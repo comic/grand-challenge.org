@@ -79,13 +79,17 @@ def get_receivers(action):
 
 @lambda_task(singleton=True)
 def send_bulk_email(
-    *, action: SendActionChoices, email_pk: int, current_page_number: int = 1
+    *,
+    action: SendActionChoices,
+    email_pk: int,
+    # Django paginator uses 1-indexing for paging
+    current_page_number: int = 1,
 ):
     with check_lock_acquired():
         email = Email.objects.select_for_update(nowait=True).get(pk=email_pk)
 
-    if email.sent:
-        task_logger.error("Email has already been sent")
+    if email.status != Email.EmailStatusChoices.QUEUED:
+        task_logger.error(f"Email status is {email.status}")
         return
 
     receivers = get_receivers(action=action)
@@ -104,17 +108,17 @@ def send_bulk_email(
         ),
     )
 
-    if current_page_number >= paginator.num_pages:
-        email.sent = True
-        email.sent_at = now()
-        email.save()
-        return
-    else:
+    if current_page_number < paginator.num_pages:
         send_bulk_email.execute_on_commit(
             action=action,
             email_pk=email_pk,
             current_page_number=current_page_number + 1,
         )
+        return
+    else:
+        email.status = Email.EmailStatusChoices.SUCCEEDED
+        email.sent_at = now()
+        email.save()
         return
 
 

@@ -9,6 +9,10 @@ def set_status(apps, _schema_editor):
     RawEmail.objects.filter(sent_at__isnull=False).update(status="SUCCEEDED")
     RawEmail.objects.filter(errored=True).update(status="FAILED")
 
+    Email = apps.get_model("emails", "Email")  # noqa: N806
+
+    Email.objects.filter(sent=True).update(status="SUCCEEDED")
+
 
 class Migration(migrations.Migration):
 

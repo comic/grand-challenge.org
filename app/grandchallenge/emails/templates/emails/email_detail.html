@@ -16,7 +16,7 @@
 
 {% block content %}
     <h2>{{ object.subject }}</h2>
-    {% if object.sent %}
+    {% if object.sent_at %}
         <p>Sent on {{ object.sent_at|date:"j N Y" }}</p>
     {% endif %}
     <hr>
@@ -33,7 +33,7 @@
         </div>
 
         <div class="col-4">
-            {% if not object.sent and "emails.change_email" in perms %}
+            {% if not object.sent_at and "emails.change_email" in perms %}
                 <div class="alert alert-warning ml-3" role="alert">
                         This email has not been sent yet.
                         You can come back and edit it. When it's ready to be sent,

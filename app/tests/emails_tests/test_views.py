@@ -1,7 +1,7 @@
 import pytest
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.emails.models import Email
+from grandchallenge.emails.models import Email, EmailStatusChoices
 from tests.emails_tests.factories import EmailFactory
 from tests.factories import UserFactory
 from tests.utils import get_view_for_user
@@ -68,8 +68,9 @@ def test_email_metadata_update(client):
     assert email.body == "Test content"
 
     # but not when the email has been sent
-    email.sent = True
+    email.status = email.EmailStatusChoices.SUCCEEDED
     email.save()
+
     response = get_view_for_user(
         viewname="emails:metadata-update",
         client=client,
@@ -114,8 +115,9 @@ def test_email_body_update(client):
     assert email.body == "Updated content"
 
     # but not when the email has been sent
-    email.sent = True
+    email.status = EmailStatusChoices.SUCCEEDED
     email.save()
+
     response = get_view_for_user(
         viewname="emails:body-update",
         client=client,

@@ -36,4 +36,29 @@ class Migration(migrations.Migration):
                 name="emails_rawemail_status_in_choices",
             ),
         ),
+        migrations.AddField(
+            model_name="email",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("INITIALIZED", "Initialized"),
+                    ("QUEUED", "Queued"),
+                    ("SUCCEEDED", "Succeeded"),
+                ],
+                default="INITIALIZED",
+                max_length=11,
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="email",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    (
+                        "status__in",
+                        ["INITIALIZED", "QUEUED", "SUCCEEDED"],
+                    )
+                ),
+                name="emails_email_status_in_choices",
+            ),
+        ),
     ]

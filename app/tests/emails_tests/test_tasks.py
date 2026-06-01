@@ -80,12 +80,17 @@ def test_email_content(settings):
 
     assert len(mail.outbox) == 0
 
+    email.status = email.EmailStatusChoices.QUEUED
+    email.save()
+
     send_bulk_email(action=SendActionChoices.MAILING_LIST, email_pk=email.pk)
 
     assert len(mail.outbox) == 2
 
     email.refresh_from_db()
-    assert email.sent
+
+    assert email.status == email.EmailStatusChoices.SUCCEEDED
+    assert email.sent_at is not None
 
     for m in mail.outbox:
         assert (
@@ -106,7 +111,9 @@ def test_email_content(settings):
 
     # check that email sending task is idempotent
     mail.outbox.clear()
+
     send_bulk_email(action=SendActionChoices.MAILING_LIST, email_pk=email.pk)
+
     assert len(mail.outbox) == 0
 
 
