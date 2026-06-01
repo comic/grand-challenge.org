@@ -22,9 +22,12 @@ from grandchallenge.workstations.models import Session
 @lambda_task
 def cleanup_celery_backend():
     """Cleanup the Celery backend."""
-    TaskResult.objects.filter(date_created__lt=now() - timedelta(days=7)).only(
-        "pk"
-    ).delete()
+    deleted_count, _ = (
+        TaskResult.objects.filter(date_created__lt=now() - timedelta(days=7))
+        .only("pk")
+        .delete()
+    )
+    return deleted_count
 
 
 CLOUDWATCH_METRICS_LIMIT = 1000

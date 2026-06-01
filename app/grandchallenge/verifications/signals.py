@@ -6,7 +6,6 @@ from django.contrib.auth import get_user_model
 from django.core.mail import mail_managers
 from django.core.signing import Signer
 from django.db.models.signals import m2m_changed
-from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.html import format_html
@@ -43,10 +42,8 @@ def handle_user_logged_in(*, request, user, response, **_):
         )
 
         if len(usernames) > 1:
-            on_commit(
-                update_verification_user_set.signature(
-                    kwargs={"usernames": [*usernames]}
-                ).apply_async
+            update_verification_user_set.execute_on_commit(
+                usernames=[*usernames]
             )
 
 

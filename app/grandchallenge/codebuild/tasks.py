@@ -10,9 +10,15 @@ from grandchallenge.core.celery import (
 )
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.create_codebuild_build")
 @transaction.atomic
-def create_codebuild_build(*, pk):
+def create_codebuild_build_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return create_codebuild_build(**kwargs)
+
+
+@lambda_task
+def create_codebuild_build(*, pk: int):
     from grandchallenge.codebuild.models import Build
     from grandchallenge.github.models import GitHubWebhookMessage
 
