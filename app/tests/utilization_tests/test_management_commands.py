@@ -36,6 +36,9 @@ def test_links_job_utilization_to_authorized_invoice():
     job.utilization.refresh_from_db()
     assert job.utilization.invoice == invoice
 
+    invoice.refresh_from_db()
+    assert invoice.compute_cost_euro_millicents == 1
+
 
 @pytest.mark.django_db
 def test_does_not_link_job_utilization_without_authorized_invoice():
@@ -241,20 +244,12 @@ def test_overcharge_falls_on_final_invoice():
 @pytest.mark.django_db
 def test_existing_invoice_spend_is_accounted_for_in_routing():
     challenge = ChallengeFactory()
-    invoice_1 = InvoiceFactory(
+    _ = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
         payment_status=Invoice.PaymentStatusChoices.PAID,
+        compute_cost_euro_millicents=1 * 1000 * 100,  # already fully spent
     )
-    util = AlgorithmJobFactory().utilization
-    util.challenge = challenge
-    util.compute_cost_euro_millicents = 1 * 1000 * 100  # already fully spent
-    util.invoice = invoice_1
-    util.save()
-
-    # Note: this has not been updated at this time
-    assert invoice_1.compute_cost_euro_millicents == 0
-
     invoice_2 = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=100,
@@ -262,7 +257,7 @@ def test_existing_invoice_spend_is_accounted_for_in_routing():
     )
     job = AlgorithmJobFactory()
     job.utilization.challenge = challenge
-    job.utilization.compute_cost_euro_millicents = 1
+    job.utilization.compute_cost_euro_millicents = 2
     job.utilization.save()
 
     call_command("route_challenge_utilizations_to_invoices")
@@ -272,11 +267,9 @@ def test_existing_invoice_spend_is_accounted_for_in_routing():
         job.utilization.invoice == invoice_2
     )  # invoice_1 was already fully spent
 
-    # The command should have updated the compute costs on invoice_1 prior to routing
-    invoice_1.refresh_from_db()
-    assert (
-        invoice_1.compute_cost_euro_millicents == 1 * 1000 * 100
-    )  # updating is part of the command
+    # The command should have updated the compute costs
+    invoice_2.refresh_from_db()
+    assert invoice_2.compute_cost_euro_millicents == 2
 
 
 @pytest.mark.django_db

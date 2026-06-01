@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
+from django.db.models import F
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.challenges.tasks import update_challenge_compute_costs
 from grandchallenge.invoices.models import Invoice
 from grandchallenge.utilization.models import (
     EvaluationUtilization,
@@ -25,10 +25,9 @@ class NoAuthorizedInvoiceError(Exception):
 
 class ChallengeInvoiceRouter:
     def __init__(self):
-        # Final update of compute costs to ensure we have the latest information on the invoices
-        # before we start routing utilizations to them.
-        update_challenge_compute_costs()
+        self.__get_invoices()
 
+    def __get_invoices(self):
         # Preload invoices for all challenges to avoid hitting the database for each challenge.
         # Only select authorized budget; explicitly not filtered on invoices with a positive balance
         # as we'll overcharge the last invoice if we run out of budget, but at least we'll link to an invoice.
@@ -40,6 +39,8 @@ class ChallengeInvoiceRouter:
         )
 
         self.__challenge_to_authorized_invoices = {}
+        self.__original_compute_cost_euro_millicents = {}
+
         for invoice in invoices:
             if (
                 invoice.challenge_id
@@ -51,6 +52,10 @@ class ChallengeInvoiceRouter:
             self.__challenge_to_authorized_invoices[
                 invoice.challenge_id
             ].append(invoice)
+
+            self.__original_compute_cost_euro_millicents[invoice.id] = (
+                invoice.compute_cost_euro_millicents
+            )
 
     def route(self, *, utilization):
         challenge_id = utilization.challenge_id
@@ -87,6 +92,28 @@ class ChallengeInvoiceRouter:
         else:
             return invoices[-1]
 
+    def flush_invoice_compute_costs(self):
+        invoices_to_update = []
+
+        for invoices in self.__challenge_to_authorized_invoices.values():
+            for invoice in invoices:
+                diff = (
+                    invoice.compute_cost_euro_millicents
+                    - self.__original_compute_cost_euro_millicents[invoice.id]
+                )
+                # Note: use increment to avoid overwriting concurrent updates
+                invoice.compute_cost_euro_millicents = (
+                    F("compute_cost_euro_millicents") + diff
+                )
+                invoices_to_update.append(invoice)
+
+        Invoice.objects.bulk_update(
+            invoices_to_update,
+            fields=["compute_cost_euro_millicents"],
+        )
+
+        self.__get_invoices()  # Refresh the invoices and their original compute costs after flushing updates.
+
 
 class Command(BaseCommand):
     help = "Routes challenge utilizations to invoices"
@@ -106,9 +133,15 @@ class Command(BaseCommand):
             updated = 0
             objects_to_update = []
 
-            def push_bulk_update():
+            def bulk_update():
                 nonlocal updated
                 nonlocal objects_to_update
+
+                # Note. First flush the invoice with the utilization-cost tally
+                # The otherway around, something might update the invoice in the meantime with
+                # utilizations that are already in the tally
+                utilization_router.flush_invoice_compute_costs()
+
                 updated += model.objects.bulk_update(
                     objs=objects_to_update,
                     fields=["invoice"],
@@ -137,11 +170,11 @@ class Command(BaseCommand):
 
                 objects_to_update.append(utilization)
                 if len(objects_to_update) >= ITER_BATCH_SIZE:
-                    push_bulk_update()
+                    bulk_update()
 
             # Handle remaining objects
             if objects_to_update:
-                push_bulk_update()
+                bulk_update()
 
             self.stdout.write(
                 self.style.SUCCESS(
