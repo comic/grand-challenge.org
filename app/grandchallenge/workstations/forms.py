@@ -57,10 +57,11 @@ class SessionForm(ModelForm):
         ],
     )
 
-    def __init__(self, *args, reader_study, **kwargs):
+    def __init__(self, *args, reader_study, user, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.__reader_study = reader_study
+        self.__user = user
 
         self.helper = FormHelper(self)
         self.helper.attrs.update({"class": "d-none"})
@@ -68,7 +69,10 @@ class SessionForm(ModelForm):
         self.fields["ping_times"].required = False
 
     def clean(self):
-        if self.__reader_study and not self.__reader_study.has_budget:
+        if self.__reader_study and (
+            not self.__reader_study.has_budget
+            and not self.__reader_study.is_editor(self.__user)
+        ):
             raise ValidationError(
                 "Reader study is out of budget and cannot be launched."
             )

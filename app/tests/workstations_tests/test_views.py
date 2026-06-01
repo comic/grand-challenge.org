@@ -617,7 +617,7 @@ def test_session_create_reader_study_with_algorithm_implementation_skip_active_e
 
 @pytest.mark.django_db
 def test_session_create_reader_study_out_of_budget(client):
-    user = UserFactory()
+    user, editor = UserFactory.create_batch(2)
     ws = WorkstationFactory()
     WorkstationImageFactory(
         workstation=ws,
@@ -627,12 +627,14 @@ def test_session_create_reader_study_out_of_budget(client):
     )
     reader_study = ReaderStudyFactory(workstation=ws, max_credits=0)
     QuestionFactory(reader_study=reader_study)
-    reader_study.readers_group.user_set.add(user)
+    reader_study.add_editor(editor)
+    reader_study.add_reader(user)
     path, _ = get_workstation_path_and_query_string(reader_study=reader_study)
 
     assert not reader_study.has_budget
     assert Session.objects.count() == 0
 
+    # reader cannot launch study
     response = get_view_for_user(
         client=client,
         method=client.post,
@@ -641,9 +643,20 @@ def test_session_create_reader_study_out_of_budget(client):
         user=user,
         data={"region": "eu-central-1"},
     )
-
     assert response.status_code == 200
     assert Session.objects.count() == 0
+
+    # editor can launch study
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="workstations:workstation-session-create-nested",
+        reverse_kwargs={"slug": ws.slug, "workstation_path": path},
+        user=editor,
+        data={"region": "eu-central-1"},
+    )
+    assert response.status_code == 302
+    assert Session.objects.count() == 1
 
 
 @pytest.mark.django_db

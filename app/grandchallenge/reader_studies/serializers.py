@@ -296,6 +296,11 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             display_set = attrs.get("display_set")
             creator = self.context.get("request").user
 
+        if not question.reader_study.has_budget:
+            raise ValidationError(
+                "You cannot create or edit answers because this reader study is out of budget."
+            )
+
         Answer.validate(
             creator=creator,
             question=question,

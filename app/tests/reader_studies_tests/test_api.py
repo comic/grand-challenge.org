@@ -233,6 +233,43 @@ def test_answer_update(client):
 
 
 @pytest.mark.django_db
+def test_answer_creation_blocked_when_rs_out_of_budget(client):
+    # im = ImageFactory()
+    # civ = ComponentInterfaceValueFactory(image=im)
+    rs = ReaderStudyFactory(max_credits=0)
+    ds = DisplaySetFactory(reader_study=rs)
+    # ds.values.add(civ)
+    reader, editor = UserFactory.create_batch(2)
+    rs.add_reader(reader)
+    rs.add_editor(editor)
+
+    q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
+
+    assert not rs.has_budget
+
+    # neither reader nor editor can create answers
+    for user in (editor, reader):
+        response = get_view_for_user(
+            viewname="api:reader-studies-answer-list",
+            user=user,
+            client=client,
+            method=client.post,
+            data={
+                "answer": True,
+                "display_set": ds.api_url,
+                "question": q.api_url,
+            },
+            content_type="application/json",
+        )
+        assert response.status_code == 400
+        assert Answer.objects.count() == 0
+        assert (
+            "You cannot create or edit answers because this reader study is out of budget."
+            in str(response.content)
+        )
+
+
+@pytest.mark.django_db
 def test_answer_creator_is_reader(client):
     rs_set = TwoReaderStudies()
     ds = DisplaySetFactory(reader_study=rs_set.rs1)
