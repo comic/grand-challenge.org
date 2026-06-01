@@ -105,5 +105,5 @@ class EmailAdmin(ModelAdmin):
 class RawEmailAdmin(ModelAdmin):
     list_display = ("pk", "created", "modified", "status")
     list_filter = ("status",)
-    readonly_fields = ("created", "message")
+    readonly_fields = ("created", "message", "status")
     search_fields = ("message",)
