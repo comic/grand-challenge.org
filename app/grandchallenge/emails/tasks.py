@@ -126,7 +126,10 @@ def send_bulk_email(*, action, email_pk):
 
 def get_max_emails_per_minute():
     client = boto3.client("ses", region_name=settings.AWS_SES_REGION_NAME)
-    return 60 * int(client.get_send_quota()["MaxSendRate"])
+    return min(
+        60 * int(client.get_send_quota()["MaxSendRate"]),
+        settings.EMAILS_MAX_SENT_PER_MINUTE,
+    )
 
 
 @acks_late_micro_short_task(

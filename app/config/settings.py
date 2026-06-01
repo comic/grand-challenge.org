@@ -99,6 +99,9 @@ DATABASES = {
 }
 
 EMAIL_BACKEND = "grandchallenge.emails.backends.CelerySESBackend"
+EMAILS_MAX_SENT_PER_MINUTE = int(
+    os.environ.get("EMAILS_MAX_SENT_PER_MINUTE", "600")
+)
 SUPPORT_EMAIL = os.environ.get("SUPPORT_EMAIL", "grandchallenge@localhost")
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL", "grandchallenge@localhost"
