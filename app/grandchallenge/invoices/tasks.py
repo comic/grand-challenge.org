@@ -3,6 +3,7 @@ from django.core.mail import mail_managers
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils.timezone import now
+from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
@@ -36,8 +37,14 @@ def send_challenge_invoice_issued_notification_emails(*, pk):
     send_challenge_invoice_issued_notification(invoice)
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.send_open_invoices_email")
 @transaction.atomic
+def send_open_invoices_email_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return send_open_invoices_email(**kwargs)
+
+
+@lambda_task
 def send_open_invoices_email():
     from grandchallenge.invoices.models import Invoice
 
