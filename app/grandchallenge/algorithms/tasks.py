@@ -266,13 +266,19 @@ class ChallengeNameAndUrl(NamedTuple):
     get_absolute_url: str
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.update_associated_challenges")
+def update_associated_challenges_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_associated_challenges(**kwargs)
+
+
+@lambda_task
 def update_associated_challenges():
     from grandchallenge.algorithms.models import Algorithm
     from grandchallenge.challenges.models import Challenge
 
     challenge_list = {}
-    for algorithm in Algorithm.objects.all():
+    for algorithm in Algorithm.objects.iterator(chunk_size=1000):
         challenge_list[algorithm.pk] = [
             ChallengeNameAndUrl(
                 short_name=challenge.short_name,

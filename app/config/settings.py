@@ -1200,10 +1200,6 @@ EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
 )
 
 CELERY_BEAT_SCHEDULE = {
-    "update_associated_challenges": {  # short
-        "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
-        "schedule": crontab(hour=3, minute=0),
-    },
     "send_onboarding_task_reminder_emails": {  # short
         "task": "grandchallenge.challenges.tasks.send_onboarding_task_reminder_emails",
         "schedule": crontab(day_of_week="mon", hour=6, minute=0),
