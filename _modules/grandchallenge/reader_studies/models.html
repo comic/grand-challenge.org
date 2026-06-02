@@ -36,9 +36,7 @@
           <div class="body" role="main">
             
   <h1>Source code for grandchallenge.reader_studies.models</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">ceil</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Group</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
@@ -54,12 +52,15 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Avg</span><span class="p">,</span>
     <span class="n">Count</span><span class="p">,</span>
+    <span class="n">F</span><span class="p">,</span>
     <span class="n">IntegerField</span><span class="p">,</span>
     <span class="n">OuterRef</span><span class="p">,</span>
     <span class="n">Q</span><span class="p">,</span>
     <span class="n">Subquery</span><span class="p">,</span>
     <span class="n">Sum</span><span class="p">,</span>
+    <span class="n">Value</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Coalesce</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.signals</span><span class="w"> </span><span class="kn">import</span> <span class="n">post_delete</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.dispatch</span><span class="w"> </span><span class="kn">import</span> <span class="n">receiver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
@@ -114,8 +115,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.reader_studies.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">accuracy_score</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.subdomains.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.utilization.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">EndpointUtilization</span><span class="p">,</span>
-    <span class="n">SessionUtilization</span><span class="p">,</span>
+    <span class="n">EndpointUtilizationReaderStudy</span><span class="p">,</span>
+    <span class="n">SessionUtilizationReaderStudy</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.workstations.templatetags.workstations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_workstation_path_and_query_string</span><span class="p">,</span>
@@ -248,6 +249,68 @@
                     <span class="n">pk</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_has_budget</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">session_credits_subquery</span> <span class="o">=</span> <span class="n">Subquery</span><span class="p">(</span>
+            <span class="n">SessionUtilizationReaderStudy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">reader_study</span><span class="o">=</span><span class="n">OuterRef</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="n">reader_studies_count</span><span class="o">=</span><span class="n">Subquery</span><span class="p">(</span>
+                    <span class="n">SessionUtilizationReaderStudy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">session_utilization</span><span class="o">=</span><span class="n">OuterRef</span><span class="p">(</span><span class="s2">&quot;session_utilization&quot;</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;session_utilization&quot;</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">))</span>
+                    <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;count&quot;</span><span class="p">)[:</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="n">output_field</span><span class="o">=</span><span class="n">IntegerField</span><span class="p">(),</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;reader_study&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="n">total</span><span class="o">=</span><span class="n">Sum</span><span class="p">(</span>
+                    <span class="n">F</span><span class="p">(</span><span class="s2">&quot;session_utilization__credits_consumed&quot;</span><span class="p">)</span>
+                    <span class="o">/</span> <span class="n">F</span><span class="p">(</span><span class="s2">&quot;reader_studies_count&quot;</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;total&quot;</span><span class="p">)[:</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">output_field</span><span class="o">=</span><span class="n">IntegerField</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+        <span class="n">endpoint_credits_subquery</span> <span class="o">=</span> <span class="n">Subquery</span><span class="p">(</span>
+            <span class="n">EndpointUtilizationReaderStudy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">reader_study</span><span class="o">=</span><span class="n">OuterRef</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="n">reader_studies_count</span><span class="o">=</span><span class="n">Subquery</span><span class="p">(</span>
+                    <span class="n">EndpointUtilizationReaderStudy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">endpoint_utilization</span><span class="o">=</span><span class="n">OuterRef</span><span class="p">(</span><span class="s2">&quot;endpoint_utilization&quot;</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;endpoint_utilization&quot;</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">))</span>
+                    <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;count&quot;</span><span class="p">)[:</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="n">output_field</span><span class="o">=</span><span class="n">IntegerField</span><span class="p">(),</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;reader_study&quot;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="n">total</span><span class="o">=</span><span class="n">Sum</span><span class="p">(</span>
+                    <span class="n">F</span><span class="p">(</span><span class="s2">&quot;endpoint_utilization__credits_consumed&quot;</span><span class="p">)</span>
+                    <span class="o">/</span> <span class="n">F</span><span class="p">(</span><span class="s2">&quot;reader_studies_count&quot;</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;total&quot;</span><span class="p">)[:</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">output_field</span><span class="o">=</span><span class="n">IntegerField</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="n">credits_consumed</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">Coalesce</span><span class="p">(</span><span class="n">session_credits_subquery</span><span class="p">,</span> <span class="n">Value</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+                <span class="o">+</span> <span class="n">Coalesce</span><span class="p">(</span><span class="n">endpoint_credits_subquery</span><span class="p">,</span> <span class="n">Value</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+            <span class="p">),</span>
+            <span class="n">has_budget</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span><span class="n">max_credits__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">credits_consumed__lt</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="s2">&quot;max_credits&quot;</span><span class="p">)),</span>
         <span class="p">)</span></div>
 
 
@@ -958,49 +1021,6 @@
             <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                 <span class="n">question__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
             <span class="p">)</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
-        <span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">credits_consumed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
-
-        <span class="n">session_utilizations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_utilizations</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-            <span class="n">reader_studies_count</span><span class="o">=</span><span class="n">Subquery</span><span class="p">(</span>
-                <span class="n">SessionUtilization</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">OuterRef</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">))</span>
-                <span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s2">&quot;reader_studies&quot;</span><span class="p">))</span>
-                <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;count&quot;</span><span class="p">),</span>
-                <span class="n">output_field</span><span class="o">=</span><span class="n">IntegerField</span><span class="p">(),</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-
-        <span class="n">total</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span>
-            <span class="n">session_utilization</span><span class="o">.</span><span class="n">credits_consumed</span>
-            <span class="o">/</span> <span class="n">session_utilization</span><span class="o">.</span><span class="n">reader_studies_count</span>
-            <span class="k">for</span> <span class="n">session_utilization</span> <span class="ow">in</span> <span class="n">session_utilizations</span>
-        <span class="p">)</span>
-
-        <span class="n">endpoint_utilizations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_utilizations</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-            <span class="n">reader_studies_count</span><span class="o">=</span><span class="n">Subquery</span><span class="p">(</span>
-                <span class="n">EndpointUtilization</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">OuterRef</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">))</span>
-                <span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s2">&quot;reader_studies&quot;</span><span class="p">))</span>
-                <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s2">&quot;count&quot;</span><span class="p">),</span>
-                <span class="n">output_field</span><span class="o">=</span><span class="n">IntegerField</span><span class="p">(),</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-
-        <span class="n">total</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span>
-            <span class="n">endpoint_utilization</span><span class="o">.</span><span class="n">credits_consumed</span>
-            <span class="o">/</span> <span class="n">endpoint_utilization</span><span class="o">.</span><span class="n">reader_studies_count</span>
-            <span class="k">for</span> <span class="n">endpoint_utilization</span> <span class="ow">in</span> <span class="n">endpoint_utilizations</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">ceil</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">has_budget</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">max_credits</span> <span class="ow">is</span> <span class="kc">None</span>
-            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">credits_consumed</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_credits</span>
         <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
