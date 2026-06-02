@@ -10,13 +10,14 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 from django.utils.timezone import datetime, now, timedelta
 
+from grandchallenge.challenges.exceptions import InsufficientBudgetError
 from grandchallenge.challenges.models import (
     Challenge,
     ChallengeRequest,
     OnboardingTask,
 )
 from grandchallenge.discussion_forums.models import ForumTopicKindChoices
-from grandchallenge.invoices.models import Invoice
+from grandchallenge.invoices.models import Invoice, PaymentTypeChoices
 from grandchallenge.notifications.models import Notification
 from tests.discussion_forums_tests.factories import ForumTopicFactory
 from tests.factories import (
@@ -877,3 +878,110 @@ def test_challenge_available_compute_euro_millicents():
         challenge.available_compute_euro_millicents_via_invoices
         == (1 + 2) * 1000 * 100
     )
+
+
+@pytest.mark.django_db
+def test_active_invoice():
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=1,
+        compute_cost_euro_millicents=0,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    assert challenge.active_invoice == invoice
+
+
+@pytest.mark.django_db
+def test_active_invoice_no_invoice():
+    challenge = ChallengeFactory()
+    with pytest.raises(InsufficientBudgetError):
+        challenge.active_invoice
+
+
+@pytest.mark.django_db
+def test_active_invoice_raises_on_negative_balance():
+    challenge = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=1,
+        compute_cost_euro_millicents=2 * 1000 * 100,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    with pytest.raises(InsufficientBudgetError):
+        challenge.active_invoice
+
+
+@pytest.mark.django_db
+def test_active_invoice_raises_on_zero_balance():
+    challenge = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=1,
+        compute_cost_euro_millicents=1 * 1000 * 100,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    with pytest.raises(InsufficientBudgetError):
+        challenge.active_invoice
+
+
+@pytest.mark.django_db
+def test_active_invoice_orders_by_expiry():
+    challenge = ChallengeFactory()
+
+    _fixed_now = now()
+
+    invoice0 = InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=1,
+        compute_cost_euro_millicents=0,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+        expires_on=_fixed_now + timedelta(10),
+    )
+    invoice1 = InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=1,
+        compute_cost_euro_millicents=0,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+        expires_on=_fixed_now + timedelta(10),
+    )
+
+    # All things being equal, use created time to determine order, so invoice0 should be active as it was created first
+    assert challenge.active_invoice == invoice0
+
+    invoice1.expires_on = _fixed_now + timedelta(5)
+    invoice1.save()
+    assert invoice1.expires_on < invoice0.expires_on, "Sanity"
+    assert challenge.active_invoice == invoice1
+
+    invoice0.expires_on = _fixed_now + timedelta(4)
+    invoice0.save()
+    assert invoice0.expires_on < invoice1.expires_on, "Sanity"
+    assert challenge.active_invoice == invoice0
+
+
+@pytest.mark.django_db
+def test_active_invoice_ignores_overall_balance():
+    challenge = ChallengeFactory()
+
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=1,
+        compute_cost_euro_millicents=0,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=1,
+        compute_cost_euro_millicents=1000 * 1000 * 100,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+
+    challenge.active_invoice
