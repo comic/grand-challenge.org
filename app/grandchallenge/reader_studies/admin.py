@@ -53,6 +53,10 @@ class ReaderStudyAdmin(admin.ModelAdmin):
     def get_queryset(self, *args, **kwargs):
         return super().get_queryset(*args, **kwargs).with_has_budget()
 
+    @admin.display(description="Credits consumed")
+    def credits_consumed(self, obj):
+        return obj.credits_consumed
+
     def get_form(self, *args, **kwargs):
         help_texts = {
             "max_credits": f"The maximum number of credits that may be consumed for "
