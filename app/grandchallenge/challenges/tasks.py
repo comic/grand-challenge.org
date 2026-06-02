@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, Max, Min, Q
 from django.utils.timezone import datetime, now
+from lambda_tasks.decorators import lambda_task
 from psycopg.errors import LockNotAvailable
 
 from grandchallenge.challenges.costs import (
@@ -158,8 +159,16 @@ class OnboardingTaskInfo(NamedTuple):
     min_support_deadline: datetime
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(
+    name=f"{__name__}.send_onboarding_task_reminder_emails"
+)
 @transaction.atomic
+def send_onboarding_task_reminder_emails_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return send_onboarding_task_reminder_emails(**kwargs)
+
+
+@lambda_task
 def send_onboarding_task_reminder_emails():
     onboarding_task_info = (
         OnboardingTask.objects.with_overdue_status()
