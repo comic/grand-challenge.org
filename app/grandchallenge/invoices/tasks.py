@@ -5,24 +5,12 @@ from django.template.loader import render_to_string
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
+from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.invoices.emails import (
     send_challenge_invoice_issued_notification,
     send_challenge_invoice_overdue_reminder,
     send_postpaid_invoice_follow_up_date_approaching_email,
 )
-
-
-@acks_late_2xlarge_task(
-    name=f"{__name__}.send_challenge_invoice_overdue_reminder_emails"
-)
-@transaction.atomic
-def send_challenge_invoice_overdue_reminder_emails_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return send_challenge_invoice_overdue_reminder_emails(**kwargs)
 
 
 @lambda_task
@@ -43,13 +31,6 @@ def send_challenge_invoice_issued_notification_emails(*, pk):
 
     invoice = Invoice.objects.get(pk=pk)
     send_challenge_invoice_issued_notification(invoice)
-
-
-@acks_late_micro_short_task(name=f"{__name__}.send_open_invoices_email")
-@transaction.atomic
-def send_open_invoices_email_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return send_open_invoices_email(**kwargs)
 
 
 @lambda_task
@@ -97,15 +78,6 @@ def send_open_invoices_email():
         subject=subject,
         message=message,
     )
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.send_post_paid_invoice_follow_up_emails"
-)
-@transaction.atomic
-def send_post_paid_invoice_follow_up_emails_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return send_post_paid_invoice_follow_up_emails(**kwargs)
 
 
 @lambda_task

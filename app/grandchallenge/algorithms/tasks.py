@@ -16,10 +16,7 @@ from grandchallenge.components.tasks import (
     provision_invocation_input_data,
     remove_container_image_from_registry,
 )
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
+from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.notifications.models import (
@@ -266,12 +263,6 @@ class ChallengeNameAndUrl(NamedTuple):
     get_absolute_url: str
 
 
-@acks_late_2xlarge_task(name=f"{__name__}.update_associated_challenges")
-def update_associated_challenges_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return update_associated_challenges(**kwargs)
-
-
 @lambda_task
 def update_associated_challenges():
     from grandchallenge.algorithms.models import Algorithm
@@ -307,13 +298,6 @@ def update_algorithm_average_duration(*, algorithm_pk):
         algorithm=algorithm, job__status=Job.SUCCESS
     ).average_duration()
     algorithm.save(update_fields=("average_duration",))
-
-
-@acks_late_2xlarge_task(name=f"{__name__}.deactivate_old_algorithm_images")
-@transaction.atomic
-def deactivate_old_algorithm_images_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return deactivate_old_algorithm_images(**kwargs)
 
 
 @lambda_task

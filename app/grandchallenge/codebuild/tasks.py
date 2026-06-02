@@ -1,20 +1,9 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
 from django.db.transaction import on_commit
 from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
-
-
-@acks_late_micro_short_task(name=f"{__name__}.create_codebuild_build")
-@transaction.atomic
-def create_codebuild_build_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return create_codebuild_build(**kwargs)
+from grandchallenge.core.celery import acks_late_2xlarge_task
 
 
 @lambda_task

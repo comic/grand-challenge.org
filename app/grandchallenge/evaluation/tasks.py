@@ -609,15 +609,6 @@ def assign_submission_permissions(*, phase_pk: uuid.UUID):
         sub.assign_permissions()
 
 
-@acks_late_micro_short_task(
-    name=f"{__name__}.cancel_external_evaluations_past_timeout"
-)
-@transaction.atomic
-def cancel_external_evaluations_past_timeout_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return cancel_external_evaluations_past_timeout(**kwargs)
-
-
 @lambda_task
 def cancel_external_evaluations_past_timeout():
     from grandchallenge.evaluation.models import Evaluation
