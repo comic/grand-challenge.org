@@ -623,7 +623,7 @@ class Session(FieldChangeMixin, UUIDModel):
         reader_study.workstation_sessions.add(self)
 
         if reader_study.questions_with_interactive_algorithm.exists():
-            on_commit(preload_interactive_algorithms.apply_async)
+            preload_interactive_algorithms.execute_on_commit()
 
         self.create_reader_study_endpoints(reader_study=reader_study)
         self.update_reader_studies_on_associated_endpoint_utilizations(

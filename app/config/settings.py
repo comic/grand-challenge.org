@@ -1208,10 +1208,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.update_challenge_compute_costs",
         "schedule": crontab(minute=45),
     },
-    "preload_interactive_algorithms": {  # short
-        "task": "grandchallenge.components.tasks.preload_interactive_algorithms",
-        "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
-    },
 }
 
 PUSH_CLOUDWATCH_METRICS = strtobool(

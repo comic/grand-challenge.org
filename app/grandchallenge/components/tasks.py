@@ -1332,8 +1332,14 @@ class InteractiveAlgorithmLambda:
         return deleted
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.preload_interactive_algorithms")
 @transaction.atomic
+def preload_interactive_algorithms_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return preload_interactive_algorithms(**kwargs)
+
+
+@lambda_task
 def preload_interactive_algorithms():
     from grandchallenge.reader_studies.models import Question, ReaderStudy
     from grandchallenge.workstations.models import Session
