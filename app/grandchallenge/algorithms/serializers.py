@@ -349,7 +349,14 @@ class HyperlinkedInvocationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Invocation
-        fields = ["pk", "endpoint", "inputs", "outputs", "status"]
+        fields = [
+            "pk",
+            "endpoint",
+            "inputs",
+            "outputs",
+            "status",
+            "error_message",
+        ]
 
 
 class InvocationPostSerializer(serializers.ModelSerializer):
