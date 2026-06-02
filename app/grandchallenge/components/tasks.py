@@ -1306,14 +1306,11 @@ def preload_interactive_algorithms():
     from grandchallenge.reader_studies.models import Question, ReaderStudy
     from grandchallenge.workstations.models import Session
 
-    reader_studies_with_budget = [
-        rs.pk
-        for rs in ReaderStudy.objects.prefetch_related(
-            "session_utilizations__reader_studies",
-            "endpoint_utilizations__reader_studies",
-        ).only("pk", "max_credits")
-        if rs.has_budget
-    ]
+    reader_studies_with_budget = (
+        ReaderStudy.objects.with_has_budget()
+        .filter(has_budget=True)
+        .values_list("pk", flat=True)
+    )
 
     active_interactive_algorithms = (
         Question.objects.filter(

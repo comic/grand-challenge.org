@@ -1,5 +1,3 @@
-from math import ceil
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -16,12 +14,15 @@ from django.db import models
 from django.db.models import (
     Avg,
     Count,
+    F,
     IntegerField,
     OuterRef,
     Q,
     Subquery,
     Sum,
+    Value,
 )
+from django.db.models.functions import Coalesce
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
@@ -76,8 +77,8 @@ from grandchallenge.reader_studies.interactive_algorithms import (
 from grandchallenge.reader_studies.metrics import accuracy_score
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.utilization.models import (
-    EndpointUtilization,
-    SessionUtilization,
+    EndpointUtilizationReaderStudy,
+    SessionUtilizationReaderStudy,
 )
 from grandchallenge.workstations.templatetags.workstations import (
     get_workstation_path_and_query_string,
@@ -208,6 +209,68 @@ class ReaderStudyQuerySet(models.QuerySet):
                     pk=user.pk,
                 )
             ),
+        )
+
+    def with_has_budget(self):
+        session_credits_subquery = Subquery(
+            SessionUtilizationReaderStudy.objects.filter(
+                reader_study=OuterRef("pk")
+            )
+            .annotate(
+                reader_studies_count=Subquery(
+                    SessionUtilizationReaderStudy.objects.filter(
+                        session_utilization=OuterRef("session_utilization")
+                    )
+                    .values("session_utilization")
+                    .annotate(count=Count("id"))
+                    .values("count")[:1],
+                    output_field=IntegerField(),
+                ),
+            )
+            .values("reader_study")
+            .annotate(
+                total=Sum(
+                    F("session_utilization__credits_consumed")
+                    / F("reader_studies_count")
+                )
+            )
+            .values("total")[:1],
+            output_field=IntegerField(),
+        )
+
+        endpoint_credits_subquery = Subquery(
+            EndpointUtilizationReaderStudy.objects.filter(
+                reader_study=OuterRef("pk")
+            )
+            .annotate(
+                reader_studies_count=Subquery(
+                    EndpointUtilizationReaderStudy.objects.filter(
+                        endpoint_utilization=OuterRef("endpoint_utilization")
+                    )
+                    .values("endpoint_utilization")
+                    .annotate(count=Count("id"))
+                    .values("count")[:1],
+                    output_field=IntegerField(),
+                ),
+            )
+            .values("reader_study")
+            .annotate(
+                total=Sum(
+                    F("endpoint_utilization__credits_consumed")
+                    / F("reader_studies_count")
+                )
+            )
+            .values("total")[:1],
+            output_field=IntegerField(),
+        )
+
+        return self.annotate(
+            credits_consumed=(
+                Coalesce(session_credits_subquery, Value(0))
+                + Coalesce(endpoint_credits_subquery, Value(0))
+            ),
+            has_budget=Q(max_credits__isnull=True)
+            | Q(credits_consumed__lt=F("max_credits")),
         )
 
 
@@ -885,49 +948,6 @@ class ReaderStudy(
             ComponentInterface.objects.filter(
                 question__in=self.questions.all()
             ).distinct()
-        )
-
-    @property
-    def credits_consumed(self):
-        total = 0
-
-        session_utilizations = self.session_utilizations.annotate(
-            reader_studies_count=Subquery(
-                SessionUtilization.objects.filter(pk=OuterRef("pk"))
-                .annotate(count=Count("reader_studies"))
-                .values("count"),
-                output_field=IntegerField(),
-            )
-        )
-
-        total += sum(
-            session_utilization.credits_consumed
-            / session_utilization.reader_studies_count
-            for session_utilization in session_utilizations
-        )
-
-        endpoint_utilizations = self.endpoint_utilizations.annotate(
-            reader_studies_count=Subquery(
-                EndpointUtilization.objects.filter(pk=OuterRef("pk"))
-                .annotate(count=Count("reader_studies"))
-                .values("count"),
-                output_field=IntegerField(),
-            )
-        )
-
-        total += sum(
-            endpoint_utilization.credits_consumed
-            / endpoint_utilization.reader_studies_count
-            for endpoint_utilization in endpoint_utilizations
-        )
-
-        return ceil(total)
-
-    @property
-    def has_budget(self):
-        return (
-            self.max_credits is None
-            or self.credits_consumed < self.max_credits
         )
 
     @cached_property
