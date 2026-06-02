@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.backends.base import duration_to_millicents
@@ -12,8 +13,17 @@ from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.utilization.models import JobWarmPoolUtilization
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.create_job_warm_pool_utilizations",
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
+def create_job_warm_pool_utilizations_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return create_job_warm_pool_utilizations(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def create_job_warm_pool_utilizations():
     with check_lock_acquired():
         jobs = list(
