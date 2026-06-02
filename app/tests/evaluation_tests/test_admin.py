@@ -67,8 +67,8 @@ def test_selectable_gpu_type_choices_invalid():
 @pytest.mark.django_db
 def test_reevaluate_submission_only_for_evaluations_without_inputs(rf):
     s1, s2 = SubmissionFactory.create_batch(2)
-    InvoiceFactory.create_valid(challenge=s1.phase.challenge)
-    InvoiceFactory.create_valid(challenge=s2.phase.challenge)
+    InvoiceFactory(challenge=s1.phase.challenge)
+    InvoiceFactory(challenge=s2.phase.challenge)
 
     s1.phase.additional_evaluation_inputs.add(ComponentInterfaceFactory())
 
@@ -102,7 +102,7 @@ def test_reevaluate_submission_only_for_evaluations_without_inputs(rf):
 @pytest.mark.django_db
 def test_reevaluate_submission_idempotent(rf):
     submission = SubmissionFactory()
-    InvoiceFactory.create_valid(challenge=submission.phase.challenge)
+    InvoiceFactory(challenge=submission.phase.challenge)
     MethodFactory(
         phase=submission.phase,
         is_manifest_valid=True,
@@ -165,7 +165,7 @@ def test_rescheduling_external_evaluation_not_possible(rf):
 
     SubmissionFactory(phase=phase_ext)
     SubmissionFactory(phase=phase_int)
-    InvoiceFactory.create_valid(challenge=phase_int.challenge)
+    InvoiceFactory(challenge=phase_int.challenge)
 
     modeladmin = SubmissionAdmin(Submission, AdminSite)
     request = rf.get("/foo")
@@ -213,7 +213,7 @@ def test_reevaluate_submission_missing_invoice(rf):
 @pytest.mark.django_db
 def test_reevaluate_submission_assigns_invoice(rf):
     submission = SubmissionFactory()
-    invoice = InvoiceFactory.create_valid(challenge=submission.phase.challenge)
+    invoice = InvoiceFactory(challenge=submission.phase.challenge)
     MethodFactory(
         phase=submission.phase,
         is_manifest_valid=True,

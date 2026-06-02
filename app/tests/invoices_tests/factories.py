@@ -10,9 +10,10 @@ from tests.factories import ChallengeFactory
 class InvoiceFactory(factory.django.DjangoModelFactory):
     challenge = factory.SubFactory(ChallengeFactory)
     payment_type = Invoice.PaymentTypeChoices.PREPAID
-    support_costs_euros = 0
-    compute_costs_euros = 0
-    storage_costs_euros = 0
+    payment_status = Invoice.PaymentStatusChoices.PAID
+    support_costs_euros = 100
+    compute_costs_euros = 100
+    storage_costs_euros = 100
     issued_on = factory.Faker("past_date")
     paid_on = factory.Faker("past_date")
     internal_invoice_number = factory.Faker("numerify", text="#########")
@@ -29,20 +30,6 @@ class InvoiceFactory(factory.django.DjangoModelFactory):
             else None
         )
     )
-
-    @classmethod
-    def create_valid(cls, **kwargs):
-        if "support_costs_euros" not in kwargs:
-            kwargs["support_costs_euros"] = 100
-        if "compute_costs_euros" not in kwargs:
-            kwargs["compute_costs_euros"] = 100
-        if "storage_costs_euros" not in kwargs:
-            kwargs["storage_costs_euros"] = 100
-        if "payment_type" not in kwargs:
-            kwargs["payment_type"] = Invoice.PaymentTypeChoices.PREPAID
-        if "payment_status" not in kwargs:
-            kwargs["payment_status"] = Invoice.PaymentStatusChoices.PAID
-        return cls.create(**kwargs)
 
     class Meta:
         model = Invoice

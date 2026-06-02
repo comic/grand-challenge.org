@@ -1086,7 +1086,7 @@ def test_create_algorithm_jobs_for_evaluation_invoice_workflow():
     archive = ArchiveFactory()
     submission = SubmissionFactory(phase__archive=archive, algorithm_image=ai)
     challenge = submission.phase.challenge
-    invoice = InvoiceFactory.create_valid(challenge=challenge)
+    invoice = InvoiceFactory(challenge=challenge)
     evaluation = EvaluationFactory(
         submission=submission,
         time_limit=ai.algorithm.time_limit,

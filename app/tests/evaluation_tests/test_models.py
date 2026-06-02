@@ -108,7 +108,7 @@ def test_algorithm_submission_creates_one_job_per_test_set_image(
         phase=algorithm_submission.method.phase,
         algorithm_image=algorithm_submission.algorithm_image,
     )
-    InvoiceFactory.create_valid(challenge=s.phase.challenge)
+    InvoiceFactory(challenge=s.phase.challenge)
 
     eval = EvaluationFactory(
         submission=s,
@@ -141,7 +141,7 @@ def test_create_evaluation_is_idempotent(
         phase=algorithm_submission.method.phase,
         algorithm_image=algorithm_submission.algorithm_image,
     )
-    i = InvoiceFactory.create_valid(challenge=s.phase.challenge)
+    i = InvoiceFactory(challenge=s.phase.challenge)
 
     with django_capture_on_commit_callbacks(execute=True):
         s.create_evaluation(additional_inputs=None, invoice=i)
@@ -168,7 +168,7 @@ def test_create_evaluation_sets_gpu_and_memory():
 
     submission.create_evaluation(
         additional_inputs=None,
-        invoice=InvoiceFactory.create_valid(challenge=method.phase.challenge),
+        invoice=InvoiceFactory(challenge=method.phase.challenge),
     )
 
     evaluation = Evaluation.objects.get()
@@ -248,7 +248,7 @@ def test_create_evaluation_uniqueness_checks(
         phase=algorithm_submission.method.phase,
         algorithm_image=algorithm_submission.algorithm_image,
     )
-    invoice = InvoiceFactory.create_valid(challenge=sub.phase.challenge)
+    invoice = InvoiceFactory(challenge=sub.phase.challenge)
 
     with django_capture_on_commit_callbacks(execute=True):
         sub.create_evaluation(
@@ -350,7 +350,7 @@ def test_create_evaluation_with_invoice(
         phase=algorithm_submission.method.phase,
         algorithm_image=algorithm_submission.algorithm_image,
     )
-    i = InvoiceFactory.create_valid(challenge=s.phase.challenge)
+    i = InvoiceFactory(challenge=s.phase.challenge)
 
     with django_capture_on_commit_callbacks(execute=True):
         s.create_evaluation(additional_inputs=None, invoice=i)
@@ -364,7 +364,7 @@ class TestPhaseLimits:
     def setup_method(self):
         phase = PhaseFactory()
 
-        InvoiceFactory.create_valid(challenge=phase.challenge)
+        InvoiceFactory(challenge=phase.challenge)
 
         # Fetch from the db to get the cost annotations
         self.phase = Phase.objects.get(pk=phase.pk)
