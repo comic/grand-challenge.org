@@ -244,8 +244,16 @@ def remove_inactive_container_images():
                 )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(
+    name=f"{__name__}.delete_failed_import_container_images"
+)
 @transaction.atomic
+def delete_failed_import_container_images_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return delete_failed_import_container_images(**kwargs)
+
+
+@lambda_task
 def delete_failed_import_container_images():
     from grandchallenge.algorithms.models import AlgorithmImage
     from grandchallenge.components.models import ComponentImage
@@ -256,7 +264,7 @@ def delete_failed_import_container_images():
         for image in model.objects.filter(
             is_removed=False,
             import_status=ComponentImage.ImportStatusChoices.FAILED,
-        ).iterator():
+        ).iterator(chunk_size=1000):
             on_commit(
                 delete_container_image.signature(
                     kwargs={
