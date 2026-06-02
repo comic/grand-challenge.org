@@ -1200,11 +1200,7 @@ EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
 )
 
 CELERY_BEAT_SCHEDULE = {
-    "update_challenge_storage_size": {  # 10 min, retry_with_backoff
-        "task": "grandchallenge.challenges.tasks.update_challenge_storage_size",
-        "schedule": crontab(hour=6, minute=15),
-    },
-    "update_challenge_compute_costs": {  # short, retry_with_backoff
+    "update_challenge_compute_costs": {  # short, retry_with_backoff, existing PR
         "task": "grandchallenge.challenges.tasks.update_challenge_compute_costs",
         "schedule": crontab(minute=45),
     },
