@@ -208,7 +208,13 @@ def update_container_image_shim(
         instance.save()
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.remove_inactive_container_images")
+def remove_inactive_container_images_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return remove_inactive_container_images(**kwargs)
+
+
+@lambda_task
 def remove_inactive_container_images():
     """Removes inactive container images from the registry"""
     for app_label, model_name, related_name in (
@@ -218,7 +224,7 @@ def remove_inactive_container_images():
     ):
         model = apps.get_model(app_label=app_label, model_name=model_name)
 
-        for instance in model.objects.all():
+        for instance in model.objects.iterator(chunk_size=1000):
             queryset = getattr(instance, related_name).filter(
                 is_in_registry=True
             )

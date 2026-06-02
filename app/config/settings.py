@@ -1200,67 +1200,63 @@ EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
 )
 
 CELERY_BEAT_SCHEDULE = {
-    "remove_inactive_container_images": {
-        "task": "grandchallenge.components.tasks.remove_inactive_container_images",
-        "schedule": crontab(hour=1, minute=0),
-    },
-    "delete_failed_import_container_images": {
+    "delete_failed_import_container_images": {  # short
         "task": "grandchallenge.components.tasks.delete_failed_import_container_images",
         "schedule": crontab(hour=1, minute=30),
     },
-    "delete_old_unsuccessful_container_images": {
+    "delete_old_unsuccessful_container_images": {  # short
         "task": "grandchallenge.components.tasks.delete_old_unsuccessful_container_images",
         "schedule": crontab(hour=2, minute=0),
     },
-    "deactivate_old_algorithm_images": {
+    "deactivate_old_algorithm_images": {  # short
         "task": "grandchallenge.algorithms.tasks.deactivate_old_algorithm_images",
         "schedule": crontab(hour=2, minute=30),
     },
-    "update_associated_challenges": {
+    "update_associated_challenges": {  # short
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
         "schedule": crontab(hour=3, minute=0),
     },
-    "send_onboarding_task_reminder_emails": {
+    "send_onboarding_task_reminder_emails": {  # short
         "task": "grandchallenge.challenges.tasks.send_onboarding_task_reminder_emails",
         "schedule": crontab(day_of_week="mon", hour=6, minute=0),
     },
-    "send_open_invoices_email": {
+    "send_open_invoices_email": {  # short
         "task": "grandchallenge.invoices.tasks.send_open_invoices_email",
         "schedule": crontab(day_of_week="wed", hour=6, minute=0),
     },
-    "send_challenge_invoice_overdue_reminder_emails": {
+    "send_challenge_invoice_overdue_reminder_emails": {  # short
         "task": "grandchallenge.invoices.tasks.send_challenge_invoice_overdue_reminder_emails",
         "schedule": crontab(day_of_month=1, hour=6, minute=0),
     },
-    "send_post_paid_invoice_follow_up_emails": {
+    "send_post_paid_invoice_follow_up_emails": {  # short
         "task": "grandchallenge.invoices.tasks.send_post_paid_invoice_follow_up_emails",
         "schedule": crontab(day_of_month="1,14", hour=5, minute=0),
     },
-    "send_challenge_request_draft_reminder_emails": {
+    "send_challenge_request_draft_reminder_emails": {  # short
         "task": "grandchallenge.challenges.tasks.send_challenge_request_draft_reminder_emails",
         "schedule": crontab(day_of_month="1,14", hour=6, minute=0),
     },
-    "update_challenge_storage_size": {
+    "update_challenge_storage_size": {  # 10 min
         "task": "grandchallenge.challenges.tasks.update_challenge_storage_size",
         "schedule": crontab(hour=6, minute=15),
     },
-    "create_job_warm_pool_utilizations": {
+    "create_job_warm_pool_utilizations": {  # short
         "task": "grandchallenge.utilization.tasks.create_job_warm_pool_utilizations",
         "schedule": crontab(minute=30),
     },
-    "update_challenge_compute_costs": {
+    "update_challenge_compute_costs": {  # short
         "task": "grandchallenge.challenges.tasks.update_challenge_compute_costs",
         "schedule": crontab(minute=45),
     },
-    "update_challenge_results_cache": {
+    "update_challenge_results_cache": {  # short
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
         "schedule": timedelta(minutes=5),
     },
-    "cancel_external_evaluations_past_timeout": {
+    "cancel_external_evaluations_past_timeout": {  # short
         "task": "grandchallenge.evaluation.tasks.cancel_external_evaluations_past_timeout",
         "schedule": timedelta(hours=1),
     },
-    "stop_expired_services": {
+    "stop_expired_services": {  # short
         "task": "grandchallenge.components.tasks.stop_expired_services",
         "kwargs": {
             "app_label": "workstations",
@@ -1268,7 +1264,7 @@ CELERY_BEAT_SCHEDULE = {
         },
         "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
     },
-    "stop_expired_endpoints": {
+    "stop_expired_endpoints": {  # short
         "task": "grandchallenge.components.tasks.stop_expired_endpoints",
         "kwargs": {
             "app_label": "algorithms",
@@ -1276,7 +1272,7 @@ CELERY_BEAT_SCHEDULE = {
         },
         "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
     },
-    "preload_interactive_algorithms": {
+    "preload_interactive_algorithms": {  # short
         "task": "grandchallenge.components.tasks.preload_interactive_algorithms",
         "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
     },
