@@ -44,6 +44,11 @@ jobs:
               run: |
                   make local_s3
                   docker compose run --rm celery_worker pytest --durations 10
+            - name: Debug
+              run: |
+                  df -h
+                  docker system df -v
+
 
     forge-integration-tests:
         runs-on: ubuntu-latest
