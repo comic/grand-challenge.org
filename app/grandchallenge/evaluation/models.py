@@ -1650,7 +1650,7 @@ class Submission(FieldChangeMixin, UUIDModel):
                     send_action=False,
                 )
 
-    def create_evaluation(self, *, additional_inputs):
+    def create_evaluation(self, *, additional_inputs, invoice):
         if (
             self.phase.additional_evaluation_inputs.exists()
             and not additional_inputs
@@ -1711,6 +1711,8 @@ class Submission(FieldChangeMixin, UUIDModel):
                 requires_memory_gb=self.phase.evaluation_requires_memory_gb,
                 status=Evaluation.VALIDATING_INPUTS,
             )
+            evaluation.utilization.invoice = invoice
+            evaluation.utilization.save()
 
         if self.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             if not self.has_matching_algorithm_interfaces:

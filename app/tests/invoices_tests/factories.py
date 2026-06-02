@@ -30,5 +30,19 @@ class InvoiceFactory(factory.django.DjangoModelFactory):
         )
     )
 
+    @classmethod
+    def create_valid(cls, **kwargs):
+        if "support_costs_euros" not in kwargs:
+            kwargs["support_costs_euros"] = 100
+        if "compute_costs_euros" not in kwargs:
+            kwargs["compute_costs_euros"] = 100
+        if "storage_costs_euros" not in kwargs:
+            kwargs["storage_costs_euros"] = 100
+        if "payment_type" not in kwargs:
+            kwargs["payment_type"] = Invoice.PaymentTypeChoices.PREPAID
+        if "payment_status" not in kwargs:
+            kwargs["payment_status"] = Invoice.PaymentStatusChoices.PAID
+        return cls.create(**kwargs)
+
     class Meta:
         model = Invoice
