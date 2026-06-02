@@ -841,12 +841,6 @@ def test_challenge_available_compute_euro_millicents():
         compute_costs_euros=2,
     )
 
-    challenge = (
-        Challenge.objects.with_invoices_with_budget_authorization().get(
-            pk=challenge.pk
-        )
-    )
-
     # All these should be ignored
     InvoiceFactory(
         challenge=challenge,
@@ -874,6 +868,11 @@ def test_challenge_available_compute_euro_millicents():
         - timedelta(days=1),  # Expired: should be ignored
     )
 
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     assert (
         challenge.available_compute_euro_millicents_via_invoices
         == (1 + 2) * 1000 * 100
