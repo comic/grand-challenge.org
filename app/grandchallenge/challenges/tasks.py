@@ -28,18 +28,8 @@ from grandchallenge.challenges.models import (
     ChallengeRequest,
     OnboardingTask,
 )
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
+from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.evaluation.models import Evaluation, Phase
-
-
-@acks_late_2xlarge_task(name=f"{__name__}.update_challenge_results_cache")
-@transaction.atomic
-def update_challenge_results_cache_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return update_challenge_results_cache(**kwargs)
 
 
 @lambda_task
@@ -140,13 +130,6 @@ def update_challenge_compute_costs():
             save_phase()
 
 
-@acks_late_2xlarge_task(name=f"{__name__}.update_challenge_storage_size")
-@transaction.atomic
-def update_challenge_storage_size_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return update_challenge_storage_sizes(**kwargs)
-
-
 @lambda_task
 def update_challenge_storage_sizes():
     for challenge in Challenge.objects.only("pk"):
@@ -172,15 +155,6 @@ class OnboardingTaskInfo(NamedTuple):
     min_deadline: datetime
     num_support_is_overdue: int
     min_support_deadline: datetime
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.send_onboarding_task_reminder_emails"
-)
-@transaction.atomic
-def send_onboarding_task_reminder_emails_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return send_onboarding_task_reminder_emails(**kwargs)
 
 
 @lambda_task
@@ -260,15 +234,6 @@ def send_onboarding_task_reminder_emails():
             send_onboarding_task_support_overdue_alert(
                 challenge=c, task_info=task_info
             )
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.send_challenge_request_draft_reminder_emails"
-)
-@transaction.atomic
-def send_challenge_request_draft_reminder_emails_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return send_challenge_request_draft_reminder_emails(**kwargs)
 
 
 @lambda_task
