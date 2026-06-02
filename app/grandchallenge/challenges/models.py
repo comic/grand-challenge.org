@@ -1093,6 +1093,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     )
     draft_reminder_count = models.PositiveSmallIntegerField(
         default=0,
+        editable=False,
         help_text=(
             "Number of reminders sent to the challenge organizers to submit this draft for review."
         ),

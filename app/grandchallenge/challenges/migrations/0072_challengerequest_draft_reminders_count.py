@@ -15,6 +15,7 @@ class Migration(migrations.Migration):
             name="draft_reminder_count",
             field=models.PositiveSmallIntegerField(
                 default=0,
+                editable=False,
                 help_text="Number of reminders sent to the challenge organizers to submit this draft for review.",
             ),
         ),
