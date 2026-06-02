@@ -103,7 +103,6 @@ class Command(BaseCommand):
 
             # Iterate over the queryset and push bulk updates in batches to avoid overloading the memory
             # at the Python and the database level, respectively.
-            objects_to_update = []
             for utilization in queryset.iterator(chunk_size=ITER_BATCH_SIZE):
                 if utilization.challenge_id not in invoices_map:
                     missing_invoice_challenges.add(utilization.challenge_id)
