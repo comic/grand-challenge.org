@@ -34,7 +34,14 @@ from grandchallenge.core.celery import (
 from grandchallenge.evaluation.models import Evaluation, Phase
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.update_challenge_results_cache")
+@transaction.atomic
+def update_challenge_results_cache_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_challenge_results_cache(**kwargs)
+
+
+@lambda_task
 def update_challenge_results_cache():
     challenges = Challenge.objects.all()
     evaluation_info = (
