@@ -1252,7 +1252,11 @@ def test_answer_score_calculation():
 def test_reader_study_out_of_budget_when_max_credits_consumed():
     reader_study = ReaderStudyFactory(max_credits=100)
 
-    assert reader_study.has_budget
+    assert (
+        ReaderStudy.objects.with_has_budget()
+        .get(pk=reader_study.pk)
+        .has_budget
+    )
 
     session_utilization = SessionUtilizationFactory(
         duration=timedelta(hours=1)
@@ -1260,9 +1264,17 @@ def test_reader_study_out_of_budget_when_max_credits_consumed():
     session_utilization.reader_studies.add(reader_study)
 
     assert reader_study.session_utilizations.count() == 1
-    assert reader_study.session_utilizations.first().credits_consumed == 500
-    assert reader_study.credits_consumed == 500
-    assert not reader_study.has_budget
+    assert (
+        ReaderStudy.objects.with_has_budget()
+        .get(pk=reader_study.pk)
+        .credits_consumed
+        == 500
+    )
+    assert (
+        not ReaderStudy.objects.with_has_budget()
+        .get(pk=reader_study.pk)
+        .has_budget
+    )
 
 
 @pytest.mark.django_db
@@ -1284,9 +1296,14 @@ def test_reader_study_session_credits_consumed_divided():
     assert other_session_utilization.reader_studies.count() == 2
     assert other_session_utilization.credits_consumed == 1000
 
-    assert reader_studies[0].credits_consumed == 1000
-    assert reader_studies[1].credits_consumed == 1000
-    assert reader_studies[2].credits_consumed == 500
+    credits_consumed = {
+        rs.pk: rs.credits_consumed
+        for rs in ReaderStudy.objects.with_has_budget()
+    }
+
+    assert credits_consumed[reader_studies[0].pk] == 1000
+    assert credits_consumed[reader_studies[1].pk] == 1000
+    assert credits_consumed[reader_studies[2].pk] == 500
 
 
 @pytest.mark.django_db
@@ -1297,20 +1314,27 @@ def test_reader_study_endpoint_credits_consumed_divided():
     endpoint_utilization.reader_studies.set(reader_studies)
     endpoint_utilization.compute_cost_euro_millicents = 6000
     endpoint_utilization.save()
+    endpoint_utilization.refresh_from_db()
 
     other_endpoint_utilization = EndpointFactory().endpoint_utilization
     other_endpoint_utilization.reader_studies.set(reader_studies[:2])
     other_endpoint_utilization.compute_cost_euro_millicents = 4000
     other_endpoint_utilization.save()
+    other_endpoint_utilization.refresh_from_db()
 
     assert endpoint_utilization.reader_studies.count() == 3
     assert endpoint_utilization.credits_consumed == 6
     assert other_endpoint_utilization.reader_studies.count() == 2
     assert other_endpoint_utilization.credits_consumed == 4
 
-    assert reader_studies[0].credits_consumed == 4
-    assert reader_studies[1].credits_consumed == 4
-    assert reader_studies[2].credits_consumed == 2
+    credits_consumed = {
+        rs.pk: rs.credits_consumed
+        for rs in ReaderStudy.objects.with_has_budget()
+    }
+
+    assert credits_consumed[reader_studies[0].pk] == 4
+    assert credits_consumed[reader_studies[1].pk] == 4
+    assert credits_consumed[reader_studies[2].pk] == 2
 
 
 @pytest.mark.django_db

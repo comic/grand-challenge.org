@@ -14,6 +14,7 @@ from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmLambdaChoices,
 )
+from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Session, Workstation
 from grandchallenge.workstations.templatetags.workstations import (
@@ -641,7 +642,11 @@ def test_session_create_reader_study_out_of_budget(client):
     reader_study.readers_group.user_set.add(user)
     path, _ = get_workstation_path_and_query_string(reader_study=reader_study)
 
-    assert not reader_study.has_budget
+    assert (
+        not ReaderStudy.objects.with_has_budget()
+        .get(pk=reader_study.pk)
+        .has_budget
+    )
     assert Session.objects.count() == 0
 
     response = get_view_for_user(
