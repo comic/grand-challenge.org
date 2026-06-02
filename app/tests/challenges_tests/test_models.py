@@ -16,6 +16,7 @@ from grandchallenge.challenges.models import (
     OnboardingTask,
 )
 from grandchallenge.discussion_forums.models import ForumTopicKindChoices
+from grandchallenge.invoices.models import Invoice
 from grandchallenge.notifications.models import Notification
 from tests.discussion_forums_tests.factories import ForumTopicFactory
 from tests.factories import (
@@ -24,6 +25,7 @@ from tests.factories import (
     OnboardingTaskFactory,
     UserFactory,
 )
+from tests.invoices_tests.factories import InvoiceFactory
 from tests.organizations_tests.factories import OrganizationFactory
 
 
@@ -802,3 +804,76 @@ def test_challenge_queryset_with_user_roles_multiple_challenges():
     # Both
     assert result[challenge4.pk].user_is_challenge_admin is True
     assert result[challenge4.pk].user_is_challenge_participant is True
+
+
+@pytest.mark.django_db
+def test_challenge_available_compute_euro_millicents():
+    challenge = ChallengeFactory()
+
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
+    assert challenge.available_compute_euro_millicents_via_invoices == 0
+
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
+        compute_costs_euros=1,
+    )
+
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
+    assert (
+        challenge.available_compute_euro_millicents_via_invoices
+        == 1 * 1000 * 100
+    )
+
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
+        compute_costs_euros=2,
+    )
+
+    # All these should be ignored
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=Invoice.PaymentStatusChoices.CANCELLED,  # Not authorized: should be ignored
+        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
+        compute_costs_euros=4,
+    )
+
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
+        compute_costs_euros=8,
+        compute_cost_euro_millicents=9
+        * 1000
+        * 1000,  # Note, overcharge: should be ignored
+    )
+
+    InvoiceFactory(
+        challenge=challenge,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
+        compute_costs_euros=16,
+        expires_on=now().date()
+        - timedelta(days=1),  # Expired: should be ignored
+    )
+
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
+    assert (
+        challenge.available_compute_euro_millicents_via_invoices
+        == (1 + 2) * 1000 * 100
+    )

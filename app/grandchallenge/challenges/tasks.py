@@ -13,7 +13,8 @@ from lambda_tasks.decorators import lambda_task
 from psycopg.errors import LockNotAvailable
 
 from grandchallenge.challenges.costs import (
-    annotate_compute_costs,
+    annotate_challenge_compute_costs,
+    annotate_invoice_compute_costs,
     annotate_job_duration_and_compute_costs,
     annotate_storage_size,
 )
@@ -30,6 +31,7 @@ from grandchallenge.challenges.models import (
 )
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.evaluation.models import Evaluation, Phase
+from grandchallenge.invoices.models import Invoice
 
 
 @lambda_task
@@ -101,17 +103,28 @@ def retry_with_backoff(exceptions, max_attempts=5, base_delay=1, max_delay=10):
 
 @acks_late_2xlarge_task
 def update_challenge_compute_costs():
+    # TODO: remove the loop and do this live once the challenge.compute_cost_euro_millicents field is removed or deprecated
     for challenge in Challenge.objects.with_available_compute().iterator(
         chunk_size=1000
     ):
         with transaction.atomic():
-            annotate_compute_costs(challenge=challenge)
+            annotate_challenge_compute_costs(challenge=challenge)
 
             @retry_with_backoff((LockNotAvailable,))
             def save_challenge():
                 challenge.save(update_fields=("compute_cost_euro_millicents",))
 
             save_challenge()
+
+    for invoice in Invoice.objects.iterator(chunk_size=1000):
+        with transaction.atomic():
+            annotate_invoice_compute_costs(invoice=invoice)
+
+            @retry_with_backoff((LockNotAvailable,))
+            def save_invoice():
+                invoice.save(update_fields=("compute_cost_euro_millicents",))
+
+            save_invoice()
 
     for phase in Phase.objects.iterator(chunk_size=1000):
         with transaction.atomic():

@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Count, ExpressionWrapper, F, Q
+from django.db.models import Count, Exists, ExpressionWrapper, F, OuterRef, Q
 from django.db.models.functions import Cast, Now
 from django.db.transaction import on_commit
 from django.utils.timezone import now
@@ -85,6 +85,38 @@ class InvoiceQuerySet(models.QuerySet):
             num_is_due=Count("is_due", filter=Q(is_due=True), distinct=True),
         )
 
+    def with_budget_authorization(self):
+
+        has_paid_prepaid_invoice = Exists(
+            Invoice.objects.filter(
+                challenge_id=OuterRef("challenge_id"),
+                compute_costs_euros__gt=0,
+                payment_type=PaymentTypeChoices.PREPAID,
+                payment_status=PaymentStatusChoices.PAID,
+            )
+        )
+
+        return self.annotate(
+            is_budget_authorized=ExpressionWrapper(
+                ~Q(payment_status=PaymentStatusChoices.CANCELLED)
+                & (
+                    Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                    | Q(
+                        payment_type=PaymentTypeChoices.PREPAID,
+                        payment_status=PaymentStatusChoices.PAID,
+                    )
+                    | (
+                        Q(payment_type=PaymentTypeChoices.POSTPAID)
+                        & (
+                            Q(payment_status=PaymentStatusChoices.PAID)
+                            | has_paid_prepaid_invoice
+                        )
+                    )
+                ),
+                output_field=models.BooleanField(),
+            )
+        )
+
     def to_check(self):
         return self.filter(
             Q(payment_status=Invoice.PaymentStatusChoices.REQUESTED)
@@ -150,7 +182,7 @@ class Invoice(models.Model, FieldChangeMixin):
     compute_costs_euros = models.PositiveIntegerField(
         help_text="The capacity reservation in Euros"
     )
-    compute_costs_utilized_euros_millicents = models.PositiveIntegerField(
+    compute_cost_euro_millicents = models.PositiveIntegerField(
         help_text="The utilized compute costs in Euro millicents (cached from utilizations)",
         default=0,
     )
@@ -329,29 +361,9 @@ class Invoice(models.Model, FieldChangeMixin):
     def is_expired(self):
         return self.expires_on < now().date()
 
-    @property
-    def is_budget_authorized(self):
-        if self.payment_status == PaymentStatusChoices.CANCELLED:
-            return False
-        else:
-            return (
-                self.payment_type == PaymentTypeChoices.COMPLIMENTARY
-                or (
-                    self.payment_type == PaymentTypeChoices.PREPAID
-                    and self.payment_status == PaymentStatusChoices.PAID
-                )
-                or (
-                    self.payment_type == PaymentTypeChoices.POSTPAID
-                    and (
-                        self.challenge.has_paid_prepaid_invoice
-                        or self.payment_status == PaymentStatusChoices.PAID
-                    )
-                )
-            )
-
     @cached_property
-    def compute_costs_balance_euros_millicents(self):
-        utilized = self.compute_costs_utilized_euros_millicents
+    def available_compute_cost_euro_millicents(self):
+        utilized = self.compute_cost_euro_millicents
         diff = self.compute_costs_euros * 1000 * 100 - utilized
 
         if not self.is_budget_authorized:
