@@ -1,0 +1,60 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load url %}
+{% load costs %}
+
+{% block title %}
+    Invoices - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'invoices:list' challenge_short_name=challenge.short_name %}">Invoices</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Invoice {% firstof object.internal_invoice_number object.pk %}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Invoice for {{ challenge.short_name }}</h2>
+
+    <dl>
+        <dt>ID Number</dt>
+        <dd>{% firstof object.internal_invoice_number '-' %}</dd>
+
+        <dt>Type</dt>
+        <dd>{{ invoice.get_payment_type_display }}</dd>
+
+        <dt>Status</dt>
+        <dd>{{ object.get_status_badge }}</dd>
+
+        <dt>Issued on</dt>
+        <dd>{{ invoice.issued_on|default_if_none:"-" }}</dd>
+
+        <dt>Due on</dt>
+        <dd>
+            {{ object.due_date|default_if_none:"-" }}
+            {% if object.is_overdue %}
+                <i class="fas fa-exclamation-triangle text-danger" title="Invoice is overdue."></i>
+            {% elif object.is_due %}
+                <i class="fas fa-exclamation-triangle text-warning" title="Invoice is due."></i>
+            {% endif %}
+         </dd>
+
+        <dt>Follow-up on</dt>
+        <dd>{{ object.follow_up_on|default_if_none:"-" }}</dd>
+
+        <dt>Expires on</dt>
+        <dd>{{ object.expires_on }}</dd>
+
+
+    </dl>
+{% endblock %}

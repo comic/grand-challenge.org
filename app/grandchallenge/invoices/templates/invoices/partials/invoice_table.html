@@ -1,4 +1,5 @@
 {% load costs %}
+{% load url %}
 
 <div class="table-responsive">
     <table
@@ -12,9 +13,10 @@
     >
         <thead class="thead-light">
             <tr>
+            <th></th>
                 <th class="nonSortable">ID Number</th>
                 <th>Issued on</th>
-                <th>Due date</th>
+                <th>Due on</th>
                 <th>Amount</th>
                 <th>Type</th>
                 <th>Status</th>
@@ -23,7 +25,10 @@
         <tbody>
             {% for invoice in invoices %}
                 <tr>
-                    <td>{{ invoice.internal_invoice_number }}</td>
+                    <td>
+                        <a href="{% url 'invoices:detail' challenge_short_name=invoice.challenge.short_name pk=invoice.pk %}" title="View invoice details"><i class="fas fa-info-circle"></i></a>
+                    </td>
+                    <td>{% firstof invoice.internal_invoice_number '-' %}</td>
                     <td data-order="{{ invoice.issued_on|date:"c" }}">{{ invoice.issued_on }}</td>
                     <td data-order="{{ invoice.due_date|date:"c" }}">
                         {{ invoice.due_date|default_if_none:"-" }}

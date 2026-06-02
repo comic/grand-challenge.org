@@ -1,4 +1,4 @@
-from django.views.generic import ListView
+from django.views.generic import DetailView, ListView
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.core.guardian import (
@@ -34,3 +34,22 @@ class InvoiceList(
         return queryset.filter(
             challenge=self.request.challenge
         ).with_overdue_status()
+
+
+class InvoiceDetail(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    ViewObjectPermissionListMixin,
+    DetailView,
+):
+    model = Invoice
+    permission_required = "change_challenge"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.with_overdue_status()
