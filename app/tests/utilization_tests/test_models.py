@@ -166,8 +166,19 @@ def test_session_utilization_interactive_algorithms_credit_rate():
     session_without_interactive_alg.reader_studies.add(question.reader_study)
     stop_service(**session_without_interactive_alg.task_kwargs)
 
+    session_without_interactive_alg.session_utilization.duration = timedelta(
+        hours=1
+    )
+    session_without_interactive_alg.session_utilization.save()
+
+    session_without_interactive_alg.session_utilization.refresh_from_db()
+
     assert (
-        session_without_interactive_alg.session_utilization.credits_per_hour
+        session_without_interactive_alg.session_utilization.interactive_algorithms
+        == []
+    )
+    assert (
+        session_without_interactive_alg.session_utilization.credits_consumed
         == 500
     )
 
@@ -178,8 +189,15 @@ def test_session_utilization_interactive_algorithms_credit_rate():
     session_with_interactive_alg.reader_studies.add(question.reader_study)
     stop_service(**session_with_interactive_alg.task_kwargs)
 
+    session_with_interactive_alg.session_utilization.duration = timedelta(
+        hours=1
+    )
+    session_with_interactive_alg.session_utilization.save()
+
+    session_with_interactive_alg.session_utilization.refresh_from_db()
+
     assert (
-        session_with_interactive_alg.session_utilization.credits_per_hour
+        session_with_interactive_alg.session_utilization.credits_consumed
         == 1000
     )
 
