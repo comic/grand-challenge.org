@@ -84,6 +84,7 @@ class Command(BaseCommand):
     def handle(self, *_, **__):
 
         missing_invoice_challenges = set()
+        invoices_map = get_invoice_map()
 
         for model in CHALLENGE_UTILIZATION_MODELS:
             self.stdout.write(
@@ -94,7 +95,6 @@ class Command(BaseCommand):
 
             updated = 0
             objects_to_update = []
-            invoices_map = get_invoice_map()
 
             queryset = model.objects.filter(
                 invoice__isnull=True,
@@ -145,13 +145,16 @@ class Command(BaseCommand):
 
             # Handle remaining objects
             if objects_to_update:
-                update_invoice_compute_costs(
-                    invoices=[
-                        invoice
-                        for invoices in invoices_map.values()
-                        for invoice in invoices
-                    ],
-                )
+                with transaction.atomic():
+                    update_invoice_compute_costs(
+                        invoices=[
+                            invoice
+                            for invoices in invoices_map.values()
+                            for invoice in invoices
+                        ],
+                    )
+                    invoices_map = get_invoice_map()
+
                 model.objects.bulk_update(
                     objs=objects_to_update,
                     fields=["invoice"],
