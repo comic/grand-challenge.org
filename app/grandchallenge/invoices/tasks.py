@@ -16,8 +16,16 @@ from grandchallenge.invoices.emails import (
 )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(
+    name=f"{__name__}.send_challenge_invoice_overdue_reminder_emails"
+)
 @transaction.atomic
+def send_challenge_invoice_overdue_reminder_emails_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return send_challenge_invoice_overdue_reminder_emails(**kwargs)
+
+
+@lambda_task
 def send_challenge_invoice_overdue_reminder_emails():
     from grandchallenge.invoices.models import Invoice
 
