@@ -1200,10 +1200,6 @@ EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
 )
 
 CELERY_BEAT_SCHEDULE = {
-    "deactivate_old_algorithm_images": {  # short
-        "task": "grandchallenge.algorithms.tasks.deactivate_old_algorithm_images",
-        "schedule": crontab(hour=2, minute=30),
-    },
     "update_associated_challenges": {  # short
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
         "schedule": crontab(hour=3, minute=0),

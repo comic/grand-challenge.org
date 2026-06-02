@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import F, Max
 from django.db.transaction import on_commit
 from django.utils import timezone
+from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -302,8 +303,14 @@ def update_algorithm_average_duration(*, algorithm_pk):
     algorithm.save(update_fields=("average_duration",))
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.deactivate_old_algorithm_images")
 @transaction.atomic
+def deactivate_old_algorithm_images_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return deactivate_old_algorithm_images(**kwargs)
+
+
+@lambda_task
 def deactivate_old_algorithm_images():
     from grandchallenge.algorithms.models import AlgorithmImage
 
