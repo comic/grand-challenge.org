@@ -3,7 +3,7 @@ from typing import NamedTuple
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Max, Min, Q
+from django.db.models import Count, F, Max, Min, Q
 from django.utils.timezone import datetime, now
 from lambda_tasks.decorators import lambda_task
 from lambda_tasks.settings import MAX_DELAY
@@ -228,12 +228,14 @@ def send_onboarding_task_reminder_emails():
 
 @lambda_task
 def send_challenge_request_draft_reminder_emails():
-    for c in ChallengeRequest.objects.filter(
+    requests = ChallengeRequest.objects.filter(
         status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
         created__lte=now()
         - settings.CHALLENGE_REQUEST_AGE_START_DRAFT_REMINDER_CUTOFF,
         draft_reminder_count__lt=settings.CHALLENGE_REQUEST_MAX_DRAFT_REMINDERS,
-    ):
-        send_challenge_requests_draft_reminder(challenge_request=c)
-        c.draft_reminder_count += 1
-        c.save(update_fields=["draft_reminder_count"])
+    )
+
+    for request in requests:
+        send_challenge_requests_draft_reminder(challenge_request=request)
+
+    requests.update(draft_reminder_count=F("draft_reminder_count") + 1)
