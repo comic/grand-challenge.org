@@ -208,7 +208,13 @@ def update_container_image_shim(
         instance.save()
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.remove_inactive_container_images")
+def remove_inactive_container_images_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return remove_inactive_container_images(**kwargs)
+
+
+@lambda_task
 def remove_inactive_container_images():
     """Removes inactive container images from the registry"""
     for app_label, model_name, related_name in (
@@ -218,7 +224,7 @@ def remove_inactive_container_images():
     ):
         model = apps.get_model(app_label=app_label, model_name=model_name)
 
-        for instance in model.objects.all():
+        for instance in model.objects.iterator(chunk_size=1000):
             queryset = getattr(instance, related_name).filter(
                 is_in_registry=True
             )
@@ -238,8 +244,16 @@ def remove_inactive_container_images():
                 )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(
+    name=f"{__name__}.delete_failed_import_container_images"
+)
 @transaction.atomic
+def delete_failed_import_container_images_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return delete_failed_import_container_images(**kwargs)
+
+
+@lambda_task
 def delete_failed_import_container_images():
     from grandchallenge.algorithms.models import AlgorithmImage
     from grandchallenge.components.models import ComponentImage
@@ -250,7 +264,7 @@ def delete_failed_import_container_images():
         for image in model.objects.filter(
             is_removed=False,
             import_status=ComponentImage.ImportStatusChoices.FAILED,
-        ).iterator():
+        ).iterator(chunk_size=1000):
             on_commit(
                 delete_container_image.signature(
                     kwargs={
@@ -262,8 +276,16 @@ def delete_failed_import_container_images():
             )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(
+    name=f"{__name__}.delete_old_unsuccessful_container_images"
+)
 @transaction.atomic
+def delete_old_unsuccessful_container_images_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return delete_old_unsuccessful_container_images(**kwargs)
+
+
+@lambda_task
 def delete_old_unsuccessful_container_images():
     from grandchallenge.algorithms.models import AlgorithmImage, Job
     from grandchallenge.evaluation.models import Evaluation, Method
@@ -294,7 +316,7 @@ def delete_old_unsuccessful_container_images():
     ]
 
     for queryset in querysets:
-        for image in queryset.iterator():
+        for image in queryset.iterator(chunk_size=1000):
             on_commit(
                 delete_container_image.signature(
                     kwargs={
@@ -1197,8 +1219,14 @@ def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     service.save()
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.stop_expired_services")
 @transaction.atomic
+def stop_expired_services_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return stop_expired_services(**kwargs)
+
+
+@lambda_task
 def stop_expired_services(*, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
@@ -1304,8 +1332,14 @@ class InteractiveAlgorithmLambda:
         return deleted
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.preload_interactive_algorithms")
 @transaction.atomic
+def preload_interactive_algorithms_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return preload_interactive_algorithms(**kwargs)
+
+
+@lambda_task
 def preload_interactive_algorithms():
     from grandchallenge.reader_studies.models import Question, ReaderStudy
     from grandchallenge.workstations.models import Session
@@ -1755,8 +1789,14 @@ def stop_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
     endpoint.update_status(status=endpoint.StatusChoices.STOPPED)
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.stop_expired_endpoints")
 @transaction.atomic
+def stop_expired_endpoints_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return stop_expired_endpoints(**kwargs)
+
+
+@lambda_task
 def stop_expired_endpoints(*, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
