@@ -2,16 +2,19 @@ import json
 from urllib.parse import quote_plus
 
 import pytest
+from celery.canvas import Signature
 from django.contrib.auth.models import Group
 from django.http import Http404
 from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
+from lambda_tasks.models import SQSLambdaTask
 
 from grandchallenge.algorithms.models import Endpoint
 from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmLambdaChoices,
 )
+from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Session, Workstation
 from grandchallenge.workstations.templatetags.workstations import (
@@ -375,10 +378,19 @@ def test_session_create_reader_study(
         )
 
     assert response.status_code == 302
-    assert [c.__self__.name for c in callbacks] == [
+    assert len(callbacks) == 3
+    assert [
+        c.__self__.name for c in callbacks if isinstance(c.__self__, Signature)
+    ] == [
         "grandchallenge.components.tasks.start_service",
-        "grandchallenge.components.tasks.preload_interactive_algorithms",
         "grandchallenge.components.tasks.stop_service",
+    ]
+    assert [
+        c.__self__.message.task_name
+        for c in callbacks
+        if isinstance(c.__self__, SQSLambdaTask)
+    ] == [
+        "grandchallenge.components.tasks.preload_interactive_algorithms",
     ]
     assert reader_study.workstation_sessions.count() == 1
 
@@ -630,7 +642,11 @@ def test_session_create_reader_study_out_of_budget(client):
     reader_study.readers_group.user_set.add(user)
     path, _ = get_workstation_path_and_query_string(reader_study=reader_study)
 
-    assert not reader_study.has_budget
+    assert (
+        not ReaderStudy.objects.with_has_budget()
+        .get(pk=reader_study.pk)
+        .has_budget
+    )
     assert Session.objects.count() == 0
 
     response = get_view_for_user(
@@ -680,10 +696,19 @@ def test_session_create_display_set(
         )
 
     assert response.status_code == 302
-    assert [c.__self__.name for c in callbacks] == [
+    assert len(callbacks) == 3
+    assert [
+        c.__self__.name for c in callbacks if isinstance(c.__self__, Signature)
+    ] == [
         "grandchallenge.components.tasks.start_service",
-        "grandchallenge.components.tasks.preload_interactive_algorithms",
         "grandchallenge.components.tasks.stop_service",
+    ]
+    assert [
+        c.__self__.message.task_name
+        for c in callbacks
+        if isinstance(c.__self__, SQSLambdaTask)
+    ] == [
+        "grandchallenge.components.tasks.preload_interactive_algorithms",
     ]
     assert reader_study.workstation_sessions.count() == 1
 

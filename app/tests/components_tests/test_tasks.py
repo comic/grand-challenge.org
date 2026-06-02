@@ -51,6 +51,7 @@ from grandchallenge.components.tasks import (
     encode_b64j,
     execute_job,
     handle_endpoint_invocation_event,
+    handle_endpoint_status_event,
     parse_endpoint_invocation_outputs,
     preload_interactive_algorithms,
     remove_container_image_from_registry,
@@ -68,6 +69,7 @@ from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmLambdaChoices,
 )
+from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstations.models import WorkstationImage
 from tests.algorithms_tests.factories import (
@@ -109,6 +111,7 @@ from tests.uploads_tests.factories import (
     UserUploadFactory,
     create_upload_from_file,
 )
+from tests.utilization_tests.factories import SessionUtilizationFactory
 
 
 @pytest.mark.django_db
@@ -1323,6 +1326,62 @@ def test_preload_interactive_algorithms(settings):
 
 
 @pytest.mark.django_db
+def test_preload_interactive_algorithms_excludes_reader_studies_without_budget(
+    settings,
+):
+    arn = f"arn:aws:lambda:eu-central-1:1234567890:function:org-proj-e-uls23-baseline-{uuid.uuid4()}"
+
+    settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = {
+        "io_bucket_name": "org-proj-e-some-bucket",
+        "lambda_functions": [
+            {
+                # Add a uuid to avoid cache key clashes in testing
+                "arn": arn,
+                "internal_name": "uls23-baseline",
+                "minimum_duration": 1,
+                "timeout": 60,
+                "version": "1",
+            }
+        ],
+    }
+
+    rs_with_exhausted_credit = ReaderStudyFactory(max_credits=100)
+    session_utilization = SessionUtilizationFactory(
+        duration=timedelta(hours=1)
+    )
+    session_utilization.reader_studies.add(rs_with_exhausted_credit)
+
+    QuestionFactory(
+        reader_study=rs_with_exhausted_credit,
+        interactive_algorithm=InteractiveAlgorithmLambdaChoices.ULS23_BASELINE,
+    )
+
+    assert (
+        not ReaderStudy.objects.with_has_budget()
+        .get(pk=rs_with_exhausted_credit.pk)
+        .has_budget
+    )
+
+    with patch(
+        "grandchallenge.components.tasks.InteractiveAlgorithmLambda"
+    ) as mock_interactive_algorithm:
+        mock_instance = mock_interactive_algorithm.return_value
+        mock_instance.consolidate.return_value = "mocked_consolidation_result"
+
+        assert preload_interactive_algorithms() == {
+            "uls23-baseline": "mocked_consolidation_result"
+        }
+
+        mock_interactive_algorithm.assert_any_call(
+            arn=arn,
+            qualifier="1",
+            should_be_active=False,
+        )
+
+        assert mock_instance.consolidate.call_count == 1
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "image_factory, job_model_factory, image_attribute_name",
     (
@@ -1499,7 +1558,7 @@ def test_start_endpoint(mocker):
 
     for mock_method in mock_start_methods:
         mock_method.assert_called_once()
-    assert endpoint.status == endpoint.StatusChoices.RUNNING
+    assert endpoint.status == endpoint.StatusChoices.STARTED
 
 
 @pytest.mark.django_db
@@ -1659,6 +1718,88 @@ def test_stop_expired_endpoints(
     assert len(callbacks) == 1
     mock_deprovision.assert_called_once()
     assert endpoint_to_stop.status == EndpointStatusChoices.STOPPED
+
+
+@pytest.mark.django_db
+def test_handle_endpoint_status_in_service_event(settings):
+    endpoint = EndpointFactory(
+        status=EndpointStatusChoices.STARTED,
+    )
+    event = {
+        "EndpointName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{endpoint.pk}",
+        "EndpointStatus": "IN_SERVICE",
+    }
+
+    handle_endpoint_status_event(event=event)
+    endpoint.refresh_from_db()
+
+    assert endpoint.status == EndpointStatusChoices.RUNNING
+
+
+@pytest.mark.django_db
+def test_handle_endpoint_status_failed_events(settings, mocker):
+    endpoint = EndpointFactory(
+        status=EndpointStatusChoices.STARTED,
+    )
+    event = {
+        "EndpointName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{endpoint.pk}",
+        "EndpointStatus": "FAILED",
+    }
+    mock_deprovision = mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
+    )
+
+    handle_endpoint_status_event(event=event)
+    endpoint.refresh_from_db()
+
+    mock_deprovision.assert_called_once()
+    assert endpoint.status == EndpointStatusChoices.FAILED
+    assert endpoint.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+
+
+@pytest.mark.django_db
+def test_handle_endpoint_status_invalid_events(settings, mocker):
+    endpoint = EndpointFactory(
+        status=EndpointStatusChoices.STARTED,
+    )
+    event = {
+        "EndpointName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{endpoint.pk}",
+        "EndpointStatus": "some invalid status",
+    }
+    mock_deprovision = mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
+    )
+
+    handle_endpoint_status_event(event=event)
+    endpoint.refresh_from_db()
+
+    mock_deprovision.assert_called_once()
+    assert endpoint.status == EndpointStatusChoices.FAILED
+    assert endpoint.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+
+
+@pytest.mark.parametrize(
+    "status",
+    set(EndpointStatusChoices).difference([EndpointStatusChoices.STARTED]),
+)
+@pytest.mark.django_db
+def test_handle_endpoint_status_wrong_state_ignored(mocker, settings, status):
+    endpoint = EndpointFactory(status=status)
+    event = {
+        "EndpointName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{endpoint.pk}",
+    }
+    mock_handle_status_event = mocker.patch.object(
+        EndpointOrchestrator,
+        "handle_status_event",
+    )
+
+    handle_endpoint_status_event(event=event)
+    endpoint.refresh_from_db()
+
+    mock_handle_status_event.assert_not_called()
+    assert endpoint.status == status
 
 
 @pytest.mark.django_db

@@ -320,8 +320,7 @@ def test_one_click_unsubscribe_user_mismatch(
     new_subscription_preference,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     user = UserFactory()
     user.user_profile.receive_newsletter = True

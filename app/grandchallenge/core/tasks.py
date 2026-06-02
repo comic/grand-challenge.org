@@ -8,7 +8,6 @@ from django.utils import timezone
 from django.utils.timezone import now
 from django_celery_results.models import TaskResult
 from lambda_tasks.decorators import lambda_task
-from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import AlgorithmImage, Endpoint, Job
@@ -23,9 +22,12 @@ from grandchallenge.workstations.models import Session
 @lambda_task
 def cleanup_celery_backend():
     """Cleanup the Celery backend."""
-    TaskResult.objects.filter(date_created__lt=now() - timedelta(days=7)).only(
-        "pk"
-    ).delete()
+    deleted_count, _ = (
+        TaskResult.objects.filter(date_created__lt=now() - timedelta(days=7))
+        .only("pk")
+        .delete()
+    )
+    return deleted_count
 
 
 CLOUDWATCH_METRICS_LIMIT = 1000
@@ -33,8 +35,8 @@ CLOUDWATCH_METRICS_LIMIT = 1000
 
 @lambda_task(
     singleton=True,
-    # No need to retry here as the periodic task call this again
-    ignore_errors=(LockError, SoftTimeLimitExceeded),
+    # No need to retry here as the periodic task calls this again
+    ignore_errors=(LockError,),
 )
 def put_cloudwatch_metrics():
     if not settings.PUSH_CLOUDWATCH_METRICS:

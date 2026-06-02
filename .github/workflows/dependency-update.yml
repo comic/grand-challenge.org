@@ -56,6 +56,7 @@ jobs:
                   git add .
                   pre-commit run --all-files
             - name: Run the django tests
+              timeout-minutes: 30
               run: |
                   mkdir -p /tmp/coverage
                   chmod a+w /tmp/coverage

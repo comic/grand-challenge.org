@@ -319,19 +319,25 @@ def test_get_metrics():
             "Unit": "Count",
         },
         {
+            "MetricName": "EndpointsStarted",
+            "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
             "MetricName": "EndpointsRunning",
             "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
             "Value": 0,
             "Unit": "Count",
         },
         {
-            "MetricName": "EndpointsStopped",
+            "MetricName": "EndpointsFailed",
             "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
             "Value": 0,
             "Unit": "Count",
         },
         {
-            "MetricName": "EndpointsFailed",
+            "MetricName": "EndpointsStopped",
             "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
             "Value": 0,
             "Unit": "Count",

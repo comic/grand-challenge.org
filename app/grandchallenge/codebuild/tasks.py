@@ -1,18 +1,13 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
 from django.db.transaction import on_commit
 from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
+from grandchallenge.core.celery import acks_late_2xlarge_task
 
 
-@acks_late_micro_short_task
-@transaction.atomic
-def create_codebuild_build(*, pk):
+@lambda_task
+def create_codebuild_build(*, pk: int):
     from grandchallenge.codebuild.models import Build
     from grandchallenge.github.models import GitHubWebhookMessage
 

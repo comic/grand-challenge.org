@@ -2,12 +2,14 @@ import functools
 import random
 import time
 from typing import NamedTuple
+from uuid import UUID
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, Max, Min, Q
 from django.utils.timezone import datetime, now
+from lambda_tasks.decorators import lambda_task
 from psycopg.errors import LockNotAvailable
 
 from grandchallenge.challenges.costs import (
@@ -27,15 +29,12 @@ from grandchallenge.challenges.models import (
     ChallengeRequest,
     OnboardingTask,
 )
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
+from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.evaluation.models import Evaluation, Phase
 from grandchallenge.invoices.models import Invoice
 
 
-@acks_late_2xlarge_task
+@lambda_task
 def update_challenge_results_cache():
     challenges = Challenge.objects.all()
     evaluation_info = (
@@ -144,22 +143,22 @@ def update_challenge_compute_costs():
             save_phase()
 
 
-@acks_late_2xlarge_task
-def update_challenge_storage_size():
-    for challenge in Challenge.objects.iterator():
-        with transaction.atomic():
-            annotate_storage_size(challenge=challenge)
+@lambda_task
+def update_challenge_storage_sizes():
+    for challenge in Challenge.objects.only("pk"):
+        update_challenge_storage_size.execute_on_commit(pk=challenge.pk)
 
-            @retry_with_backoff((LockNotAvailable,))
-            def save_challenge():
-                challenge.save(
-                    update_fields=(
-                        "size_in_storage",
-                        "size_in_registry",
-                    )
-                )
 
-            save_challenge()
+@lambda_task(singleton=True)
+def update_challenge_storage_size(*, pk: str | UUID):
+    challenge = Challenge.objects.get(pk=pk)
+    annotate_storage_size(challenge=challenge)
+    challenge.save(
+        update_fields=(
+            "size_in_storage",
+            "size_in_registry",
+        )
+    )
 
 
 class OnboardingTaskInfo(NamedTuple):
@@ -171,8 +170,7 @@ class OnboardingTaskInfo(NamedTuple):
     min_support_deadline: datetime
 
 
-@acks_late_micro_short_task
-@transaction.atomic
+@lambda_task
 def send_onboarding_task_reminder_emails():
     onboarding_task_info = (
         OnboardingTask.objects.with_overdue_status()
@@ -251,8 +249,7 @@ def send_onboarding_task_reminder_emails():
             )
 
 
-@acks_late_micro_short_task
-@transaction.atomic
+@lambda_task
 def send_challenge_request_draft_reminder_emails():
     for c in ChallengeRequest.objects.filter(
         status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,

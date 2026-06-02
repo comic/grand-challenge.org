@@ -2,18 +2,16 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.backends.base import duration_to_millicents
-from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.utilization.models import JobWarmPoolUtilization
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
-@transaction.atomic
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def create_job_warm_pool_utilizations():
     with check_lock_acquired():
         jobs = list(

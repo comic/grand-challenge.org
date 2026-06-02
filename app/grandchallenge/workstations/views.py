@@ -369,7 +369,7 @@ class SessionCreate(
             # Not a reader study path
             return
 
-        return get_object_or_404(ReaderStudy, lookup)
+        return get_object_or_404(ReaderStudy.objects.with_has_budget(), lookup)
 
     def get_permission_object(self):
         return self.workstation_image.workstation
