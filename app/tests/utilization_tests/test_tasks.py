@@ -54,7 +54,7 @@ def test_create_job_warm_pool_utilizations(
     )
     settings.COMPONENTS_USD_TO_EUR = 1
 
-    n_expected_queries = 4
+    n_expected_queries = 2
 
     challenge = ChallengeFactory()
     archive = ArchiveFactory()
