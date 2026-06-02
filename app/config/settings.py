@@ -1208,14 +1208,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.update_challenge_compute_costs",
         "schedule": crontab(minute=45),
     },
-    "stop_expired_endpoints": {  # short
-        "task": "grandchallenge.components.tasks.stop_expired_endpoints",
-        "kwargs": {
-            "app_label": "algorithms",
-            "model_name": "endpoint",
-        },
-        "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
-    },
     "preload_interactive_algorithms": {  # short
         "task": "grandchallenge.components.tasks.preload_interactive_algorithms",
         "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
