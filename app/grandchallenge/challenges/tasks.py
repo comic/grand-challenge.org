@@ -247,8 +247,16 @@ def send_onboarding_task_reminder_emails():
             )
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(
+    name=f"{__name__}.send_challenge_request_draft_reminder_emails"
+)
 @transaction.atomic
+def send_challenge_request_draft_reminder_emails_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return send_challenge_request_draft_reminder_emails(**kwargs)
+
+
+@lambda_task
 def send_challenge_request_draft_reminder_emails():
     for c in ChallengeRequest.objects.filter(
         status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
