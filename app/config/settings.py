@@ -1208,10 +1208,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.update_challenge_compute_costs",
         "schedule": crontab(minute=45),
     },
-    "cancel_external_evaluations_past_timeout": {  # short
-        "task": "grandchallenge.evaluation.tasks.cancel_external_evaluations_past_timeout",
-        "schedule": timedelta(hours=1),
-    },
     "stop_expired_services": {  # short
         "task": "grandchallenge.components.tasks.stop_expired_services",
         "kwargs": {
