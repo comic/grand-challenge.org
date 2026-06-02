@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
         ("invoices", "0012_migrate_invoice_expires_on"),
         (
             "utilization",
-            "0006_endpointutilization_endpointutilizationreaderstudy_and_more",
+            "0007_endpointutilization_credits_consumed_and_more",
         ),
     ]
 
