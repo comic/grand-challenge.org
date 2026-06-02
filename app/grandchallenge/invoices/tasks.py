@@ -99,8 +99,16 @@ def send_open_invoices_email():
     )
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(
+    name=f"{__name__}.send_post_paid_invoice_follow_up_emails"
+)
 @transaction.atomic
+def send_post_paid_invoice_follow_up_emails_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return send_post_paid_invoice_follow_up_emails(**kwargs)
+
+
+@lambda_task
 def send_post_paid_invoice_follow_up_emails():
     from grandchallenge.invoices.models import Invoice
 

@@ -1200,10 +1200,6 @@ EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
 )
 
 CELERY_BEAT_SCHEDULE = {
-    "send_post_paid_invoice_follow_up_emails": {  # short
-        "task": "grandchallenge.invoices.tasks.send_post_paid_invoice_follow_up_emails",
-        "schedule": crontab(day_of_month="1,14", hour=5, minute=0),
-    },
     "send_challenge_request_draft_reminder_emails": {  # short
         "task": "grandchallenge.challenges.tasks.send_challenge_request_draft_reminder_emails",
         "schedule": crontab(day_of_month="1,14", hour=6, minute=0),
