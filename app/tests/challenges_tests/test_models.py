@@ -966,7 +966,7 @@ def test_active_invoice_orders_by_expiry():
 
 
 @pytest.mark.django_db
-def test_active_invoice_ignores_overall_balance():
+def test_active_invoice_ignores_invoices_with_negative_balance():
     challenge = ChallengeFactory()
 
     InvoiceFactory(

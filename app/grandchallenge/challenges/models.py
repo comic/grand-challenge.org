@@ -856,18 +856,18 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     def available_compute_euro_millicents_via_invoices(self):
         return sum(
             invoice.available_compute_cost_euro_millicents
-            for invoice in self.get_bookable_invoices()
+            for invoice in self.get_available_invoices()
         )
 
     @property
     def active_invoice(self):
-        bookable_invoices = self.get_bookable_invoices()
-        if bookable_invoices:
-            return bookable_invoices[0]
+        available_invoices = self.get_available_invoices()
+        if available_invoices:
+            return available_invoices[0]
         else:
             raise InsufficientBudgetError
 
-    def get_bookable_invoices(self):
+    def get_available_invoices(self):
         invoices = (
             self.invoices.with_budget_authorization()
             .order_by("expires_on", "created")
