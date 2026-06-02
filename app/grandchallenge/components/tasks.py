@@ -1219,8 +1219,14 @@ def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     service.save()
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.stop_expired_services")
 @transaction.atomic
+def stop_expired_services_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return stop_expired_services(**kwargs)
+
+
+@lambda_task
 def stop_expired_services(*, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
