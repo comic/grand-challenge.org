@@ -2007,15 +2007,24 @@ def handle_endpoint_invocation_event(*, event: dict):
             invoke_duration=orchestrator.invoke_duration,
             # TODO: set stdout, stderr and runtime metrics
         )
-        on_commit(
-            parse_endpoint_invocation_outputs.signature(
-                kwargs=invocation.task_kwargs,
-            ).apply_async
+        parse_endpoint_invocation_outputs.execute_on_commit(
+            **invocation.task_kwargs
         )
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.parse_endpoint_invocation_outputs",
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
+def parse_endpoint_invocation_outputs_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return parse_endpoint_invocation_outputs(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+)
 def parse_endpoint_invocation_outputs(
     *, pk: str | UUID, app_label: str, model_name: str
 ):
