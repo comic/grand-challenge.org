@@ -1727,8 +1727,16 @@ def get_object_checksum(file_field):
         return ""
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.start_endpoint", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
+def start_endpoint_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return start_endpoint(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def start_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     """
     Starts the endpoint on Sagemaker.
