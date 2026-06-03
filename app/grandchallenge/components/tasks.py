@@ -89,14 +89,10 @@ def update_all_container_image_shims():
         for instance in model.objects.executable_images().exclude(
             latest_shimmed_version=settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
         ):
-            on_commit(
-                update_container_image_shim.signature(
-                    kwargs={
-                        "pk": str(instance.pk),
-                        "app_label": instance._meta.app_label,
-                        "model_name": instance._meta.model_name,
-                    }
-                ).apply_async
+            update_container_image_shim.execute_on_commit(
+                pk=instance.pk,
+                app_label=instance._meta.app_label,
+                model_name=instance._meta.model_name,
             )
 
 
@@ -194,10 +190,17 @@ def upload_to_registry_and_sagemaker(
             )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.update_container_image_shim")
+@transaction.atomic
+def update_container_image_shim_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_container_image_shim(**kwargs)
+
+
+@lambda_task
 def update_container_image_shim(
     *,
-    pk: uuid.UUID,
+    pk: str | uuid.UUID,
     app_label: str,
     model_name: str,
 ):
