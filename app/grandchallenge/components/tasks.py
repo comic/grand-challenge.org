@@ -847,10 +847,19 @@ def provision_job(
         logger.error("Could not provision job", exc_info=True)
     else:
         job.update_status(status=job.PROVISIONED)
-        on_commit(execute_job.signature(**job.signature_kwargs).apply_async)
+        execute_job.execute_on_commit(**job.task_kwargs)
 
 
-@acks_late_micro_short_task(retry_on=(RetryStep,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.execute_job", retry_on=(RetryStep,)
+)
+@transaction.atomic
+def execute_job_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return execute_job(**kwargs)
+
+
+@lambda_task(retry_on=(RetryStep,), retry_delay=120)
 def execute_job(
     *,
     job_pk: str | UUID,
