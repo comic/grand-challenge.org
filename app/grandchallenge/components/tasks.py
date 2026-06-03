@@ -806,15 +806,6 @@ def lock_for_utilization_update(*, algorithm_image_pk):
         ).get()
 
 
-@acks_late_2xlarge_task(
-    name=f"{__name__}.provision_job", retry_on=(LockNotAcquiredException,)
-)
-@transaction.atomic
-def provision_job_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return provision_job(**kwargs)
-
-
 @lambda_task(
     queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
 )
