@@ -981,6 +981,9 @@ else:
 LAMBDA_TASKS_QUEUES = {
     "default": os.environ.get("LAMBDA_TASKS_DEFAULT_QUEUE_URL"),
 }
+LAMBDA_TASKS_LOCAL_WORKERS = int(
+    os.environ.get("LAMBDA_TASKS_LOCAL_WORKERS", "0")
+)
 
 COMPONENTS_DEFAULT_BACKEND = os.environ.get(
     "COMPONENTS_DEFAULT_BACKEND",
@@ -1476,3 +1479,8 @@ if DEBUG:
             "SHOW_TOOLBAR_CALLBACK": "config.toolbar_callback",
             "RESULTS_CACHE_SIZE": 100,
         }
+else:
+    if LAMBDA_TASKS_LOCAL_WORKERS:
+        raise ImproperlyConfigured(
+            "LAMBDA_TASKS_LOCAL_WORKERS should only be set in development"
+        )

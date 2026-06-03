@@ -23,6 +23,7 @@ x-django-env: &django-env
     COMPONENTS_REGISTRY_INSECURE: "true"
     COMPONENTS_DEFAULT_BACKEND: "tests.components_tests.resources.backends.IOCopyExecutor"
     CSP_REPORT_ONLY: "true"
+    LAMBDA_TASKS_LOCAL_WORKERS: 2
 
 services:
     postgres:
