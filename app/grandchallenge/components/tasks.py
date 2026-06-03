@@ -244,14 +244,10 @@ def remove_inactive_container_images():
                 queryset = queryset.exclude(pk=instance.active_image.pk)
 
             for image in queryset:
-                on_commit(
-                    remove_container_image_from_registry.signature(
-                        kwargs={
-                            "pk": image.pk,
-                            "app_label": image._meta.app_label,
-                            "model_name": image._meta.model_name,
-                        }
-                    ).apply_async
+                remove_container_image_from_registry.execute_on_commit(
+                    pk=image.pk,
+                    app_label=image._meta.app_label,
+                    model_name=image._meta.model_name,
                 )
 
 
@@ -313,9 +309,18 @@ def delete_old_unsuccessful_container_images():
             )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(
+    name=f"{__name__}.remove_container_image_from_registry"
+)
+@transaction.atomic
+def remove_container_image_from_registry_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return remove_container_image_from_registry(**kwargs)
+
+
+@lambda_task
 def remove_container_image_from_registry(
-    *, pk: uuid.UUID, app_label: str, model_name: str
+    *, pk: str | uuid.UUID, app_label: str, model_name: str
 ):
     """Remove a container image from the registry"""
     model = apps.get_model(app_label=app_label, model_name=model_name)

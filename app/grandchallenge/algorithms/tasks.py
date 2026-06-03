@@ -314,14 +314,10 @@ def deactivate_old_algorithm_images():
     )
 
     for image in images_to_remove:
-        on_commit(
-            remove_container_image_from_registry.signature(
-                kwargs={
-                    "pk": image.pk,
-                    "app_label": AlgorithmImage._meta.app_label,
-                    "model_name": AlgorithmImage._meta.model_name,
-                }
-            ).apply_async
+        remove_container_image_from_registry.execute_on_commit(
+            pk=image.pk,
+            app_label=AlgorithmImage._meta.app_label,
+            model_name=AlgorithmImage._meta.model_name,
         )
 
 
