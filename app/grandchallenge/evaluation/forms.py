@@ -10,7 +10,6 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import BooleanField, Case, Exists, OuterRef, When
-from django.db.transaction import on_commit
 from django.forms import (
     CheckboxSelectMultiple,
     Form,
@@ -897,16 +896,11 @@ class EvaluationGroundTruthForm(SaveFormInitMixin, ModelForm):
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
-        on_commit(
-            assign_tarball_from_upload.signature(
-                kwargs={
-                    "app_label": instance._meta.app_label,
-                    "model_name": instance._meta.model_name,
-                    "tarball_pk": instance.pk,
-                    "field_to_copy": "ground_truth",
-                },
-                immutable=True,
-            ).apply_async
+        assign_tarball_from_upload.execute_on_commit(
+            app_label=instance._meta.app_label,
+            model_name=instance._meta.model_name,
+            tarball_pk=instance.pk,
+            field_to_copy="ground_truth",
         )
         return instance
 

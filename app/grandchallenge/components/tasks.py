@@ -1645,10 +1645,23 @@ def add_file_to_object(
         logger.info("No linked task, task complete")
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.assign_tarball_from_upload",
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
+def assign_tarball_from_upload_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return assign_tarball_from_upload(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def assign_tarball_from_upload(
-    *, app_label, model_name, tarball_pk, field_to_copy
+    *,
+    app_label: str,
+    model_name: str,
+    tarball_pk: str | UUID,
+    field_to_copy: str,
 ):
     from grandchallenge.components.models import ImportStatusChoices
 
