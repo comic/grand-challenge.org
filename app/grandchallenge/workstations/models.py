@@ -601,11 +601,7 @@ class Session(FieldChangeMixin, UUIDModel):
 
         if created:
             self.assign_permissions()
-            on_commit(
-                start_service.signature(
-                    kwargs=self.task_kwargs,
-                ).apply_async
-            )
+            start_service.execute_on_commit(**self.task_kwargs)
         elif self.user_finished and self.status != self.STOPPED:
             on_commit(
                 stop_service.signature(

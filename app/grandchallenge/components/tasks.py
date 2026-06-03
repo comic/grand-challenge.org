@@ -1130,6 +1130,19 @@ def deprovision_job(
 
 
 @acks_late_micro_short_task(
+    name=f"{__name__}.start_service",
+    retry_on=(
+        LockNotAcquiredException,
+        RetryStep,
+    ),
+)
+@transaction.atomic
+def start_service_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return start_service(**kwargs)
+
+
+@lambda_task(
     retry_on=(
         LockNotAcquiredException,
         RetryStep,
