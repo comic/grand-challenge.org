@@ -87,7 +87,7 @@ def update_all_container_image_shims():
             )
 
 
-@lambda_task
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
 def assign_docker_image_from_upload(
     *, pk: str | UUID, app_label: str, model_name: str
 ):
