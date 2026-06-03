@@ -51,7 +51,7 @@ from grandchallenge.components.emails import (
     send_docker_not_made_active,
     send_invalid_dockerfile_email,
 )
-from grandchallenge.components.exceptions import InstanceInUse, PriorStepFailed
+from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.core.celery import (
     _retry,
@@ -264,14 +264,10 @@ def delete_failed_import_container_images():
             is_removed=False,
             import_status=ComponentImage.ImportStatusChoices.FAILED,
         ).iterator(chunk_size=1000):
-            on_commit(
-                delete_container_image.signature(
-                    kwargs={
-                        "pk": image.pk,
-                        "app_label": image._meta.app_label,
-                        "model_name": image._meta.model_name,
-                    }
-                ).apply_async
+            delete_container_image.execute_on_commit(
+                pk=image.pk,
+                app_label=image._meta.app_label,
+                model_name=image._meta.model_name,
             )
 
 
@@ -307,18 +303,14 @@ def delete_old_unsuccessful_container_images():
 
     for queryset in querysets:
         for image in queryset.iterator(chunk_size=1000):
-            on_commit(
-                delete_container_image.signature(
-                    kwargs={
-                        "pk": image.pk,
-                        "app_label": image._meta.app_label,
-                        "model_name": image._meta.model_name,
-                    }
-                ).apply_async
+            delete_container_image.execute_on_commit(
+                pk=image.pk,
+                app_label=image._meta.app_label,
+                model_name=image._meta.model_name,
             )
 
 
-@acks_late_2xlarge_task(ignore_errors=(InstanceInUse,))
+@acks_late_2xlarge_task
 def remove_container_image_from_registry(
     *, pk: uuid.UUID, app_label: str, model_name: str
 ):
@@ -361,7 +353,8 @@ def remove_container_image_from_registry(
         raise RuntimeError("Unknown instance type")
 
     if instance_in_use:
-        raise InstanceInUse
+        # Nothing to do
+        return
 
     if instance.latest_shimmed_version:
         remove_tag_from_registry(repo_tag=instance.shimmed_repo_tag)
@@ -376,7 +369,14 @@ def remove_container_image_from_registry(
         instance.save()
 
 
-@acks_late_2xlarge_task(ignore_errors=(InstanceInUse,))
+@acks_late_2xlarge_task(name=f"{__name__}.delete_container_image")
+@transaction.atomic
+def delete_container_image_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return delete_container_image(**kwargs)
+
+
+@lambda_task
 def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     from grandchallenge.algorithms.models import AlgorithmImage, Job
     from grandchallenge.components.models import ComponentImage
@@ -410,7 +410,8 @@ def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
         raise RuntimeError("Unknown instance type")
 
     if should_be_protected:
-        raise InstanceInUse
+        # Nothing to do
+        return
 
     if instance.image:
         instance.image.delete(save=False)
