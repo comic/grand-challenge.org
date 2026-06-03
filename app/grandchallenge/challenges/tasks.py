@@ -2,7 +2,6 @@ import functools
 import random
 import time
 from typing import NamedTuple
-from uuid import UUID
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -150,7 +149,7 @@ def update_challenge_storage_sizes():
 
 
 @lambda_task(singleton=True)
-def update_challenge_storage_size(*, pk: str | UUID):
+def update_challenge_storage_size(*, pk: int):
     challenge = Challenge.objects.get(pk=pk)
     annotate_storage_size(challenge=challenge)
     challenge.save(
