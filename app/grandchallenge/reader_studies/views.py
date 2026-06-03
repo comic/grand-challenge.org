@@ -460,10 +460,12 @@ class ReaderStudyDisplaySetList(ObjectPermissionRequiredMixin, CivSetListView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return (
-            queryset.filter(reader_study=self.base_object)
-            .select_related("reader_study")
-            .prefetch_related("answers")
+        return queryset.filter(reader_study=self.base_object).prefetch_related(
+            "answers",
+            Prefetch(
+                "reader_study",
+                queryset=ReaderStudy.objects.with_has_budget(),
+            ),
         )
 
 
