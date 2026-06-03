@@ -208,7 +208,7 @@ def test_challenge_budget_alert_two_thresholds_one_email(settings):
 def test_challenge_budget_alert_no_budget():
     challenge = ChallengeFactory()
     phase = PhaseFactory(challenge=challenge)
-    invoice = InvoiceFactory(challenge=challenge)
+    invoice = InvoiceFactory(challenge=challenge, compute_costs_euros=0)
     evaluation = EvaluationFactory(
         submission__phase=phase,
         time_limit=60,
