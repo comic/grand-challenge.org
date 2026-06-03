@@ -14,6 +14,7 @@ from grandchallenge.reader_studies.models import (
     DisplaySet,
     Question,
     QuestionWidgetKindChoices,
+    ReaderStudy,
 )
 from grandchallenge.reader_studies.views import DisplaySetViewSet
 from tests.components_tests.factories import (
@@ -241,7 +242,7 @@ def test_answer_creation_blocked_when_rs_out_of_budget(client):
     ds = DisplaySetFactory(reader_study=rs)
     q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
 
-    assert not rs.has_budget
+    assert not ReaderStudy.objects.with_has_budget().get(pk=rs.pk).has_budget
 
     # neither reader nor editor can create answers
     for user in (editor, reader):
