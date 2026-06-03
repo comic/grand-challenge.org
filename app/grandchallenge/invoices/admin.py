@@ -71,7 +71,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "challenge__short_name",
     )
     autocomplete_fields = ("challenge",)
-    readonly_fields = ["invoice_request_text"]
+    readonly_fields = ["invoice_request_text", "compute_cost_euro_millicents"]
 
     def has_delete_permission(self, request, obj=None):
         # invoices cannot be deleted
