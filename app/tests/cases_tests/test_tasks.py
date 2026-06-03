@@ -152,7 +152,8 @@ def test_post_processing(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.LAMBDA_TASKS_EAGER = True
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     filename = "valid_tiff.tif"
 
