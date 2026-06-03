@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.models import Count, Max, Min, Q
 from django.utils.timezone import datetime, now
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.settings import MAX_DELAY
 from psycopg.errors import LockNotAvailable
 
 from grandchallenge.challenges.costs import (
@@ -144,11 +145,14 @@ def update_challenge_compute_costs():
 
 @lambda_task
 def update_challenge_storage_sizes():
-    for challenge in Challenge.objects.only("pk"):
-        update_challenge_storage_size.execute_on_commit(pk=challenge.pk)
+    for idx, challenge in enumerate(Challenge.objects.only("pk")):
+        update_challenge_storage_size.execute_on_commit(
+            pk=challenge.pk,
+            _delay=idx % MAX_DELAY,
+        )
 
 
-@lambda_task(singleton=True)
+@lambda_task(singleton=True, retry_on=(LockNotAvailable,))
 def update_challenge_storage_size(*, pk: int):
     challenge = Challenge.objects.get(pk=pk)
     annotate_storage_size(challenge=challenge)
