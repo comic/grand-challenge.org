@@ -54,7 +54,6 @@ from grandchallenge.components.emails import (
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.core.celery import (
-    _retry,
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
@@ -991,9 +990,7 @@ def handle_event(*, event: dict, backend: str):
         raise
     except RetryTask:
         job.update_status(status=job.PROVISIONED)
-        _retry(
-            task=retry_task, signature_kwargs=job.signature_kwargs, retries=0
-        )
+        retry_task.execute_on_commit(**job.signature_kwargs)
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
@@ -1069,8 +1066,16 @@ def parse_job_outputs(
         job.update_status(status=job.SUCCESS)
 
 
-@acks_late_micro_short_task(retry_on=(RetryStep,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.retry_task", retry_on=(RetryStep,)
+)
 @transaction.atomic
+def retry_task_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return retry_task(**kwargs)
+
+
+@lambda_task(retry_on=(RetryStep,))
 def retry_task(
     *,
     job_pk: str | UUID,
