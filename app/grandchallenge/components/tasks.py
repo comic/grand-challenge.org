@@ -1013,13 +1013,21 @@ def handle_event(*, event: dict, backend: str):
             status=job.EXECUTED,
             **get_update_status_kwargs(executor=executor),
         )
-        on_commit(
-            parse_job_outputs.signature(**job.signature_kwargs).apply_async
-        )
+        parse_job_outputs.signature(**job.task_kwargs)
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.parse_job_outputs", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
+def parse_job_outputs_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return parse_job_outputs(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+)
 def parse_job_outputs(
     *,
     job_pk: str | UUID,
