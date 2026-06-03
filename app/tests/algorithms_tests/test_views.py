@@ -1253,6 +1253,8 @@ class TestJobCreateView:
         settings.CELERY_TASK_ALWAYS_EAGER = True
         settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+        settings.LAMBDA_TASKS_EAGER = True
+
         # configure file input
         interface = AlgorithmInterfaceFactory(
             inputs=[algorithm_with_multiple_inputs.ci_json_file],
@@ -1341,6 +1343,8 @@ class TestJobCreateView:
         settings.CELERY_TASK_ALWAYS_EAGER = True
         settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+        settings.LAMBDA_TASKS_EAGER = True
+
         interface = AlgorithmInterfaceFactory(
             inputs=[algorithm_with_multiple_inputs.ci_img_upload],
             outputs=[ComponentInterfaceFactory()],
@@ -1387,6 +1391,8 @@ class TestJobCreateView:
     ):
         settings.CELERY_TASK_ALWAYS_EAGER = True
         settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+        settings.LAMBDA_TASKS_EAGER = True
 
         # configure multiple inputs
         ci1, ci2 = ComponentInterfaceFactory.create_batch(

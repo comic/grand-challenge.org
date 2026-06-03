@@ -1007,7 +1007,7 @@ def handle_event(*, event: dict, backend: str):
             status=job.EXECUTED,
             **get_update_status_kwargs(executor=executor),
         )
-        parse_job_outputs.signature(**job.task_kwargs)
+        parse_job_outputs.execute_on_commit(**job.task_kwargs)
 
 
 @acks_late_2xlarge_task(

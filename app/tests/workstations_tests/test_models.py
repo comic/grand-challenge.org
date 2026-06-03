@@ -294,8 +294,7 @@ def test_session_updates_correct_endpoints():
 def test_session_stopped_schedules_stop_for_correct_endpoints(
     settings, django_capture_on_commit_callbacks, mocker
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     user = UserFactory()
     algorithm_image = AlgorithmImageFactory(

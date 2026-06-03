@@ -2,12 +2,10 @@ import json
 from urllib.parse import quote_plus
 
 import pytest
-from celery.canvas import Signature
 from django.contrib.auth.models import Group
 from django.http import Http404
 from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
-from lambda_tasks.models import SQSLambdaTask
 
 from grandchallenge.algorithms.models import Endpoint
 from grandchallenge.components.models import APIMethodChoices
@@ -378,19 +376,10 @@ def test_session_create_reader_study(
         )
 
     assert response.status_code == 302
-    assert len(callbacks) == 3
-    assert [
-        c.__self__.name for c in callbacks if isinstance(c.__self__, Signature)
-    ] == [
+    assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.start_service",
-        "grandchallenge.components.tasks.stop_service",
-    ]
-    assert [
-        c.__self__.message.task_name
-        for c in callbacks
-        if isinstance(c.__self__, SQSLambdaTask)
-    ] == [
         "grandchallenge.components.tasks.preload_interactive_algorithms",
+        "grandchallenge.components.tasks.stop_service",
     ]
     assert reader_study.workstation_sessions.count() == 1
 
@@ -425,7 +414,7 @@ def test_session_create_reader_study_no_algorithm(
         )
 
     assert response.status_code == 302
-    assert [c.__self__.name for c in callbacks] == [
+    assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.start_service",
         "grandchallenge.components.tasks.stop_service",
     ]
@@ -473,7 +462,7 @@ def test_session_create_reader_study_with_algorithm_implementation(
         )
 
     assert response.status_code == 302
-    assert [c.__self__.name for c in callbacks] == [
+    assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.start_service",
         "grandchallenge.components.tasks.start_endpoint",
         "grandchallenge.components.tasks.stop_service",
@@ -543,7 +532,7 @@ def test_session_create_reader_study_with_algorithm_implementation_skip_active_e
         )
 
     assert response.status_code == 302
-    assert [c.__self__.name for c in callbacks] == [
+    assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.start_service",
         "grandchallenge.components.tasks.start_endpoint",
         "grandchallenge.components.tasks.stop_service",
@@ -567,7 +556,7 @@ def test_session_create_reader_study_with_algorithm_implementation_skip_active_e
         )
 
     assert response.status_code == 302
-    assert [c.__self__.name for c in callbacks] == [
+    assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.stop_service",
     ]
     assert reader_study.workstation_sessions.count() == 1
@@ -592,7 +581,7 @@ def test_session_create_reader_study_with_algorithm_implementation_skip_active_e
         )
 
     assert response.status_code == 302
-    assert [c.__self__.name for c in callbacks] == [
+    assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.start_endpoint",
         "grandchallenge.components.tasks.stop_service",
     ]
@@ -619,7 +608,7 @@ def test_session_create_reader_study_with_algorithm_implementation_skip_active_e
         )
 
     assert response.status_code == 302
-    assert [c.__self__.name for c in callbacks] == [
+    assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.start_endpoint",
         "grandchallenge.components.tasks.stop_service",
     ]
@@ -751,19 +740,10 @@ def test_session_create_display_set(
         )
 
     assert response.status_code == 302
-    assert len(callbacks) == 3
-    assert [
-        c.__self__.name for c in callbacks if isinstance(c.__self__, Signature)
-    ] == [
+    assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.start_service",
-        "grandchallenge.components.tasks.stop_service",
-    ]
-    assert [
-        c.__self__.message.task_name
-        for c in callbacks
-        if isinstance(c.__self__, SQSLambdaTask)
-    ] == [
         "grandchallenge.components.tasks.preload_interactive_algorithms",
+        "grandchallenge.components.tasks.stop_service",
     ]
     assert reader_study.workstation_sessions.count() == 1
 
@@ -797,7 +777,7 @@ def test_session_create_image(client, django_capture_on_commit_callbacks):
 
     assert response.status_code == 302
     # No callback to preload_interactive_algorithms should be done for non-reader studies
-    assert [c.__self__.name for c in callbacks] == [
+    assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.start_service",
         "grandchallenge.components.tasks.stop_service",
     ]
@@ -1249,7 +1229,7 @@ def test_session_switch_reader_study_updates_endpoint_utilizations(
         )
 
     assert response.status_code == 302
-    assert [c.__self__.name for c in callbacks] == [
+    assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.start_service",
         "grandchallenge.components.tasks.start_endpoint",
         "grandchallenge.components.tasks.start_endpoint",
@@ -1282,7 +1262,7 @@ def test_session_switch_reader_study_updates_endpoint_utilizations(
         )
 
     assert response.status_code == 302
-    assert [c.__self__.name for c in callbacks] == [
+    assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.stop_service",
     ]
     assert reader_study_without_endpoint.workstation_sessions.count() == 1

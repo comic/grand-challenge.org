@@ -47,7 +47,6 @@ from grandchallenge.components.tasks import (
     assign_tarball_from_upload,
     delete_container_image,
     encode_b64j,
-    execute_job,
     handle_endpoint_invocation_event,
     handle_endpoint_status_event,
     parse_endpoint_invocation_outputs,
@@ -113,7 +112,7 @@ from tests.utilization_tests.factories import SessionUtilizationFactory
 def test_retry_initial_options(django_capture_on_commit_callbacks):
     with django_capture_on_commit_callbacks() as callbacks:
         _retry(
-            task=execute_job,
+            task=some_async_task,
             signature_kwargs={
                 "kwargs": {"foo": "bar"},
                 "options": {"queue": "mine"},
@@ -130,7 +129,7 @@ def test_retry_initial_options(django_capture_on_commit_callbacks):
 def test_retry_initial(django_capture_on_commit_callbacks):
     with django_capture_on_commit_callbacks() as callbacks:
         _retry(
-            task=execute_job,
+            task=some_async_task,
             signature_kwargs={"kwargs": {"foo": "bar"}},
             retries=0,
         )
@@ -144,7 +143,7 @@ def test_retry_initial(django_capture_on_commit_callbacks):
 def test_retry_many(django_capture_on_commit_callbacks):
     with django_capture_on_commit_callbacks() as callbacks:
         _retry(
-            task=execute_job,
+            task=some_async_task,
             signature_kwargs={"kwargs": {"foo": "bar"}},
             retries=10,
         )
@@ -157,7 +156,7 @@ def test_retry_many(django_capture_on_commit_callbacks):
 def test_retry_too_many():
     with pytest.raises(MaxRetriesExceededError):
         _retry(
-            task=execute_job,
+            task=some_async_task,
             signature_kwargs={"kwargs": {"foo": "bar"}},
             retries=100_000,
         )
@@ -203,10 +202,12 @@ def test_remove_inactive_container_images(django_capture_on_commit_callbacks):
     assert len(callbacks) == 1
     # Ensure only the first algorithm image is deleted
     assert repr(callbacks[0]) == (
-        "<bound method Signature.apply_async of "
-        "grandchallenge.components.tasks.remove_container_image_from_registry"
-        f"(pk={ai1.pk!r}, "
-        "app_label='algorithms', model_name='algorithmimage')>"
+        "<bound method SQSLambdaTask._execute of SQSLambdaTask("
+        "message=SQSLambdaTaskMessage("
+        "task_name='grandchallenge.components.tasks.remove_container_image_from_registry', "
+        "kwargs={"
+        f"'pk': UUID('{ai1.pk}'), "
+        "'app_label': 'algorithms', 'model_name': 'algorithmimage'}, n_retries=0), delay=0, queue='default')>"
     )
 
 
@@ -530,8 +531,7 @@ def test_add_image_to_object_updates_upload_session_on_validation_fail(
     object_factory,
     factory_kwargs,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     obj = object_factory(**factory_kwargs)
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
@@ -565,8 +565,7 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     job = AlgorithmJobFactory(time_limit=10)
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
@@ -660,8 +659,7 @@ def test_add_dicom_image_set_to_object_updates_upload_on_validation_fail(
     object_factory,
     factory_kwargs,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     obj = object_factory(**factory_kwargs)
     # create upload without resulting dicom image set and image.
@@ -699,8 +697,7 @@ def test_add_dicom_image_set_to_object_marks_job_as_failed_on_validation_fail(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     obj = AlgorithmJobFactory(time_limit=10)
     # create upload without resulting dicom image set and image.
@@ -751,8 +748,7 @@ def test_add_dicom_image_set_to_object_sends_notification_on_validation_fail(
     object_factory,
     factory_kwargs,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     obj = object_factory(**factory_kwargs)
     # create upload without resulting dicom image set and image.
@@ -1031,8 +1027,7 @@ def test_add_file_to_object_updates_job_on_validation_fail(
     upload_data,
     expected_error_message,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     creator = UserFactory()
     obj = AlgorithmJobFactory(time_limit=10)
@@ -1095,8 +1090,7 @@ def test_add_file_to_object_validates_kinds(
     django_capture_on_commit_callbacks,
     mocker,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     creator = UserFactory()
     obj = AlgorithmJobFactory(time_limit=10)
@@ -1663,8 +1657,7 @@ def test_stop_endpoint_wrong_state_raises(mocker):
 def test_stop_expired_endpoints(
     settings, mocker, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     EndpointFactory(status=EndpointStatusChoices.RUNNING)
     endpoint_to_stop = EndpointFactory(

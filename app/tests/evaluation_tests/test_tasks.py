@@ -672,6 +672,8 @@ def test_non_zip_submission_failure(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     phase = PhaseFactory(
         submission_kind=SubmissionKindChoices.CSV,
         submissions_limit_per_user_per_period=1,

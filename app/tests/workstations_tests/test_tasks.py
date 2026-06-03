@@ -5,6 +5,7 @@ import pytest
 from botocore.stub import Stubber
 
 from grandchallenge.components.backends.amazon_ecs import ECSTaskOrchestrator
+from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.components.tasks import (
     start_service,
     stop_expired_services,
@@ -26,9 +27,7 @@ def test_start_service_scheduled(django_capture_on_commit_callbacks):
 
     assert len(callbacks) == 1
     assert repr(callbacks[0]) == (
-        "<bound method Signature.apply_async of "
-        "grandchallenge.components.tasks.start_service"
-        f"(app_label='workstations', model_name='session', pk={s.pk!r})>"
+        f"<bound method SQSLambdaTask._execute of SQSLambdaTask(message=SQSLambdaTaskMessage(task_name='grandchallenge.components.tasks.start_service', kwargs={{'app_label': 'workstations', 'model_name': 'session', 'pk': UUID('{s.pk}')}}, n_retries=0), delay=0, queue='default')>"
     )
 
 
@@ -60,15 +59,8 @@ def test_workstation_limit(settings, django_capture_on_commit_callbacks):
         workstation_image__is_desired_version=True,
     )
 
-    with django_capture_on_commit_callbacks() as callbacks:
+    with pytest.raises(RetryStep, match="Too many sessions are running"):
         start_service(**session.task_kwargs)
-
-    assert len(callbacks) == 1
-    assert repr(callbacks[0]) == (
-        "<bound method Signature.apply_async of "
-        "grandchallenge.components.tasks.start_service"
-        f"(app_label='workstations', model_name='session', pk={session.pk!r}, _retries=1)>"
-    )
 
 
 @pytest.mark.django_db
@@ -206,9 +198,7 @@ def test_start_service(mocker, settings, django_capture_on_commit_callbacks):
 
     assert len(callbacks) == 1
     assert repr(callbacks[0]) == (
-        "<bound method Signature.apply_async of "
-        "grandchallenge.components.tasks.update_service"
-        f"(app_label='workstations', model_name='session', pk={session.pk!r})>"
+        f"<bound method SQSLambdaTask._execute of SQSLambdaTask(message=SQSLambdaTaskMessage(task_name='grandchallenge.components.tasks.update_service', kwargs={{'app_label': 'workstations', 'model_name': 'session', 'pk': UUID('{session.pk}')}}, n_retries=0), delay=0, queue='default')>"
     )
 
 
@@ -375,7 +365,5 @@ def test_session_cleanup(django_capture_on_commit_callbacks):
 
     assert len(callbacks) == 1
     assert repr(callbacks[0]) == (
-        "<bound method Signature.apply_async of "
-        "grandchallenge.components.tasks.stop_service"
-        f"(app_label='workstations', model_name='session', pk={session_to_stop.pk!r})>"
+        f"<bound method SQSLambdaTask._execute of SQSLambdaTask(message=SQSLambdaTaskMessage(task_name='grandchallenge.components.tasks.stop_service', kwargs={{'app_label': 'workstations', 'model_name': 'session', 'pk': UUID('{session_to_stop.pk}')}}, n_retries=0), delay=0, queue='default')>"
     )
