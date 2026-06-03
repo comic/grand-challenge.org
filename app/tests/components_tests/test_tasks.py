@@ -45,7 +45,6 @@ from grandchallenge.components.tasks import (
     add_file_to_object,
     add_image_to_object,
     assign_tarball_from_upload,
-    civ_value_to_file,
     delete_container_image,
     encode_b64j,
     execute_job,
@@ -85,10 +84,7 @@ from tests.cases_tests.factories import (
     DICOMImageSetUploadFactory,
     RawImageUploadSessionFactory,
 )
-from tests.components_tests.factories import (
-    ComponentInterfaceFactory,
-    ComponentInterfaceValueFactory,
-)
+from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
     EvaluationGroundTruthFactory,
@@ -165,26 +161,6 @@ def test_retry_too_many():
             signature_kwargs={"kwargs": {"foo": "bar"}},
             retries=100_000,
         )
-
-
-@pytest.mark.parametrize("value", [{"foo": 1, "bar": None}, "", None])
-@pytest.mark.django_db
-def test_civ_value_to_file(value):
-    civ = ComponentInterfaceValueFactory(value=value)
-
-    civ_value_to_file(civ_pk=civ.pk)
-
-    civ.refresh_from_db()
-
-    with civ.file.open("r") as f:
-        v = json.loads(f.read())
-
-    assert v == value
-    assert civ.value is None
-
-    # Check idempotency
-    with pytest.raises(RuntimeError):
-        civ_value_to_file(civ_pk=civ.pk)
 
 
 @pytest.mark.parametrize(

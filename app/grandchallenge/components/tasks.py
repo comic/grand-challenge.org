@@ -22,7 +22,6 @@ from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import Count, DateTimeField, ExpressionWrapper, F, Q
 from django.db.transaction import on_commit
@@ -1425,24 +1424,6 @@ def preload_interactive_algorithms():
         )
 
     return consolidation_results
-
-
-@acks_late_2xlarge_task
-@transaction.atomic
-def civ_value_to_file(*, civ_pk):
-    from grandchallenge.components.models import ComponentInterfaceValue
-
-    civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
-
-    if civ.file:
-        raise RuntimeError("CIV file is not None")
-
-    civ.file = ContentFile(
-        json.dumps(civ.value).encode("utf-8"),
-        name=Path(civ.interface.relative_path).name,
-    )
-    civ.value = None
-    civ.save()
 
 
 @acks_late_micro_short_task(
