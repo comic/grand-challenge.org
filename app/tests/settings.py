@@ -30,6 +30,9 @@ ROOT_URLCONF = "tests.urls.root"
 CELERY_BROKER = "memory"
 CELERY_BROKER_URL = "memory://"
 
+# Never use local workers in tests, use eager mode per-test if necessary
+LAMBDA_TASKS_LOCAL_WORKERS = 0
+
 # Disable image resizing
 PICTURES["PROCESSOR"] = "pictures.tasks.noop"  # noqa 405
 
