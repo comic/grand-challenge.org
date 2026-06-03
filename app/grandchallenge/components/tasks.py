@@ -883,9 +883,7 @@ def execute_job(
     if job.status == job.PROVISIONED:
         job.update_status(status=job.EXECUTING)
     else:
-        on_commit(
-            deprovision_job.signature(**job.signature_kwargs).apply_async
-        )
+        deprovision_job.execute_on_commit(**job.task_kwargs)
         raise PriorStepFailed("Job is not set to be executed")
 
     if not job.container.can_execute:
@@ -1107,7 +1105,16 @@ def retry_task(
         task_logger.error("Maximum attempts exceeded")
 
 
-@acks_late_micro_short_task(retry_on=(RetryStep,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.deprovision_job", retry_on=(RetryStep,)
+)
+@transaction.atomic
+def deprovision_job_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return deprovision_job(**kwargs)
+
+
+@lambda_task(retry_on=(RetryStep,))
 def deprovision_job(
     *,
     job_pk: str | UUID,

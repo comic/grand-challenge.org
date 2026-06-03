@@ -1936,16 +1936,12 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         provision_job.execute_on_commit(**self.task_kwargs)
 
     def execute_task_on_success(self):
-        on_commit(
-            deprovision_job.signature(**self.signature_kwargs).apply_async
-        )
+        deprovision_job.execute_on_commit(**self.task_kwargs)
         if self.task_on_success:
             on_commit(signature(self.task_on_success).apply_async)
 
     def execute_task_on_failure(self):
-        on_commit(
-            deprovision_job.signature(**self.signature_kwargs).apply_async
-        )
+        deprovision_job.execute_on_commit(**self.task_kwargs)
         if self.task_on_failure:
             on_commit(signature(self.task_on_failure).apply_async)
 
