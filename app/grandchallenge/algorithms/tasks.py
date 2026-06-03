@@ -6,7 +6,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F, Max
-from django.db.transaction import on_commit
 from django.utils import timezone
 from lambda_tasks.decorators import lambda_task
 
@@ -342,8 +341,4 @@ def execute_invocation_for_inputs(*, invocation_pk):
 
     invocation.update_status(status=Invocation.StatusChoices.QUEUED)
 
-    on_commit(
-        provision_invocation_input_data.signature(
-            kwargs=invocation.task_kwargs
-        ).apply_async
-    )
+    provision_invocation_input_data.execute_on_commit(**invocation.task_kwargs)

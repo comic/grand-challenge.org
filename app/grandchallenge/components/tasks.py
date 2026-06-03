@@ -1860,8 +1860,17 @@ def stop_expired_endpoints(*, app_label: str, model_name: str):
         stop_endpoint.execute_on_commit(**endpoint.task_kwargs)
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.provision_invocation_input_data",
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
+def provision_invocation_input_data_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return provision_invocation_input_data(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def provision_invocation_input_data(
     *, pk: str | UUID, app_label: str, model_name: str
 ):
