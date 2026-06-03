@@ -1148,7 +1148,6 @@ def start_service_celery(**kwargs):
         RetryStep,
     )
 )
-@transaction.atomic
 def start_service(*, pk: str | UUID, app_label: str, model_name: str):
     """
     Starts the service on ECS.
@@ -1200,15 +1199,17 @@ def start_service(*, pk: str | UUID, app_label: str, model_name: str):
         service.full_clean()
         service.save()
 
-        on_commit(
-            update_service.signature(
-                kwargs=service.task_kwargs,
-            ).apply_async
-        )
+        update_service.execute_on_commit(**service.task_kwargs)
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(name=f"{__name__}.update_service")
 @transaction.atomic
+def update_service_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_service(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def update_service(*, pk: str | UUID, app_label: str, model_name: str):
     """
     Update the host and ports from ECS
