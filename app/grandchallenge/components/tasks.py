@@ -1912,15 +1912,19 @@ def provision_invocation_input_data(
     else:
         invocation.update_status(status=invocation.StatusChoices.PROVISIONED)
 
-        on_commit(
-            invoke_endpoint.signature(
-                kwargs=invocation.task_kwargs,
-            ).apply_async
-        )
+        invoke_endpoint.execute_on_commit(**invocation.task_kwargs)
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.invoke_endpoint", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
+def invoke_endpoint_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return invoke_endpoint(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def invoke_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
