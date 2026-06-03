@@ -603,11 +603,7 @@ class Session(FieldChangeMixin, UUIDModel):
             self.assign_permissions()
             start_service.execute_on_commit(**self.task_kwargs)
         elif self.user_finished and self.status != self.STOPPED:
-            on_commit(
-                stop_service.signature(
-                    kwargs=self.task_kwargs,
-                ).apply_async
-            )
+            stop_service.execute_on_commit(**self.task_kwargs)
 
         if self.has_changed("status") and self.status == self.STOPPED:
             self.handle_session_stopped()

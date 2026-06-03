@@ -1202,7 +1202,9 @@ def start_service(*, pk: str | UUID, app_label: str, model_name: str):
         update_service.execute_on_commit(**service.task_kwargs)
 
 
-@acks_late_micro_short_task(name=f"{__name__}.update_service")
+@acks_late_micro_short_task(
+    name=f"{__name__}.update_service", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
 def update_service_celery(**kwargs):
     # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
@@ -1252,8 +1254,16 @@ def update_service(*, pk: str | UUID, app_label: str, model_name: str):
         service.save()
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.stop_service", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
+def stop_service_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return stop_service(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def stop_service(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
@@ -1288,11 +1298,7 @@ def stop_expired_services(*, app_label: str, model_name: str):
     )
 
     for service in services_to_stop:
-        on_commit(
-            stop_service.signature(
-                kwargs=service.task_kwargs,
-            ).apply_async
-        )
+        stop_service.execute_on_commit(**service.task_kwargs)
 
 
 class InteractiveAlgorithmLambda:
