@@ -11,7 +11,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q
 from django.db.transaction import on_commit
 from django.forms import Form
 from django.forms.utils import ErrorList
@@ -1224,9 +1224,22 @@ class AnswerViewSet(
     GenericViewSet,
 ):
     serializer_class = AnswerSerializer
-    queryset = Answer.objects.all().select_related(
-        "creator",
-        "question__reader_study",
+    queryset = (
+        Answer.objects.all()
+        .select_related(
+            "creator",
+        )
+        .prefetch_related(
+            Prefetch(
+                "question",
+                queryset=Question.objects.prefetch_related(
+                    Prefetch(
+                        "reader_study",
+                        queryset=ReaderStudy.objects.with_has_budget(),
+                    )
+                ),
+            )
+        )
     )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]

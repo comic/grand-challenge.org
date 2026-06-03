@@ -629,7 +629,7 @@ def test_session_create_reader_study_with_algorithm_implementation_skip_active_e
 
 @pytest.mark.django_db
 def test_session_create_reader_study_out_of_budget(client):
-    user = UserFactory()
+    user, editor = UserFactory.create_batch(2)
     ws = WorkstationFactory()
     WorkstationImageFactory(
         workstation=ws,
@@ -639,7 +639,8 @@ def test_session_create_reader_study_out_of_budget(client):
     )
     reader_study = ReaderStudyFactory(workstation=ws, max_credits=0)
     QuestionFactory(reader_study=reader_study)
-    reader_study.readers_group.user_set.add(user)
+    reader_study.add_editor(editor)
+    reader_study.add_reader(user)
     path, _ = get_workstation_path_and_query_string(reader_study=reader_study)
 
     assert (
@@ -649,6 +650,7 @@ def test_session_create_reader_study_out_of_budget(client):
     )
     assert Session.objects.count() == 0
 
+    # reader cannot launch study
     response = get_view_for_user(
         client=client,
         method=client.post,
@@ -657,9 +659,62 @@ def test_session_create_reader_study_out_of_budget(client):
         user=user,
         data={"region": "eu-central-1"},
     )
-
     assert response.status_code == 200
     assert Session.objects.count() == 0
+
+    # editor can launch study
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="workstations:workstation-session-create-nested",
+        reverse_kwargs={"slug": ws.slug, "workstation_path": path},
+        user=editor,
+        data={"region": "eu-central-1"},
+    )
+    assert response.status_code == 302
+    assert Session.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_session_create_for_out_of_budget_rs_does_not_preload_algorithms_or_create_endpoints(
+    client, django_capture_on_commit_callbacks, mocker
+):
+    editor = UserFactory()
+    ws = WorkstationFactory()
+    WorkstationImageFactory(
+        workstation=ws,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    reader_study = ReaderStudyFactory(workstation=ws, max_credits=0)
+    QuestionFactory(reader_study=reader_study)
+    reader_study.add_editor(editor)
+
+    assert (
+        not ReaderStudy.objects.with_has_budget()
+        .get(pk=reader_study.pk)
+        .has_budget
+    )
+    assert Session.objects.count() == 0
+
+    mock_preload_interactive_algs_task = mocker.patch(
+        "grandchallenge.components.tasks.preload_interactive_algorithms"
+    )
+    with django_capture_on_commit_callbacks():
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            viewname="workstations:workstation-session-create",
+            reverse_kwargs={"slug": ws.slug},
+            user=editor,
+            data={"region": "eu-central-1"},
+        )
+    assert response.status_code == 302
+    assert Session.objects.count() == 1
+    mock_preload_interactive_algs_task.assert_not_called()
+    session = Session.objects.first()
+    assert session.associated_endpoints.count() == 0
 
 
 @pytest.mark.django_db

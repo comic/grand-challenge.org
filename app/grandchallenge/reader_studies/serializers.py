@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.db.models import Prefetch
 from rest_framework.fields import (
     BooleanField,
     CharField,
@@ -243,7 +244,12 @@ class AnswerSerializer(HyperlinkedModelSerializer):
     creator = SlugRelatedField(read_only=True, slug_field="username")
     question = HyperlinkedRelatedField(
         view_name="api:reader-studies-question-detail",
-        queryset=Question.objects.all(),
+        queryset=Question.objects.prefetch_related(
+            Prefetch(
+                "reader_study",
+                queryset=ReaderStudy.objects.with_has_budget(),
+            )
+        ),
     )
     display_set = HyperlinkedRelatedField(
         queryset=DisplaySet.objects.all(),
@@ -295,6 +301,11 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             question = attrs.get("question")
             display_set = attrs.get("display_set")
             creator = self.context.get("request").user
+
+        if not question.reader_study.has_budget:
+            raise ValidationError(
+                "You cannot create or edit answers because this reader study is out of budget."
+            )
 
         Answer.validate(
             creator=creator,
