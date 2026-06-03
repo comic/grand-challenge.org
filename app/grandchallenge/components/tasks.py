@@ -988,7 +988,7 @@ def handle_event(*, event: dict, backend: str):
         raise
     except RetryTask:
         job.update_status(status=job.PROVISIONED)
-        retry_task.execute_on_commit(**job.signature_kwargs)
+        retry_task.execute_on_commit(**job.task_kwargs)
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,

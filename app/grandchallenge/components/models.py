@@ -1925,13 +1925,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "backend": settings.COMPONENTS_DEFAULT_BACKEND,
         }
 
-    @property
-    def signature_kwargs(self):
-        return {
-            "kwargs": self.task_kwargs,
-            "immutable": True,
-        }
-
     def execute(self):
         provision_job.execute_on_commit(**self.task_kwargs)
 
