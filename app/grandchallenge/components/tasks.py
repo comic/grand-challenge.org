@@ -68,13 +68,6 @@ from grandchallenge.uploads.models import UserUpload
 logger = get_task_logger(__name__)
 
 
-@acks_late_2xlarge_task(name=f"{__name__}.update_all_container_image_shims")
-@transaction.atomic
-def update_all_container_image_shims_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return update_all_container_image_shims(**kwargs)
-
-
 @lambda_task
 def update_all_container_image_shims():
     """Updates existing images to new versions of sagemaker shim"""
@@ -94,14 +87,7 @@ def update_all_container_image_shims():
             )
 
 
-@acks_late_2xlarge_task(name=f"{__name__}.assign_docker_image_from_upload")
-@transaction.atomic
-def assign_docker_image_from_upload_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return assign_docker_image_from_upload(**kwargs)
-
-
-@lambda_task
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
 def assign_docker_image_from_upload(
     *, pk: str | UUID, app_label: str, model_name: str
 ):
@@ -186,13 +172,6 @@ def upload_to_registry_and_sagemaker(
             send_docker_not_made_active(
                 container_image=instance, error_message=str(error)
             )
-
-
-@acks_late_2xlarge_task(name=f"{__name__}.update_container_image_shim")
-@transaction.atomic
-def update_container_image_shim_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return update_container_image_shim(**kwargs)
 
 
 @lambda_task
@@ -307,15 +286,6 @@ def delete_old_unsuccessful_container_images():
             )
 
 
-@acks_late_2xlarge_task(
-    name=f"{__name__}.remove_container_image_from_registry"
-)
-@transaction.atomic
-def remove_container_image_from_registry_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return remove_container_image_from_registry(**kwargs)
-
-
 @lambda_task
 def remove_container_image_from_registry(
     *, pk: str | UUID, app_label: str, model_name: str
@@ -373,13 +343,6 @@ def remove_container_image_from_registry(
         instance.is_in_registry = False
         instance.is_desired_version = False
         instance.save()
-
-
-@acks_late_2xlarge_task(name=f"{__name__}.delete_container_image")
-@transaction.atomic
-def delete_container_image_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return delete_container_image(**kwargs)
 
 
 @lambda_task
@@ -848,15 +811,6 @@ def provision_job(
         execute_job.execute_on_commit(**job.task_kwargs)
 
 
-@acks_late_micro_short_task(
-    name=f"{__name__}.execute_job", retry_on=(RetryStep,)
-)
-@transaction.atomic
-def execute_job_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return execute_job(**kwargs)
-
-
 @lambda_task(retry_on=(RetryStep,), retry_delay=120)
 def execute_job(
     *,
@@ -1010,15 +964,6 @@ def handle_event(*, event: dict, backend: str):
         parse_job_outputs.execute_on_commit(**job.task_kwargs)
 
 
-@acks_late_2xlarge_task(
-    name=f"{__name__}.parse_job_outputs", retry_on=(LockNotAcquiredException,)
-)
-@transaction.atomic
-def parse_job_outputs_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return parse_job_outputs(**kwargs)
-
-
 @lambda_task(
     queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
 )
@@ -1063,15 +1008,6 @@ def parse_job_outputs(
         job.update_status(status=job.SUCCESS)
 
 
-@acks_late_micro_short_task(
-    name=f"{__name__}.retry_task", retry_on=(RetryStep,)
-)
-@transaction.atomic
-def retry_task_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return retry_task(**kwargs)
-
-
 @lambda_task(retry_on=(RetryStep,))
 def retry_task(
     *,
@@ -1104,15 +1040,6 @@ def retry_task(
         task_logger.error("Maximum attempts exceeded")
 
 
-@acks_late_micro_short_task(
-    name=f"{__name__}.deprovision_job", retry_on=(RetryStep,)
-)
-@transaction.atomic
-def deprovision_job_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return deprovision_job(**kwargs)
-
-
 @lambda_task(retry_on=(RetryStep,))
 def deprovision_job(
     *,
@@ -1126,19 +1053,6 @@ def deprovision_job(
 
     executor = job.get_executor(backend=backend)
     executor.deprovision()
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.start_service",
-    retry_on=(
-        LockNotAcquiredException,
-        RetryStep,
-    ),
-)
-@transaction.atomic
-def start_service_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return start_service(**kwargs)
 
 
 @lambda_task(
@@ -1201,15 +1115,6 @@ def start_service(*, pk: str | UUID, app_label: str, model_name: str):
         update_service.execute_on_commit(**service.task_kwargs)
 
 
-@acks_late_micro_short_task(
-    name=f"{__name__}.update_service", retry_on=(LockNotAcquiredException,)
-)
-@transaction.atomic
-def update_service_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return update_service(**kwargs)
-
-
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def update_service(*, pk: str | UUID, app_label: str, model_name: str):
     """
@@ -1251,15 +1156,6 @@ def update_service(*, pk: str | UUID, app_label: str, model_name: str):
         service.status = service.RUNNING
         service.full_clean()
         service.save()
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.stop_service", retry_on=(LockNotAcquiredException,)
-)
-@transaction.atomic
-def stop_service_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return stop_service(**kwargs)
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
@@ -1645,16 +1541,6 @@ def add_file_to_object(
         logger.info("No linked task, task complete")
 
 
-@acks_late_2xlarge_task(
-    name=f"{__name__}.assign_tarball_from_upload",
-    retry_on=(LockNotAcquiredException,),
-)
-@transaction.atomic
-def assign_tarball_from_upload_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return assign_tarball_from_upload(**kwargs)
-
-
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def assign_tarball_from_upload(
     *,
@@ -1725,15 +1611,6 @@ def get_object_checksum(file_field):
         # The checksums are not calculated on local s3
         logger.error("checksum was not calculated", exc_info=True)
         return ""
-
-
-@acks_late_2xlarge_task(
-    name=f"{__name__}.start_endpoint", retry_on=(LockNotAcquiredException,)
-)
-@transaction.atomic
-def start_endpoint_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return start_endpoint(**kwargs)
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
@@ -1819,15 +1696,6 @@ def handle_endpoint_status_event(*, event: dict):
         endpoint.update_status(status=endpoint.StatusChoices.RUNNING)
 
 
-@acks_late_micro_short_task(
-    name=f"{__name__}.stop_endpoint", retry_on=(LockNotAcquiredException,)
-)
-@transaction.atomic
-def stop_endpoint_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return stop_endpoint(**kwargs)
-
-
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def stop_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
@@ -1858,16 +1726,6 @@ def stop_expired_endpoints(*, app_label: str, model_name: str):
 
     for endpoint in endpoints_to_stop:
         stop_endpoint.execute_on_commit(**endpoint.task_kwargs)
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.provision_invocation_input_data",
-    retry_on=(LockNotAcquiredException,),
-)
-@transaction.atomic
-def provision_invocation_input_data_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return provision_invocation_input_data(**kwargs)
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
@@ -1913,15 +1771,6 @@ def provision_invocation_input_data(
         invocation.update_status(status=invocation.StatusChoices.PROVISIONED)
 
         invoke_endpoint.execute_on_commit(**invocation.task_kwargs)
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.invoke_endpoint", retry_on=(LockNotAcquiredException,)
-)
-@transaction.atomic
-def invoke_endpoint_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return invoke_endpoint(**kwargs)
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
@@ -2010,16 +1859,6 @@ def handle_endpoint_invocation_event(*, event: dict):
         parse_endpoint_invocation_outputs.execute_on_commit(
             **invocation.task_kwargs
         )
-
-
-@acks_late_2xlarge_task(
-    name=f"{__name__}.parse_endpoint_invocation_outputs",
-    retry_on=(LockNotAcquiredException,),
-)
-@transaction.atomic
-def parse_endpoint_invocation_outputs_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return parse_endpoint_invocation_outputs(**kwargs)
 
 
 @lambda_task(
