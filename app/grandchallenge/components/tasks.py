@@ -70,8 +70,14 @@ from grandchallenge.uploads.models import UserUpload
 logger = get_task_logger(__name__)
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.update_all_container_image_shims")
 @transaction.atomic
+def update_all_container_image_shims_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_all_container_image_shims(**kwargs)
+
+
+@lambda_task
 def update_all_container_image_shims():
     """Updates existing images to new versions of sagemaker shim"""
     for app_label, model_name in (
