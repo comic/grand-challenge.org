@@ -704,6 +704,11 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_reader_study_switching</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">reader_study</span><span class="p">):</span>
         <span class="n">reader_study</span><span class="o">.</span><span class="n">workstation_sessions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">reader_study</span><span class="o">.</span><span class="n">has_budget</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">reader_study</span><span class="o">.</span><span class="n">is_editor</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">creator</span>
+        <span class="p">):</span>
+            <span class="k">return</span>
+
         <span class="k">if</span> <span class="n">reader_study</span><span class="o">.</span><span class="n">questions_with_interactive_algorithm</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">preload_interactive_algorithms</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">()</span>
 
