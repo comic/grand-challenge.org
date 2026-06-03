@@ -2261,14 +2261,10 @@ class ComponentImage(FieldChangeMixin, models.Model):
             )
 
     def assign_docker_image_from_upload(self):
-        on_commit(
-            assign_docker_image_from_upload.signature(
-                kwargs={
-                    "app_label": self._meta.app_label,
-                    "model_name": self._meta.model_name,
-                    "pk": self.pk,
-                }
-            ).apply_async
+        assign_docker_image_from_upload.execute_on_commit(
+            app_label=self._meta.app_label,
+            model_name=self._meta.model_name,
+            pk=self.pk,
         )
 
     def get_peer_images(self):

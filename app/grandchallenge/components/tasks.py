@@ -100,9 +100,16 @@ def update_all_container_image_shims():
             )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.assign_docker_image_from_upload")
+@transaction.atomic
+def assign_docker_image_from_upload_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return assign_docker_image_from_upload(**kwargs)
+
+
+@lambda_task
 def assign_docker_image_from_upload(
-    *, pk: uuid.UUID, app_label: str, model_name: str
+    *, pk: str | uuid.UUID, app_label: str, model_name: str
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
