@@ -622,6 +622,11 @@ class Session(FieldChangeMixin, UUIDModel):
     def handle_reader_study_switching(self, *, reader_study):
         reader_study.workstation_sessions.add(self)
 
+        if not reader_study.has_budget and not reader_study.is_editor(
+            self.creator
+        ):
+            return
+
         if reader_study.questions_with_interactive_algorithm.exists():
             preload_interactive_algorithms.execute_on_commit()
 

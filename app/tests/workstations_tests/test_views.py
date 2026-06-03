@@ -676,6 +676,48 @@ def test_session_create_reader_study_out_of_budget(client):
 
 
 @pytest.mark.django_db
+def test_session_create_for_out_of_budget_rs_does_not_preload_algorithms_or_create_endpoints(
+    client, django_capture_on_commit_callbacks, mocker
+):
+    editor = UserFactory()
+    ws = WorkstationFactory()
+    WorkstationImageFactory(
+        workstation=ws,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    reader_study = ReaderStudyFactory(workstation=ws, max_credits=0)
+    QuestionFactory(reader_study=reader_study)
+    reader_study.add_editor(editor)
+
+    assert (
+        not ReaderStudy.objects.with_has_budget()
+        .get(pk=reader_study.pk)
+        .has_budget
+    )
+    assert Session.objects.count() == 0
+
+    mock_preload_interactive_algs_task = mocker.patch(
+        "grandchallenge.components.tasks.preload_interactive_algorithms"
+    )
+    with django_capture_on_commit_callbacks():
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            viewname="workstations:workstation-session-create",
+            reverse_kwargs={"slug": ws.slug},
+            user=editor,
+            data={"region": "eu-central-1"},
+        )
+    assert response.status_code == 302
+    assert Session.objects.count() == 1
+    mock_preload_interactive_algs_task.assert_not_called()
+    session = Session.objects.first()
+    assert session.associated_endpoints.count() == 0
+
+
+@pytest.mark.django_db
 def test_session_create_display_set(
     client, django_capture_on_commit_callbacks
 ):
