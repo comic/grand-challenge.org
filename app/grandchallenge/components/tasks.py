@@ -1819,8 +1819,16 @@ def handle_endpoint_status_event(*, event: dict):
         endpoint.update_status(status=endpoint.StatusChoices.RUNNING)
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.stop_endpoint", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
+def stop_endpoint_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return stop_endpoint(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def stop_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
@@ -1849,11 +1857,7 @@ def stop_expired_endpoints(*, app_label: str, model_name: str):
     )
 
     for endpoint in endpoints_to_stop:
-        on_commit(
-            stop_endpoint.signature(
-                kwargs=endpoint.task_kwargs,
-            ).apply_async
-        )
+        stop_endpoint.execute_on_commit(**endpoint.task_kwargs)
 
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
