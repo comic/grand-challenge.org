@@ -419,8 +419,7 @@ class TestUpdateExternalEvaluation:
     ):
         settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = 0
 
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
+        settings.LAMBDA_TASKS_EAGER = True
 
         time.sleep(1)
         # reset notifications

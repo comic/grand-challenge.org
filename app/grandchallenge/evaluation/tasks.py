@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import Case, IntegerField, Value, When
 from django.db.transaction import on_commit
 from django.utils.timezone import now
+from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import AlgorithmModel, Job
@@ -608,8 +609,7 @@ def assign_submission_permissions(*, phase_pk: uuid.UUID):
         sub.assign_permissions()
 
 
-@acks_late_micro_short_task
-@transaction.atomic
+@lambda_task
 def cancel_external_evaluations_past_timeout():
     from grandchallenge.evaluation.models import Evaluation
 
@@ -620,7 +620,7 @@ def cancel_external_evaluations_past_timeout():
     for eval in Evaluation.objects.filter(
         status=Evaluation.CLAIMED,
         claimed_at__lt=timeout_threshold,
-    ).all():
+    ).iterator(chunk_size=1000):
         eval.update_status(
             status=Evaluation.CANCELLED,
             error_message="External evaluation timed out.",

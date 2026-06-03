@@ -6,7 +6,6 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.signing import BadSignature, Signer
 from django.db.models import Q
-from django.db.transaction import on_commit
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, UpdateView
@@ -224,15 +223,11 @@ class EmailPreferencesUpdate(
             return False
 
         if self.request.user.is_authenticated and user != self.request.user:
-            on_commit(
-                update_verification_user_set.signature(
-                    kwargs={
-                        "usernames": [
-                            self.request.user.username,
-                            user.username,
-                        ]
-                    }
-                ).apply_async
+            update_verification_user_set.execute_on_commit(
+                usernames=[
+                    self.request.user.username,
+                    user.username,
+                ]
             )
 
         return True

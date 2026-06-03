@@ -1,9 +1,9 @@
 from datetime import timedelta
-from math import ceil
 
 from django.conf import settings
 from django.db import models
-from django.db.models import Avg
+from django.db.models import Avg, Case, F, Value, When
+from django.db.models.functions import Ceil, Extract
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import JSONValidator
@@ -50,6 +50,24 @@ class SessionUtilization(UUIDModel):
             )
         ],
     )
+    credits_consumed = models.GeneratedField(
+        expression=Ceil(
+            Extract(F("duration"), lookup_name="epoch")
+            / Value(3600.0)
+            * Case(
+                When(
+                    interactive_algorithms=Value("[]"),
+                    then=Value(settings.WORKSTATIONS_SESSION_CREDITS_PER_HOUR),
+                ),
+                default=Value(
+                    settings.WORKSTATIONS_SESSION_INTERACTIVE_ALGORITHMS_CREDITS_PER_HOUR
+                ),
+                output_field=models.IntegerField(),
+            )
+        ),
+        output_field=models.IntegerField(),
+        db_persist=True,
+    )
 
     def save(self, *args, **kwargs) -> None:
         from grandchallenge.reader_studies.models import Question
@@ -71,21 +89,6 @@ class SessionUtilization(UUIDModel):
 
         if adding:
             self.reader_studies.set(reader_studies)
-
-    @property
-    def credits_per_hour(self):
-        if self.interactive_algorithms:
-            return (
-                settings.WORKSTATIONS_SESSION_INTERACTIVE_ALGORITHMS_CREDITS_PER_HOUR
-            )
-        else:
-            return settings.WORKSTATIONS_SESSION_CREDITS_PER_HOUR
-
-    @property
-    def credits_consumed(self):
-        return ceil(
-            self.duration.total_seconds() / 3600 * self.credits_per_hour
-        )
 
 
 class SessionUtilizationReaderStudy(models.Model):
@@ -127,6 +130,15 @@ class EndpointUtilization(UUIDModel):
         blank=True,
         help_text="Reader studies that used this endpoint",
     )
+    credits_consumed = models.GeneratedField(
+        expression=Case(
+            When(compute_cost_euro_millicents__isnull=True, then=Value(0)),
+            default=Ceil(F("compute_cost_euro_millicents") / Value(1000.0)),
+            output_field=models.IntegerField(),
+        ),
+        output_field=models.IntegerField(),
+        db_persist=True,
+    )
 
     class Meta:
         indexes = [
@@ -141,16 +153,6 @@ class EndpointUtilization(UUIDModel):
             self.algorithm = self.endpoint.algorithm_image.algorithm
 
         super().save(*args, **kwargs)
-
-    @property
-    def credits_consumed(self):
-        euro_millicents_per_credit = 1000
-        if self.compute_cost_euro_millicents is None:
-            return 0
-        else:
-            return ceil(
-                self.compute_cost_euro_millicents / euro_millicents_per_credit
-            )
 
 
 class EndpointUtilizationReaderStudy(models.Model):
@@ -176,6 +178,9 @@ class ComponentJobUtilizationManager(models.QuerySet):
 class ComponentJobUtilization(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+    invoice = models.ForeignKey(
+        "invoices.Invoice", null=True, on_delete=models.PROTECT
     )
     phase = models.ForeignKey(
         "evaluation.Phase", null=True, on_delete=models.SET_NULL
@@ -242,6 +247,7 @@ class JobWarmPoolUtilization(ComponentJobUtilization):
     def save(self, *args, **kwargs) -> None:
         if self._state.adding:
             self.creator_id = self.job.job_utilization.creator_id
+            self.invoice_id = self.job.job_utilization.invoice_id
             self.phase_id = self.job.job_utilization.phase_id
             self.challenge_id = self.job.job_utilization.challenge_id
             self.archive_id = self.job.job_utilization.archive_id

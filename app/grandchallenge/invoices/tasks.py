@@ -3,11 +3,9 @@ from django.core.mail import mail_managers
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils.timezone import now
+from lambda_tasks.decorators import lambda_task
 
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
+from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.invoices.emails import (
     send_challenge_invoice_issued_notification,
     send_challenge_invoice_overdue_reminder,
@@ -15,8 +13,7 @@ from grandchallenge.invoices.emails import (
 )
 
 
-@acks_late_2xlarge_task
-@transaction.atomic
+@lambda_task
 def send_challenge_invoice_overdue_reminder_emails():
     from grandchallenge.invoices.models import Invoice
 
@@ -36,8 +33,7 @@ def send_challenge_invoice_issued_notification_emails(*, pk):
     send_challenge_invoice_issued_notification(invoice)
 
 
-@acks_late_micro_short_task
-@transaction.atomic
+@lambda_task
 def send_open_invoices_email():
     from grandchallenge.invoices.models import Invoice
 
@@ -84,8 +80,7 @@ def send_open_invoices_email():
     )
 
 
-@acks_late_micro_short_task
-@transaction.atomic
+@lambda_task
 def send_post_paid_invoice_follow_up_emails():
     from grandchallenge.invoices.models import Invoice
 

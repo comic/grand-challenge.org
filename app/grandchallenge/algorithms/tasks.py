@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import F, Max
 from django.db.transaction import on_commit
 from django.utils import timezone
+from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -15,10 +16,7 @@ from grandchallenge.components.tasks import (
     provision_invocation_input_data,
     remove_container_image_from_registry,
 )
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
+from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.notifications.models import (
@@ -265,13 +263,13 @@ class ChallengeNameAndUrl(NamedTuple):
     get_absolute_url: str
 
 
-@acks_late_2xlarge_task
+@lambda_task
 def update_associated_challenges():
     from grandchallenge.algorithms.models import Algorithm
     from grandchallenge.challenges.models import Challenge
 
     challenge_list = {}
-    for algorithm in Algorithm.objects.all():
+    for algorithm in Algorithm.objects.iterator(chunk_size=1000):
         challenge_list[algorithm.pk] = [
             ChallengeNameAndUrl(
                 short_name=challenge.short_name,
@@ -302,8 +300,7 @@ def update_algorithm_average_duration(*, algorithm_pk):
     algorithm.save(update_fields=("average_duration",))
 
 
-@acks_late_2xlarge_task
-@transaction.atomic
+@lambda_task
 def deactivate_old_algorithm_images():
     from grandchallenge.algorithms.models import AlgorithmImage
 

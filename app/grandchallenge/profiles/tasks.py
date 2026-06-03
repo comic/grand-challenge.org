@@ -31,13 +31,16 @@ def deactivate_user(*, user_pk: int):
 @lambda_task
 def delete_users_who_dont_login():
     """Remove users who do not sign in after USER_LOGIN_TIMEOUT_DAYS"""
-    get_user_model().objects.exclude(
-        username=settings.ANONYMOUS_USER_NAME
-    ).filter(
-        last_login__isnull=True,
-        date_joined__lt=(
-            now() - timedelta(days=settings.USER_LOGIN_TIMEOUT_DAYS)
-        ),
-    ).only(
-        "pk"
-    ).delete()
+    deleted_count, _ = (
+        get_user_model()
+        .objects.exclude(username=settings.ANONYMOUS_USER_NAME)
+        .filter(
+            last_login__isnull=True,
+            date_joined__lt=(
+                now() - timedelta(days=settings.USER_LOGIN_TIMEOUT_DAYS)
+            ),
+        )
+        .only("pk")
+        .delete()
+    )
+    return deleted_count

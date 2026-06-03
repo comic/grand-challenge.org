@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.db.transaction import on_commit
 from django.utils.timezone import now
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
@@ -146,7 +145,7 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
         if (
             evaluation.claimed_at - now()
         ).seconds > settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS:
-            on_commit(cancel_external_evaluations_past_timeout.apply_async)
+            cancel_external_evaluations_past_timeout.execute_on_commit()
             return Response(
                 {"status": "The evaluation was not updated in time."},
                 status=400,

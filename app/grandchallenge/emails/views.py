@@ -6,7 +6,7 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.emails.forms import EmailBodyForm, EmailMetadataForm
-from grandchallenge.emails.models import Email
+from grandchallenge.emails.models import Email, EmailStatusChoices
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -34,7 +34,7 @@ class UnsentEmailRequiredMixin:
     def get_object(self, *args, **kwargs):
         obj = super().get_object(*args, **kwargs)
 
-        if obj.sent:
+        if obj.status != EmailStatusChoices.INITIALIZED:
             raise PermissionDenied
         else:
             return obj

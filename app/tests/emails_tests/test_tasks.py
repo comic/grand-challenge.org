@@ -8,11 +8,12 @@ from grandchallenge.emails.emails import (
     create_email_object,
     send_standard_email_batch,
 )
-from grandchallenge.emails.models import RawEmail
+from grandchallenge.emails.models import RawEmail, RawEmailStatusChoices
 from grandchallenge.emails.tasks import (
     cleanup_sent_raw_emails,
     get_receivers,
     send_bulk_email,
+    send_raw_email,
     send_raw_emails,
 )
 from grandchallenge.emails.utils import SendActionChoices
@@ -69,8 +70,7 @@ def test_get_receivers(factory, action):
 
 @pytest.mark.django_db
 def test_email_content(settings):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     email = EmailFactory(subject="Test email", body="Test content")
     u1, u2 = UserFactory.create_batch(2)
@@ -80,11 +80,17 @@ def test_email_content(settings):
 
     assert len(mail.outbox) == 0
 
+    email.status = email.EmailStatusChoices.QUEUED
+    email.save()
+
     send_bulk_email(action=SendActionChoices.MAILING_LIST, email_pk=email.pk)
 
     assert len(mail.outbox) == 2
+
     email.refresh_from_db()
-    assert email.sent
+
+    assert email.status == email.EmailStatusChoices.SUCCEEDED
+    assert email.sent_at is not None
 
     for m in mail.outbox:
         assert (
@@ -105,7 +111,9 @@ def test_email_content(settings):
 
     # check that email sending task is idempotent
     mail.outbox.clear()
+
     send_bulk_email(action=SendActionChoices.MAILING_LIST, email_pk=email.pk)
+
     assert len(mail.outbox) == 0
 
 
@@ -350,11 +358,11 @@ def test_can_email_notification_if_opted_in(opt_in_type):
 def test_cleanup_sent_raw_emails():
     e1, e2, e3 = RawEmailFactory.create_batch(3)
 
-    e1.sent_at = timezone.now()
+    e1.status = e1.RawEmailStatusChoices.SUCCEEDED
     e1.save()
 
-    e2.sent_at = timezone.now() - timezone.timedelta(days=8)
-    e2.created = e2.sent_at
+    e2.created = timezone.now() - timezone.timedelta(days=8)
+    e2.status = e2.RawEmailStatusChoices.SUCCEEDED
     e2.save()
 
     cleanup_sent_raw_emails()
@@ -363,17 +371,72 @@ def test_cleanup_sent_raw_emails():
 
 
 @pytest.mark.django_db
-def test_send_raw_emails(settings):
-    settings.DEBUG = True  # Do not connect to SQS
-
-    sent_at_time = timezone.now()
+def test_send_raw_emails(mocker, django_capture_on_commit_callbacks):
+    mocker.patch(
+        "grandchallenge.emails.tasks.get_max_emails_per_minute",
+        return_value=5,
+    )
 
     e1, e2 = RawEmailFactory.create_batch(2)
 
-    e1.sent_at = sent_at_time
+    e1.status = e1.RawEmailStatusChoices.SUCCEEDED
     e1.save()
 
-    send_raw_emails()
+    with django_capture_on_commit_callbacks() as callbacks:
+        send_raw_emails()
 
-    assert RawEmail.objects.filter(sent_at__isnull=True).count() == 0
-    assert RawEmail.objects.get(pk=e1.pk).sent_at == sent_at_time
+    e2.refresh_from_db()
+
+    assert e2.status == e2.RawEmailStatusChoices.QUEUED
+    assert (
+        RawEmail.objects.filter(
+            status=e2.RawEmailStatusChoices.INITIALIZED
+        ).count()
+        == 0
+    )
+    assert len(callbacks) == 1
+    assert (
+        repr(callbacks[0])
+        == f"<bound method SQSLambdaTask._execute of SQSLambdaTask(message=SQSLambdaTaskMessage(task_name='grandchallenge.emails.tasks.send_raw_email', kwargs={{'pk': UUID('{e2.pk}')}}, n_retries=0), delay=0, queue='default')>"
+    )
+
+
+@pytest.mark.django_db
+def test_send_raw_emails_limited(mocker, django_capture_on_commit_callbacks):
+    mocker.patch(
+        "grandchallenge.emails.tasks.get_max_emails_per_minute",
+        return_value=2,
+    )
+
+    RawEmailFactory.create_batch(3)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        send_raw_emails()
+
+    assert (
+        RawEmail.objects.filter(
+            status=RawEmailStatusChoices.INITIALIZED
+        ).count()
+        == 1
+    )
+    assert (
+        RawEmail.objects.filter(status=RawEmailStatusChoices.QUEUED).count()
+        == 2
+    )
+    assert len(callbacks) == 2
+
+
+@pytest.mark.django_db
+def test_send_raw_email(settings):
+    settings.DEBUG = True  # Do not connect to SQS
+
+    raw_email = RawEmailFactory()
+
+    raw_email.status = raw_email.RawEmailStatusChoices.QUEUED
+    raw_email.save()
+
+    send_raw_email(pk=raw_email.pk)
+
+    raw_email.refresh_from_db()
+
+    assert raw_email.status == raw_email.RawEmailStatusChoices.SUCCEEDED
