@@ -21,6 +21,7 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 
 from config.denylist import USERNAME_DENYLIST
+from config.lambda_tasks import LambdaTaskQueueChoices
 from config.sentry import sentry_before_send
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.core.utils import strtobool
@@ -979,7 +980,12 @@ else:
     CELERY_BROKER_URL = os.environ.get("BROKER_URL", f"{REDIS_ENDPOINT}/1")
 
 LAMBDA_TASKS_QUEUES = {
-    "default": os.environ.get("LAMBDA_TASKS_DEFAULT_QUEUE_URL"),
+    LambdaTaskQueueChoices.DEFAULT: os.environ.get(
+        "LAMBDA_TASKS_DEFAULT_QUEUE_URL"
+    ),
+    LambdaTaskQueueChoices.MEM8G: os.environ.get(
+        "LAMBDA_TASKS_MEM8G_QUEUE_URL"
+    ),
 }
 LAMBDA_TASKS_LOCAL_WORKERS = int(
     os.environ.get("LAMBDA_TASKS_LOCAL_WORKERS", "0")

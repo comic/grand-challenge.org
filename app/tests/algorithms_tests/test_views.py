@@ -989,6 +989,8 @@ class TestJobCreateView:
         settings.CELERY_TASK_ALWAYS_EAGER = True
         settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+        settings.LAMBDA_TASKS_EAGER = True
+
         # configure multiple inputs
         interface = AlgorithmInterfaceFactory(
             inputs=[
@@ -1100,6 +1102,8 @@ class TestJobCreateView:
     ):
         settings.CELERY_TASK_ALWAYS_EAGER = True
         settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+        settings.LAMBDA_TASKS_EAGER = True
 
         # configure multiple inputs
         interface = AlgorithmInterfaceFactory(

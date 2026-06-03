@@ -1917,19 +1917,23 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         raise NotImplementedError
 
     @property
+    def task_kwargs(self):
+        return {
+            "job_pk": self.pk,
+            "job_app_label": self._meta.app_label,
+            "job_model_name": self._meta.model_name,
+            "backend": settings.COMPONENTS_DEFAULT_BACKEND,
+        }
+
+    @property
     def signature_kwargs(self):
         return {
-            "kwargs": {
-                "job_pk": str(self.pk),
-                "job_app_label": self._meta.app_label,
-                "job_model_name": self._meta.model_name,
-                "backend": settings.COMPONENTS_DEFAULT_BACKEND,
-            },
+            "kwargs": self.task_kwargs,
             "immutable": True,
         }
 
     def execute(self):
-        on_commit(provision_job.signature(**self.signature_kwargs).apply_async)
+        provision_job.execute_on_commit(**self.task_kwargs)
 
     def execute_task_on_success(self):
         on_commit(

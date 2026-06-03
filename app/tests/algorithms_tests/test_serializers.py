@@ -201,6 +201,8 @@ def test_algorithm_job_post_serializer_create(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     # setup
     user = UserFactory()
     upload = RawImageUploadSessionFactory(creator=user)

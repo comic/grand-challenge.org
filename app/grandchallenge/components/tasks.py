@@ -32,6 +32,7 @@ from lambda_tasks.decorators import lambda_task
 from lambda_tasks.logging import task_logger
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
+from config.lambda_tasks import LambdaTaskQueueChoices
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
     DICOMImageSetUploadStatusChoices,
@@ -783,10 +784,24 @@ def lock_for_utilization_update(*, algorithm_image_pk):
         ).get()
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.provision_job", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
+def provision_job_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return provision_job(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+)
 def provision_job(
-    *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
+    *,
+    job_pk: str | uuid.UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,
 ):
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
 
@@ -1021,6 +1036,7 @@ def parse_job_outputs(
 
 
 @acks_late_micro_short_task(retry_on=(RetryStep,))
+@transaction.atomic
 def retry_task(
     *,
     job_pk: uuid.UUID,
@@ -1038,17 +1054,18 @@ def retry_task(
 
     executor.deprovision()
 
-    with transaction.atomic():
-        if job.attempt < 99:
-            job.status = job.PENDING
-            job.attempt += 1
-            job.save()
+    if job.attempt < 99:
+        job.status = job.PENDING
+        job.attempt += 1
+        job.save()
 
-            on_commit(
-                provision_job.signature(**job.signature_kwargs).apply_async
-            )
-        else:
-            raise RuntimeError("Maximum attempts exceeded")
+        provision_job.execute_on_commit(**job.task_kwargs)
+    else:
+        job.update_status(
+            status=job.FAILURE,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+        )
+        task_logger.error("Maximum attempts exceeded")
 
 
 @acks_late_micro_short_task(retry_on=(RetryStep,))
