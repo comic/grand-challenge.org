@@ -1651,11 +1651,7 @@ class Endpoint(FieldChangeMixin, UUIDModel):
             self.assign_permissions()
             if self.creator:
                 self.viewers_group.user_set.add(self.creator)
-            on_commit(
-                start_endpoint.signature(
-                    kwargs=self.task_kwargs,
-                ).apply_async
-            )
+            start_endpoint.execute_on_commit(**self.task_kwargs)
             EndpointUtilization.objects.create(endpoint=self)
 
         if (

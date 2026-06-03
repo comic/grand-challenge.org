@@ -4,13 +4,13 @@ import json
 import shlex
 import subprocess
 import tarfile
-import uuid
 import zlib
 from base64 import b64decode, b64encode
 from binascii import hexlify
 from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from uuid import UUID
 
 import boto3
 from billiard.exceptions import (
@@ -22,7 +22,6 @@ from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import Count, DateTimeField, ExpressionWrapper, F, Q
 from django.db.transaction import on_commit
@@ -51,10 +50,9 @@ from grandchallenge.components.emails import (
     send_docker_not_made_active,
     send_invalid_dockerfile_email,
 )
-from grandchallenge.components.exceptions import InstanceInUse, PriorStepFailed
+from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.core.celery import (
-    _retry,
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
@@ -70,8 +68,14 @@ from grandchallenge.uploads.models import UserUpload
 logger = get_task_logger(__name__)
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.update_all_container_image_shims")
 @transaction.atomic
+def update_all_container_image_shims_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_all_container_image_shims(**kwargs)
+
+
+@lambda_task
 def update_all_container_image_shims():
     """Updates existing images to new versions of sagemaker shim"""
     for app_label, model_name in (
@@ -83,20 +87,23 @@ def update_all_container_image_shims():
         for instance in model.objects.executable_images().exclude(
             latest_shimmed_version=settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
         ):
-            on_commit(
-                update_container_image_shim.signature(
-                    kwargs={
-                        "pk": str(instance.pk),
-                        "app_label": instance._meta.app_label,
-                        "model_name": instance._meta.model_name,
-                    }
-                ).apply_async
+            update_container_image_shim.execute_on_commit(
+                pk=instance.pk,
+                app_label=instance._meta.app_label,
+                model_name=instance._meta.model_name,
             )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.assign_docker_image_from_upload")
+@transaction.atomic
+def assign_docker_image_from_upload_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return assign_docker_image_from_upload(**kwargs)
+
+
+@lambda_task
 def assign_docker_image_from_upload(
-    *, pk: uuid.UUID, app_label: str, model_name: str
+    *, pk: str | UUID, app_label: str, model_name: str
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
@@ -108,7 +115,7 @@ def assign_docker_image_from_upload(
 
 @acks_late_2xlarge_task
 def validate_docker_image(  # noqa C901
-    *, pk: uuid.UUID, app_label: str, model_name: str, mark_as_desired: bool
+    *, pk: str | UUID, app_label: str, model_name: str, mark_as_desired: bool
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
@@ -141,7 +148,7 @@ def validate_docker_image(  # noqa C901
 
 @acks_late_2xlarge_task
 def upload_to_registry_and_sagemaker(
-    *, pk: uuid.UUID, app_label: str, model_name: str, mark_as_desired: bool
+    *, pk: str | UUID, app_label: str, model_name: str, mark_as_desired: bool
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
@@ -181,10 +188,17 @@ def upload_to_registry_and_sagemaker(
             )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.update_container_image_shim")
+@transaction.atomic
+def update_container_image_shim_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_container_image_shim(**kwargs)
+
+
+@lambda_task
 def update_container_image_shim(
     *,
-    pk: uuid.UUID,
+    pk: str | UUID,
     app_label: str,
     model_name: str,
 ):
@@ -228,14 +242,10 @@ def remove_inactive_container_images():
                 queryset = queryset.exclude(pk=instance.active_image.pk)
 
             for image in queryset:
-                on_commit(
-                    remove_container_image_from_registry.signature(
-                        kwargs={
-                            "pk": image.pk,
-                            "app_label": image._meta.app_label,
-                            "model_name": image._meta.model_name,
-                        }
-                    ).apply_async
+                remove_container_image_from_registry.execute_on_commit(
+                    pk=image.pk,
+                    app_label=image._meta.app_label,
+                    model_name=image._meta.model_name,
                 )
 
 
@@ -251,14 +261,10 @@ def delete_failed_import_container_images():
             is_removed=False,
             import_status=ComponentImage.ImportStatusChoices.FAILED,
         ).iterator(chunk_size=1000):
-            on_commit(
-                delete_container_image.signature(
-                    kwargs={
-                        "pk": image.pk,
-                        "app_label": image._meta.app_label,
-                        "model_name": image._meta.model_name,
-                    }
-                ).apply_async
+            delete_container_image.execute_on_commit(
+                pk=image.pk,
+                app_label=image._meta.app_label,
+                model_name=image._meta.model_name,
             )
 
 
@@ -294,20 +300,25 @@ def delete_old_unsuccessful_container_images():
 
     for queryset in querysets:
         for image in queryset.iterator(chunk_size=1000):
-            on_commit(
-                delete_container_image.signature(
-                    kwargs={
-                        "pk": image.pk,
-                        "app_label": image._meta.app_label,
-                        "model_name": image._meta.model_name,
-                    }
-                ).apply_async
+            delete_container_image.execute_on_commit(
+                pk=image.pk,
+                app_label=image._meta.app_label,
+                model_name=image._meta.model_name,
             )
 
 
-@acks_late_2xlarge_task(ignore_errors=(InstanceInUse,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.remove_container_image_from_registry"
+)
+@transaction.atomic
+def remove_container_image_from_registry_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return remove_container_image_from_registry(**kwargs)
+
+
+@lambda_task
 def remove_container_image_from_registry(
-    *, pk: uuid.UUID, app_label: str, model_name: str
+    *, pk: str | UUID, app_label: str, model_name: str
 ):
     """Remove a container image from the registry"""
     model = apps.get_model(app_label=app_label, model_name=model_name)
@@ -348,7 +359,8 @@ def remove_container_image_from_registry(
         raise RuntimeError("Unknown instance type")
 
     if instance_in_use:
-        raise InstanceInUse
+        # Nothing to do
+        return
 
     if instance.latest_shimmed_version:
         remove_tag_from_registry(repo_tag=instance.shimmed_repo_tag)
@@ -363,8 +375,15 @@ def remove_container_image_from_registry(
         instance.save()
 
 
-@acks_late_2xlarge_task(ignore_errors=(InstanceInUse,))
-def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
+@acks_late_2xlarge_task(name=f"{__name__}.delete_container_image")
+@transaction.atomic
+def delete_container_image_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return delete_container_image(**kwargs)
+
+
+@lambda_task
+def delete_container_image(*, pk: str | UUID, app_label: str, model_name: str):
     from grandchallenge.algorithms.models import AlgorithmImage, Job
     from grandchallenge.components.models import ComponentImage
     from grandchallenge.evaluation.models import Evaluation, Method
@@ -397,7 +416,8 @@ def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
         raise RuntimeError("Unknown instance type")
 
     if should_be_protected:
-        raise InstanceInUse
+        # Nothing to do
+        return
 
     if instance.image:
         instance.image.delete(save=False)
@@ -784,21 +804,12 @@ def lock_for_utilization_update(*, algorithm_image_pk):
         ).get()
 
 
-@acks_late_2xlarge_task(
-    name=f"{__name__}.provision_job", retry_on=(LockNotAcquiredException,)
-)
-@transaction.atomic
-def provision_job_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return provision_job(**kwargs)
-
-
 @lambda_task(
     queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
 )
 def provision_job(
     *,
-    job_pk: str | uuid.UUID,
+    job_pk: str | UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
@@ -834,13 +845,22 @@ def provision_job(
         logger.error("Could not provision job", exc_info=True)
     else:
         job.update_status(status=job.PROVISIONED)
-        on_commit(execute_job.signature(**job.signature_kwargs).apply_async)
+        execute_job.execute_on_commit(**job.task_kwargs)
 
 
-@acks_late_micro_short_task(retry_on=(RetryStep,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.execute_job", retry_on=(RetryStep,)
+)
+@transaction.atomic
+def execute_job_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return execute_job(**kwargs)
+
+
+@lambda_task(retry_on=(RetryStep,), retry_delay=120)
 def execute_job(
     *,
-    job_pk: uuid.UUID,
+    job_pk: str | UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
@@ -862,9 +882,7 @@ def execute_job(
     if job.status == job.PROVISIONED:
         job.update_status(status=job.EXECUTING)
     else:
-        on_commit(
-            deprovision_job.signature(**job.signature_kwargs).apply_async
-        )
+        deprovision_job.execute_on_commit(**job.task_kwargs)
         raise PriorStepFailed("Job is not set to be executed")
 
     if not job.container.can_execute:
@@ -969,9 +987,7 @@ def handle_event(*, event: dict, backend: str):
         raise
     except RetryTask:
         job.update_status(status=job.PROVISIONED)
-        _retry(
-            task=retry_task, signature_kwargs=job.signature_kwargs, retries=0
-        )
+        retry_task.execute_on_commit(**job.task_kwargs)
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
@@ -991,15 +1007,27 @@ def handle_event(*, event: dict, backend: str):
             status=job.EXECUTED,
             **get_update_status_kwargs(executor=executor),
         )
-        on_commit(
-            parse_job_outputs.signature(**job.signature_kwargs).apply_async
-        )
+        parse_job_outputs.execute_on_commit(**job.task_kwargs)
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.parse_job_outputs", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
+def parse_job_outputs_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return parse_job_outputs(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+)
 def parse_job_outputs(
-    *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
+    *,
+    job_pk: str | UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,
 ):
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
 
@@ -1035,11 +1063,19 @@ def parse_job_outputs(
         job.update_status(status=job.SUCCESS)
 
 
-@acks_late_micro_short_task(retry_on=(RetryStep,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.retry_task", retry_on=(RetryStep,)
+)
 @transaction.atomic
+def retry_task_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return retry_task(**kwargs)
+
+
+@lambda_task(retry_on=(RetryStep,))
 def retry_task(
     *,
-    job_pk: uuid.UUID,
+    job_pk: str | UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
@@ -1068,10 +1104,19 @@ def retry_task(
         task_logger.error("Maximum attempts exceeded")
 
 
-@acks_late_micro_short_task(retry_on=(RetryStep,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.deprovision_job", retry_on=(RetryStep,)
+)
+@transaction.atomic
+def deprovision_job_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return deprovision_job(**kwargs)
+
+
+@lambda_task(retry_on=(RetryStep,))
 def deprovision_job(
     *,
-    job_pk: uuid.UUID,
+    job_pk: str | UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
@@ -1084,13 +1129,25 @@ def deprovision_job(
 
 
 @acks_late_micro_short_task(
+    name=f"{__name__}.start_service",
+    retry_on=(
+        LockNotAcquiredException,
+        RetryStep,
+    ),
+)
+@transaction.atomic
+def start_service_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return start_service(**kwargs)
+
+
+@lambda_task(
     retry_on=(
         LockNotAcquiredException,
         RetryStep,
     )
 )
-@transaction.atomic
-def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+def start_service(*, pk: str | UUID, app_label: str, model_name: str):
     """
     Starts the service on ECS.
 
@@ -1141,16 +1198,20 @@ def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
         service.full_clean()
         service.save()
 
-        on_commit(
-            update_service.signature(
-                kwargs=service.task_kwargs,
-            ).apply_async
-        )
+        update_service.execute_on_commit(**service.task_kwargs)
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.update_service", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
-def update_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+def update_service_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_service(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def update_service(*, pk: str | UUID, app_label: str, model_name: str):
     """
     Update the host and ports from ECS
 
@@ -1192,9 +1253,17 @@ def update_service(*, pk: uuid.UUID, app_label: str, model_name: str):
         service.save()
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.stop_service", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
-def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+def stop_service_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return stop_service(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def stop_service(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     with check_lock_acquired():
@@ -1228,11 +1297,7 @@ def stop_expired_services(*, app_label: str, model_name: str):
     )
 
     for service in services_to_stop:
-        on_commit(
-            stop_service.signature(
-                kwargs=service.task_kwargs,
-            ).apply_async
-        )
+        stop_service.execute_on_commit(**service.task_kwargs)
 
 
 class InteractiveAlgorithmLambda:
@@ -1359,24 +1424,6 @@ def preload_interactive_algorithms():
         )
 
     return consolidation_results
-
-
-@acks_late_2xlarge_task
-@transaction.atomic
-def civ_value_to_file(*, civ_pk):
-    from grandchallenge.components.models import ComponentInterfaceValue
-
-    civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
-
-    if civ.file:
-        raise RuntimeError("CIV file is not None")
-
-    civ.file = ContentFile(
-        json.dumps(civ.value).encode("utf-8"),
-        name=Path(civ.interface.relative_path).name,
-    )
-    civ.value = None
-    civ.save()
 
 
 @acks_late_micro_short_task(
@@ -1598,10 +1645,23 @@ def add_file_to_object(
         logger.info("No linked task, task complete")
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.assign_tarball_from_upload",
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
+def assign_tarball_from_upload_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return assign_tarball_from_upload(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def assign_tarball_from_upload(
-    *, app_label, model_name, tarball_pk, field_to_copy
+    *,
+    app_label: str,
+    model_name: str,
+    tarball_pk: str | UUID,
+    field_to_copy: str,
 ):
     from grandchallenge.components.models import ImportStatusChoices
 
@@ -1667,9 +1727,17 @@ def get_object_checksum(file_field):
         return ""
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.start_endpoint", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
-def start_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
+def start_endpoint_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return start_endpoint(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def start_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     """
     Starts the endpoint on Sagemaker.
 
@@ -1751,9 +1819,17 @@ def handle_endpoint_status_event(*, event: dict):
         endpoint.update_status(status=endpoint.StatusChoices.RUNNING)
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.stop_endpoint", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
-def stop_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
+def stop_endpoint_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return stop_endpoint(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def stop_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     with check_lock_acquired():
@@ -1781,17 +1857,22 @@ def stop_expired_endpoints(*, app_label: str, model_name: str):
     )
 
     for endpoint in endpoints_to_stop:
-        on_commit(
-            stop_endpoint.signature(
-                kwargs=endpoint.task_kwargs,
-            ).apply_async
-        )
+        stop_endpoint.execute_on_commit(**endpoint.task_kwargs)
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.provision_invocation_input_data",
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
+def provision_invocation_input_data_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return provision_invocation_input_data(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def provision_invocation_input_data(
-    *, pk: uuid.UUID, app_label: str, model_name: str
+    *, pk: str | UUID, app_label: str, model_name: str
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
@@ -1831,16 +1912,20 @@ def provision_invocation_input_data(
     else:
         invocation.update_status(status=invocation.StatusChoices.PROVISIONED)
 
-        on_commit(
-            invoke_endpoint.signature(
-                kwargs=invocation.task_kwargs,
-            ).apply_async
-        )
+        invoke_endpoint.execute_on_commit(**invocation.task_kwargs)
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.invoke_endpoint", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
-def invoke_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
+def invoke_endpoint_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return invoke_endpoint(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def invoke_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     with check_lock_acquired():
@@ -1922,17 +2007,26 @@ def handle_endpoint_invocation_event(*, event: dict):
             invoke_duration=orchestrator.invoke_duration,
             # TODO: set stdout, stderr and runtime metrics
         )
-        on_commit(
-            parse_endpoint_invocation_outputs.signature(
-                kwargs=invocation.task_kwargs,
-            ).apply_async
+        parse_endpoint_invocation_outputs.execute_on_commit(
+            **invocation.task_kwargs
         )
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.parse_endpoint_invocation_outputs",
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
+def parse_endpoint_invocation_outputs_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return parse_endpoint_invocation_outputs(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+)
 def parse_endpoint_invocation_outputs(
-    *, pk: uuid.UUID, app_label: str, model_name: str
+    *, pk: str | UUID, app_label: str, model_name: str
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 

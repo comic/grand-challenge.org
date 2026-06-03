@@ -1925,27 +1925,16 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "backend": settings.COMPONENTS_DEFAULT_BACKEND,
         }
 
-    @property
-    def signature_kwargs(self):
-        return {
-            "kwargs": self.task_kwargs,
-            "immutable": True,
-        }
-
     def execute(self):
         provision_job.execute_on_commit(**self.task_kwargs)
 
     def execute_task_on_success(self):
-        on_commit(
-            deprovision_job.signature(**self.signature_kwargs).apply_async
-        )
+        deprovision_job.execute_on_commit(**self.task_kwargs)
         if self.task_on_success:
             on_commit(signature(self.task_on_success).apply_async)
 
     def execute_task_on_failure(self):
-        on_commit(
-            deprovision_job.signature(**self.signature_kwargs).apply_async
-        )
+        deprovision_job.execute_on_commit(**self.task_kwargs)
         if self.task_on_failure:
             on_commit(signature(self.task_on_failure).apply_async)
 
@@ -2261,14 +2250,10 @@ class ComponentImage(FieldChangeMixin, models.Model):
             )
 
     def assign_docker_image_from_upload(self):
-        on_commit(
-            assign_docker_image_from_upload.signature(
-                kwargs={
-                    "app_label": self._meta.app_label,
-                    "model_name": self._meta.model_name,
-                    "pk": self.pk,
-                }
-            ).apply_async
+        assign_docker_image_from_upload.execute_on_commit(
+            app_label=self._meta.app_label,
+            model_name=self._meta.model_name,
+            pk=self.pk,
         )
 
     def get_peer_images(self):

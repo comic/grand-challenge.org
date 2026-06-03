@@ -7,8 +7,7 @@ from tests.factories import SessionFactory, UserFactory
 def test_session_stopped_on_user_logout(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     u1, u2 = UserFactory.create_batch(2)
 

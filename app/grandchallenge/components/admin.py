@@ -1,6 +1,5 @@
 import humanize
 from django.contrib import admin
-from django.db.transaction import on_commit
 
 from grandchallenge.components.models import (
     ComponentImage,
@@ -185,6 +184,4 @@ def cancel_jobs(modeladmin, request, queryset):
 )
 def deprovision_jobs(modeladmin, request, queryset):
     for job in queryset:
-        on_commit(
-            deprovision_job.signature(**job.signature_kwargs).apply_async
-        )
+        deprovision_job.execute_on_commit(**job.task_kwargs)

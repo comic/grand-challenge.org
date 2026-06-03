@@ -6,7 +6,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F, Max
-from django.db.transaction import on_commit
 from django.utils import timezone
 from lambda_tasks.decorators import lambda_task
 
@@ -314,14 +313,10 @@ def deactivate_old_algorithm_images():
     )
 
     for image in images_to_remove:
-        on_commit(
-            remove_container_image_from_registry.signature(
-                kwargs={
-                    "pk": image.pk,
-                    "app_label": AlgorithmImage._meta.app_label,
-                    "model_name": AlgorithmImage._meta.model_name,
-                }
-            ).apply_async
+        remove_container_image_from_registry.execute_on_commit(
+            pk=image.pk,
+            app_label=AlgorithmImage._meta.app_label,
+            model_name=AlgorithmImage._meta.model_name,
         )
 
 
@@ -346,8 +341,4 @@ def execute_invocation_for_inputs(*, invocation_pk):
 
     invocation.update_status(status=Invocation.StatusChoices.QUEUED)
 
-    on_commit(
-        provision_invocation_input_data.signature(
-            kwargs=invocation.task_kwargs
-        ).apply_async
-    )
+    provision_invocation_input_data.execute_on_commit(**invocation.task_kwargs)

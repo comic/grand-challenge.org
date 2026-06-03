@@ -17,7 +17,6 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import Count, Exists, Max, OuterRef, Q
-from django.db.transaction import on_commit
 from django.forms import (
     Form,
     HiddenInput,
@@ -978,16 +977,11 @@ class AlgorithmModelForm(SaveFormInitMixin, ModelForm):
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
-        on_commit(
-            assign_tarball_from_upload.signature(
-                kwargs={
-                    "app_label": instance._meta.app_label,
-                    "model_name": instance._meta.model_name,
-                    "tarball_pk": instance.pk,
-                    "field_to_copy": "model",
-                },
-                immutable=True,
-            ).apply_async
+        assign_tarball_from_upload.execute_on_commit(
+            app_label=instance._meta.app_label,
+            model_name=instance._meta.model_name,
+            tarball_pk=instance.pk,
+            field_to_copy="model",
         )
         return instance
 

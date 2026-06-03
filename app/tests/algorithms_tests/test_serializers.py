@@ -732,6 +732,8 @@ def test_invocation_post_serializer_create(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     user = UserFactory()
     request.user = user
     endpoint = EndpointFactory.create(

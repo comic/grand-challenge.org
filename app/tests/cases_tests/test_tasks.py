@@ -563,6 +563,8 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     obj = AlgorithmJobFactory(time_limit=10)
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.DICOM_IMAGE_SET)
     di_upload = DICOMImageSetUploadFactory(

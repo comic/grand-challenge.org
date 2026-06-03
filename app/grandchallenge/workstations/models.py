@@ -14,7 +14,6 @@ from django.core.validators import (
 )
 from django.db import models
 from django.db.models.signals import post_delete
-from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
@@ -601,17 +600,9 @@ class Session(FieldChangeMixin, UUIDModel):
 
         if created:
             self.assign_permissions()
-            on_commit(
-                start_service.signature(
-                    kwargs=self.task_kwargs,
-                ).apply_async
-            )
+            start_service.execute_on_commit(**self.task_kwargs)
         elif self.user_finished and self.status != self.STOPPED:
-            on_commit(
-                stop_service.signature(
-                    kwargs=self.task_kwargs,
-                ).apply_async
-            )
+            stop_service.execute_on_commit(**self.task_kwargs)
 
         if self.has_changed("status") and self.status == self.STOPPED:
             self.handle_session_stopped()
@@ -689,11 +680,7 @@ class Session(FieldChangeMixin, UUIDModel):
         )
 
         for endpoint in self.associated_endpoints:
-            on_commit(
-                stop_endpoint.signature(
-                    kwargs=endpoint.task_kwargs,
-                ).apply_async
-            )
+            stop_endpoint.execute_on_commit(**endpoint.task_kwargs)
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):
