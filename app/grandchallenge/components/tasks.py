@@ -4,13 +4,13 @@ import json
 import shlex
 import subprocess
 import tarfile
-import uuid
 import zlib
 from base64 import b64decode, b64encode
 from binascii import hexlify
 from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from uuid import UUID
 
 import boto3
 from billiard.exceptions import (
@@ -105,7 +105,7 @@ def assign_docker_image_from_upload_celery(**kwargs):
 
 @lambda_task
 def assign_docker_image_from_upload(
-    *, pk: str | uuid.UUID, app_label: str, model_name: str
+    *, pk: str | UUID, app_label: str, model_name: str
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
@@ -117,7 +117,7 @@ def assign_docker_image_from_upload(
 
 @acks_late_2xlarge_task
 def validate_docker_image(  # noqa C901
-    *, pk: uuid.UUID, app_label: str, model_name: str, mark_as_desired: bool
+    *, pk: str | UUID, app_label: str, model_name: str, mark_as_desired: bool
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
@@ -150,7 +150,7 @@ def validate_docker_image(  # noqa C901
 
 @acks_late_2xlarge_task
 def upload_to_registry_and_sagemaker(
-    *, pk: uuid.UUID, app_label: str, model_name: str, mark_as_desired: bool
+    *, pk: str | UUID, app_label: str, model_name: str, mark_as_desired: bool
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
@@ -200,7 +200,7 @@ def update_container_image_shim_celery(**kwargs):
 @lambda_task
 def update_container_image_shim(
     *,
-    pk: str | uuid.UUID,
+    pk: str | UUID,
     app_label: str,
     model_name: str,
 ):
@@ -320,7 +320,7 @@ def remove_container_image_from_registry_celery(**kwargs):
 
 @lambda_task
 def remove_container_image_from_registry(
-    *, pk: str | uuid.UUID, app_label: str, model_name: str
+    *, pk: str | UUID, app_label: str, model_name: str
 ):
     """Remove a container image from the registry"""
     model = apps.get_model(app_label=app_label, model_name=model_name)
@@ -385,7 +385,7 @@ def delete_container_image_celery(**kwargs):
 
 
 @lambda_task
-def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
+def delete_container_image(*, pk: str | UUID, app_label: str, model_name: str):
     from grandchallenge.algorithms.models import AlgorithmImage, Job
     from grandchallenge.components.models import ComponentImage
     from grandchallenge.evaluation.models import Evaluation, Method
@@ -820,7 +820,7 @@ def provision_job_celery(**kwargs):
 )
 def provision_job(
     *,
-    job_pk: str | uuid.UUID,
+    job_pk: str | UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
@@ -862,7 +862,7 @@ def provision_job(
 @acks_late_micro_short_task(retry_on=(RetryStep,))
 def execute_job(
     *,
-    job_pk: uuid.UUID,
+    job_pk: str | UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
@@ -1021,7 +1021,11 @@ def handle_event(*, event: dict, backend: str):
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def parse_job_outputs(
-    *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
+    *,
+    job_pk: str | UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,
 ):
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
 
@@ -1061,7 +1065,7 @@ def parse_job_outputs(
 @transaction.atomic
 def retry_task(
     *,
-    job_pk: uuid.UUID,
+    job_pk: str | UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
@@ -1093,7 +1097,7 @@ def retry_task(
 @acks_late_micro_short_task(retry_on=(RetryStep,))
 def deprovision_job(
     *,
-    job_pk: uuid.UUID,
+    job_pk: str | UUID,
     job_app_label: str,
     job_model_name: str,
     backend: str,
@@ -1112,7 +1116,7 @@ def deprovision_job(
     )
 )
 @transaction.atomic
-def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+def start_service(*, pk: str | UUID, app_label: str, model_name: str):
     """
     Starts the service on ECS.
 
@@ -1172,7 +1176,7 @@ def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
-def update_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+def update_service(*, pk: str | UUID, app_label: str, model_name: str):
     """
     Update the host and ports from ECS
 
@@ -1216,7 +1220,7 @@ def update_service(*, pk: uuid.UUID, app_label: str, model_name: str):
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
-def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+def stop_service(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     with check_lock_acquired():
@@ -1691,7 +1695,7 @@ def get_object_checksum(file_field):
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
-def start_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
+def start_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     """
     Starts the endpoint on Sagemaker.
 
@@ -1775,7 +1779,7 @@ def handle_endpoint_status_event(*, event: dict):
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
-def stop_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
+def stop_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     with check_lock_acquired():
@@ -1813,7 +1817,7 @@ def stop_expired_endpoints(*, app_label: str, model_name: str):
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def provision_invocation_input_data(
-    *, pk: uuid.UUID, app_label: str, model_name: str
+    *, pk: str | UUID, app_label: str, model_name: str
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
@@ -1862,7 +1866,7 @@ def provision_invocation_input_data(
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
-def invoke_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
+def invoke_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     with check_lock_acquired():
@@ -1954,7 +1958,7 @@ def handle_endpoint_invocation_event(*, event: dict):
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def parse_endpoint_invocation_outputs(
-    *, pk: uuid.UUID, app_label: str, model_name: str
+    *, pk: str | UUID, app_label: str, model_name: str
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
