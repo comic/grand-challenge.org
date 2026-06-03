@@ -6,6 +6,7 @@ from pathlib import Path
 from shutil import rmtree
 from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory
+from uuid import UUID
 
 import boto3
 import botocore.exceptions
@@ -29,6 +30,7 @@ from lambda_tasks.decorators import lambda_task
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from panimg_models import ImageBuilderOptions, PanImgResult
 
+from config.lambda_tasks import LambdaTaskQueueChoices
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
     DICOMImageSetUploadStatusChoices,
@@ -462,9 +464,20 @@ def _handle_raw_files(
     }
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.execute_post_process_image_task",
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
-def execute_post_process_image_task(*, post_process_image_task_pk):
+def execute_post_process_image_task_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return execute_post_process_image_task(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+)
+def execute_post_process_image_task(*, post_process_image_task_pk: str | UUID):
     with check_lock_acquired():
         task = PostProcessImageTask.objects.select_for_update(nowait=True).get(
             pk=post_process_image_task_pk

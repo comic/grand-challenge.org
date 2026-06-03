@@ -20,6 +20,8 @@ def test_image_file_creation(settings, django_capture_on_commit_callbacks):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     images = [
         "image10x10x10.zraw",
         "image10x10x10.mhd",
@@ -201,6 +203,8 @@ def test_check_compressed_and_extract_same_name(
 def test_build_zip_file(settings, django_capture_on_commit_callbacks):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     # valid.zip contains a tarred version of the dicom folder,
     # image10x10x10.[mha,mhd,zraw] and valid_tiff.tiff

@@ -938,10 +938,8 @@ class PostProcessImageTask(UUIDModel):
                 execute_post_process_image_task,
             )
 
-            on_commit(
-                execute_post_process_image_task.signature(
-                    kwargs={"post_process_image_task_pk": self.pk}
-                ).apply_async
+            execute_post_process_image_task.execute_on_commit(
+                post_process_image_task_pk=self.pk
             )
 
 
