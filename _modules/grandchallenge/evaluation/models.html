@@ -1700,7 +1700,7 @@
                     <span class="n">send_action</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                 <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">additional_inputs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">additional_inputs</span><span class="p">,</span> <span class="n">invoice</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">additional_evaluation_inputs</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="n">additional_inputs</span>
@@ -1761,6 +1761,8 @@
                 <span class="n">requires_memory_gb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_requires_memory_gb</span><span class="p">,</span>
                 <span class="n">status</span><span class="o">=</span><span class="n">Evaluation</span><span class="o">.</span><span class="n">VALIDATING_INPUTS</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="n">evaluation</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">invoice</span> <span class="o">=</span> <span class="n">invoice</span>
+            <span class="n">evaluation</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_matching_algorithm_interfaces</span><span class="p">:</span>
