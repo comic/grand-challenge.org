@@ -535,6 +535,8 @@ def test_api_archive_item_add_and_update_image(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     archive = ArchiveFactory()
     editor = UserFactory()
     archive.add_editor(editor)
@@ -911,6 +913,8 @@ def test_archive_item_add_image(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     archive = ArchiveFactory()
     item = ArchiveItemFactory(archive=archive)
     editor = UserFactory()
@@ -1176,6 +1180,8 @@ def test_archive_item_create_view(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     archive = ArchiveFactory()
     editor = UserFactory()
@@ -1456,6 +1462,8 @@ def test_archive_item_upload_corrupt_image(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     editor = UserFactory()
     archive = ArchiveFactory()

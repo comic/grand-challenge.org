@@ -24,6 +24,8 @@ def test_upload_some_images(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     user = UserFactory()
 
     # Use reader studies as this uses UploadRawImagesForm

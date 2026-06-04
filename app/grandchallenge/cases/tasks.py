@@ -6,6 +6,7 @@ from pathlib import Path
 from shutil import rmtree
 from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory
+from uuid import UUID
 
 import boto3
 import botocore.exceptions
@@ -13,7 +14,6 @@ from billiard.exceptions import (
     SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
 )
 from botocore.exceptions import ClientError
-from celery import signature
 from celery.utils.log import get_task_logger
 from django.apps import apps
 from django.conf import settings
@@ -26,9 +26,15 @@ from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.models import SQSLambdaTask
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from panimg_models import ImageBuilderOptions, PanImgResult
 
+from config.lambda_tasks import (
+    LONG_TASK_HARD_TIMEOUT,
+    LONG_TASK_SOFT_TIMEOUT,
+    LambdaTaskQueueChoices,
+)
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
     DICOMImageSetUploadStatusChoices,
@@ -112,16 +118,29 @@ def extract_files(*, source_path: Path, checked_paths=None):
         )
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.build_images", retry_on=(LockNotAcquiredException,)
+)
 @transaction.atomic
+def build_images_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return build_images(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=LONG_TASK_HARD_TIMEOUT,
+)
 def build_images(  # noqa:C901
     *,
-    upload_session_pk,
-    linked_app_label,
-    linked_model_name,
-    linked_object_pk,
-    linked_interface_slug,
-    linked_task,
+    upload_session_pk: str | UUID,
+    linked_app_label: str | None,
+    linked_model_name: str | None,
+    linked_object_pk: str | UUID | None,
+    linked_interface_slug: str | None,
+    linked_task: dict | None,
 ):
     """
     Task which analyzes an upload session and attempts to extract and store
@@ -229,7 +248,7 @@ def build_images(  # noqa:C901
 
         if linked_task is not None:
             logger.info("Scheduling linked task")
-            on_commit(signature(linked_task).apply_async)
+            SQSLambdaTask.model_validate(linked_task).execute_on_commit()
         else:
             logger.info("No linked task, task complete")
     else:

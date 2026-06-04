@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 from unittest.mock import patch
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from botocore.exceptions import ClientError
@@ -9,6 +9,7 @@ from django.db import IntegrityError
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
+from lambda_tasks.decorators import lambda_task
 from panimg_models import ImageType, PanImgFile, PostProcessorResult
 
 from grandchallenge.cases.models import (
@@ -19,6 +20,7 @@ from grandchallenge.cases.models import (
     JobSummary,
     PostProcessImageTask,
     PostProcessImageTaskStatusChoices,
+    UploadSessionCompleteTask,
 )
 from grandchallenge.cases.tasks import (
     _check_post_processor_result,
@@ -41,28 +43,34 @@ from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import ImageFactory
 from tests.utils import create_raw_upload_image_session
 
+LOCAL_LINKED_TASK_CALLED = {}
+
+
+@lambda_task
+def local_linked_task(*, upload_session_pk: str | UUID):
+    global LOCAL_LINKED_TASK_CALLED
+    LOCAL_LINKED_TASK_CALLED.update(upload_session_pk=upload_session_pk)
+
 
 @pytest.mark.django_db
 def test_linked_task_called_with_session_pk(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
-    called = {}
-
-    @acks_late_micro_short_task
-    def local_linked_task(*_, **kwargs):
-        called.update(**kwargs)
+    settings.LAMBDA_TASKS_EAGER = True
 
     session, uploaded_images = create_raw_upload_image_session(
         image_paths=[RESOURCE_PATH / "image10x10x10.mha"],
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        session.process_images(linked_task=local_linked_task.signature())
+        session.process_images(
+            upload_session_complete_task=UploadSessionCompleteTask(
+                task=local_linked_task, kwargs={}
+            )
+        )
 
-    assert called == {"upload_session_pk": session.pk}
+    global LOCAL_LINKED_TASK_CALLED
+    assert LOCAL_LINKED_TASK_CALLED == {"upload_session_pk": str(session.pk)}
 
 
 def test_check_post_processor_result():

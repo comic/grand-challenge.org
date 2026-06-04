@@ -1330,6 +1330,8 @@ def test_assign_answer_image(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
     editor, reader = UserFactory(), UserFactory()
@@ -1712,6 +1714,8 @@ def test_display_set_add_and_edit(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     r1, r2 = UserFactory(), UserFactory()
 

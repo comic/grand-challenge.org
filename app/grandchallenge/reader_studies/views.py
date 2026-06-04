@@ -54,7 +54,11 @@ from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 
 from grandchallenge.archives.forms import AddCasesForm
-from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.models import (
+    Image,
+    RawImageUploadSession,
+    UploadSessionCompleteTask,
+)
 from grandchallenge.components.views import (
     CIVSetBulkDelete,
     CIVSetDelete,
@@ -753,9 +757,9 @@ class AddDisplaySetsToReaderStudy(BaseAddObjectToReaderStudyMixin, CreateView):
         kwargs.update(
             {
                 "user": self.request.user,
-                "linked_task": create_display_sets_for_upload_session.signature(
+                "upload_session_complete_task": UploadSessionCompleteTask(
+                    task=create_display_sets_for_upload_session,
                     kwargs={"reader_study_pk": self.reader_study.pk},
-                    immutable=True,
                 ),
                 "interface_viewname": "components:component-interface-list-reader-studies",
                 "base_obj": self.reader_study,

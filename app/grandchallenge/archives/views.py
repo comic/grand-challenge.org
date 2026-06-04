@@ -44,7 +44,11 @@ from grandchallenge.archives.serializers import (
     ArchiveSerializer,
 )
 from grandchallenge.archives.tasks import add_images_to_archive
-from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.models import (
+    Image,
+    RawImageUploadSession,
+    UploadSessionCompleteTask,
+)
 from grandchallenge.components.forms import MultipleCIVForm
 from grandchallenge.components.views import (
     CIVSetBulkDelete,
@@ -374,8 +378,9 @@ class ArchiveUploadSessionCreate(
         kwargs = super().get_form_kwargs()
         kwargs.update(
             {
-                "linked_task": add_images_to_archive.signature(
-                    kwargs={"archive_pk": self.archive.pk}, immutable=True
+                "upload_session_complete_task": UploadSessionCompleteTask(
+                    task=add_images_to_archive,
+                    kwargs={"archive_pk": self.archive.pk},
                 ),
                 "interface_viewname": "components:component-interface-list-archives",
                 "base_obj": self.archive,

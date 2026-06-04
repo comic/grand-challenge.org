@@ -2428,6 +2428,8 @@ class TestSubmissionCreationWithExtraInputs:
         settings.CELERY_TASK_ALWAYS_EAGER = True
         settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+        settings.LAMBDA_TASKS_EAGER = True
+
         # configure multiple additional evaluation inputs
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [

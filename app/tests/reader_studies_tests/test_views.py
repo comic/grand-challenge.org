@@ -623,6 +623,8 @@ def test_add_display_set_to_reader_study(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     u1, u2 = UserFactory.create_batch(2)
     rs = ReaderStudyFactory()
     ds1 = DisplaySetFactory(reader_study=rs)
@@ -934,6 +936,8 @@ def test_display_set_upload_corrupt_image(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     editor = UserFactory()
     rs = ReaderStudyFactory()

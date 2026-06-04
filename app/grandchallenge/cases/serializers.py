@@ -15,6 +15,7 @@ from grandchallenge.cases.models import (
     Image,
     ImageFile,
     RawImageUploadSession,
+    UploadSessionCompleteTask,
 )
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import add_image_to_object
@@ -298,39 +299,44 @@ def process_images(*, instance, targets, interface):
         raise ValidationError("Session is not pending")
 
     instance.process_images(
-        linked_task=_get_linked_task(targets=targets, interface=interface)
+        upload_session_complete_task=_get_upload_session_complete_task(
+            targets=targets, interface=interface
+        )
     )
 
 
-def _get_linked_task(*, targets, interface):
+def _get_upload_session_complete_task(*, targets, interface):
     if "archive" in targets:
         kwargs = {"archive_pk": targets["archive"].pk}
         if interface:
             kwargs["interface_pk"] = interface.pk
-        return add_images_to_archive.signature(kwargs=kwargs, immutable=True)
+        return UploadSessionCompleteTask(
+            task=add_images_to_archive, kwargs=kwargs
+        )
     elif "archive_item" in targets:
-        return add_image_to_object.signature(
+        return UploadSessionCompleteTask(
+            task=add_image_to_object,
             kwargs={
                 "app_label": targets["archive_item"]._meta.app_label,
                 "model_name": targets["archive_item"]._meta.model_name,
                 "object_pk": targets["archive_item"].pk,
                 "interface_pk": interface.pk,
             },
-            immutable=True,
         )
     elif "display_set" in targets:
-        return add_image_to_object.signature(
+        return UploadSessionCompleteTask(
+            task=add_image_to_object,
             kwargs={
                 "app_label": targets["display_set"]._meta.app_label,
                 "model_name": targets["display_set"]._meta.model_name,
                 "object_pk": targets["display_set"].pk,
                 "interface_pk": interface.pk,
             },
-            immutable=True,
         )
     elif "answer" in targets:
-        return add_image_to_answer.signature(
-            kwargs={"answer_pk": targets["answer"].pk}, immutable=True
+        return UploadSessionCompleteTask(
+            task=add_image_to_answer,
+            kwargs={"answer_pk": targets["answer"].pk},
         )
     else:
         raise RuntimeError(f"Unknown target {targets=}")

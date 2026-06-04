@@ -245,7 +245,7 @@ class AddCasesForm(UploadRawImagesForm):
         )
 
     def save(self, *args, **kwargs):
-        self._linked_task.kwargs.update(
+        self._upload_session_complete_task.kwargs.update(
             {"interface_pk": self.cleaned_data["socket"].pk}
         )
         return super().save(*args, **kwargs)

@@ -37,7 +37,9 @@ class UploadRawImagesForm(SaveFormInitMixin, forms.ModelForm):
         queryset=None,
     )
 
-    def __init__(self, *args, user, linked_task=None, **kwargs):
+    def __init__(
+        self, *args, user, upload_session_complete_task=None, **kwargs
+    ):
         super().__init__(*args, **kwargs)
 
         self._user = user
@@ -50,7 +52,7 @@ class UploadRawImagesForm(SaveFormInitMixin, forms.ModelForm):
             codename="change_userupload",
         )
 
-        self._linked_task = linked_task
+        self._upload_session_complete_task = upload_session_complete_task
 
     def clean_user_uploads(self):
         user_uploads = self.cleaned_data["user_uploads"]
@@ -64,7 +66,9 @@ class UploadRawImagesForm(SaveFormInitMixin, forms.ModelForm):
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
-        instance.process_images(linked_task=self._linked_task)
+        instance.process_images(
+            upload_session_complete_task=self._upload_session_complete_task
+        )
         return instance
 
     class Meta:

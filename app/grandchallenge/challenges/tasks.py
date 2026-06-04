@@ -1,4 +1,5 @@
 import functools
+import math
 import random
 import time
 from typing import NamedTuple
@@ -145,10 +146,12 @@ def update_challenge_compute_costs():
 
 @lambda_task
 def update_challenge_storage_sizes():
+    seconds_per_task = math.ceil(MAX_DELAY / max(Challenge.objects.count(), 1))
+
     for idx, challenge in enumerate(Challenge.objects.only("pk")):
         update_challenge_storage_size.execute_on_commit(
             pk=challenge.pk,
-            _delay=idx % MAX_DELAY,
+            _delay=(idx * seconds_per_task) % MAX_DELAY,
         )
 
 
