@@ -1774,10 +1774,9 @@
                 <span class="n">civ_data_objects</span><span class="o">=</span><span class="n">additional_inputs</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">creator</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">e</span> <span class="o">=</span> <span class="n">check_prerequisites_for_evaluation_execution</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
-                <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;evaluation_pk&quot;</span><span class="p">:</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">pk</span><span class="p">},</span> <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span>
+            <span class="n">check_prerequisites_for_evaluation_execution</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span>
+                <span class="n">evaluation_pk</span><span class="o">=</span><span class="n">evaluation</span><span class="o">.</span><span class="n">pk</span>
             <span class="p">)</span>
-            <span class="n">on_commit</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_submission&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
@@ -2426,12 +2425,10 @@
             <span class="n">check_prerequisites_for_evaluation_execution</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">linked_task</span> <span class="o">=</span> <span class="n">check_prerequisites_for_evaluation_execution</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
-            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">&quot;evaluation_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
-            <span class="p">},</span>
-            <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">linked_task</span> <span class="o">=</span> <span class="n">check_prerequisites_for_evaluation_execution</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span>
+            <span class="n">evaluation_pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span>
         <span class="p">)</span>
+
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">process_civ_data_objects_and_execute_linked_task</span><span class="p">(</span>
             <span class="n">civ_data_objects</span><span class="o">=</span><span class="n">civ_data_objects</span><span class="p">,</span>
             <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>

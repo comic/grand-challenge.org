@@ -75,6 +75,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.translation</span><span class="w"> </span><span class="kn">import</span> <span class="n">gettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoSlugField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lambda_tasks.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">SQSLambdaTask</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">lambda_tasks.timeouts</span><span class="w"> </span><span class="kn">import</span> <span class="n">SoftTimeLimitExceeded</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_core</span><span class="w"> </span><span class="kn">import</span> <span class="n">MISSING</span>
 
@@ -107,7 +108,6 @@
     <span class="n">validate_relative_path_not_reserved</span><span class="p">,</span>
     <span class="n">validate_safe_path</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.celery</span><span class="w"> </span><span class="kn">import</span> <span class="n">acks_late_2xlarge_task</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.error_handlers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DICOMImageSetUploadErrorHandler</span><span class="p">,</span>
     <span class="n">EvaluationCIVErrorHandler</span><span class="p">,</span>
@@ -1365,11 +1365,6 @@
     <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">NEWICK</span><span class="p">:</span> <span class="s2">&quot;.newick&quot;</span><span class="p">,</span>
     <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BIOM</span><span class="p">:</span> <span class="s2">&quot;.biom&quot;</span><span class="p">,</span>
     <span class="o">**</span><span class="p">{</span><span class="n">kind</span><span class="p">:</span> <span class="s2">&quot;.json&quot;</span> <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKinds</span><span class="o">.</span><span class="n">json</span><span class="p">},</span>
-<span class="p">}</span>
-
-<span class="n">INTERFACE_KIND_TO_CUSTOM_QUEUE</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">NEWICK</span><span class="p">:</span> <span class="n">acks_late_2xlarge_task</span><span class="o">.</span><span class="n">queue</span><span class="p">,</span>
-    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BIOM</span><span class="p">:</span> <span class="n">acks_late_2xlarge_task</span><span class="o">.</span><span class="n">queue</span><span class="p">,</span>
 <span class="p">}</span>
 
 
@@ -2739,7 +2734,7 @@
                     <span class="k">return</span>
 
             <span class="k">if</span> <span class="n">linked_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">on_commit</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="n">linked_task</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
+                <span class="n">SQSLambdaTask</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">linked_task</span><span class="p">)</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_update_civ_for_image</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -2780,7 +2775,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">add_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">civ</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">linked_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">on_commit</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="n">linked_task</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
+                <span class="n">SQSLambdaTask</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">linked_task</span><span class="p">)</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">()</span>
 
         <span class="k">elif</span> <span class="n">upload_session</span> <span class="ow">or</span> <span class="n">user_upload_queryset</span><span class="p">:</span>
             <span class="c1"># Local import to avoid circular dependency</span>
@@ -2887,28 +2882,18 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">add_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">file_civ</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">linked_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">on_commit</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="n">linked_task</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
+                <span class="n">SQSLambdaTask</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">linked_task</span><span class="p">)</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">()</span>
 
         <span class="k">elif</span> <span class="n">user_upload</span><span class="p">:</span>
             <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_file_to_object</span>
 
-            <span class="n">custom_queue</span> <span class="o">=</span> <span class="n">INTERFACE_KIND_TO_CUSTOM_QUEUE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ci</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-            <span class="n">task_queue_kwarg</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="k">if</span> <span class="n">custom_queue</span><span class="p">:</span>
-                <span class="n">task_queue_kwarg</span><span class="p">[</span><span class="s2">&quot;queue&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">custom_queue</span>
-
-            <span class="n">transaction</span><span class="o">.</span><span class="n">on_commit</span><span class="p">(</span>
-                <span class="n">add_file_to_object</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
-                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
-                        <span class="s2">&quot;app_label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
-                        <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
-                        <span class="s2">&quot;user_upload_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">user_upload</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
-                        <span class="s2">&quot;interface_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ci</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
-                        <span class="s2">&quot;object_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
-                        <span class="s2">&quot;linked_task&quot;</span><span class="p">:</span> <span class="n">linked_task</span><span class="p">,</span>
-                    <span class="p">},</span>
-                    <span class="o">**</span><span class="n">task_queue_kwarg</span><span class="p">,</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
+            <span class="n">add_file_to_object</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span>
+                <span class="n">app_label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
+                <span class="n">model_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
+                <span class="n">user_upload_pk</span><span class="o">=</span><span class="n">user_upload</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="n">interface_pk</span><span class="o">=</span><span class="n">ci</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="n">object_pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">else</span><span class="p">:</span>
