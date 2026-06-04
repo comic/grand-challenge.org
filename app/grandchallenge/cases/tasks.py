@@ -118,15 +118,6 @@ def extract_files(*, source_path: Path, checked_paths=None):
         )
 
 
-@acks_late_2xlarge_task(
-    name=f"{__name__}.build_images", retry_on=(LockNotAcquiredException,)
-)
-@transaction.atomic
-def build_images_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return build_images(**kwargs)
-
-
 @lambda_task(
     queue=LambdaTaskQueueChoices.MEM8G,
     retry_on=(LockNotAcquiredException,),

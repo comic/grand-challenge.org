@@ -51,10 +51,7 @@ from grandchallenge.components.emails import (
 )
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
+from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -1321,17 +1318,6 @@ def preload_interactive_algorithms():
     return consolidation_results
 
 
-@acks_late_micro_short_task(
-    name=f"{__name__}.add_image_to_object",
-    retry_on=(LockNotAcquiredException,),
-    delayed_retry=False,
-)
-@transaction.atomic
-def add_image_to_object_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return add_image_to_object(**kwargs)
-
-
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def add_image_to_object(  # noqa: C901
     *,
@@ -1459,15 +1445,6 @@ def add_image_to_object(  # noqa: C901
         SQSLambdaTask.model_validate(linked_task).execute_on_commit()
     else:
         logger.info("No linked task, task complete")
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.add_file_to_object", retry_on=(LockNotAcquiredException,)
-)
-@transaction.atomic
-def add_file_to_object_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return add_file_to_object(**kwargs)
 
 
 @lambda_task(

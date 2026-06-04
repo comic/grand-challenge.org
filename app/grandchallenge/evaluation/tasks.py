@@ -34,16 +34,6 @@ from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
 logger = get_task_logger(__name__)
 
 
-@acks_late_2xlarge_task(
-    name=f"{__name__}.check_prerequisites_for_evaluation_execution",
-    retry_on=(LockNotAcquiredException,),
-)
-@transaction.atomic
-def check_prerequisites_for_evaluation_execution_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return check_prerequisites_for_evaluation_execution(**kwargs)
-
-
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def check_prerequisites_for_evaluation_execution(
     *, evaluation_pk: str | uuid.UUID

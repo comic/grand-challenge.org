@@ -77,15 +77,6 @@ def bulk_assign_scores_for_reader_study(*, reader_study_pk):
     Answer.objects.bulk_update(answers, ["score"])
 
 
-@acks_late_2xlarge_task(
-    name=f"{__name__}.create_display_sets_for_upload_session"
-)
-@transaction.atomic
-def create_display_sets_for_upload_session_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return create_display_sets_for_upload_session(**kwargs)
-
-
 @lambda_task
 def create_display_sets_for_upload_session(
     *,
@@ -126,13 +117,6 @@ def create_display_sets_for_upload_session(
 
             ds = DisplaySet.objects.create(reader_study=reader_study)
             ds.values.add(civ)
-
-
-@acks_late_2xlarge_task(name=f"{__name__}.add_image_to_answer")
-@transaction.atomic
-def add_image_to_answer_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return add_image_to_answer(**kwargs)
 
 
 @lambda_task
