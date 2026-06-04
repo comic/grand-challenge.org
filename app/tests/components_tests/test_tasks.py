@@ -802,8 +802,7 @@ def test_task_add_file_to_object_handles_deleted_object(
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     obj = object_factory(**factory_kwargs)
-    obj.delete()
-
+    user_upload = UserUploadFactory()
     linked_task = some_async_task.serialize(foo="bar")
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
 
@@ -813,8 +812,10 @@ def test_task_add_file_to_object_handles_deleted_object(
         "object_pk": obj.pk,
         "linked_task": linked_task,
         "interface_pk": ci.pk,
-        "user_upload_pk": None,
+        "user_upload_pk": user_upload.pk,
     }
+
+    obj.delete()
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         with context:

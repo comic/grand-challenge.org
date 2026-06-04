@@ -70,7 +70,6 @@ from grandchallenge.components.validators import (
     validate_relative_path_not_reserved,
     validate_safe_path,
 )
-from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_handlers import (
     DICOMImageSetUploadErrorHandler,
     EvaluationCIVErrorHandler,
@@ -1298,11 +1297,6 @@ INTERFACE_KIND_TO_FILE_EXTENSION = {
     InterfaceKindChoices.NEWICK: ".newick",
     InterfaceKindChoices.BIOM: ".biom",
     **{kind: ".json" for kind in InterfaceKinds.json},
-}
-
-INTERFACE_KIND_TO_CUSTOM_QUEUE = {
-    InterfaceKindChoices.NEWICK: acks_late_2xlarge_task.queue,
-    InterfaceKindChoices.BIOM: acks_late_2xlarge_task.queue,
 }
 
 
@@ -2789,23 +2783,13 @@ class CIVForObjectMixin:
         elif user_upload:
             from grandchallenge.components.tasks import add_file_to_object
 
-            custom_queue = INTERFACE_KIND_TO_CUSTOM_QUEUE.get(ci.kind, False)
-            task_queue_kwarg = {}
-            if custom_queue:
-                task_queue_kwarg["queue"] = custom_queue
-
-            transaction.on_commit(
-                add_file_to_object.signature(
-                    kwargs={
-                        "app_label": self._meta.app_label,
-                        "model_name": self._meta.model_name,
-                        "user_upload_pk": str(user_upload.pk),
-                        "interface_pk": str(ci.pk),
-                        "object_pk": self.pk,
-                        "linked_task": linked_task,
-                    },
-                    **task_queue_kwarg,
-                ).apply_async
+            add_file_to_object.execute_on_commit(
+                app_label=self._meta.app_label,
+                model_name=self._meta.model_name,
+                user_upload_pk=user_upload.pk,
+                interface_pk=ci.pk,
+                object_pk=self.pk,
+                linked_task=linked_task,
             )
 
         else:

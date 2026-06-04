@@ -1462,17 +1462,26 @@ def add_image_to_object(  # noqa: C901
 
 
 @acks_late_micro_short_task(
-    retry_on=(LockNotAcquiredException,), delayed_retry=False
+    name=f"{__name__}.add_file_to_object", retry_on=(LockNotAcquiredException,)
 )
 @transaction.atomic
+def add_file_to_object_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return add_file_to_object(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G,
+    retry_on=(LockNotAcquiredException,),
+)
 def add_file_to_object(
     *,
-    app_label,
-    model_name,
-    user_upload_pk,
-    object_pk,
-    interface_pk,
-    linked_task=None,
+    app_label: str,
+    model_name: str,
+    user_upload_pk: str | UUID,
+    object_pk: str | UUID,
+    interface_pk: int,
+    linked_task: dict | None = None,
 ):
     from grandchallenge.algorithms.models import Job
     from grandchallenge.archives.models import ArchiveItem

@@ -1893,59 +1893,6 @@ def test_validate_user_upload_json_decode_error_handling():
     assert "The file is not valid JSON. Expecting ',' delimiter" in str(err)
 
 
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "kind,expected_queue",
-    (
-        # Ensure queue is not passed since setting to None would
-        # have Celery use the Celery-scope default ("celery")
-        (
-            InterfaceKindChoices.STRING,
-            None,
-        ),
-        (
-            InterfaceKindChoices.NEWICK,
-            "acks-late-2xlarge",
-        ),
-        (
-            InterfaceKindChoices.BIOM,
-            "acks-late-2xlarge",
-        ),
-    ),
-)
-def test_component_interface_custom_queue(kind, expected_queue, mocker):
-
-    ci = ComponentInterfaceFactory(
-        kind=kind,
-        store_in_database=False,
-    )
-    user = UserFactory()
-
-    # Need an existing CIVSet, use archive here since it is slightly easier setup
-    archive = ArchiveFactory()
-    archive.add_editor(user)
-    ai = ArchiveItemFactory.build(archive=None)
-
-    mock_task = mocker.patch(
-        "grandchallenge.components.tasks.add_file_to_object",
-        autospec=True,
-    )
-
-    ai.process_civ_data_objects_and_execute_linked_task(
-        civ_data_objects=[
-            CIVData(
-                interface_slug=ci.slug,
-                value=UserUploadFactory(creator=user),
-            )
-        ],
-        user=user,
-    )
-    mock_task.signature.assert_called_once()
-
-    _, call_kwargs = mock_task.signature.call_args
-    assert call_kwargs.get("queue") == expected_queue
-
-
 def test_inputs_json_reserved():
     ci = ComponentInterface(relative_path="inputs.json")
 
@@ -2204,7 +2151,7 @@ def test_process_civ_data_objects_and_execute_linked_task_with_file_upload(
     upload = UserUploadFactory()
     civ_data_objects = [CIVData(interface_slug=socket.slug, value=upload)]
     mock_add_file_to_object_task = mocker.patch(
-        "grandchallenge.components.tasks.add_file_to_object.signature",
+        "grandchallenge.components.tasks.add_file_to_object.execute_on_commit",
         return_value=MagicMock(),
     )
 
