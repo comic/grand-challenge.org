@@ -49,6 +49,8 @@ def test_linked_task_called_with_session_pk(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     called = {}
 
     @acks_late_micro_short_task

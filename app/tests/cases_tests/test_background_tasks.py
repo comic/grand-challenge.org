@@ -20,6 +20,8 @@ def test_image_file_creation(settings, django_capture_on_commit_callbacks):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     images = [
         "image10x10x10.zraw",
         "image10x10x10.mhd",
@@ -68,6 +70,8 @@ def test_no_convertible_file(settings, django_capture_on_commit_callbacks):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     images = ["no_image", "image10x10x10.mhd", "referring_to_system_file.mhd"]
     session, uploaded_images = create_raw_upload_image_session(
         image_paths=[RESOURCE_PATH / p for p in images],
@@ -90,6 +94,8 @@ def test_errors_on_files_with_duplicate_file_names(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     images = [
         "image10x10x10.zraw",
@@ -119,6 +125,8 @@ def test_mhd_file_annotation_creation(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     images = ["image5x6x7.mhd", "image5x6x7.zraw"]
     session, uploaded_images = create_raw_upload_image_session(
@@ -202,6 +210,8 @@ def test_build_zip_file(settings, django_capture_on_commit_callbacks):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     # valid.zip contains a tarred version of the dicom folder,
     # image10x10x10.[mha,mhd,zraw] and valid_tiff.tiff
     images = ["valid.zip"]
@@ -237,6 +247,8 @@ def test_soft_time_limit(settings, django_capture_on_commit_callbacks, mocker):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     session = UploadSessionFactory()
     session.status = session.PENDING
     session.save()
@@ -260,6 +272,8 @@ def test_failed_image_import_notification(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     images = ["corrupt.png"]
     session, _ = create_raw_upload_image_session(

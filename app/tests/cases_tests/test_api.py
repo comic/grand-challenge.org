@@ -378,6 +378,8 @@ def test_session_with_user_upload_to_archive(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     user = UserFactory()
     archive = ArchiveFactory()
     archive.add_editor(user=user)
@@ -468,6 +470,8 @@ def test_user_upload_to_archive_item_with_new_interface(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     user = UserFactory()
     archive = ArchiveFactory()
     archive.add_editor(user=user)
@@ -515,6 +519,8 @@ def test_user_upload_to_archive_item_with_existing_interface(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     user = UserFactory()
     archive = ArchiveFactory()

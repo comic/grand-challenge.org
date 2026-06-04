@@ -244,19 +244,16 @@ class RawImageUploadSession(UUIDModel):
         # The linked task is updated here so we can define it on forms
         # before the upload session instance exists.
         if linked_task is not None:
+            # TODO: 4408 should manipulate the message here
             linked_task.kwargs.update({"upload_session_pk": self.pk})
 
-        on_commit(
-            build_images.signature(
-                kwargs={
-                    "upload_session_pk": self.pk,
-                    "linked_app_label": linked_app_label,
-                    "linked_model_name": linked_model_name,
-                    "linked_object_pk": linked_object_pk,
-                    "linked_interface_slug": linked_interface_slug,
-                    "linked_task": linked_task,
-                }
-            ).apply_async
+        build_images.execute_on_commit(
+            upload_session_pk=self.pk,
+            linked_app_label=linked_app_label,
+            linked_model_name=linked_model_name,
+            linked_object_pk=linked_object_pk,
+            linked_interface_slug=linked_interface_slug,
+            linked_task=linked_task,
         )
 
     def get_absolute_url(self):
