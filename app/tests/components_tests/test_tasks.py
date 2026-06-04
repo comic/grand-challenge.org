@@ -811,7 +811,6 @@ def test_task_add_image_to_object_handles_deleted_object(
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     obj = object_factory(**factory_kwargs)
-    obj.delete()
 
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
@@ -827,6 +826,8 @@ def test_task_add_image_to_object_handles_deleted_object(
         "interface_pk": ci.pk,
         "upload_session_pk": us.pk,
     }
+
+    obj.delete()
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         with context:
