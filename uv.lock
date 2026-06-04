@@ -919,7 +919,7 @@ wheels = [
 
 [[package]]
 name = "django-lambda-tasks"
-version = "0.4.9"
+version = "0.4.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "awslambdaric" },
@@ -928,9 +928,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "redis" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/80/7a/8147ca6bb01a93c49b4ebd871951341cdee5d94471a34e26f83987342cf8/django_lambda_tasks-0.4.9.tar.gz", hash = "sha256:1c9136dda86fcc4712a7820cbbff3b0abab9999ca886902cbea7478cb063009e", size = 158114, upload-time = "2026-06-03T12:40:08.525Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/81/df/509771f9e7ff812c4265cd32771a290a6209c9346e459d7597729bd2dce3/django_lambda_tasks-0.4.10.tar.gz", hash = "sha256:ab4e2cf52ddeb35040eba9852bba65725b6ed6a5f0c62da6781ad4cd4a0464e2", size = 158273, upload-time = "2026-06-04T13:50:24.153Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/80/77/6353e9ae6cce3094ab077205e4dc61b740087ce8f441f888bd2863dec8e4/django_lambda_tasks-0.4.9-py3-none-any.whl", hash = "sha256:dc4db85130ef4976b5d6c084a8c361ee51f2609231d4b22036695461091960d4", size = 33033, upload-time = "2026-06-03T12:40:07.2Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/be/b39e71bfa34873be0d3ae477dca36f94a8546dee7f5dfc8993752da83106/django_lambda_tasks-0.4.10-py3-none-any.whl", hash = "sha256:804b3fdc49f33f9569be9178fa37c0214bbb15e4bd8d5ab3ee17abd4c6d34b71", size = 33048, upload-time = "2026-06-04T13:50:22.8Z" },
 ]
 
 [[package]]
