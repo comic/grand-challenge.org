@@ -14,7 +14,6 @@ from billiard.exceptions import (
     SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
 )
 from botocore.exceptions import ClientError
-from celery import signature
 from celery.utils.log import get_task_logger
 from django.apps import apps
 from django.conf import settings
@@ -27,6 +26,7 @@ from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.models import SQSLambdaTask
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from panimg_models import ImageBuilderOptions, PanImgResult
 
@@ -248,7 +248,7 @@ def build_images(  # noqa:C901
 
         if linked_task is not None:
             logger.info("Scheduling linked task")
-            on_commit(signature(linked_task).apply_async)
+            SQSLambdaTask.model_validate(linked_task).execute_on_commit()
         else:
             logger.info("No linked task, task complete")
     else:

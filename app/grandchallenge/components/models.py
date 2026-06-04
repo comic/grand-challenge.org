@@ -45,6 +45,7 @@ from grandchallenge.cases.models import (
     Image,
     ImageFile,
     RawImageUploadSession,
+    UploadSessionCompleteTask,
 )
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
@@ -2706,12 +2707,15 @@ class CIVForObjectMixin:
                 linked_model_name=self._meta.model_name,
                 linked_object_pk=self.pk,
                 linked_interface_slug=ci.slug,
-                linked_task=add_image_to_object.serialize(
-                    app_label=self._meta.app_label,
-                    model_name=self._meta.model_name,
-                    object_pk=self.pk,
-                    interface_pk=ci.pk,
-                    linked_task=linked_task,
+                upload_session_complete_task=UploadSessionCompleteTask(
+                    task=add_image_to_object,
+                    kwargs={
+                        "app_label": self._meta.app_label,
+                        "model_name": self._meta.model_name,
+                        "object_pk": self.pk,
+                        "interface_pk": ci.pk,
+                        "linked_task": linked_task,
+                    },
                 ),
             )
         elif dicom_upload_with_name:

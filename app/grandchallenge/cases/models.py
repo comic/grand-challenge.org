@@ -28,6 +28,7 @@ from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
 from grand_challenge_dicom_de_identifier.deidentifier import DicomDeidentifier
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
+from lambda_tasks.decorators import LambdaTaskWrapper
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from panimg_models import ColorSpace, ImageType
 from pydantic import ConfigDict, Field, field_validator
@@ -89,6 +90,11 @@ IMPORT_JOB_FAILURE_NDJSON_SCHEMA = {
         "required": ["inputFile", "exception"],
     },
 }
+
+
+class UploadSessionCompleteTask(NamedTuple):
+    task: LambdaTaskWrapper
+    kwargs: dict
 
 
 class RawImageUploadSession(UUIDModel):
@@ -219,15 +225,15 @@ class RawImageUploadSession(UUIDModel):
         linked_model_name=None,
         linked_object_pk=None,
         linked_interface_slug=None,
-        linked_task=None,
+        upload_session_complete_task: UploadSessionCompleteTask | None = None,
     ):
         """
         Starts the Celery task to import this RawImageUploadSession.
 
         Parameters
         ----------
-        linked_task
-            A celery task that will be executed on success of the build_images
+        upload_session_complete_task
+            A task that will be executed on success of the build_images
             task, with 1 keyword argument: upload_session_pk=self.pk
         """
 
@@ -243,9 +249,15 @@ class RawImageUploadSession(UUIDModel):
 
         # The linked task is updated here so we can define it on forms
         # before the upload session instance exists.
-        if linked_task is not None:
-            # TODO: 4408 should manipulate the message here
-            linked_task.kwargs.update({"upload_session_pk": self.pk})
+        if upload_session_complete_task:
+            linked_task = upload_session_complete_task.task.serialize(
+                **{
+                    **upload_session_complete_task.kwargs,
+                    "upload_session_pk": self.pk,
+                }
+            )
+        else:
+            linked_task = None
 
         build_images.execute_on_commit(
             upload_session_pk=self.pk,

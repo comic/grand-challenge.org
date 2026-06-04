@@ -1339,7 +1339,7 @@ def add_image_to_object(  # noqa: C901
     app_label: str,
     model_name: str,
     object_pk: str | UUID,
-    interface_pk: str | UUID,
+    interface_pk: int,
     upload_session_pk: str | UUID | None = None,
     dicom_image_set_upload_pk: str | UUID | None = None,
     linked_task: dict | None = None,

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from django.db import transaction
 from lambda_tasks.decorators import lambda_task
 
@@ -18,7 +20,12 @@ def add_images_to_archive_celery(**kwargs):
 
 
 @lambda_task
-def add_images_to_archive(*, upload_session_pk, archive_pk, interface_pk=None):
+def add_images_to_archive(
+    *,
+    upload_session_pk: str | UUID,
+    archive_pk: str | UUID,
+    interface_pk: int | None = None,
+):
     images = Image.objects.filter(origin_id=upload_session_pk)
     archive = Archive.objects.get(pk=archive_pk)
     if interface_pk is not None:

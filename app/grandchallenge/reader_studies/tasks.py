@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -75,10 +77,21 @@ def bulk_assign_scores_for_reader_study(*, reader_study_pk):
     Answer.objects.bulk_update(answers, ["score"])
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(
+    name=f"{__name__}.create_display_sets_for_upload_session"
+)
 @transaction.atomic
+def create_display_sets_for_upload_session_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return create_display_sets_for_upload_session(**kwargs)
+
+
+@lambda_task
 def create_display_sets_for_upload_session(
-    *, upload_session_pk, reader_study_pk, interface_pk
+    *,
+    upload_session_pk: str | UUID,
+    reader_study_pk: str | UUID,
+    interface_pk: int,
 ):
     images = Image.objects.filter(origin_id=upload_session_pk)
     reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
@@ -123,7 +136,9 @@ def add_image_to_answer_celery(**kwargs):
 
 
 @lambda_task
-def add_image_to_answer(*, upload_session_pk, answer_pk):
+def add_image_to_answer(
+    *, upload_session_pk: str | UUID, answer_pk: str | UUID
+):
     image = Image.objects.get(origin_id=upload_session_pk)
     answer = Answer.objects.get(pk=answer_pk)
     question = answer.question
