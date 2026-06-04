@@ -16,7 +16,6 @@ import boto3
 from billiard.exceptions import (
     SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
 )
-from celery import signature
 from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
@@ -24,11 +23,11 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, DateTimeField, ExpressionWrapper, F, Q
-from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 from lambda_tasks.logging import task_logger
+from lambda_tasks.models import SQSLambdaTask
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
 from config.lambda_tasks import LambdaTaskQueueChoices
@@ -1457,7 +1456,7 @@ def add_image_to_object(  # noqa: C901
 
     if linked_task is not None:
         logger.info("Scheduling linked task")
-        on_commit(signature(linked_task).apply_async)
+        SQSLambdaTask.model_validate(linked_task).execute_on_commit()
     else:
         logger.info("No linked task, task complete")
 
@@ -1544,7 +1543,7 @@ def add_file_to_object(
 
     if linked_task is not None:
         logger.info("Scheduling linked task")
-        on_commit(signature(linked_task).apply_async)
+        SQSLambdaTask.model_validate(linked_task).execute_on_commit()
     else:
         logger.info("No linked task, task complete")
 

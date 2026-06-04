@@ -1,4 +1,5 @@
 from typing import NamedTuple
+from uuid import UUID
 
 from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
@@ -28,10 +29,20 @@ logger = get_task_logger(__name__)
 
 
 @acks_late_micro_short_task(
-    retry_on=(LockNotAcquiredException, TooManyJobsScheduled)
+    name=f"{__name__}.execute_algorithm_job_for_inputs",
+    retry_on=(LockNotAcquiredException, TooManyJobsScheduled),
 )
 @transaction.atomic
-def execute_algorithm_job_for_inputs(*, job_pk):
+def execute_algorithm_job_for_inputs_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return execute_algorithm_job_for_inputs(**kwargs)
+
+
+@lambda_task(
+    retry_on=(LockNotAcquiredException, TooManyJobsScheduled),
+    retry_delay=60,
+)
+def execute_algorithm_job_for_inputs(*, job_pk: str | UUID):
     from grandchallenge.algorithms.models import Job
 
     with check_lock_acquired():
@@ -320,9 +331,18 @@ def deactivate_old_algorithm_images():
         )
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.execute_invocation_for_inputs",
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
-def execute_invocation_for_inputs(*, invocation_pk):
+def execute_invocation_for_inputs_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return execute_invocation_for_inputs(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def execute_invocation_for_inputs(*, invocation_pk: str | UUID):
     from grandchallenge.algorithms.models import Invocation
 
     with check_lock_acquired():

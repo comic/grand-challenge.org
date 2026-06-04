@@ -37,6 +37,7 @@ from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
+from lambda_tasks.models import SQSLambdaTask
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from pydantic_core import MISSING
 
@@ -2635,7 +2636,7 @@ class CIVForObjectMixin:
                     return
 
             if linked_task is not None:
-                on_commit(signature(linked_task).apply_async)
+                SQSLambdaTask.model_validate(linked_task).execute_on_commit()
 
     def _update_civ_for_image(  # noqa: C901
         self,
@@ -2676,7 +2677,7 @@ class CIVForObjectMixin:
             self.add_civ(civ=civ)
 
             if linked_task is not None:
-                on_commit(signature(linked_task).apply_async)
+                SQSLambdaTask.model_validate(linked_task).execute_on_commit()
 
         elif upload_session or user_upload_queryset:
             # Local import to avoid circular dependency
@@ -2783,7 +2784,7 @@ class CIVForObjectMixin:
             self.add_civ(civ=file_civ)
 
             if linked_task is not None:
-                on_commit(signature(linked_task).apply_async)
+                SQSLambdaTask.model_validate(linked_task).execute_on_commit()
 
         elif user_upload:
             from grandchallenge.components.tasks import add_file_to_object
