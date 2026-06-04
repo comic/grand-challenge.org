@@ -1,6 +1,5 @@
 from uuid import UUID
 
-from django.db import transaction
 from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.archives.models import Archive, ArchiveItem
@@ -9,14 +8,6 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.core.celery import acks_late_micro_short_task
-
-
-@acks_late_micro_short_task(name=f"{__name__}.add_images_to_archive")
-@transaction.atomic
-def add_images_to_archive_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return add_images_to_archive(**kwargs)
 
 
 @lambda_task
