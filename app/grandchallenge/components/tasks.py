@@ -1541,7 +1541,9 @@ def add_file_to_object(
         logger.info("No linked task, task complete")
 
 
-@lambda_task(retry_on=(LockNotAcquiredException,))
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+)
 def assign_tarball_from_upload(
     *,
     app_label: str,
