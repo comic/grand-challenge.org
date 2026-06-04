@@ -1,7 +1,6 @@
-import logging
 from subprocess import CalledProcessError
 
-logger = logging.getLogger(__name__)
+from botocore.exceptions import ClientError
 
 
 def sentry_before_send(event, hint):
@@ -23,9 +22,11 @@ def sentry_before_send(event, hint):
             else:
                 # Do not include stderr
                 pass
+        elif isinstance(exc_value, ClientError):
+            event["extra"] = event.get("extra", {})
 
-            logger.warning(
-                f"Subprocess stderr: {event["extra"].get("stderr")}"
-            )
+            error = exc_value.response["Error"]
+            event["extra"]["botocore_error_code"] = error["Code"]
+            event["extra"]["botocore_error_message"] = error["Message"]
 
     return event
