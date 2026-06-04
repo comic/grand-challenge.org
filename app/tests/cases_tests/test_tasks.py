@@ -70,7 +70,7 @@ def test_linked_task_called_with_session_pk(
         )
 
     global LOCAL_LINKED_TASK_CALLED
-    assert LOCAL_LINKED_TASK_CALLED == {"upload_session_pk": session.pk}
+    assert LOCAL_LINKED_TASK_CALLED == {"upload_session_pk": str(session.pk)}
 
 
 def test_check_post_processor_result():
