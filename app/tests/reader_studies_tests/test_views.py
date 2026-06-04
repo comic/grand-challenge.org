@@ -434,6 +434,8 @@ def test_display_set_update(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     user = UserFactory()
     rs = ReaderStudyFactory()
     ds1, ds2 = DisplaySetFactory.create_batch(2, reader_study=rs)

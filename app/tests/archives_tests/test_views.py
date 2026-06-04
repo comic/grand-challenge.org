@@ -454,6 +454,8 @@ def test_api_archive_item_add_and_update_non_image_file(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     archive = ArchiveFactory()
     editor = UserFactory()
     archive.add_editor(editor)
@@ -642,6 +644,8 @@ def test_api_archive_item_add_and_update_json_file(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     archive = ArchiveFactory()
     editor = UserFactory()
@@ -1005,6 +1009,8 @@ def test_archive_item_add_file(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     archive = ArchiveFactory()
     item = ArchiveItemFactory(archive=archive)
     editor = UserFactory()
@@ -1042,6 +1048,8 @@ def test_archive_item_add_json_file(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     archive = ArchiveFactory()
     item = ArchiveItemFactory(archive=archive)
