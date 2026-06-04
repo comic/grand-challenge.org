@@ -374,8 +374,8 @@ class ArchiveUploadSessionCreate(
         kwargs = super().get_form_kwargs()
         kwargs.update(
             {
-                "linked_task": add_images_to_archive.signature(
-                    kwargs={"archive_pk": self.archive.pk}, immutable=True
+                "linked_task": add_images_to_archive.serialize(
+                    archive_pk=self.archive.pk
                 ),
                 "interface_viewname": "components:component-interface-list-archives",
                 "base_obj": self.archive,

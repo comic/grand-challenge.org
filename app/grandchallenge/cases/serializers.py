@@ -307,7 +307,7 @@ def _get_linked_task(*, targets, interface):
         kwargs = {"archive_pk": targets["archive"].pk}
         if interface:
             kwargs["interface_pk"] = interface.pk
-        return add_images_to_archive.signature(kwargs=kwargs, immutable=True)
+        return add_images_to_archive.serialize(**kwargs)
     elif "archive_item" in targets:
         return add_image_to_object.signature(
             kwargs={
