@@ -2706,15 +2706,12 @@ class CIVForObjectMixin:
                 linked_model_name=self._meta.model_name,
                 linked_object_pk=self.pk,
                 linked_interface_slug=ci.slug,
-                linked_task=add_image_to_object.signature(
-                    kwargs={
-                        "app_label": self._meta.app_label,
-                        "model_name": self._meta.model_name,
-                        "object_pk": self.pk,
-                        "interface_pk": str(ci.pk),
-                        "linked_task": linked_task,
-                    },
-                    immutable=True,
+                linked_task=add_image_to_object.serialize(
+                    app_label=self._meta.app_label,
+                    model_name=self._meta.model_name,
+                    object_pk=self.pk,
+                    interface_pk=str(ci.pk),
+                    linked_task=linked_task,
                 ),
             )
         elif dicom_upload_with_name:
@@ -2734,16 +2731,13 @@ class CIVForObjectMixin:
                 linked_object=self,
                 linked_socket_pk=ci.pk,
             )
-            upload.task_on_success = add_image_to_object.signature(
-                kwargs={
-                    "app_label": self._meta.app_label,
-                    "model_name": self._meta.model_name,
-                    "object_pk": str(self.pk),
-                    "interface_pk": str(ci.pk),
-                    "dicom_image_set_upload_pk": str(upload.pk),
-                    "linked_task": linked_task,
-                },
-                immutable=True,
+            upload.task_on_success = add_image_to_object.serialize(
+                app_label=self._meta.app_label,
+                model_name=self._meta.model_name,
+                object_pk=str(self.pk),
+                interface_pk=str(ci.pk),
+                dicom_image_set_upload_pk=str(upload.pk),
+                linked_task=linked_task,
             )
             try:
                 upload.full_clean()

@@ -1323,18 +1323,26 @@ def preload_interactive_algorithms():
 
 
 @acks_late_micro_short_task(
-    retry_on=(LockNotAcquiredException,), delayed_retry=False
+    name=f"{__name__}.add_image_to_object",
+    retry_on=(LockNotAcquiredException,),
+    delayed_retry=False,
 )
 @transaction.atomic
+def add_image_to_object_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return add_image_to_object(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def add_image_to_object(  # noqa: C901
     *,
-    app_label,
-    model_name,
-    object_pk,
-    interface_pk,
-    upload_session_pk=None,
-    dicom_image_set_upload_pk=None,
-    linked_task=None,
+    app_label: str,
+    model_name: str,
+    object_pk: str | UUID,
+    interface_pk: str | UUID,
+    upload_session_pk: str | UUID | None = None,
+    dicom_image_set_upload_pk: str | UUID | None = None,
+    linked_task: dict | None = None,
 ):
     if upload_session_pk is None and dicom_image_set_upload_pk is None:
         raise ValueError(

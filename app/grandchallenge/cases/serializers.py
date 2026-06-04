@@ -309,24 +309,18 @@ def _get_linked_task(*, targets, interface):
             kwargs["interface_pk"] = interface.pk
         return add_images_to_archive.serialize(**kwargs)
     elif "archive_item" in targets:
-        return add_image_to_object.signature(
-            kwargs={
-                "app_label": targets["archive_item"]._meta.app_label,
-                "model_name": targets["archive_item"]._meta.model_name,
-                "object_pk": targets["archive_item"].pk,
-                "interface_pk": interface.pk,
-            },
-            immutable=True,
+        return add_image_to_object.serialize(
+            app_label=targets["archive_item"]._meta.app_label,
+            model_name=targets["archive_item"]._meta.model_name,
+            object_pk=targets["archive_item"].pk,
+            interface_pk=interface.pk,
         )
     elif "display_set" in targets:
-        return add_image_to_object.signature(
-            kwargs={
-                "app_label": targets["display_set"]._meta.app_label,
-                "model_name": targets["display_set"]._meta.model_name,
-                "object_pk": targets["display_set"].pk,
-                "interface_pk": interface.pk,
-            },
-            immutable=True,
+        return add_image_to_object.serialize(
+            app_label=targets["display_set"]._meta.app_label,
+            model_name=targets["display_set"]._meta.model_name,
+            object_pk=targets["display_set"].pk,
+            interface_pk=interface.pk,
         )
     elif "answer" in targets:
         return add_image_to_answer.signature(
