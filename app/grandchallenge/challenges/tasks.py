@@ -152,7 +152,7 @@ def update_challenge_storage_sizes():
         )
 
 
-@lambda_task(singleton=True, retry_on=(LockNotAvailable,))
+@lambda_task
 def update_challenge_storage_size(*, pk: int):
     challenge = Challenge.objects.get(pk=pk)
     annotate_storage_size(challenge=challenge)
