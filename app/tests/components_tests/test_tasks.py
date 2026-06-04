@@ -9,11 +9,11 @@ from pathlib import Path
 from unittest.mock import call, patch
 
 import pytest
-from celery.exceptions import MaxRetriesExceededError
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.utils.timezone import now
+from lambda_tasks.decorators import lambda_task
 from requests import put
 
 from grandchallenge.algorithms.models import (
@@ -60,7 +60,6 @@ from grandchallenge.components.tasks import (
     upload_to_registry_and_sagemaker,
     validate_docker_image,
 )
-from grandchallenge.core.celery import _retry, acks_late_micro_short_task
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.interactive_algorithms import (
@@ -106,60 +105,6 @@ from tests.uploads_tests.factories import (
     create_upload_from_file,
 )
 from tests.utilization_tests.factories import SessionUtilizationFactory
-
-
-@pytest.mark.django_db
-def test_retry_initial_options(django_capture_on_commit_callbacks):
-    with django_capture_on_commit_callbacks() as callbacks:
-        _retry(
-            task=some_async_task,
-            signature_kwargs={
-                "kwargs": {"foo": "bar"},
-                "options": {"queue": "mine"},
-            },
-            retries=0,
-        )
-    new_task = callbacks[0].__self__
-
-    assert new_task.options["queue"] == "mine-delay"
-    assert new_task.kwargs == {"foo": "bar", "_retries": 1}
-
-
-@pytest.mark.django_db
-def test_retry_initial(django_capture_on_commit_callbacks):
-    with django_capture_on_commit_callbacks() as callbacks:
-        _retry(
-            task=some_async_task,
-            signature_kwargs={"kwargs": {"foo": "bar"}},
-            retries=0,
-        )
-    new_task = callbacks[0].__self__
-
-    assert new_task.options["queue"] == "acks-late-micro-short-delay"
-    assert new_task.kwargs == {"foo": "bar", "_retries": 1}
-
-
-@pytest.mark.django_db
-def test_retry_many(django_capture_on_commit_callbacks):
-    with django_capture_on_commit_callbacks() as callbacks:
-        _retry(
-            task=some_async_task,
-            signature_kwargs={"kwargs": {"foo": "bar"}},
-            retries=10,
-        )
-    new_task = callbacks[0].__self__
-
-    assert new_task.options["queue"] == "acks-late-micro-short-delay"
-    assert new_task.kwargs == {"foo": "bar", "_retries": 11}
-
-
-def test_retry_too_many():
-    with pytest.raises(MaxRetriesExceededError):
-        _retry(
-            task=some_async_task,
-            signature_kwargs={"kwargs": {"foo": "bar"}},
-            retries=100_000,
-        )
 
 
 @pytest.mark.parametrize(
@@ -465,8 +410,8 @@ def test_update_sagemaker_shim(
     )
 
 
-@acks_late_micro_short_task
-def some_async_task(foo):
+@lambda_task
+def some_async_task(*, foo: str):
     return foo
 
 
@@ -491,14 +436,14 @@ def test_add_image_to_object(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     obj = object_factory(**factory_kwargs)
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
     ImageFactory(origin=us)
 
-    linked_task = some_async_task.signature(
-        kwargs={"foo": "bar"}, immutable=True
-    )
+    linked_task = some_async_task.serialize(foo="bar")
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         add_image_to_object(
@@ -539,9 +484,7 @@ def test_add_image_to_object_updates_upload_session_on_validation_fail(
 
     error_message = f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image."
 
-    linked_task = some_async_task.signature(
-        kwargs={"foo": "bar"}, immutable=True
-    )
+    linked_task = some_async_task.serialize(foo="bar")
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         add_image_to_object(
@@ -571,9 +514,7 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
 
-    linked_task = some_async_task.signature(
-        kwargs={"foo": "bar"}, immutable=True
-    )
+    linked_task = some_async_task.serialize(foo="bar")
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         add_image_to_object(
@@ -616,6 +557,8 @@ def test_add_dicom_image_set_to_object(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     obj = object_factory(**factory_kwargs)
     upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.COMPLETED
@@ -624,9 +567,7 @@ def test_add_dicom_image_set_to_object(
     ImageFactory(dicom_image_set=dicom_image_set)
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.DICOM_IMAGE_SET)
 
-    linked_task = some_async_task.signature(
-        kwargs={"foo": "bar"}, immutable=True
-    )
+    linked_task = some_async_task.serialize(foo="bar")
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         add_image_to_object(
@@ -668,9 +609,7 @@ def test_add_dicom_image_set_to_object_updates_upload_on_validation_fail(
     )
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.DICOM_IMAGE_SET)
 
-    linked_task = some_async_task.signature(
-        kwargs={"foo": "bar"}, immutable=True
-    )
+    linked_task = some_async_task.serialize(foo="bar")
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         add_image_to_object(
@@ -706,9 +645,7 @@ def test_add_dicom_image_set_to_object_marks_job_as_failed_on_validation_fail(
     )
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.DICOM_IMAGE_SET)
 
-    linked_task = some_async_task.signature(
-        kwargs={"foo": "bar"}, immutable=True
-    )
+    linked_task = some_async_task.serialize(foo="bar")
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         add_image_to_object(
@@ -756,9 +693,7 @@ def test_add_dicom_image_set_to_object_sends_notification_on_validation_fail(
         status=DICOMImageSetUploadStatusChoices.COMPLETED
     )
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.DICOM_IMAGE_SET)
-    linked_task = some_async_task.signature(
-        kwargs={"foo": "bar"}, immutable=True
-    )
+    linked_task = some_async_task.serialize(foo="bar")
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         add_image_to_object(
@@ -812,9 +747,7 @@ def test_task_add_image_to_object_handles_deleted_object(
 
     obj = object_factory(**factory_kwargs)
 
-    linked_task = some_async_task.signature(
-        kwargs={"foo": "bar"}, immutable=True
-    )
+    linked_task = some_async_task.serialize(foo="bar")
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind="IMG")
 
@@ -869,11 +802,8 @@ def test_task_add_file_to_object_handles_deleted_object(
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     obj = object_factory(**factory_kwargs)
-    obj.delete()
-
-    linked_task = some_async_task.signature(
-        kwargs={"foo": "bar"}, immutable=True
-    )
+    user_upload = UserUploadFactory()
+    linked_task = some_async_task.serialize(foo="bar")
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
 
     task_kwargs = {
@@ -882,8 +812,10 @@ def test_task_add_file_to_object_handles_deleted_object(
         "object_pk": obj.pk,
         "linked_task": linked_task,
         "interface_pk": ci.pk,
-        "user_upload_pk": None,
+        "user_upload_pk": user_upload.pk,
     }
+
+    obj.delete()
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         with context:
@@ -914,11 +846,11 @@ def test_add_file_to_object(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     creator = UserFactory()
     obj = object_factory(**factory_kwargs)
-    linked_task = some_async_task.signature(
-        kwargs={"foo": "bar"}, immutable=True
-    )
+    linked_task = some_async_task.serialize(foo="bar")
 
     us = UserUploadFactory(filename="file.json", creator=creator)
     presigned_urls = us.generate_presigned_urls(part_numbers=[1])
@@ -969,9 +901,7 @@ def test_add_file_to_object_sends_notification_on_validation_fail(
 
     creator = UserFactory()
     obj = object_factory()
-    linked_task = some_async_task.signature(
-        kwargs={"foo": "bar"}, immutable=True
-    )
+    linked_task = some_async_task.serialize(foo="bar")
 
     us = UserUploadFactory(filename="file.json", creator=creator)
     presigned_urls = us.generate_presigned_urls(part_numbers=[1])
@@ -1032,9 +962,7 @@ def test_add_file_to_object_updates_job_on_validation_fail(
 
     creator = UserFactory()
     obj = AlgorithmJobFactory(time_limit=10)
-    linked_task = some_async_task.signature(
-        kwargs={"foo": "bar"}, immutable=True
-    )
+    linked_task = some_async_task.serialize(foo="bar")
 
     us = UserUploadFactory(filename="file.json", creator=creator)
     presigned_urls = us.generate_presigned_urls(part_numbers=[1])
@@ -1095,9 +1023,7 @@ def test_add_file_to_object_validates_kinds(
 
     creator = UserFactory()
     obj = AlgorithmJobFactory(time_limit=10)
-    linked_task = some_async_task.signature(
-        kwargs={"foo": "bar"}, immutable=True
-    )
+    linked_task = some_async_task.serialize(foo="bar")
 
     us = UserUploadFactory(filename="file.newick", creator=creator)
     presigned_urls = us.generate_presigned_urls(part_numbers=[1])

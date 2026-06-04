@@ -1371,8 +1371,8 @@ class Job(CIVForObjectMixin, ComponentJob):
             execute_algorithm_job_for_inputs,
         )
 
-        linked_task = execute_algorithm_job_for_inputs.signature(
-            kwargs={"job_pk": str(self.pk)}, immutable=True
+        linked_task = execute_algorithm_job_for_inputs.serialize(
+            job_pk=self.pk
         )
 
         return super().process_civ_data_objects_and_execute_linked_task(
@@ -1918,8 +1918,8 @@ class Invocation(CIVForObjectMixin, UUIDModel):
             execute_invocation_for_inputs,
         )
 
-        linked_task = execute_invocation_for_inputs.signature(
-            kwargs={"invocation_pk": str(self.pk)}, immutable=True
+        linked_task = execute_invocation_for_inputs.serialize(
+            invocation_pk=self.pk
         )
 
         return super().process_civ_data_objects_and_execute_linked_task(

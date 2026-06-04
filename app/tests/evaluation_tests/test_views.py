@@ -2549,6 +2549,8 @@ class TestSubmissionCreationWithExtraInputs:
         settings.CELERY_TASK_ALWAYS_EAGER = True
         settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+        settings.LAMBDA_TASKS_EAGER = True
+
         # configure multiple inputs
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
@@ -3107,6 +3109,8 @@ def test_reschedule_evaluation_blocked_if_failed_jobs_with_complete_inputs_exist
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
 

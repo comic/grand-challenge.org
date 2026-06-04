@@ -1724,10 +1724,9 @@ class Submission(FieldChangeMixin, UUIDModel):
                 civ_data_objects=additional_inputs, user=self.creator
             )
         else:
-            e = check_prerequisites_for_evaluation_execution.signature(
-                kwargs={"evaluation_pk": evaluation.pk}, immutable=True
+            check_prerequisites_for_evaluation_execution.execute_on_commit(
+                evaluation_pk=evaluation.pk
             )
-            on_commit(e.apply_async)
 
     def assign_permissions(self):
         assign_perm("view_submission", self.phase.challenge.admins_group, self)
@@ -2376,12 +2375,10 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
             check_prerequisites_for_evaluation_execution,
         )
 
-        linked_task = check_prerequisites_for_evaluation_execution.signature(
-            kwargs={
-                "evaluation_pk": str(self.pk),
-            },
-            immutable=True,
+        linked_task = check_prerequisites_for_evaluation_execution.serialize(
+            evaluation_pk=self.pk
         )
+
         return super().process_civ_data_objects_and_execute_linked_task(
             civ_data_objects=civ_data_objects,
             user=user,

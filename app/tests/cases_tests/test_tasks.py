@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from botocore.exceptions import ClientError
+from celery.exceptions import MaxRetriesExceededError
 from django.db import IntegrityError
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
@@ -33,7 +34,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
 )
-from grandchallenge.core.celery import acks_late_micro_short_task
+from grandchallenge.core.celery import _retry, acks_late_micro_short_task
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.storage import protected_s3_storage
 from tests.algorithms_tests.factories import AlgorithmJobFactory
@@ -560,6 +561,60 @@ def test_handle_health_imaging_import_job_event_invalid_import(
 @acks_late_micro_short_task
 def some_async_task(foo):
     return foo
+
+
+@pytest.mark.django_db
+def test_retry_initial_options(django_capture_on_commit_callbacks):
+    with django_capture_on_commit_callbacks() as callbacks:
+        _retry(
+            task=some_async_task,
+            signature_kwargs={
+                "kwargs": {"foo": "bar"},
+                "options": {"queue": "mine"},
+            },
+            retries=0,
+        )
+    new_task = callbacks[0].__self__
+
+    assert new_task.options["queue"] == "mine-delay"
+    assert new_task.kwargs == {"foo": "bar", "_retries": 1}
+
+
+@pytest.mark.django_db
+def test_retry_initial(django_capture_on_commit_callbacks):
+    with django_capture_on_commit_callbacks() as callbacks:
+        _retry(
+            task=some_async_task,
+            signature_kwargs={"kwargs": {"foo": "bar"}},
+            retries=0,
+        )
+    new_task = callbacks[0].__self__
+
+    assert new_task.options["queue"] == "acks-late-micro-short-delay"
+    assert new_task.kwargs == {"foo": "bar", "_retries": 1}
+
+
+@pytest.mark.django_db
+def test_retry_many(django_capture_on_commit_callbacks):
+    with django_capture_on_commit_callbacks() as callbacks:
+        _retry(
+            task=some_async_task,
+            signature_kwargs={"kwargs": {"foo": "bar"}},
+            retries=10,
+        )
+    new_task = callbacks[0].__self__
+
+    assert new_task.options["queue"] == "acks-late-micro-short-delay"
+    assert new_task.kwargs == {"foo": "bar", "_retries": 11}
+
+
+def test_retry_too_many():
+    with pytest.raises(MaxRetriesExceededError):
+        _retry(
+            task=some_async_task,
+            signature_kwargs={"kwargs": {"foo": "bar"}},
+            retries=100_000,
+        )
 
 
 @pytest.mark.django_db
