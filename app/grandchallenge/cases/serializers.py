@@ -323,8 +323,6 @@ def _get_linked_task(*, targets, interface):
             interface_pk=interface.pk,
         )
     elif "answer" in targets:
-        return add_image_to_answer.signature(
-            kwargs={"answer_pk": targets["answer"].pk}, immutable=True
-        )
+        return add_image_to_answer.serialize(answer_pk=targets["answer"].pk)
     else:
         raise RuntimeError(f"Unknown target {targets=}")

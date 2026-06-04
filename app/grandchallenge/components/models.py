@@ -2710,7 +2710,7 @@ class CIVForObjectMixin:
                     app_label=self._meta.app_label,
                     model_name=self._meta.model_name,
                     object_pk=self.pk,
-                    interface_pk=str(ci.pk),
+                    interface_pk=ci.pk,
                     linked_task=linked_task,
                 ),
             )
@@ -2734,9 +2734,9 @@ class CIVForObjectMixin:
             upload.task_on_success = add_image_to_object.serialize(
                 app_label=self._meta.app_label,
                 model_name=self._meta.model_name,
-                object_pk=str(self.pk),
-                interface_pk=str(ci.pk),
-                dicom_image_set_upload_pk=str(upload.pk),
+                object_pk=self.pk,
+                interface_pk=ci.pk,
+                dicom_image_set_upload_pk=upload.pk,
                 linked_task=linked_task,
             )
             try:

@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
@@ -114,8 +115,14 @@ def create_display_sets_for_upload_session(
             ds.values.add(civ)
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.add_image_to_answer")
 @transaction.atomic
+def add_image_to_answer_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return add_image_to_answer(**kwargs)
+
+
+@lambda_task
 def add_image_to_answer(*, upload_session_pk, answer_pk):
     image = Image.objects.get(origin_id=upload_session_pk)
     answer = Answer.objects.get(pk=answer_pk)
