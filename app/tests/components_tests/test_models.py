@@ -1670,6 +1670,8 @@ def test_displacement_field_validation(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     image_paths = [Path(__file__).parent.absolute() / "resources" / image]
     session, uploaded_images = create_raw_upload_image_session(
         image_paths=image_paths,
