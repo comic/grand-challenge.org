@@ -44,6 +44,7 @@ from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_reviewers,
     send_email_percent_budget_consumed_alert,
 )
+from grandchallenge.challenges.exceptions import InsufficientBudgetError
 from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -855,9 +856,28 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     def available_compute_euro_millicents_via_invoices(self):
         return sum(
             invoice.available_compute_cost_euro_millicents
-            for invoice in self.invoices.all()
-            if invoice.available_compute_cost_euro_millicents > 0
+            for invoice in self.get_available_invoices()
         )
+
+    @property
+    def active_invoice(self):
+        available_invoices = self.get_available_invoices()
+        if available_invoices:
+            return available_invoices[0]
+        else:
+            raise InsufficientBudgetError
+
+    def get_available_invoices(self):
+        invoices = (
+            self.invoices.with_budget_authorization()
+            .order_by("expires_on", "created")
+            .all()
+        )
+        return [
+            invoice
+            for invoice in invoices
+            if invoice.available_compute_cost_euro_millicents > 0
+        ]
 
     def send_alert_if_budget_consumed_warning_threshold_exceeded(self):
         for percent_threshold in sorted(

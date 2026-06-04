@@ -535,7 +535,8 @@ class EvaluationCreate(
     def form_valid(self, form):
         redirect = super().form_valid(form)
         self.submission.create_evaluation(
-            additional_inputs=form.cleaned_data["additional_inputs"]
+            additional_inputs=form.cleaned_data["additional_inputs"],
+            invoice=form.cleaned_data["invoice"],
         )
         return redirect
 

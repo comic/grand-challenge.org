@@ -47,6 +47,7 @@ from tests.evaluation_tests.factories import (
     EvaluationFactory,
     MethodFactory,
     PhaseFactory,
+    SubmissionFactory,
 )
 from tests.factories import ChallengeFactory, UserFactory
 from tests.invoices_tests.factories import InvoiceFactory
@@ -1079,3 +1080,36 @@ def test_evaluation_order_without_title():
     expected_civ = civs[0]
 
     assert {*job.inputs.all()} == {expected_civ}
+
+
+@pytest.mark.django_db
+def test_create_algorithm_jobs_for_evaluation_invoice_workflow():
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    submission = SubmissionFactory(phase__archive=archive, algorithm_image=ai)
+    challenge = submission.phase.challenge
+    invoice = InvoiceFactory(challenge=challenge)
+    evaluation = EvaluationFactory(
+        submission=submission,
+        time_limit=ai.algorithm.time_limit,
+        status=Evaluation.PENDING,
+    )
+    evaluation.utilization.invoice = invoice
+    evaluation.utilization.save()
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
+
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.add(ComponentInterfaceValueFactory(interface=input_ci))
+
+    create_algorithm_jobs_for_evaluation(
+        evaluation_pk=evaluation.pk, first_run=True
+    )
+
+    assert Job.objects.count() == 1, "Sanity: creates jobs"
+    job = Job.objects.get()
+    assert job.utilization.invoice == invoice
+    assert job.status == Job.PENDING

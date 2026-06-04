@@ -19,6 +19,7 @@ from tests.evaluation_tests.factories import (
     SubmissionFactory,
 )
 from tests.factories import ChallengeFactory
+from tests.invoices_tests.factories import InvoiceFactory
 
 
 @pytest.mark.django_db
@@ -66,6 +67,9 @@ def test_selectable_gpu_type_choices_invalid():
 @pytest.mark.django_db
 def test_reevaluate_submission_only_for_evaluations_without_inputs(rf):
     s1, s2 = SubmissionFactory.create_batch(2)
+    InvoiceFactory(challenge=s1.phase.challenge)
+    InvoiceFactory(challenge=s2.phase.challenge)
+
     s1.phase.additional_evaluation_inputs.add(ComponentInterfaceFactory())
 
     modeladmin = SubmissionAdmin(Submission, AdminSite)
@@ -88,7 +92,7 @@ def test_reevaluate_submission_only_for_evaluations_without_inputs(rf):
     )
 
     messages = [m.message for m in request._messages]
-    assert len(messages) == 1
+    assert len(messages) == 1, messages
     assert (
         messages[0]
         == f"Submission {s1.pk} cannot be reevaluated in the admin because it requires additional inputs. Please reschedule through the challenge UI."
@@ -98,6 +102,7 @@ def test_reevaluate_submission_only_for_evaluations_without_inputs(rf):
 @pytest.mark.django_db
 def test_reevaluate_submission_idempotent(rf):
     submission = SubmissionFactory()
+    InvoiceFactory(challenge=submission.phase.challenge)
     MethodFactory(
         phase=submission.phase,
         is_manifest_valid=True,
@@ -160,6 +165,7 @@ def test_rescheduling_external_evaluation_not_possible(rf):
 
     SubmissionFactory(phase=phase_ext)
     SubmissionFactory(phase=phase_int)
+    InvoiceFactory(challenge=phase_int.challenge)
 
     modeladmin = SubmissionAdmin(Submission, AdminSite)
     request = rf.get("/foo")
@@ -177,3 +183,52 @@ def test_rescheduling_external_evaluation_not_possible(rf):
     messages = [m.message for m in request._messages]
     assert len(messages) == 1
     assert messages[0] == "External evaluations cannot be requeued."
+
+
+@pytest.mark.django_db
+def test_reevaluate_submission_missing_invoice(rf):
+    submission = SubmissionFactory()
+
+    modeladmin = SubmissionAdmin(Submission, AdminSite)
+    request = rf.get("/foo")
+    # Add session
+    middleware = SessionMiddleware(lambda x: None)
+    middleware.process_request(request)
+    request.session.save()
+    # Add messages storage
+    messages_storage = FallbackStorage(request)
+    request.session["_messages"] = messages_storage
+    request._messages = messages_storage
+
+    reevaluate_submissions(modeladmin, request, Submission.objects.all())
+
+    messages = [m.message for m in request._messages]
+    assert len(messages) == 1
+    assert (
+        messages[0]
+        == f"Submission {submission.pk} cannot be reevaluated. Challenge has insufficient budget."
+    )
+
+
+@pytest.mark.django_db
+def test_reevaluate_submission_assigns_invoice(rf):
+    submission = SubmissionFactory()
+    invoice = InvoiceFactory(challenge=submission.phase.challenge)
+    MethodFactory(
+        phase=submission.phase,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+
+    modeladmin = SubmissionAdmin(Submission, AdminSite)
+    request = rf.get("/foo")
+
+    reevaluate_submissions(
+        request=request,
+        modeladmin=modeladmin,
+        queryset=Submission.objects.all(),
+    )
+
+    evaluation = Evaluation.objects.get()
+    assert evaluation.evaluation_utilization.invoice == invoice

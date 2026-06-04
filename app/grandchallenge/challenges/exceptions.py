@@ -1,0 +1,2 @@
+class InsufficientBudgetError(Exception):
+    pass

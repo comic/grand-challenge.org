@@ -79,6 +79,7 @@ def create_algorithm_jobs(
     task_on_failure=None,
     job_utilization_phase=None,
     job_utilization_challenge=None,
+    job_utilization_invoice=None,
 ):
     """
     Creates algorithm jobs for sets of component interface values
@@ -114,6 +115,8 @@ def create_algorithm_jobs(
         The phase that should be assigned for utilization tracking
     job_utilization_challenge
         The challenge that should be assigned for utilization tracking
+    job_utilization_invoice
+        The invoice that should be assigned for utilization tracking
     """
     from grandchallenge.algorithms.models import Job
 
@@ -167,6 +170,7 @@ def create_algorithm_jobs(
             job.utilization.archive = ai.archive
             job.utilization.phase = job_utilization_phase
             job.utilization.challenge = job_utilization_challenge
+            job.utilization.invoice = job_utilization_invoice
             job.utilization.save()
 
             job.execute()

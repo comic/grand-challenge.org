@@ -23,7 +23,7 @@ from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.algorithms.models import Job
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.exceptions import InsufficientBudgetError
 from grandchallenge.components.forms import (
     AdditionalInputsMixin,
     ContainerImageForm,
@@ -470,6 +470,15 @@ class SubmissionForm(
                 "You must confirm that you want to submit to this phase."
             )
 
+        try:
+            invoice = self._phase.challenge.active_invoice
+        except InsufficientBudgetError:
+            raise ValidationError(
+                "Challenge has insufficient budget. Please contact the challenge organizers."
+            )
+        else:
+            cleaned_data["invoice"] = invoice
+
         return cleaned_data
 
     def clean_phase(self):
@@ -654,7 +663,8 @@ class SubmissionForm(
         instance = super().save(*args, **kwargs)
 
         instance.create_evaluation(
-            additional_inputs=self.cleaned_data["additional_inputs"]
+            additional_inputs=self.cleaned_data["additional_inputs"],
+            invoice=self.cleaned_data["invoice"],
         )
 
         return instance
@@ -740,17 +750,14 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
                     "Please wait for the other evaluation to complete."
                 )
 
-        # Fetch from the db to get the cost annotations
-        challenge = (
-            Challenge.objects.filter(
-                pk=cleaned_data["submission"].phase.challenge.pk
+        try:
+            invoice = cleaned_data["submission"].phase.challenge.active_invoice
+        except InsufficientBudgetError:
+            raise ValidationError(
+                "Challenge has insufficient budget. Please contact support to add more funds."
             )
-            .with_available_compute()
-            .get()
-        )
-
-        if challenge.available_compute_euro_millicents <= 0:
-            raise ValidationError("This challenge has exceeded its budget")
+        else:
+            cleaned_data["invoice"] = invoice
 
         if Evaluation.objects.get_evaluations_with_same_inputs(
             inputs=cleaned_data["additional_inputs"],
