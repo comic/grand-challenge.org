@@ -1389,13 +1389,9 @@ class DICOMImageSetUpload(UUIDModel):
             revert_image_set_to_initial_version,
         )
 
-        on_commit(
-            revert_image_set_to_initial_version.signature(
-                kwargs={
-                    "image_set_id": image_set_summary.image_set_id,
-                    "version_id": image_set_summary.image_set_version,
-                }
-            ).apply_async
+        revert_image_set_to_initial_version.execute_on_commit(
+            image_set_id=image_set_summary.image_set_id,
+            version_id=image_set_summary.image_set_version,
         )
 
     def convert_image_set_to_internal(self, *, image_set_id):

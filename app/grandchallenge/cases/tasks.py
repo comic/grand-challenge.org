@@ -693,9 +693,17 @@ def delete_health_imaging_image_set(*, image_set_id: str):
         raise RetryStep("Request throttled") from error
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(
+    name=f"{__name__}.revert_image_set_to_initial_version"
+)
 @transaction.atomic
-def revert_image_set_to_initial_version(*, image_set_id, version_id):
+def revert_image_set_to_initial_version_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return revert_image_set_to_initial_version(**kwargs)
+
+
+@lambda_task
+def revert_image_set_to_initial_version(*, image_set_id: str, version_id: int):
     health_imaging_client = boto3.client(
         "medical-imaging",
         region_name=settings.AWS_DEFAULT_REGION,

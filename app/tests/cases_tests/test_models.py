@@ -348,11 +348,9 @@ def test_validate_image_set_generated_image_set_not_first_version(
         },
     )
     mocker.patch.object(di_upload, "get_job_summary", return_value=job_summary)
-    mock_signature = MagicMock()
-    mock_signature.apply_async = MagicMock()
     mock_revert_image_set_to_initial_version = mocker.patch(
-        "grandchallenge.cases.tasks.revert_image_set_to_initial_version.signature",
-        return_value=mock_signature,
+        "grandchallenge.cases.tasks.revert_image_set_to_initial_version.execute_on_commit",
+        return_value=MagicMock(),
     )
 
     with (
@@ -367,9 +365,9 @@ def test_validate_image_set_generated_image_set_not_first_version(
     )
 
     mock_revert_image_set_to_initial_version.assert_called_once_with(
-        kwargs={"image_set_id": image_set_id, "version_id": 2}
+        image_set_id=image_set_id, version_id=2
     )
-    assert mock_signature.apply_async.call_count == 1
+    assert mock_revert_image_set_to_initial_version.call_count == 1
 
 
 @pytest.mark.django_db
