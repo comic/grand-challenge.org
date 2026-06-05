@@ -13,9 +13,11 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from django.conf import settings
 from django.core import files
+from django.db import transaction
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 
+from config.lambda_tasks import LambdaTaskQueueChoices
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
 from grandchallenge.core.celery import (
@@ -108,8 +110,15 @@ def save_zipfile(ghwm, tmpdirname):
     return temp_file
 
 
-@acks_late_2xlarge_task
-def get_zipfile(*, pk):
+@acks_late_2xlarge_task(name=f"{__name__}.get_zipfile")
+@transaction.atomic
+def get_zipfile_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return get_zipfile(**kwargs)
+
+
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
+def get_zipfile(*, pk: int):
     from grandchallenge.github.models import GitHubWebhookMessage
 
     ghwm = GitHubWebhookMessage.objects.get(pk=pk)
@@ -161,8 +170,15 @@ def get_zipfile(*, pk):
                 raise
 
 
-@acks_late_micro_short_task
-def unlink_algorithm(*, pk):
+@acks_late_micro_short_task(name=f"{__name__}.unlink_algorithm")
+@transaction.atomic
+def unlink_algorithm_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return unlink_algorithm(**kwargs)
+
+
+@lambda_task
+def unlink_algorithm(*, pk: int):
     from grandchallenge.github.models import GitHubWebhookMessage
 
     ghwm = GitHubWebhookMessage.objects.get(pk=pk)

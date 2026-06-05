@@ -8,8 +8,9 @@ from django.utils import timezone
 from django.utils.timezone import now
 from django_celery_results.models import TaskResult
 from lambda_tasks.decorators import lambda_task
-from redis.exceptions import LockError
+from pictures.tasks import _process_picture
 
+from config.lambda_tasks import LambdaTaskQueueChoices
 from grandchallenge.algorithms.models import AlgorithmImage, Endpoint, Job
 from grandchallenge.cases.models import (
     PostProcessImageTask,
@@ -36,7 +37,7 @@ CLOUDWATCH_METRICS_LIMIT = 1000
 @lambda_task(
     singleton=True,
     # No need to retry here as the periodic task calls this again
-    ignore_errors=(LockError,),
+    retry_singleton=False,
 )
 def put_cloudwatch_metrics():
     if not settings.PUSH_CLOUDWATCH_METRICS:
@@ -132,3 +133,25 @@ def _get_metrics():
         )
 
     return metric_data
+
+
+def schedule_process_picture(
+    storage: list | tuple,
+    file_name: str,
+    new: list | tuple | None = None,
+    old: list | tuple | None = None,
+):
+    process_picture.execute_on_commit(
+        storage=storage, file_name=file_name, new=new, old=old
+    )
+
+
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
+def process_picture(
+    *,
+    storage: list | tuple,
+    file_name: str,
+    new: list | tuple | None = None,
+    old: list | tuple | None = None,
+):
+    _process_picture(storage=storage, file_name=file_name, new=new, old=old)

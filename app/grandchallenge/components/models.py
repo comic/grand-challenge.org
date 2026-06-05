@@ -11,7 +11,6 @@ from urllib.parse import quote
 from billiard.exceptions import (
     SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
 )
-from celery import signature
 from django import forms
 from django.conf import settings
 from django.core.exceptions import (
@@ -1927,12 +1926,16 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     def execute_task_on_success(self):
         deprovision_job.execute_on_commit(**self.task_kwargs)
         if self.task_on_success:
-            on_commit(signature(self.task_on_success).apply_async)
+            SQSLambdaTask.model_validate(
+                self.task_on_success
+            ).execute_on_commit()
 
     def execute_task_on_failure(self):
         deprovision_job.execute_on_commit(**self.task_kwargs)
         if self.task_on_failure:
-            on_commit(signature(self.task_on_failure).apply_async)
+            SQSLambdaTask.model_validate(
+                self.task_on_failure
+            ).execute_on_commit()
 
     @property
     def animate(self):

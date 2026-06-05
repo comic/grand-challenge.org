@@ -34,7 +34,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
 )
-from grandchallenge.core.celery import _retry, acks_late_micro_short_task
+from grandchallenge.core.celery import _retry, acks_late_2xlarge_task
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.storage import protected_s3_storage
 from tests.algorithms_tests.factories import AlgorithmJobFactory
@@ -271,6 +271,8 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     di_upload = DICOMImageSetUploadFactory()
     with (
         patch.object(
@@ -306,6 +308,8 @@ def test_error_in_start_dicom_import_job(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory()
 
@@ -346,6 +350,8 @@ def test_start_dicom_import_job_sets_error_message_when_deid_fails(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory()
 
@@ -453,6 +459,8 @@ def test_handle_health_imaging_import_job_event_failed_status(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     di_upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.STARTED
     )
@@ -487,6 +495,8 @@ def test_handle_health_imaging_import_job_event_invalid_status(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     di_upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.STARTED
     )
@@ -520,6 +530,8 @@ def test_handle_health_imaging_import_job_event_invalid_import(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.STARTED
@@ -558,7 +570,7 @@ def test_handle_health_imaging_import_job_event_invalid_import(
     assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
 
 
-@acks_late_micro_short_task
+@acks_late_2xlarge_task
 def some_async_task(foo):
     return foo
 
@@ -590,7 +602,7 @@ def test_retry_initial(django_capture_on_commit_callbacks):
         )
     new_task = callbacks[0].__self__
 
-    assert new_task.options["queue"] == "acks-late-micro-short-delay"
+    assert new_task.options["queue"] == "acks-late-2xlarge-delay"
     assert new_task.kwargs == {"foo": "bar", "_retries": 1}
 
 
@@ -604,7 +616,7 @@ def test_retry_many(django_capture_on_commit_callbacks):
         )
     new_task = callbacks[0].__self__
 
-    assert new_task.options["queue"] == "acks-late-micro-short-delay"
+    assert new_task.options["queue"] == "acks-late-2xlarge-delay"
     assert new_task.kwargs == {"foo": "bar", "_retries": 11}
 
 

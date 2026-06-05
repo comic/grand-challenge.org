@@ -4,7 +4,6 @@ from datetime import timedelta
 import requests
 from django.conf import settings
 from django.db import models
-from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
@@ -188,9 +187,7 @@ class GitHubWebhookMessage(models.Model):
         super().save(*args, **kwargs)
 
         if post_save_task:
-            on_commit(
-                post_save_task.signature(kwargs={"pk": self.pk}).apply_async
-            )
+            post_save_task.execute_on_commit(pk=self.pk)
 
     class Meta:
         indexes = [models.Index(fields=["created"])]

@@ -295,6 +295,8 @@ def test_challenge_invoice_issued_notification_emails_on_save(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     challenge = ChallengeFactory()
     challenge_admin = challenge.creator
 
@@ -350,6 +352,8 @@ def test_challenge_invoice_issued_notification_emails_on_create(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     challenge = ChallengeFactory()
     challenge_admin = challenge.creator

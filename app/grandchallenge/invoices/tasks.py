@@ -24,9 +24,17 @@ def send_challenge_invoice_overdue_reminder_emails():
         send_challenge_invoice_overdue_reminder(invoice)
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(
+    name=f"{__name__}.send_challenge_invoice_issued_notification_emails"
+)
 @transaction.atomic
-def send_challenge_invoice_issued_notification_emails(*, pk):
+def send_challenge_invoice_issued_notification_emails_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return send_challenge_invoice_issued_notification_emails(**kwargs)
+
+
+@lambda_task
+def send_challenge_invoice_issued_notification_emails(*, pk: int):
     from grandchallenge.invoices.models import Invoice
 
     invoice = Invoice.objects.get(pk=pk)

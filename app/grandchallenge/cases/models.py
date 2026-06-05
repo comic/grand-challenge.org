@@ -13,7 +13,6 @@ from billiard.exceptions import (
 )
 from botocore.awsrequest import AWSRequest
 from botocore.exceptions import ClientError
-from celery import signature
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -29,6 +28,7 @@ from django.utils.translation import gettext_lazy as _
 from grand_challenge_dicom_de_identifier.deidentifier import DicomDeidentifier
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from lambda_tasks.decorators import LambdaTaskWrapper
+from lambda_tasks.models import SQSLambdaTask
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from panimg_models import ColorSpace, ImageType
 from pydantic import ConfigDict, Field, field_validator
@@ -423,10 +423,8 @@ class DICOMImageSet(UUIDModel):
 def delete_image_set(*_, instance: DICOMImageSet, **__):
     from grandchallenge.cases.tasks import delete_health_imaging_image_set
 
-    on_commit(
-        delete_health_imaging_image_set.signature(
-            kwargs={"image_set_id": instance.image_set_id}
-        ).apply_async
+    delete_health_imaging_image_set.execute_on_commit(
+        image_set_id=instance.image_set_id
     )
 
 
@@ -1381,10 +1379,8 @@ class DICOMImageSetUpload(UUIDModel):
         from grandchallenge.cases.tasks import delete_health_imaging_image_set
 
         for image_set_summary in job_summary.image_sets_summary:
-            on_commit(
-                delete_health_imaging_image_set.signature(
-                    kwargs={"image_set_id": image_set_summary.image_set_id}
-                ).apply_async
+            delete_health_imaging_image_set.execute_on_commit(
+                image_set_id=image_set_summary.image_set_id
             )
 
     @staticmethod
@@ -1393,13 +1389,9 @@ class DICOMImageSetUpload(UUIDModel):
             revert_image_set_to_initial_version,
         )
 
-        on_commit(
-            revert_image_set_to_initial_version.signature(
-                kwargs={
-                    "image_set_id": image_set_summary.image_set_id,
-                    "version_id": image_set_summary.image_set_version,
-                }
-            ).apply_async
+        revert_image_set_to_initial_version.execute_on_commit(
+            image_set_id=image_set_summary.image_set_id,
+            version_id=image_set_summary.image_set_version,
         )
 
     def convert_image_set_to_internal(self, *, image_set_id):
@@ -1419,7 +1411,9 @@ class DICOMImageSetUpload(UUIDModel):
 
     def execute_task_on_success(self):
         if self.task_on_success:
-            on_commit(signature(self.task_on_success).apply_async)
+            SQSLambdaTask.model_validate(
+                self.task_on_success
+            ).execute_on_commit()
 
     def get_absolute_url(self):
         return reverse(
@@ -1437,13 +1431,10 @@ class DICOMImageSetUpload(UUIDModel):
 
         self.user_uploads.all().delete()
         self.delete_input_files()
-        on_commit(
-            handle_dicom_import_error.signature(
-                kwargs={
-                    "dicom_imageset_upload_pk": self.pk,
-                    "error_message": error_message,
-                }
-            ).apply_async
+
+        handle_dicom_import_error.execute_on_commit(
+            dicom_imageset_upload_pk=self.pk,
+            error_message=error_message,
         )
 
 

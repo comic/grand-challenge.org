@@ -1,7 +1,7 @@
 import pytest
 from django.db.transaction import on_commit
 
-from grandchallenge.core.celery import acks_late_micro_short_task
+from grandchallenge.core.celery import acks_late_2xlarge_task
 
 
 @pytest.mark.django_db
@@ -13,7 +13,7 @@ def test_task_errors_raised_when_invoked(
 
     counter = 0
 
-    @acks_late_micro_short_task(ignore_errors=(ValueError,))
+    @acks_late_2xlarge_task(ignore_errors=(ValueError,))
     def test_task():
         nonlocal counter
         counter += 1

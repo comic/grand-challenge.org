@@ -10,6 +10,7 @@ from django.db.transaction import on_commit
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 
+from config.lambda_tasks import LambdaTaskQueueChoices
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import AlgorithmModel, Job
 from grandchallenge.algorithms.tasks import create_algorithm_jobs
@@ -152,13 +153,9 @@ def prepare_and_execute_evaluation(*, evaluation_pk):
     if evaluation.submission.algorithm_image:
         evaluation.status = Evaluation.PENDING
         evaluation.save()
-        on_commit(
-            create_algorithm_jobs_for_evaluation.signature(
-                kwargs={
-                    "evaluation_pk": evaluation_pk,
-                    "first_run": True,
-                }
-            ).apply_async
+        create_algorithm_jobs_for_evaluation.execute_on_commit(
+            evaluation_pk=evaluation_pk,
+            first_run=True,
         )
     elif evaluation.submission.predictions_file:
         mimetype = get_file_mimetype(evaluation.submission.predictions_file)
@@ -206,10 +203,22 @@ def prepare_and_execute_evaluation(*, evaluation_pk):
 
 
 @acks_late_micro_short_task(
-    retry_on=(TooManyJobsScheduled, LockNotAcquiredException)
+    name=f"{__name__}.create_algorithm_jobs_for_evaluation",
+    retry_on=(TooManyJobsScheduled, LockNotAcquiredException),
 )
 @transaction.atomic
-def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
+def create_algorithm_jobs_for_evaluation_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return create_algorithm_jobs_for_evaluation(**kwargs)
+
+
+@lambda_task(
+    retry_on=(TooManyJobsScheduled, LockNotAcquiredException),
+    retry_delay=60,
+)
+def create_algorithm_jobs_for_evaluation(
+    *, evaluation_pk: str | uuid.UUID, first_run: bool
+):
     """
     Creates the algorithm jobs for the evaluation
 
@@ -292,23 +301,21 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
 
         # Run with 1 job and then if that goes well, come back and
         # run all jobs.
-        task_on_success = create_algorithm_jobs_for_evaluation.signature(
-            kwargs={"evaluation_pk": str(evaluation.pk), "first_run": False},
-            immutable=True,
+        task_on_success = create_algorithm_jobs_for_evaluation.serialize(
+            evaluation_pk=evaluation.pk,
+            first_run=False,
         )
         max_jobs = 1
     else:
         # Once the algorithm has been run, score the submission. No emails as
         # algorithm editors should not have access to the underlying images.
-        task_on_success = set_evaluation_inputs.signature(
-            kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
+        task_on_success = set_evaluation_inputs.serialize(
+            evaluation_pk=evaluation.pk
         )
         max_jobs = slots_available
 
     # If any of the jobs fail then mark the evaluation as failed.
-    task_on_failure = handle_failed_jobs.signature(
-        kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
-    )
+    task_on_failure = handle_failed_jobs.serialize(evaluation_pk=evaluation.pk)
 
     try:
         jobs = create_algorithm_jobs(
@@ -341,26 +348,31 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
         if not first_run:
             # Manually create the retry task so that the jobs
             # created above are committed
-            create_algorithm_jobs_for_evaluation._retry()
+            create_algorithm_jobs_for_evaluation.execute_on_commit(
+                evaluation_pk=evaluation.pk, first_run=first_run, _delay=60
+            )
         return
 
     if not jobs:
         # No more jobs created from this task, so everything must be
         # ready for evaluation, handles archives with only one item
         # and re-evaluation of existing submissions with new methods
-        on_commit(
-            set_evaluation_inputs.signature(
-                kwargs={"evaluation_pk": str(evaluation.pk)},
-                immutable=True,
-            ).apply_async
-        )
+        set_evaluation_inputs.execute_on_commit(evaluation_pk=evaluation.pk)
 
 
 @acks_late_micro_short_task(
-    retry_on=(LockNotAcquiredException,), delayed_retry=False
+    name=f"{__name__}.handle_failed_jobs",
+    retry_on=(LockNotAcquiredException,),
+    delayed_retry=False,
 )
 @transaction.atomic
-def handle_failed_jobs(*, evaluation_pk):
+def handle_failed_jobs_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return handle_failed_jobs(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def handle_failed_jobs(*, evaluation_pk: str | uuid.UUID):
     from grandchallenge.evaluation.models import Evaluation
 
     with check_lock_acquired():
@@ -387,9 +399,20 @@ def handle_failed_jobs(*, evaluation_pk):
         ).select_for_update(skip_locked=True).update(status=Job.CANCELLED)
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.set_evaluation_inputs",
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
-def set_evaluation_inputs(*, evaluation_pk):
+def set_evaluation_inputs_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return set_evaluation_inputs(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+)
+def set_evaluation_inputs(*, evaluation_pk: str | uuid.UUID):
     """
     Sets the inputs to the Evaluation for an algorithm submission.
 
