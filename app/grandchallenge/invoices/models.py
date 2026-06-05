@@ -405,6 +405,20 @@ class Invoice(models.Model, FieldChangeMixin):
         )
         return abs(min(balance, 0))
 
+    @cached_property
+    def percent_budget_consumed(self):
+        if self.approved_compute_cost_euro_millicents > 0:
+            return int(
+                100
+                * (
+                    self.consumed_compute_cost_euro_millicents
+                    + self.write_off_compute_cost_euro_millicents
+                )
+                / self.approved_compute_cost_euro_millicents
+            )
+        else:
+            return None
+
     def clean(self):
         if (
             not self._state.adding

@@ -12,6 +12,46 @@ from tests.factories import ChallengeFactory
 from tests.invoices_tests.factories import InvoiceFactory
 
 
+@pytest.mark.django_db
+def test_percent_budget_consumed():
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=2,
+        compute_cost_euro_millicents=1 * 1000 * 100,
+    )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
+    assert invoice.percent_budget_consumed == 50
+
+
+@pytest.mark.django_db
+def test_percent_budget_consumed_over_charge():
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=2,
+        compute_cost_euro_millicents=3 * 1000 * 100,
+    )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
+    assert invoice.percent_budget_consumed == 150
+
+
+@pytest.mark.django_db
+def test_percent_budget_consumed_unauthorized():
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=2,
+        compute_cost_euro_millicents=3 * 1000 * 100,
+        payment_status=PaymentStatusChoices.CANCELLED,
+    )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
+    assert invoice.percent_budget_consumed is None
+
+
 ##########
 # PREPAID
 #########
