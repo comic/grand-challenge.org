@@ -8,7 +8,9 @@ from django.utils import timezone
 from django.utils.timezone import now
 from django_celery_results.models import TaskResult
 from lambda_tasks.decorators import lambda_task
+from pictures.tasks import _process_picture
 
+from config.lambda_tasks import LambdaTaskQueueChoices
 from grandchallenge.algorithms.models import AlgorithmImage, Endpoint, Job
 from grandchallenge.cases.models import (
     PostProcessImageTask,
@@ -131,3 +133,25 @@ def _get_metrics():
         )
 
     return metric_data
+
+
+def lambda_tasks_process_picture(
+    storage: list | tuple,
+    file_name: str,
+    new: list | tuple | None = None,
+    old: list | tuple | None = None,
+):
+    process_picture.execute_on_commit(
+        storage=storage, file_name=file_name, new=new, old=old
+    )
+
+
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
+def process_picture(
+    *,
+    storage: list | tuple,
+    file_name: str,
+    new: list | tuple | None = None,
+    old: list | tuple | None = None,
+):
+    _process_picture(storage=storage, file_name=file_name, new=new, old=old)
