@@ -575,7 +575,7 @@ def test_execute_algorithm_job_sets_on_failed_jobs(
     job.refresh_from_db()
     assert job.status == Job.PENDING
     assert (
-        job.task_on_failure["task"]
+        job.task_on_failure["message"]["task_name"]
         == "grandchallenge.algorithms.tasks.send_failed_job_notification"
     )  # Full task is tested somewhere else
 

@@ -314,9 +314,7 @@ def create_algorithm_jobs_for_evaluation(
         max_jobs = slots_available
 
     # If any of the jobs fail then mark the evaluation as failed.
-    task_on_failure = handle_failed_jobs.signature(
-        kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
-    )
+    task_on_failure = handle_failed_jobs.serialize(evaluation_pk=evaluation.pk)
 
     try:
         jobs = create_algorithm_jobs(
@@ -362,10 +360,18 @@ def create_algorithm_jobs_for_evaluation(
 
 
 @acks_late_micro_short_task(
-    retry_on=(LockNotAcquiredException,), delayed_retry=False
+    name=f"{__name__}.handle_failed_jobs",
+    retry_on=(LockNotAcquiredException,),
+    delayed_retry=False,
 )
 @transaction.atomic
-def handle_failed_jobs(*, evaluation_pk):
+def handle_failed_jobs_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return handle_failed_jobs(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def handle_failed_jobs(*, evaluation_pk: str | uuid.UUID):
     from grandchallenge.evaluation.models import Evaluation
 
     with check_lock_acquired():

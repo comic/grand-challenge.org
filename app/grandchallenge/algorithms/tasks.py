@@ -55,9 +55,7 @@ def execute_algorithm_job_for_inputs(*, job_pk: str | UUID):
     logger.info("Job is ready, creating execution task")
 
     # Notify the job creator on failure
-    job.task_on_failure = send_failed_job_notification.signature(
-        kwargs={"job_pk": str(job.pk)}, immutable=True
-    )
+    job.task_on_failure = send_failed_job_notification.serialize(job_pk=job.pk)
     job.status = job.PENDING
     job.save()
 
@@ -242,9 +240,15 @@ def filter_archive_items_for_algorithm(
     return filtered_valid_job_inputs
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.send_failed_job_notification")
 @transaction.atomic
-def send_failed_job_notification(*, job_pk):
+def send_failed_job_notification_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return send_failed_job_notification(**kwargs)
+
+
+@lambda_task
+def send_failed_job_notification(*, job_pk: str | UUID):
     from grandchallenge.algorithms.models import Job
 
     job = Job.objects.get(pk=job_pk)
