@@ -259,7 +259,6 @@ def handle_build_images_error_celery(**kwargs):
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
-@transaction.atomic
 def handle_build_images_error(
     *,
     upload_session_pk: str | UUID,
@@ -581,7 +580,6 @@ def handle_dicom_import_error_celery(**kwargs):
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
-@transaction.atomic
 def handle_dicom_import_error(
     *,
     dicom_imageset_upload_pk: str | UUID,
