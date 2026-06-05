@@ -666,9 +666,17 @@ def handle_health_imaging_import_job_event(*, event: dict):
         upload.handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
 
 
-@acks_late_micro_short_task(retry_on=(RetryStep,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.delete_health_imaging_image_set", retry_on=(RetryStep,)
+)
 @transaction.atomic
-def delete_health_imaging_image_set(*, image_set_id):
+def delete_health_imaging_image_set_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return delete_health_imaging_image_set(**kwargs)
+
+
+@lambda_task(retry_on=(RetryStep,), retry_delay=60)
+def delete_health_imaging_image_set(*, image_set_id: str):
     health_imaging_client = boto3.client(
         "medical-imaging",
         region_name=settings.AWS_DEFAULT_REGION,

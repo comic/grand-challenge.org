@@ -423,10 +423,8 @@ class DICOMImageSet(UUIDModel):
 def delete_image_set(*_, instance: DICOMImageSet, **__):
     from grandchallenge.cases.tasks import delete_health_imaging_image_set
 
-    on_commit(
-        delete_health_imaging_image_set.signature(
-            kwargs={"image_set_id": instance.image_set_id}
-        ).apply_async
+    delete_health_imaging_image_set.execute_on_commit(
+        image_set_id=instance.image_set_id
     )
 
 
@@ -1381,10 +1379,8 @@ class DICOMImageSetUpload(UUIDModel):
         from grandchallenge.cases.tasks import delete_health_imaging_image_set
 
         for image_set_summary in job_summary.image_sets_summary:
-            on_commit(
-                delete_health_imaging_image_set.signature(
-                    kwargs={"image_set_id": image_set_summary.image_set_id}
-                ).apply_async
+            delete_health_imaging_image_set.execute_on_commit(
+                image_set_id=image_set_summary.image_set_id
             )
 
     @staticmethod
