@@ -291,9 +291,18 @@ def update_associated_challenges():
     cache.set("challenges_for_algorithms", challenge_list, timeout=None)
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(
+    name=f"{__name__}.update_algorithm_average_duration",
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
-def update_algorithm_average_duration(*, algorithm_pk):
+def update_algorithm_average_duration_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_algorithm_average_duration(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def update_algorithm_average_duration(*, algorithm_pk: str | UUID):
     from grandchallenge.algorithms.models import Algorithm, Job
     from grandchallenge.utilization.models import JobUtilization
 

@@ -12,7 +12,6 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, Q, Sum, TextChoices
 from django.db.models.signals import post_delete
-from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.defaultfilters import truncatechars
 from django.utils import timezone
@@ -1255,10 +1254,8 @@ class Job(CIVForObjectMixin, ComponentJob):
             self.update_viewer_groups_for_public()
 
         if self.has_changed("status") and self.status == self.SUCCESS:
-            on_commit(
-                update_algorithm_average_duration.signature(
-                    kwargs={"algorithm_pk": self.algorithm_image.algorithm.pk}
-                ).apply_async
+            update_algorithm_average_duration.execute_on_commit(
+                algorithm_pk=self.algorithm_image.algorithm.pk
             )
 
     def init_is_complimentary(self):

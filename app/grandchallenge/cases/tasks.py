@@ -20,7 +20,6 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.db import transaction
-from django.db.transaction import on_commit
 from django.utils._os import safe_join
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
@@ -178,17 +177,13 @@ def build_images(  # noqa:C901
 
     def _handle_error(*, error_message):
         logger.info(error_message)
-        on_commit(
-            handle_build_images_error.signature(
-                kwargs={
-                    "upload_session_pk": upload_session_pk,
-                    "error_message": error_message,
-                    "linked_app_label": linked_app_label,
-                    "linked_model_name": linked_model_name,
-                    "linked_object_pk": linked_object_pk,
-                    "linked_interface_slug": linked_interface_slug,
-                }
-            ).apply_async
+        handle_build_images_error.execute_on_commit(
+            upload_session_pk=upload_session_pk,
+            error_message=error_message,
+            linked_app_label=linked_app_label,
+            linked_model_name=linked_model_name,
+            linked_object_pk=linked_object_pk,
+            linked_interface_slug=linked_interface_slug,
         )
 
     try:
@@ -253,17 +248,26 @@ def build_images(  # noqa:C901
 
 
 @acks_late_micro_short_task(
-    retry_on=(LockNotAcquiredException,), delayed_retry=False
+    name=f"{__name__}.handle_build_images_error",
+    retry_on=(LockNotAcquiredException,),
+    delayed_retry=False,
 )
+@transaction.atomic
+def handle_build_images_error_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return handle_build_images_error(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def handle_build_images_error(
     *,
-    upload_session_pk,
-    error_message,
-    linked_app_label,
-    linked_model_name,
-    linked_object_pk,
-    linked_interface_slug,
+    upload_session_pk: str | UUID,
+    error_message: str,
+    linked_app_label: str | None,
+    linked_model_name: str | None,
+    linked_object_pk: str | UUID | None,
+    linked_interface_slug: str | None,
 ):
     with check_lock_acquired():
         upload_session = RawImageUploadSession.objects.select_for_update(

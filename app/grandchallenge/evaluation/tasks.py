@@ -10,6 +10,7 @@ from django.db.transaction import on_commit
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 
+from config.lambda_tasks import LambdaTaskQueueChoices
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import AlgorithmModel, Job
 from grandchallenge.algorithms.tasks import create_algorithm_jobs
@@ -408,7 +409,9 @@ def set_evaluation_inputs_celery(**kwargs):
     return set_evaluation_inputs(**kwargs)
 
 
-@lambda_task(retry_on=(LockNotAcquiredException,))
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+)
 def set_evaluation_inputs(*, evaluation_pk: str | uuid.UUID):
     """
     Sets the inputs to the Evaluation for an algorithm submission.
