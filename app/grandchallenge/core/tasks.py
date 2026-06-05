@@ -135,7 +135,7 @@ def _get_metrics():
     return metric_data
 
 
-def lambda_tasks_process_picture(
+def schedule_process_picture(
     storage: list | tuple,
     file_name: str,
     new: list | tuple | None = None,

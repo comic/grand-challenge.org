@@ -675,7 +675,7 @@ PICTURES = {
     "FILE_TYPES": ["AVIF"],
     "PIXEL_DENSITIES": [1, 2],
     "USE_PLACEHOLDERS": False,
-    "PROCESSOR": "grandchallenge.core.tasks.lambda_tasks_process_picture",
+    "PROCESSOR": "grandchallenge.core.tasks.schedule_process_picture",
 }
 
 ##############################################################################
