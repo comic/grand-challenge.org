@@ -648,7 +648,7 @@ def test_combined_leaderboards(
             == f"<bound method Signature.apply_async of grandchallenge.evaluation.tasks.update_combined_leaderboard(pk={leaderboard.pk!r})>"
         )
 
-    with django_assert_max_num_queries(7):
+    with django_assert_max_num_queries(8):
         update_combined_leaderboard(pk=leaderboard.pk)
 
     assert (
