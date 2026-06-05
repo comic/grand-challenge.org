@@ -810,9 +810,6 @@ def test_challenge_queryset_with_user_roles_multiple_challenges():
 @pytest.mark.django_db
 def test_active_invoice():
     challenge = ChallengeFactory()
-    challenge = Challenge.objects.with_only_active_invoices().get(
-        pk=challenge.pk
-    )
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
@@ -820,14 +817,21 @@ def test_active_invoice():
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     assert challenge.active_invoice == invoice
 
 
 @pytest.mark.django_db
 def test_active_invoice_no_invoice():
     challenge = ChallengeFactory()
-    challenge = Challenge.objects.with_only_active_invoices().get(
-        pk=challenge.pk
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
     )
     with pytest.raises(InsufficientBudgetError):
         challenge.active_invoice
@@ -836,15 +840,17 @@ def test_active_invoice_no_invoice():
 @pytest.mark.django_db
 def test_active_invoice_raises_on_negative_balance():
     challenge = ChallengeFactory()
-    challenge = Challenge.objects.with_only_active_invoices().get(
-        pk=challenge.pk
-    )
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
         compute_cost_euro_millicents=2 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
     )
     with pytest.raises(InsufficientBudgetError):
         challenge.active_invoice
@@ -853,15 +859,17 @@ def test_active_invoice_raises_on_negative_balance():
 @pytest.mark.django_db
 def test_active_invoice_raises_on_zero_balance():
     challenge = ChallengeFactory()
-    challenge = Challenge.objects.with_only_active_invoices().get(
-        pk=challenge.pk
-    )
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
         compute_cost_euro_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
     )
     with pytest.raises(InsufficientBudgetError):
         challenge.active_invoice
@@ -870,9 +878,6 @@ def test_active_invoice_raises_on_zero_balance():
 @pytest.mark.django_db
 def test_active_invoice_orders_by_expiry():
     challenge = ChallengeFactory()
-    challenge = Challenge.objects.with_only_active_invoices().get(
-        pk=challenge.pk
-    )
 
     _fixed_now = now()
 
@@ -893,26 +898,40 @@ def test_active_invoice_orders_by_expiry():
         expires_on=_fixed_now + timedelta(10),
     )
 
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     # All things being equal, use created time to determine order, so invoice0 should be active as it was created first
     assert challenge.active_invoice == invoice0
 
     invoice1.expires_on = _fixed_now + timedelta(5)
     invoice1.save()
     assert invoice1.expires_on < invoice0.expires_on, "Sanity"
+
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     assert challenge.active_invoice == invoice1
 
     invoice0.expires_on = _fixed_now + timedelta(4)
     invoice0.save()
     assert invoice0.expires_on < invoice1.expires_on, "Sanity"
+
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     assert challenge.active_invoice == invoice0
 
 
 @pytest.mark.django_db
 def test_active_invoice_ignores_invoices_with_negative_balance():
     challenge = ChallengeFactory()
-    challenge = Challenge.objects.with_only_active_invoices().get(
-        pk=challenge.pk
-    )
 
     InvoiceFactory(
         challenge=challenge,
@@ -929,21 +948,28 @@ def test_active_invoice_ignores_invoices_with_negative_balance():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     challenge.active_invoice
 
 
 @pytest.mark.django_db
 def test_budget_properties():
     challenge = ChallengeFactory()
-    challenge = Challenge.objects.with_only_active_invoices().get(
-        pk=challenge.pk
-    )
 
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     assert challenge.available_compute_cost_euro_millicents == 0
     assert challenge.approved_compute_cost_euro_millicents == 0
     assert challenge.consumed_compute_cost_euro_millicents == 0
     assert challenge.write_off_compute_cost_euro_millicents == 0
-    assert challenge.percent_budget_consumed is None
+    assert challenge.percent_active_budget_consumed is None
 
     InvoiceFactory(
         challenge=challenge,
@@ -951,55 +977,14 @@ def test_budget_properties():
         compute_cost_euro_millicents=6 * 1000 * 100,
     )
 
-    challenge = Challenge.objects.with_only_active_invoices().get(
-        pk=challenge.pk
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
     )
 
     assert challenge.available_compute_cost_euro_millicents == 4 * 1000 * 100
     assert challenge.approved_compute_cost_euro_millicents == 10 * 1000 * 100
     assert challenge.consumed_compute_cost_euro_millicents == 6 * 1000 * 100
     assert challenge.write_off_compute_cost_euro_millicents == 0
-    assert challenge.percent_budget_consumed == 60
-
-
-@pytest.mark.django_db
-def test_budget_properties_ignore_non_active_invoices():
-    challenge = ChallengeFactory()
-    challenge = Challenge.objects.with_only_active_invoices().get(
-        pk=challenge.pk
-    )
-
-    InvoiceFactory(
-        challenge=challenge,
-        compute_costs_euros=100,
-        compute_cost_euro_millicents=200 * 1000 * 100,
-        expires_on=now().date() - timedelta(days=1),
-    )
-    InvoiceFactory(
-        challenge=challenge,
-        compute_costs_euros=100,
-        compute_cost_euro_millicents=200 * 1000 * 100,
-        payment_status=Invoice.PaymentStatusChoices.CANCELLED,
-    )
-
-    assert challenge.approved_compute_cost_euro_millicents == 0
-    assert challenge.available_compute_cost_euro_millicents == 0
-    assert challenge.consumed_compute_cost_euro_millicents == 0
-    assert challenge.percent_budget_consumed is None
-
-    InvoiceFactory(
-        challenge=challenge,
-        compute_costs_euros=10,
-        compute_cost_euro_millicents=6 * 1000 * 100,
-    )
-
-    challenge = Challenge.objects.with_only_active_invoices().get(
-        pk=challenge.pk
-    )
-
-    assert challenge.available_compute_cost_euro_millicents == 4 * 1000 * 100
-    assert challenge.approved_compute_cost_euro_millicents == 10 * 1000 * 100
-    assert challenge.consumed_compute_cost_euro_millicents == 6 * 1000 * 100
-    assert challenge.write_off_compute_cost_euro_millicents == 0
-
-    assert challenge.percent_budget_consumed == 60
+    assert challenge.percent_active_budget_consumed == 60

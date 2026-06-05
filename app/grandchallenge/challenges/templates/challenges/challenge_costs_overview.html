@@ -14,12 +14,12 @@
                 href="{% url 'challenges:list' %}">Challenges</a>
         </li>
         <li class="breadcrumb-item active"
-            aria-current="page">Cost Overview</li>
+            aria-current="page">Active Cost Overview</li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h3 class="mb-3">Challenge Cost Overview</h3>
+    <h3 class="mb-3">Challenge Active Cost Overview</h3>
 
     <div class="table-responsive">
         <table
@@ -35,11 +35,11 @@
                     <th>Status</th>
                     <th>Should be Open</th>
                     <th>Most Recent Submission</th>
-                    <th>Percentage Budget Consumed</th>
-                    <th>Approved Compute Costs</th>
-                    <th>Total Compute Costs Incurred</th>
+                    <th>% Active Budget Consumed</th>
                     <th>Available Compute Costs</th>
-                     <th>Available Compute Costs (via Invoices)</th>
+                    <th>Total Approved Compute Costs</th>
+                    <th>Total Consumed Compute Costs </th>
+                    <th>Total Write-Off Compute Costs</th>
                     <th>Object Storage Costs per Year</th>
                     <th>Registry Storage Costs per Year</th>
                 </tr>
@@ -53,11 +53,11 @@
                         </td>
                         <td>{% if challenge.should_be_open_but_is_over_budget %}<i class="fa fa-exclamation-triangle text-danger"></i>{% endif %}</td>
                         <td data-order="{% if challenge.cached_latest_result %}{{ challenge.cached_latest_result|date:"c" }}{% else %}-1{% endif %}">{% if challenge.cached_latest_result %}{{ challenge.cached_latest_result|date }}{% endif %}</td>
-                        <td data-order="{% if challenge.percent_budget_consumed is None %}-1{% else %}{{ challenge.percent_budget_consumed }}{% endif %}" class="{% if challenge.percent_budget_consumed >= 100 %}text-danger{% elif challenge.percent_budget_consumed >= 70 %}text-warning{% else %}text-success{% endif %}">{% if challenge.percent_budget_consumed is not None %}{{ challenge.percent_budget_consumed }}&nbsp;%{% endif %}</td>
+                        <td data-order="{% if challenge.percent_active_budget_consumed is None %}-1{% else %}{{ challenge.percent_active_budget_consumed }}{% endif %}" class="{% if challenge.percent_active_budget_consumed >= 100 %}text-danger{% elif challenge.percent_active_budget_consumed >= 70 %}text-warning{% else %}text-success{% endif %}">{% if challenge.percent_active_budget_consumed is not None %}{{ challenge.percent_active_budget_consumed }}&nbsp;%{% endif %}</td>
+                        <td class="{% if challenge.available_compute_cost_euro_millicents <= 0 %}text-danger{% endif %}">{{ challenge.available_compute_cost_euro_millicents|millicents_to_euro }}</td>
                         <td>{{ challenge.approved_compute_costs_euro_millicents|millicents_to_euro }}</td>
-                        <td>{{ challenge.compute_cost_euro_millicents|millicents_to_euro }}</td>
-                        <td class="{% if challenge.available_compute_euro_millicents <= 0 %}text-danger{% endif %}">{{ challenge.available_compute_euro_millicents|millicents_to_euro }}</td>
-                        <td>{{ challenge.available_compute_euro_millicents_via_invoices|millicents_to_euro }}</td>
+                        <td>{{ challenge.consumed_compute_cost_euro_millicents|millicents_to_euro }}</td>
+                        <td class="{% if challenge.write_off_compute_cost_euro_millicents > 0 %}text-danger{% endif %}">{{ challenge.write_off_compute_cost_euro_millicents|millicents_to_euro }}</td>
                         <td>{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</td>
                         <td>{{ challenge.size_in_registry|registry_bytes_to_euro_per_year }}</td>
                     </tr>

@@ -171,13 +171,11 @@ class ChallengeQuerySet(models.QuerySet):
             ),
         )
 
-    def with_only_active_invoices(self):
+    def with_invoices_with_budget_authorization(self):
         return self.prefetch_related(
             Prefetch(
                 "invoices",
-                queryset=Invoice.objects.with_budget_authorization().filter(
-                    is_budget_authorized=True, expires_on__gt=now().date()
-                ),
+                queryset=Invoice.objects.with_budget_authorization(),
             )
         )
 
@@ -872,22 +870,29 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
 
     @cached_property
-    def percent_budget_consumed(self):
-        if self.approved_compute_cost_euro_millicents > 0:
-            return int(
-                100
-                * (
-                    self.consumed_compute_cost_euro_millicents
-                    + self.write_off_compute_cost_euro_millicents
-                )
-                / self.approved_compute_cost_euro_millicents
-            )
+    def percent_active_budget_consumed(self):
+        active_invoices = [
+            invoice
+            for invoice in self.invoices.all()
+            if not invoice.is_expired
+        ]
+
+        consumed = sum(
+            invoice.consumed_compute_cost_euro_millicents
+            for invoice in active_invoices
+        )
+        approved = sum(
+            invoice.approved_compute_cost_euro_millicents
+            for invoice in active_invoices
+        )
+        if approved > 0:
+            return int(100 * consumed / approved)
         else:
             return None
 
     @property
     def active_invoice(self):
-        for invoice in self.invoices.order_by("expires_on", "created"):
+        for invoice in self.invoices.order_by("expires_on", "created").all():
             if invoice.available_compute_cost_euro_millicents > 0:
                 return invoice
         raise InsufficientBudgetError

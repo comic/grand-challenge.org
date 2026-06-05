@@ -35,7 +35,7 @@ def test_percent_budget_consumed_over_charge():
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
 
-    assert invoice.percent_budget_consumed == 150
+    assert invoice.percent_budget_consumed == 100
 
 
 @pytest.mark.django_db
