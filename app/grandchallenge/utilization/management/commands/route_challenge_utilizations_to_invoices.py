@@ -162,7 +162,7 @@ class Command(BaseCommand):
 
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Progress: finished working on {model.__name__}."
+                    f"Progress: finished working on updating {updated} {model.__name__}."
                 )
             )
 
