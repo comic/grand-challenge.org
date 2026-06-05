@@ -842,47 +842,54 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
 
     @cached_property
+    def active_invoices(self):
+        return self.invoices.with_is_active().filter(is_active=True)
+
+    @cached_property
+    def approved_compute_cost_euro_millicents(self):
+        return sum(
+            invoice.approved_compute_cost_euro_millicents
+            for invoice in self.active_invoices
+        )
+
+    @cached_property
+    def available_compute_cost_euro_millicents(self):
+        return sum(
+            invoice.available_compute_cost_euro_millicents
+            for invoice in self.active_invoices
+        )
+
+    @cached_property
+    def consumed_compute_cost_euro_millicents(self):
+        return sum(
+            invoice.consumed_compute_cost_euro_millicents
+            for invoice in self.active_invoices
+        )
+
+    @cached_property
+    def write_off_compute_cost_euro_millicents(self):
+        return sum(
+            invoice.write_off_compute_cost_euro_millicents
+            for invoice in self.active_invoices
+        )
+
+    @cached_property
     def percent_budget_consumed(self):
-        if self.approved_compute_cost_euro_millicents:
+        if self.approved_compute_cost_euro_millicents > 0:
             return int(
                 100
-                * self.available_compute_cost_euro_millicents
+                * (
+                    self.consumed_compute_cost_euro_millicents
+                    + self.write_off_compute_cost_euro_millicents
+                )
                 / self.approved_compute_cost_euro_millicents
             )
         else:
             return None
 
-    @cached_property
-    def approved_compute_cost_euro_millicents(self):
-        total_compute_costs_euros = (
-            self.invoices.with_is_active()
-            .filter(is_active=True)
-            .aggregate(
-                total=Sum(
-                    "compute_costs_euros",
-                    output_field=models.PositiveBigIntegerField(),
-                )
-            )["total"]
-        )
-
-        return (total_compute_costs_euros or 0) * 1000 * 100
-
-    @cached_property
-    def available_compute_cost_euro_millicents(self):
-        return sum(
-            max(invoice.available_compute_cost_euro_millicents, 0)
-            for invoice in self.invoices.with_is_active().filter(
-                is_active=True
-            )
-        )
-
     @property
     def active_invoice(self):
-        for invoice in (
-            self.invoices.with_is_active()
-            .filter(is_active=True)
-            .order_by("expires_on", "created")
-        ):
+        for invoice in self.active_invoices.order_by("expires_on", "created"):
             if invoice.available_compute_cost_euro_millicents > 0:
                 return invoice
         raise InsufficientBudgetError
