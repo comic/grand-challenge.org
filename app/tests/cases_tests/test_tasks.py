@@ -602,7 +602,7 @@ def test_retry_initial(django_capture_on_commit_callbacks):
         )
     new_task = callbacks[0].__self__
 
-    assert new_task.options["queue"] == "acks-late-micro-short-delay"
+    assert new_task.options["queue"] == "acks-late-2xlarge-delay"
     assert new_task.kwargs == {"foo": "bar", "_retries": 1}
 
 
@@ -616,7 +616,7 @@ def test_retry_many(django_capture_on_commit_callbacks):
         )
     new_task = callbacks[0].__self__
 
-    assert new_task.options["queue"] == "acks-late-micro-short-delay"
+    assert new_task.options["queue"] == "acks-late-2xlarge-delay"
     assert new_task.kwargs == {"foo": "bar", "_retries": 11}
 
 
