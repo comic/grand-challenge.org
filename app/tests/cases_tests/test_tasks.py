@@ -34,7 +34,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
 )
-from grandchallenge.core.celery import _retry, acks_late_micro_short_task
+from grandchallenge.core.celery import _retry, acks_late_2xlarge_task
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.storage import protected_s3_storage
 from tests.algorithms_tests.factories import AlgorithmJobFactory
@@ -570,7 +570,7 @@ def test_handle_health_imaging_import_job_event_invalid_import(
     assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
 
 
-@acks_late_micro_short_task
+@acks_late_2xlarge_task
 def some_async_task(foo):
     return foo
 

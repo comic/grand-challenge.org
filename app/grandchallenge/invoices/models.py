@@ -7,7 +7,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Count, Exists, ExpressionWrapper, F, OuterRef, Q
 from django.db.models.functions import Cast, Now
-from django.db.transaction import on_commit
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
@@ -401,10 +400,8 @@ class Invoice(models.Model, FieldChangeMixin):
             and (self.has_changed("payment_status") or adding)
             and self.payment_status == PaymentStatusChoices.ISSUED
         ):
-            on_commit(
-                send_challenge_invoice_issued_notification_emails.signature(
-                    kwargs={"pk": self.pk}
-                ).apply_async
+            send_challenge_invoice_issued_notification_emails.execute_on_commit(
+                pk=self.pk
             )
 
     def assign_permissions(self):
