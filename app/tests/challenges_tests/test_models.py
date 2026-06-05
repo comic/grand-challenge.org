@@ -985,3 +985,52 @@ def test_active_invoice_ignores_invoices_with_negative_balance():
     )
 
     challenge.active_invoice
+
+
+@pytest.mark.django_db
+def test_budget_properties():
+    challenge = ChallengeFactory()
+
+    assert challenge.approved_compute_cost_euro_millicents == 0
+    assert challenge.available_compute_cost_euro_millicents == 0
+    assert challenge.percent_budget_consumed is None
+
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=10,
+        compute_cost_euro_millicents=5 * 1000 * 100,
+    )
+
+    challenge = Challenge.objects.get(pk=challenge.pk)
+
+    assert challenge.approved_compute_cost_euro_millicents == 10 * 1000 * 100
+    assert challenge.available_compute_cost_euro_millicents == 5 * 1000 * 100
+    assert challenge.percent_budget_consumed == 50
+
+
+@pytest.mark.django_db
+def test_budget_properties_with_over_charged_invoices():
+    challenge = ChallengeFactory()
+
+    assert challenge.approved_compute_cost_euro_millicents == 0
+    assert challenge.available_compute_cost_euro_millicents == 0
+    assert challenge.percent_budget_consumed is None
+
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=10,
+        compute_cost_euro_millicents=15
+        * 1000
+        * 100,  # Note, overcharge: should be ignored
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=20,
+        compute_cost_euro_millicents=1 * 1000 * 100,
+    )
+
+    challenge = Challenge.objects.get(pk=challenge.pk)
+
+    assert challenge.approved_compute_cost_euro_millicents == 30 * 1000 * 100
+    assert challenge.available_compute_cost_euro_millicents == 19 * 1000 * 100
+    assert challenge.percent_budget_consumed == 63

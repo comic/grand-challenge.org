@@ -835,7 +835,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
 
     @cached_property
     def should_be_open_but_is_over_budget(self):
-        return self.available_compute_euro_millicents <= 0 and any(
+        return self.available_compute_cost_euro_millicents <= 0 and any(
             phase.submission_period_is_open_now
             and phase.submissions_limit_per_user_per_period > 0
             for phase in self.phase_set.all()
@@ -843,41 +843,49 @@ class Challenge(ChallengeBase, FieldChangeMixin):
 
     @cached_property
     def percent_budget_consumed(self):
-        if self.approved_compute_costs_euro_millicents:
+        if self.approved_compute_cost_euro_millicents:
             return int(
                 100
-                * self.compute_cost_euro_millicents
-                / self.approved_compute_costs_euro_millicents
+                * self.available_compute_cost_euro_millicents
+                / self.approved_compute_cost_euro_millicents
             )
         else:
             return None
 
     @cached_property
-    def available_compute_euro_millicents_via_invoices(self):
+    def approved_compute_cost_euro_millicents(self):
+        total_compute_costs_euros = (
+            self.invoices.with_is_active()
+            .filter(is_active=True)
+            .aggregate(
+                total=Sum(
+                    "compute_costs_euros",
+                    output_field=models.PositiveBigIntegerField(),
+                )
+            )["total"]
+        )
+
+        return (total_compute_costs_euros or 0) * 1000 * 100
+
+    @cached_property
+    def available_compute_cost_euro_millicents(self):
         return sum(
-            invoice.available_compute_cost_euro_millicents
-            for invoice in self.get_available_invoices()
+            max(invoice.available_compute_cost_euro_millicents, 0)
+            for invoice in self.invoices.with_is_active().filter(
+                is_active=True
+            )
         )
 
     @property
     def active_invoice(self):
-        available_invoices = self.get_available_invoices()
-        if available_invoices:
-            return available_invoices[0]
-        else:
-            raise InsufficientBudgetError
-
-    def get_available_invoices(self):
-        invoices = (
-            self.invoices.with_budget_authorization()
+        for invoice in (
+            self.invoices.with_is_active()
+            .filter(is_active=True)
             .order_by("expires_on", "created")
-            .all()
-        )
-        return [
-            invoice
-            for invoice in invoices
-            if invoice.available_compute_cost_euro_millicents > 0
-        ]
+        ):
+            if invoice.available_compute_cost_euro_millicents > 0:
+                return invoice
+        raise InsufficientBudgetError
 
     def send_alert_if_budget_consumed_warning_threshold_exceeded(self):
         for percent_threshold in sorted(
@@ -885,7 +893,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         ):
             previous_cost = self.initial_value("compute_cost_euro_millicents")
             threshold = (
-                self.approved_compute_costs_euro_millicents
+                self.approved_compute_cost_euro_millicents
                 * percent_threshold
                 / 100
             )
