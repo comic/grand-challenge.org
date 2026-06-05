@@ -577,12 +577,10 @@ def test_open_for_submission(
     phase.submissions_close_at = submissions_close
     phase.save()
 
-    phase.challenge.compute_cost_euro_millicents = 5 * 1000 * 100
-    phase.challenge.save()
-
     InvoiceFactory(
         challenge=phase.challenge,
         compute_costs_euros=compute_costs_euros,
+        compute_cost_euro_millicents=5 * 1000 * 100,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
 
