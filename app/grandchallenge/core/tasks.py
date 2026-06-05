@@ -8,7 +8,6 @@ from django.utils import timezone
 from django.utils.timezone import now
 from django_celery_results.models import TaskResult
 from lambda_tasks.decorators import lambda_task
-from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import AlgorithmImage, Endpoint, Job
 from grandchallenge.cases.models import (
@@ -36,7 +35,7 @@ CLOUDWATCH_METRICS_LIMIT = 1000
 @lambda_task(
     singleton=True,
     # No need to retry here as the periodic task calls this again
-    ignore_errors=(LockError,),
+    retry_singleton=False,
 )
 def put_cloudwatch_metrics():
     if not settings.PUSH_CLOUDWATCH_METRICS:

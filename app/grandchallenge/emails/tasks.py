@@ -9,7 +9,6 @@ from django.core.paginator import Paginator
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 from lambda_tasks.logging import task_logger
-from redis.exceptions import LockError
 
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
@@ -127,7 +126,7 @@ def get_max_emails_per_minute():
 @lambda_task(
     singleton=True,
     # No need to retry here as the periodic task calls this again
-    ignore_errors=(LockError,),
+    retry_singleton=False,
 )
 def send_raw_emails():
     max_emails_per_minute = get_max_emails_per_minute()

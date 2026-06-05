@@ -12,7 +12,6 @@ from django.db.models import (
 from django.utils import timezone
 from django_celery_results.models import TaskResult
 from lambda_tasks.decorators import lambda_task
-from redis.exceptions import LockError
 
 from grandchallenge.background_tasks.models import CeleryTaskDailyStats
 
@@ -20,7 +19,7 @@ from grandchallenge.background_tasks.models import CeleryTaskDailyStats
 @lambda_task(
     singleton=True,
     # No need to retry here as the periodic task calls this again
-    ignore_errors=(LockError,),
+    retry_singleton=False,
 )
 def aggregate_celery_daily_stats():
     yesterday = (timezone.now() - timedelta(days=1)).date()
