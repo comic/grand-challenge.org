@@ -570,13 +570,22 @@ def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk):
 
 
 @acks_late_micro_short_task(
-    retry_on=(LockNotAcquiredException,), delayed_retry=False
+    name=f"{__name__}.handle_dicom_import_error",
+    retry_on=(LockNotAcquiredException,),
+    delayed_retry=False,
 )
+@transaction.atomic
+def handle_dicom_import_error_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return handle_dicom_import_error(**kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def handle_dicom_import_error(
     *,
-    dicom_imageset_upload_pk,
-    error_message,
+    dicom_imageset_upload_pk: str | UUID,
+    error_message: str,
 ):
     with check_lock_acquired():
         upload = DICOMImageSetUpload.objects.select_for_update(

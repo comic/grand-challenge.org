@@ -271,6 +271,8 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     di_upload = DICOMImageSetUploadFactory()
     with (
         patch.object(
@@ -306,6 +308,8 @@ def test_error_in_start_dicom_import_job(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory()
 
@@ -346,6 +350,8 @@ def test_start_dicom_import_job_sets_error_message_when_deid_fails(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory()
 
@@ -453,6 +459,8 @@ def test_handle_health_imaging_import_job_event_failed_status(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     di_upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.STARTED
     )
@@ -487,6 +495,8 @@ def test_handle_health_imaging_import_job_event_invalid_status(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     di_upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.STARTED
     )
@@ -520,6 +530,8 @@ def test_handle_health_imaging_import_job_event_invalid_import(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.STARTED

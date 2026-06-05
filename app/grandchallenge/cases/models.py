@@ -1439,13 +1439,10 @@ class DICOMImageSetUpload(UUIDModel):
 
         self.user_uploads.all().delete()
         self.delete_input_files()
-        on_commit(
-            handle_dicom_import_error.signature(
-                kwargs={
-                    "dicom_imageset_upload_pk": self.pk,
-                    "error_message": error_message,
-                }
-            ).apply_async
+
+        handle_dicom_import_error.execute_on_commit(
+            dicom_imageset_upload_pk=self.pk,
+            error_message=error_message,
         )
 
 
