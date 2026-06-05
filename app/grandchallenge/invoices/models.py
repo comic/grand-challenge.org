@@ -47,17 +47,6 @@ class InvoiceQuerySet(models.QuerySet):
             ),
         )
 
-    def with_is_active(self):
-        return self.with_budget_authorization().annotate(
-            is_active=ExpressionWrapper(
-                Q(is_budget_authorized=True)
-                & Q(
-                    expires_on__gt=now().date(),
-                ),
-                output_field=models.BooleanField(),
-            )
-        )
-
     def with_overdue_status(self):
         today = now().date()
 

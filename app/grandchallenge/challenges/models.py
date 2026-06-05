@@ -154,14 +154,6 @@ class ChallengeQuerySet(models.QuerySet):
             ),
         )
 
-    def with_invoices_with_budget_authorization(self):
-        return self.prefetch_related(
-            Prefetch(
-                "invoices",
-                queryset=Invoice.objects.with_budget_authorization(),
-            )
-        )
-
     def with_user_roles(self, *, user):
         User = get_user_model()  # noqa: N806
         return self.annotate(
@@ -177,6 +169,16 @@ class ChallengeQuerySet(models.QuerySet):
                     pk=user.pk,
                 )
             ),
+        )
+
+    def with_only_active_invoices(self):
+        return self.prefetch_related(
+            Prefetch(
+                "invoices",
+                queryset=Invoice.objects.with_budget_authorization().filter(
+                    is_budget_authorized=True, expires_on__gt=now().date()
+                ),
+            )
         )
 
 
@@ -842,35 +844,31 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
 
     @cached_property
-    def active_invoices(self):
-        return self.invoices.with_is_active().filter(is_active=True)
-
-    @cached_property
     def approved_compute_cost_euro_millicents(self):
         return sum(
             invoice.approved_compute_cost_euro_millicents
-            for invoice in self.active_invoices
+            for invoice in self.invoices.all()
         )
 
     @cached_property
     def available_compute_cost_euro_millicents(self):
         return sum(
             invoice.available_compute_cost_euro_millicents
-            for invoice in self.active_invoices
+            for invoice in self.invoices.all()
         )
 
     @cached_property
     def consumed_compute_cost_euro_millicents(self):
         return sum(
             invoice.consumed_compute_cost_euro_millicents
-            for invoice in self.active_invoices
+            for invoice in self.invoices.all()
         )
 
     @cached_property
     def write_off_compute_cost_euro_millicents(self):
         return sum(
             invoice.write_off_compute_cost_euro_millicents
-            for invoice in self.active_invoices
+            for invoice in self.invoices.all()
         )
 
     @cached_property
@@ -889,7 +887,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
 
     @property
     def active_invoice(self):
-        for invoice in self.active_invoices.order_by("expires_on", "created"):
+        for invoice in self.invoices.order_by("expires_on", "created"):
             if invoice.available_compute_cost_euro_millicents > 0:
                 return invoice
         raise InsufficientBudgetError

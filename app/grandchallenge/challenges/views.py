@@ -393,7 +393,7 @@ class ChallengeCostOverview(
             super()
             .get_queryset()
             .with_available_compute()
-            .with_invoices_with_budget_authorization()
+            .with_only_active_invoices()
             .prefetch_related("phase_set")
         )
 
