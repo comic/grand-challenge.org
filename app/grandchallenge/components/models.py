@@ -1927,7 +1927,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     def execute_task_on_success(self):
         deprovision_job.execute_on_commit(**self.task_kwargs)
         if self.task_on_success:
-            on_commit(signature(self.task_on_success).apply_async)
+            SQSLambdaTask.model_validate(
+                self.task_on_success
+            ).execute_on_commit()
 
     def execute_task_on_failure(self):
         deprovision_job.execute_on_commit(**self.task_kwargs)

@@ -13,7 +13,6 @@ from billiard.exceptions import (
 )
 from botocore.awsrequest import AWSRequest
 from botocore.exceptions import ClientError
-from celery import signature
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -29,6 +28,7 @@ from django.utils.translation import gettext_lazy as _
 from grand_challenge_dicom_de_identifier.deidentifier import DicomDeidentifier
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from lambda_tasks.decorators import LambdaTaskWrapper
+from lambda_tasks.models import SQSLambdaTask
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from panimg_models import ColorSpace, ImageType
 from pydantic import ConfigDict, Field, field_validator
@@ -1419,7 +1419,9 @@ class DICOMImageSetUpload(UUIDModel):
 
     def execute_task_on_success(self):
         if self.task_on_success:
-            on_commit(signature(self.task_on_success).apply_async)
+            SQSLambdaTask.model_validate(
+                self.task_on_success
+            ).execute_on_commit()
 
     def get_absolute_url(self):
         return reverse(
