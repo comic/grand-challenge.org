@@ -5,7 +5,6 @@ from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.cache import cache
-from django.db import transaction
 from django.db.models import F, Max
 from django.utils import timezone
 from lambda_tasks.decorators import lambda_task
@@ -16,7 +15,6 @@ from grandchallenge.components.tasks import (
     provision_invocation_input_data,
     remove_container_image_from_registry,
 )
-from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.notifications.models import (
@@ -240,13 +238,6 @@ def filter_archive_items_for_algorithm(
     return filtered_valid_job_inputs
 
 
-@acks_late_micro_short_task(name=f"{__name__}.send_failed_job_notification")
-@transaction.atomic
-def send_failed_job_notification_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return send_failed_job_notification(**kwargs)
-
-
 @lambda_task
 def send_failed_job_notification(*, job_pk: str | UUID):
     from grandchallenge.algorithms.models import Job
@@ -289,16 +280,6 @@ def update_associated_challenges():
         ]
 
     cache.set("challenges_for_algorithms", challenge_list, timeout=None)
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.update_algorithm_average_duration",
-    retry_on=(LockNotAcquiredException,),
-)
-@transaction.atomic
-def update_algorithm_average_duration_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return update_algorithm_average_duration(**kwargs)
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))

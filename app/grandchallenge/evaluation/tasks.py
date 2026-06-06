@@ -19,10 +19,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.components.tasks import lock_for_utilization_update
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
+from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_messages import (
     EvaluationErrorMessages,
     SystemErrorMessages,
@@ -202,16 +199,6 @@ def prepare_and_execute_evaluation(*, evaluation_pk):
         logger.error("No algorithm or predictions file found")
 
 
-@acks_late_micro_short_task(
-    name=f"{__name__}.create_algorithm_jobs_for_evaluation",
-    retry_on=(TooManyJobsScheduled, LockNotAcquiredException),
-)
-@transaction.atomic
-def create_algorithm_jobs_for_evaluation_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return create_algorithm_jobs_for_evaluation(**kwargs)
-
-
 @lambda_task(
     retry_on=(TooManyJobsScheduled, LockNotAcquiredException),
     retry_delay=60,
@@ -360,17 +347,6 @@ def create_algorithm_jobs_for_evaluation(
         set_evaluation_inputs.execute_on_commit(evaluation_pk=evaluation.pk)
 
 
-@acks_late_micro_short_task(
-    name=f"{__name__}.handle_failed_jobs",
-    retry_on=(LockNotAcquiredException,),
-    delayed_retry=False,
-)
-@transaction.atomic
-def handle_failed_jobs_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return handle_failed_jobs(**kwargs)
-
-
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def handle_failed_jobs(*, evaluation_pk: str | uuid.UUID):
     from grandchallenge.evaluation.models import Evaluation
@@ -397,16 +373,6 @@ def handle_failed_jobs(*, evaluation_pk: str | uuid.UUID):
             algorithm_image_id=evaluation.submission.algorithm_image_id,
             status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY],
         ).select_for_update(skip_locked=True).update(status=Job.CANCELLED)
-
-
-@acks_late_2xlarge_task(
-    name=f"{__name__}.set_evaluation_inputs",
-    retry_on=(LockNotAcquiredException,),
-)
-@transaction.atomic
-def set_evaluation_inputs_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return set_evaluation_inputs(**kwargs)
 
 
 @lambda_task(

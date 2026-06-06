@@ -47,10 +47,7 @@ from grandchallenge.cases.panimg import convert, post_process
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.components.backends.utils import UUID4_REGEX, safe_extract
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
+from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
@@ -245,17 +242,6 @@ def build_images(  # noqa:C901
 
     logger.info("Deleting associated uploaded files")
     upload_session.user_uploads.all().delete()
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.handle_build_images_error",
-    retry_on=(LockNotAcquiredException,),
-    delayed_retry=False,
-)
-@transaction.atomic
-def handle_build_images_error_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return handle_build_images_error(**kwargs)
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
@@ -568,17 +554,6 @@ def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk):
         upload.save()
 
 
-@acks_late_micro_short_task(
-    name=f"{__name__}.handle_dicom_import_error",
-    retry_on=(LockNotAcquiredException,),
-    delayed_retry=False,
-)
-@transaction.atomic
-def handle_dicom_import_error_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return handle_dicom_import_error(**kwargs)
-
-
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def handle_dicom_import_error(
     *,
@@ -664,15 +639,6 @@ def handle_health_imaging_import_job_event(*, event: dict):
         upload.handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
 
 
-@acks_late_micro_short_task(
-    name=f"{__name__}.delete_health_imaging_image_set", retry_on=(RetryStep,)
-)
-@transaction.atomic
-def delete_health_imaging_image_set_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return delete_health_imaging_image_set(**kwargs)
-
-
 @lambda_task(retry_on=(RetryStep,), retry_delay=60)
 def delete_health_imaging_image_set(*, image_set_id: str):
     health_imaging_client = boto3.client(
@@ -689,15 +655,6 @@ def delete_health_imaging_image_set(*, image_set_id: str):
         pass  # image set already deleted
     except health_imaging_client.exceptions.ThrottlingException as error:
         raise RetryStep("Request throttled") from error
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.revert_image_set_to_initial_version"
-)
-@transaction.atomic
-def revert_image_set_to_initial_version_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return revert_image_set_to_initial_version(**kwargs)
 
 
 @lambda_task
