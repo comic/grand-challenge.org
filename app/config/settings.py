@@ -450,7 +450,8 @@ MIDDLEWARE = (
     "aws_xray_sdk.ext.django.middleware.XRayMiddleware",  # xray near the top
     "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
     "csp.contrib.rate_limiting.RateLimitedCSPMiddleware",
-    "django.middleware.common.BrokenLinkEmailsMiddleware",
+    # TODO: replace BrokenLinkEmailsMiddleware with an app
+    # "django.middleware.common.BrokenLinkEmailsMiddleware",
     # Keep BrokenLinkEmailsMiddleware near the top
     "django_permissions_policy.PermissionsPolicyMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
