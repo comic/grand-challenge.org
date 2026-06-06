@@ -4,29 +4,38 @@ from botocore.exceptions import ClientError
 
 
 def sentry_before_send(event, hint):
-    """Add stderr to the event if the exception is a CalledProcessError"""
+    """Mutate event/record extra fields based on exception type."""
+
     if "exc_info" in hint:
-        exc_type, exc_value, tb = hint["exc_info"]
+        _, exc_value, _ = hint["exc_info"]
+    elif "log_record" in hint:
+        log_record = hint["log_record"]
 
-        if isinstance(exc_value, CalledProcessError) and hasattr(
-            exc_value, "stderr"
-        ):
-            event["extra"] = event.get("extra", {})
+        if log_record.exc_info:
+            _, exc_value, _ = log_record.exc_info
+        else:
+            return event
+    else:
+        return event
 
-            if isinstance(exc_value.stderr, str):
-                event["extra"]["stderr"] = exc_value.stderr
-            elif isinstance(exc_value.stderr, bytes):
-                event["extra"]["stderr"] = exc_value.stderr.decode(
-                    "utf-8", "replace"
-                )
-            else:
-                # Do not include stderr
-                pass
-        elif isinstance(exc_value, ClientError):
-            event["extra"] = event.get("extra", {})
+    if exc_value is None:
+        return event
 
-            error = exc_value.response["Error"]
-            event["extra"]["botocore_error_code"] = error["Code"]
-            event["extra"]["botocore_error_message"] = error["Message"]
+    if isinstance(exc_value, CalledProcessError):
+        extra = event.setdefault("extra", {})
+
+        for attr in ("stderr", "stdout"):
+            value = getattr(exc_value, attr)
+            if isinstance(value, str):
+                extra[attr] = value
+            elif isinstance(value, bytes):
+                extra[attr] = value.decode("utf-8", "replace")
+
+    elif isinstance(exc_value, ClientError):
+        extra = event.setdefault("extra", {})
+
+        error = exc_value.response["Error"]
+        extra["botocore_error_code"] = error["Code"]
+        extra["botocore_error_message"] = error["Message"]
 
     return event
