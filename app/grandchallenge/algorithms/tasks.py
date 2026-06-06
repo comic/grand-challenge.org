@@ -1,14 +1,13 @@
 from typing import NamedTuple
 from uuid import UUID
 
-from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.cache import cache
-from django.db import transaction
 from django.db.models import F, Max
 from django.utils import timezone
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.logging import task_logger
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -16,7 +15,6 @@ from grandchallenge.components.tasks import (
     provision_invocation_input_data,
     remove_container_image_from_registry,
 )
-from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.notifications.models import (
@@ -24,8 +22,6 @@ from grandchallenge.notifications.models import (
     NotificationTypeChoices,
 )
 from grandchallenge.subdomains.utils import reverse
-
-logger = get_task_logger(__name__)
 
 
 @lambda_task(
@@ -39,20 +35,20 @@ def execute_algorithm_job_for_inputs(*, job_pk: str | UUID):
         job = Job.objects.select_for_update(nowait=True).get(pk=job_pk)
 
     if not job.inputs_complete:
-        logger.info("Nothing to do, inputs are still being validated")
+        task_logger.info("Nothing to do, inputs are still being validated")
         return
 
     if not job.status == job.VALIDATING_INPUTS:
         # this task can be called multiple times with complete inputs,
         # and might have been queued for execution already, so ignore
-        logger.info("Job has already been scheduled for execution")
+        task_logger.info("Job has already been scheduled for execution")
         return
 
     if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-        logger.info("Too many jobs scheduled")
+        task_logger.info("Too many jobs scheduled")
         raise TooManyJobsScheduled
 
-    logger.info("Job is ready, creating execution task")
+    task_logger.info("Job is ready, creating execution task")
 
     # Notify the job creator on failure
     job.task_on_failure = send_failed_job_notification.serialize(job_pk=job.pk)
@@ -240,13 +236,6 @@ def filter_archive_items_for_algorithm(
     return filtered_valid_job_inputs
 
 
-@acks_late_micro_short_task(name=f"{__name__}.send_failed_job_notification")
-@transaction.atomic
-def send_failed_job_notification_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return send_failed_job_notification(**kwargs)
-
-
 @lambda_task
 def send_failed_job_notification(*, job_pk: str | UUID):
     from grandchallenge.algorithms.models import Job
@@ -289,16 +278,6 @@ def update_associated_challenges():
         ]
 
     cache.set("challenges_for_algorithms", challenge_list, timeout=None)
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.update_algorithm_average_duration",
-    retry_on=(LockNotAcquiredException,),
-)
-@transaction.atomic
-def update_algorithm_average_duration_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return update_algorithm_average_duration(**kwargs)
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))

@@ -18,9 +18,6 @@ def sentry_before_send(event, hint):
     else:
         return event
 
-    if exc_value is None:
-        return event
-
     if isinstance(exc_value, CalledProcessError):
         extra = event.setdefault("extra", {})
 

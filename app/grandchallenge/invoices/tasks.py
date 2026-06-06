@@ -1,11 +1,9 @@
 from dateutil.relativedelta import relativedelta
 from django.core.mail import mail_managers
-from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 
-from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.invoices.emails import (
     send_challenge_invoice_issued_notification,
     send_challenge_invoice_overdue_reminder,
@@ -22,15 +20,6 @@ def send_challenge_invoice_overdue_reminder_emails():
     )
     for invoice in invoices_overdue:
         send_challenge_invoice_overdue_reminder(invoice)
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.send_challenge_invoice_issued_notification_emails"
-)
-@transaction.atomic
-def send_challenge_invoice_issued_notification_emails_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return send_challenge_invoice_issued_notification_emails(**kwargs)
 
 
 @lambda_task

@@ -25,6 +25,7 @@ from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.logging import task_logger
 from lambda_tasks.models import SQSLambdaTask
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from panimg_models import ImageBuilderOptions, PanImgResult
@@ -47,10 +48,7 @@ from grandchallenge.cases.panimg import convert, post_process
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.components.backends.utils import UUID4_REGEX, safe_extract
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
+from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
@@ -170,13 +168,13 @@ def build_images(  # noqa:C901
         )
 
     if upload_session.status != upload_session.REQUEUED:
-        logger.info(
+        task_logger.info(
             "Nothing to do: upload session was not ready for processing"
         )
         return
 
     def _handle_error(*, error_message):
-        logger.info(error_message)
+        task_logger.info(error_message)
         handle_build_images_error.execute_on_commit(
             upload_session_pk=upload_session_pk,
             error_message=error_message,
@@ -209,7 +207,7 @@ def build_images(  # noqa:C901
             )
         else:
             _handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
-            logger.error(error, exc_info=True)
+            task_logger.error(error, exc_info=True)
         return
     except DuplicateFilesException:
         _handle_error(
@@ -226,36 +224,25 @@ def build_images(  # noqa:C901
         return
     except Exception as error:
         _handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
-        logger.error(error, exc_info=True)
+        task_logger.error(error, exc_info=True)
         return
 
     if upload_session.image_set.count() > 0:
         upload_session.update_status(status=RawImageUploadSession.SUCCESS)
 
         if linked_task is not None:
-            logger.info("Scheduling linked task")
+            task_logger.info("Scheduling linked task")
             SQSLambdaTask.model_validate(linked_task).execute_on_commit()
         else:
-            logger.info("No linked task, task complete")
+            task_logger.info("No linked task, task complete")
     else:
         _handle_error(error_message=upload_session.default_error_message)
         # The session may have been modified so needs to be saved
         upload_session.save()
         return
 
-    logger.info("Deleting associated uploaded files")
+    task_logger.info("Deleting associated uploaded files")
     upload_session.user_uploads.all().delete()
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.handle_build_images_error",
-    retry_on=(LockNotAcquiredException,),
-    delayed_retry=False,
-)
-@transaction.atomic
-def handle_build_images_error_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return handle_build_images_error(**kwargs)
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
@@ -284,7 +271,7 @@ def handle_build_images_error(
                 ).get(pk=linked_object_pk)
         except ObjectDoesNotExist:
             # Linked object may have been deleted
-            logger.info(
+            task_logger.info(
                 f"Linked object {linked_app_label}.{linked_model_name}({linked_object_pk}) does not exist"
             )
             linked_object = None
@@ -294,7 +281,9 @@ def handle_build_images_error(
     try:
         ci = ComponentInterface.objects.get(slug=linked_interface_slug)
     except ObjectDoesNotExist:
-        logger.info(f"Linked interface {linked_interface_slug} does not exist")
+        task_logger.info(
+            f"Linked interface {linked_interface_slug} does not exist"
+        )
         ci = None
 
     error_handler = upload_session.get_error_handler(
@@ -568,17 +557,6 @@ def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk):
         upload.save()
 
 
-@acks_late_micro_short_task(
-    name=f"{__name__}.handle_dicom_import_error",
-    retry_on=(LockNotAcquiredException,),
-    delayed_retry=False,
-)
-@transaction.atomic
-def handle_dicom_import_error_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return handle_dicom_import_error(**kwargs)
-
-
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def handle_dicom_import_error(
     *,
@@ -595,7 +573,9 @@ def handle_dicom_import_error(
     try:
         ci = ComponentInterface.objects.get(pk=upload.linked_socket_pk)
     except ObjectDoesNotExist:
-        logger.info(f"Linked socket {upload.linked_socket_pk} does not exist")
+        task_logger.info(
+            f"Linked socket {upload.linked_socket_pk} does not exist"
+        )
         ci = None
 
     error_handler.handle_error(
@@ -634,7 +614,7 @@ def handle_health_imaging_import_job_event(*, event: dict):
             upload.handle_completed_job(job_summary=job_summary)
         elif job_status == "FAILED":
             upload.handle_failed_job(job_summary=job_summary)
-            logger.error(
+            task_logger.error(
                 f"Import job {job_summary.job_id} failed for DICOMImageSetUpload {upload.pk}"
             )
         else:
@@ -655,22 +635,13 @@ def handle_health_imaging_import_job_event(*, event: dict):
         ):
             raise RetryStep from error
         else:
-            logger.error(error, exc_info=True)
+            task_logger.error(error, exc_info=True)
             upload.handle_error(
                 error_message=SystemErrorMessages.UNEXPECTED_ERROR
             )
     except Exception as error:
-        logger.error(error, exc_info=True)
+        task_logger.error(error, exc_info=True)
         upload.handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.delete_health_imaging_image_set", retry_on=(RetryStep,)
-)
-@transaction.atomic
-def delete_health_imaging_image_set_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return delete_health_imaging_image_set(**kwargs)
 
 
 @lambda_task(retry_on=(RetryStep,), retry_delay=60)
@@ -689,15 +660,6 @@ def delete_health_imaging_image_set(*, image_set_id: str):
         pass  # image set already deleted
     except health_imaging_client.exceptions.ThrottlingException as error:
         raise RetryStep("Request throttled") from error
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.revert_image_set_to_initial_version"
-)
-@transaction.atomic
-def revert_image_set_to_initial_version_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return revert_image_set_to_initial_version(**kwargs)
 
 
 @lambda_task

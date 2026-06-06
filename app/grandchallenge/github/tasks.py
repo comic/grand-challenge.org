@@ -8,25 +8,18 @@ from datetime import timedelta
 
 import jwt
 import requests
-from celery.utils.log import get_task_logger
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from django.conf import settings
 from django.core import files
-from django.db import transaction
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.logging import task_logger
 
 from config.lambda_tasks import LambdaTaskQueueChoices
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
 from grandchallenge.github.exceptions import GitHubBadRefreshTokenException
-
-logger = get_task_logger(__name__)
 
 
 def get_repo_url(payload):
@@ -114,13 +107,6 @@ def save_zipfile(ghwm, tmpdirname):
     return temp_file
 
 
-@acks_late_2xlarge_task(name=f"{__name__}.get_zipfile")
-@transaction.atomic
-def get_zipfile_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return get_zipfile(**kwargs)
-
-
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
 def get_zipfile(*, pk: int):
     from grandchallenge.github.models import GitHubWebhookMessage
@@ -140,7 +126,7 @@ def get_zipfile(*, pk: int):
             repo_name=ghwm.payload["repository"]["full_name"]
         ).recurse_submodules
     except Algorithm.DoesNotExist:
-        logger.info("No algorithm linked to this repo")
+        task_logger.info("No algorithm linked to this repo")
         ghwm.clone_status = (
             GitHubWebhookMessage.CloneStatusChoices.NOT_APPLICABLE
         )
@@ -172,13 +158,6 @@ def get_zipfile(*, pk: int):
 
             if not ghwm.user_error:
                 raise
-
-
-@acks_late_micro_short_task(name=f"{__name__}.unlink_algorithm")
-@transaction.atomic
-def unlink_algorithm_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return unlink_algorithm(**kwargs)
 
 
 @lambda_task

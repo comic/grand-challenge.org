@@ -16,7 +16,6 @@ import boto3
 from billiard.exceptions import (
     SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
 )
-from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
@@ -60,8 +59,6 @@ from grandchallenge.core.utils.error_messages import (
 )
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.uploads.models import UserUpload
-
-logger = get_task_logger(__name__)
 
 
 @lambda_task
@@ -801,7 +798,7 @@ def provision_job(
             status=job.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
-        logger.error("Could not provision job", exc_info=True)
+        task_logger.error("Could not provision job", exc_info=True)
     else:
         job.update_status(status=job.PROVISIONED)
         execute_job.execute_on_commit(**job.task_kwargs)
@@ -951,7 +948,7 @@ def handle_event(*, event: dict, backend: str):
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
             **get_update_status_kwargs(executor=executor),
         )
-        logger.error(str(error), exc_info=True)
+        task_logger.error(str(error), exc_info=True)
     else:
         job.update_status(
             status=job.EXECUTED,
@@ -998,7 +995,7 @@ def parse_job_outputs(
             status=job.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
-        logger.error("Could not parse outputs", exc_info=True)
+        task_logger.error("Could not parse outputs", exc_info=True)
     else:
         job.outputs.add(*outputs)
         job.update_status(status=job.SUCCESS)
@@ -1073,7 +1070,7 @@ def start_service(*, pk: str | UUID, app_label: str, model_name: str):
         raise RuntimeError("Service is not ready for starting")
 
     if not service.workstation_image.can_execute:
-        logger.error("Workstation image was not ready to be used")
+        task_logger.error("Workstation image was not ready to be used")
 
         service.status = service.FAILED
         service.full_clean()
@@ -1096,7 +1093,7 @@ def start_service(*, pk: str | UUID, app_label: str, model_name: str):
     try:
         service.task_arn = orchestrator.start(environment=service.environment)
     except Exception as error:
-        logger.error(error, exc_info=True)
+        task_logger.error(error, exc_info=True)
 
         service.status = service.FAILED
         service.full_clean()
@@ -1135,7 +1132,7 @@ def update_service(*, pk: str | UUID, app_label: str, model_name: str):
             task_arn=service.task_arn
         )
     except Exception as error:
-        logger.error(error, exc_info=True)
+        task_logger.error(error, exc_info=True)
 
         orchestrator.stop(task_arn=service.task_arn)
 
@@ -1357,7 +1354,7 @@ def add_image_to_object(  # noqa: C901
                 pk=object_pk
             )
     except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
-        logger.info(f"Nothing to do: {model_name} no longer exists.")
+        task_logger.info(f"Nothing to do: {model_name} no longer exists.")
         return
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
@@ -1378,7 +1375,7 @@ def add_image_to_object(  # noqa: C901
         )
 
     if upload.status != expected_status:
-        logger.info(
+        task_logger.info(
             "Nothing to do: upload session was not in the expected state"
         )
         return
@@ -1393,7 +1390,7 @@ def add_image_to_object(  # noqa: C901
             error_message="Image imports should result in a single image",
             user=upload.creator,
         )
-        logger.info("Upload should result in a single image")
+        task_logger.info("Upload should result in a single image")
         return
 
     current_value = obj.get_current_value_for_interface(
@@ -1413,7 +1410,7 @@ def add_image_to_object(  # noqa: C901
                 error_message=format_validation_error_message(error=e),
                 user=upload.creator,
             )
-            logger.info(f"Validation failed: {e}")
+            task_logger.info(f"Validation failed: {e}")
             return
         except Exception as e:
             error_handler.handle_error(
@@ -1421,7 +1418,7 @@ def add_image_to_object(  # noqa: C901
                 error_message=SystemErrorMessages.UNEXPECTED_ERROR,
                 user=upload.creator,
             )
-            logger.error(e, exc_info=True)
+            task_logger.error(e, exc_info=True)
             return
 
     try:
@@ -1429,7 +1426,7 @@ def add_image_to_object(  # noqa: C901
         obj.add_civ(civ=civ)
     except CIVNotEditableException as e:
         if isinstance(obj, Job) and obj.status == Job.CANCELLED:
-            logger.info("Job has been cancelled, exiting")
+            task_logger.info("Job has been cancelled, exiting")
             return
         else:
             error_handler.handle_error(
@@ -1437,14 +1434,14 @@ def add_image_to_object(  # noqa: C901
                 error_message=SystemErrorMessages.UNEXPECTED_ERROR,
                 user=upload.creator,
             )
-            logger.error(e, exc_info=True)
+            task_logger.error(e, exc_info=True)
             return
 
     if linked_task is not None:
-        logger.info("Scheduling linked task")
+        task_logger.info("Scheduling linked task")
         SQSLambdaTask.model_validate(linked_task).execute_on_commit()
     else:
-        logger.info("No linked task, task complete")
+        task_logger.info("No linked task, task complete")
 
 
 @lambda_task(
@@ -1476,7 +1473,7 @@ def add_file_to_object(
                 pk=object_pk
             )
     except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
-        logger.info(f"Nothing to do: {model_name} no longer exists.")
+        task_logger.info(f"Nothing to do: {model_name} no longer exists.")
         return
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
@@ -1500,7 +1497,7 @@ def add_file_to_object(
             error_message=format_validation_error_message(e),
             user=user_upload.creator,
         )
-        logger.info(f"Validation failed: {e}")
+        task_logger.info(f"Validation failed: {e}")
         return
     except Exception as e:
         error_handler.handle_error(
@@ -1508,7 +1505,7 @@ def add_file_to_object(
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
             user=user_upload.creator,
         )
-        logger.error(e, exc_info=True)
+        task_logger.error(e, exc_info=True)
         return
 
     try:
@@ -1516,7 +1513,7 @@ def add_file_to_object(
         obj.add_civ(civ=civ)
     except CIVNotEditableException as e:
         if isinstance(obj, Job) and obj.status == Job.CANCELLED:
-            logger.info("Job has been cancelled, exiting")
+            task_logger.info("Job has been cancelled, exiting")
             return
         else:
             error_handler.handle_error(
@@ -1524,14 +1521,14 @@ def add_file_to_object(
                 error_message=SystemErrorMessages.UNEXPECTED_ERROR,
                 user=user_upload.creator,
             )
-            logger.error(e, exc_info=True)
+            task_logger.error(e, exc_info=True)
             return
 
     if linked_task is not None:
-        logger.info("Scheduling linked task")
+        task_logger.info("Scheduling linked task")
         SQSLambdaTask.model_validate(linked_task).execute_on_commit()
     else:
-        logger.info("No linked task, task complete")
+        task_logger.info("No linked task, task complete")
 
 
 @lambda_task(
@@ -1604,7 +1601,7 @@ def get_object_checksum(file_field):
         return f"crc64nvme:{hexlify(b64decode(checksum)).decode('utf-8')}"
     except KeyError:
         # The checksums are not calculated on local s3
-        logger.error("checksum was not calculated", exc_info=True)
+        task_logger.error("checksum was not calculated", exc_info=True)
         return ""
 
 
@@ -1634,7 +1631,7 @@ def start_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
         orchestrator.create_endpoint_config()
         orchestrator.create_endpoint()
     except Exception:
-        logger.error("Could not start endpoint", exc_info=True)
+        task_logger.error("Could not start endpoint", exc_info=True)
         orchestrator.deprovision()
         endpoint.update_status(
             status=endpoint.StatusChoices.FAILED,
@@ -1681,7 +1678,7 @@ def handle_endpoint_status_event(*, event: dict):
             error_message=str(error),
         )
     except Exception:
-        logger.error("Could not start endpoint", exc_info=True)
+        task_logger.error("Could not start endpoint", exc_info=True)
         orchestrator.deprovision()
         endpoint.update_status(
             status=endpoint.StatusChoices.FAILED,
@@ -1753,7 +1750,7 @@ def provision_invocation_input_data(
             ).all(),
         )
     except Exception:
-        logger.error(
+        task_logger.error(
             "Could not provision endpoint for invocation", exc_info=True
         )
 
@@ -1791,7 +1788,7 @@ def invoke_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     try:
         orchestrator.invoke_endpoint(inference_id=invocation.inference_id)
     except Exception:
-        logger.error("Could not invoke endpoint", exc_info=True)
+        task_logger.error("Could not invoke endpoint", exc_info=True)
 
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
@@ -1893,7 +1890,7 @@ def parse_endpoint_invocation_outputs(
             status=invocation.StatusChoices.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
-        logger.error("Could not parse invocation outputs", exc_info=True)
+        task_logger.error("Could not parse invocation outputs", exc_info=True)
     else:
         invocation.outputs.add(*outputs)
         invocation.update_status(status=invocation.StatusChoices.SUCCESS)

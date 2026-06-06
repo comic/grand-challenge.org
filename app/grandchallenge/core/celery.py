@@ -190,7 +190,3 @@ class AcksLateTaskDecorator:
 # For idempotent tasks that take a long time (<7200s)
 # or require a large amount of memory
 acks_late_2xlarge_task = AcksLateTaskDecorator("acks-late-2xlarge")
-
-# For idempotent tasks that take a short time (<300s)
-# and do not require a large amount of memory
-acks_late_micro_short_task = AcksLateTaskDecorator("acks-late-micro-short")

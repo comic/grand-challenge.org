@@ -923,7 +923,9 @@ CORS_ALLOW_HEADERS = (
 
 CELERY_SOLO_QUEUES = {
     element
-    for queue in {"acks-late-2xlarge", "acks-late-micro-short"}
+    for queue in {
+        "acks-late-2xlarge",
+    }
     for element in {queue, f"{queue}-delay"}
 }
 CELERY_WORKER_MAX_MEMORY_MB = int(
