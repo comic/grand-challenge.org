@@ -96,7 +96,7 @@ def check_license(tmpdirname):
     process = subprocess.run(
         ["licensee", "detect", tmpdirname, "--json", "--no-remote"],
         text=True,
-        check=True,
+        check=False,  # licensee returns non-zero when no license is detected, but this is okay
         capture_output=True,
     )
     return json.loads(process.stdout)
