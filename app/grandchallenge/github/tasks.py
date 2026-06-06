@@ -60,8 +60,11 @@ def get_repo_url(payload):
 
 
 def install_lfs():
-    process = subprocess.check_output(
-        ["git", "lfs", "install"], stderr=subprocess.STDOUT
+    process = subprocess.run(
+        ["git", "lfs", "install"],
+        text=True,
+        check=True,
+        capture_output=True,
     )
     return process
 
@@ -80,22 +83,23 @@ def fetch_repo(payload, repo_url, tmpdirname, recurse_submodules):
     if recurse_submodules:
         cmd.insert(2, "--recurse-submodules")
 
-    process = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    process = subprocess.run(
+        cmd,
+        text=True,
+        check=True,
+        capture_output=True,
+    )
     return process
 
 
 def check_license(tmpdirname):
-    process = subprocess.Popen(
+    process = subprocess.run(
         ["licensee", "detect", tmpdirname, "--json", "--no-remote"],
-        stdout=subprocess.PIPE,
+        text=True,
+        check=True,
+        capture_output=True,
     )
-    try:
-        outs, errs = process.communicate(timeout=15)
-    except subprocess.TimeoutExpired:
-        process.kill()
-        raise
-
-    return json.loads(outs.decode("utf-8"))
+    return json.loads(process.stdout)
 
 
 def save_zipfile(ghwm, tmpdirname):

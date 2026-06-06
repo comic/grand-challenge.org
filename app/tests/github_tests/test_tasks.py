@@ -39,7 +39,7 @@ def test_get_zipfile(get_repo_url):
 
     ghwm.refresh_from_db()
     assert ghwm.zipfile.name == ""
-    assert "Authentication failed for" in ghwm.stdout
+    assert "Authentication failed for" in ghwm.stderr
     assert ghwm.clone_status == CloneStatusChoices.FAILURE
 
     ghwm2 = GitHubWebhookMessageFactory()
