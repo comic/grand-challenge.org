@@ -8,20 +8,18 @@ from datetime import timedelta
 
 import jwt
 import requests
-from celery.utils.log import get_task_logger
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from django.conf import settings
 from django.core import files
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.logging import task_logger
 
 from config.lambda_tasks import LambdaTaskQueueChoices
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
 from grandchallenge.github.exceptions import GitHubBadRefreshTokenException
-
-logger = get_task_logger(__name__)
 
 
 def get_repo_url(payload):
@@ -128,7 +126,7 @@ def get_zipfile(*, pk: int):
             repo_name=ghwm.payload["repository"]["full_name"]
         ).recurse_submodules
     except Algorithm.DoesNotExist:
-        logger.info("No algorithm linked to this repo")
+        task_logger.info("No algorithm linked to this repo")
         ghwm.clone_status = (
             GitHubWebhookMessage.CloneStatusChoices.NOT_APPLICABLE
         )

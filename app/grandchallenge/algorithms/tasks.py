@@ -1,13 +1,13 @@
 from typing import NamedTuple
 from uuid import UUID
 
-from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.cache import cache
 from django.db.models import F, Max
 from django.utils import timezone
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.logging import task_logger
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -23,8 +23,6 @@ from grandchallenge.notifications.models import (
 )
 from grandchallenge.subdomains.utils import reverse
 
-logger = get_task_logger(__name__)
-
 
 @lambda_task(
     retry_on=(LockNotAcquiredException, TooManyJobsScheduled),
@@ -37,20 +35,20 @@ def execute_algorithm_job_for_inputs(*, job_pk: str | UUID):
         job = Job.objects.select_for_update(nowait=True).get(pk=job_pk)
 
     if not job.inputs_complete:
-        logger.info("Nothing to do, inputs are still being validated")
+        task_logger.info("Nothing to do, inputs are still being validated")
         return
 
     if not job.status == job.VALIDATING_INPUTS:
         # this task can be called multiple times with complete inputs,
         # and might have been queued for execution already, so ignore
-        logger.info("Job has already been scheduled for execution")
+        task_logger.info("Job has already been scheduled for execution")
         return
 
     if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-        logger.info("Too many jobs scheduled")
+        task_logger.info("Too many jobs scheduled")
         raise TooManyJobsScheduled
 
-    logger.info("Job is ready, creating execution task")
+    task_logger.info("Job is ready, creating execution task")
 
     # Notify the job creator on failure
     job.task_on_failure = send_failed_job_notification.serialize(job_pk=job.pk)
