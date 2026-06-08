@@ -773,11 +773,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             self.send_give_algorithm_editors_job_view_permissions_changed_email()
 
         if not skip_calculate_ranks:
-            on_commit(
-                calculate_ranks.signature(
-                    kwargs={"phase_pk": self.pk}
-                ).apply_async
-            )
+            calculate_ranks.execute_on_commit(phase_pk=self.pk)
 
     def clean(self):
         super().clean()
@@ -2215,11 +2211,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
         self.assign_permissions()
 
-        on_commit(
-            calculate_ranks.signature(
-                kwargs={"phase_pk": self.submission.phase.pk}
-            ).apply_async
-        )
+        calculate_ranks.execute_on_commit(phase_pk=self.submission.phase.pk)
 
     @property
     def title(self):

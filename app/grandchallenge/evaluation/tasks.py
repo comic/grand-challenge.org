@@ -508,11 +508,21 @@ def filter_by_creators_best(*, evaluations, ranks):
     return [r for r in best_result_per_user.values()]
 
 
-# Use 2xlarge for memory use
 @acks_late_2xlarge_task(
-    retry_on=(LockNotAcquiredException,), delayed_retry=False
+    name=f"{__name__}.calculate_ranks",
+    retry_on=(LockNotAcquiredException,),
+    delayed_retry=False,
 )
 @transaction.atomic
+def calculate_ranks_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return calculate_ranks(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G,
+    retry_on=(LockNotAcquiredException,),
+)
 def calculate_ranks(*, phase_pk: uuid.UUID):
     from grandchallenge.evaluation.models import Evaluation, Phase
 
