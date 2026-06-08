@@ -67,7 +67,7 @@
                         <a href="{% url 'invoices:detail' challenge_short_name=invoice.challenge.short_name pk=invoice.pk %}" title="View invoice details"><i class="fas fa-info-circle"></i></a>
                     </td>
                     <td>{% firstof invoice.internal_invoice_number '-' %}</td>
-                    <td data-order="{{ invoice.issued_on|date:"c" }}">{{ invoice.issued_on }}</td>
+                    <td data-order="{{ invoice.issued_on|date:"c" }}">{{ invoice.issued_on|default_if_none:"-" }}</td>
                     <td data-order="{{ invoice.due_date|date:"c" }}">
                         {{ invoice.due_date|default_if_none:"-" }}
                         {% if invoice.is_overdue %}
