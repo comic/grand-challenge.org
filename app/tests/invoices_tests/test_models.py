@@ -365,6 +365,46 @@ def test_payment_type_complimentary_requires_internal_comments():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
+    "payment_status, context",
+    (
+        (PaymentStatusChoices.PAID, nullcontext()),
+        (PaymentStatusChoices.CANCELLED, nullcontext()),
+        (
+            PaymentStatusChoices.ISSUED,
+            pytest.raises(
+                ValidationError,
+                match="Complimentary invoices must have a 'Paid' or 'Cancelled' status.",
+            ),
+        ),
+        (
+            PaymentStatusChoices.INITIALIZED,
+            pytest.raises(
+                ValidationError,
+                match="Complimentary invoices must have a 'Paid' or 'Cancelled' status.",
+            ),
+        ),
+        (
+            PaymentStatusChoices.REQUESTED,
+            pytest.raises(
+                ValidationError,
+                match="Complimentary invoices must have a 'Paid' or 'Cancelled' status.",
+            ),
+        ),
+    ),
+)
+def test_payment_type_complimentary_requires_paid_or_cancelled(
+    payment_status, context
+):
+    invoice = InvoiceFactory(
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
+    )
+    invoice.payment_status = payment_status
+    with context:
+        invoice.full_clean()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
     "payment_type", (PaymentTypeChoices.PREPAID, PaymentTypeChoices.POSTPAID)
 )
 @pytest.mark.parametrize(
