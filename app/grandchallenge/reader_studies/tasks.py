@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from lambda_tasks.decorators import lambda_task
 
+from config.lambda_tasks import LambdaTaskQueueChoices
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -21,9 +22,17 @@ from grandchallenge.reader_studies.models import (
 )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.answers_from_ground_truth")
 @transaction.atomic
-def answers_from_ground_truth(*, reader_study_pk, target_user_pk):
+def answers_from_ground_truth_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return answers_from_ground_truth(**kwargs)
+
+
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
+def answers_from_ground_truth(
+    *, reader_study_pk: str | UUID, target_user_pk: int
+):
     reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
     target_user = get_user_model().objects.get(pk=target_user_pk)
 
@@ -46,9 +55,15 @@ def answers_from_ground_truth(*, reader_study_pk, target_user_pk):
         answer.save(calculate_score=False)
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.bulk_assign_scores_for_reader_study")
 @transaction.atomic
-def bulk_assign_scores_for_reader_study(*, reader_study_pk):
+def bulk_assign_scores_for_reader_study_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return bulk_assign_scores_for_reader_study(**kwargs)
+
+
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
+def bulk_assign_scores_for_reader_study(*, reader_study_pk: str | UUID):
     ground_truth = Answer.objects.filter(
         question__reader_study__pk=reader_study_pk,
         is_ground_truth=True,
@@ -152,9 +167,15 @@ def add_image_to_answer(
         raise ValueError("Upload session for answer does not match")
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.copy_reader_study_display_sets")
 @transaction.atomic
-def copy_reader_study_display_sets(*, orig_pk, new_pk):
+def copy_reader_study_display_sets_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return copy_reader_study_display_sets(**kwargs)
+
+
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
+def copy_reader_study_display_sets(*, orig_pk: str | UUID, new_pk: str | UUID):
     orig = ReaderStudy.objects.get(pk=orig_pk)
     new = ReaderStudy.objects.get(pk=new_pk)
 

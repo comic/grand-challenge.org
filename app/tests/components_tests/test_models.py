@@ -2114,7 +2114,7 @@ def test_process_civ_data_objects_and_execute_linked_task_with_dicom_upload_with
         CIVData(interface_slug=socket.slug, value=dicom_upload)
     ]
     mock_import_dicom_task = mocker.patch(
-        "grandchallenge.cases.tasks.import_dicom_to_health_imaging.signature",
+        "grandchallenge.cases.tasks.import_dicom_to_health_imaging.execute_on_commit",
         return_value=MagicMock(),
     )
 

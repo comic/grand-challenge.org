@@ -6,7 +6,6 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Case, IntegerField, Value, When
-from django.db.transaction import on_commit
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 from lambda_tasks.logging import task_logger
@@ -101,15 +100,25 @@ def check_prerequisites_for_evaluation_execution(
         )
         return
     else:
-        e = prepare_and_execute_evaluation.signature(
-            kwargs={"evaluation_pk": evaluation.pk}, immutable=True
+        prepare_and_execute_evaluation.execute_on_commit(
+            evaluation_pk=evaluation.pk
         )
-        on_commit(e.apply_async)
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    name=f"{__name__}.prepare_and_execute_evaluation",
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
-def prepare_and_execute_evaluation(*, evaluation_pk):
+def prepare_and_execute_evaluation_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return prepare_and_execute_evaluation(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+)
+def prepare_and_execute_evaluation(*, evaluation_pk: str | uuid.UUID):
     """
     Prepares an evaluation object for execution
 
@@ -502,11 +511,21 @@ def filter_by_creators_best(*, evaluations, ranks):
     return [r for r in best_result_per_user.values()]
 
 
-# Use 2xlarge for memory use
 @acks_late_2xlarge_task(
-    retry_on=(LockNotAcquiredException,), delayed_retry=False
+    name=f"{__name__}.calculate_ranks",
+    retry_on=(LockNotAcquiredException,),
+    delayed_retry=False,
 )
 @transaction.atomic
+def calculate_ranks_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return calculate_ranks(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G,
+    retry_on=(LockNotAcquiredException,),
+)
 def calculate_ranks(*, phase_pk: uuid.UUID):
     from grandchallenge.evaluation.models import Evaluation, Phase
 
@@ -574,18 +593,30 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
         leaderboard.schedule_combined_ranks_update()
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.update_combined_leaderboard")
 @transaction.atomic
-def update_combined_leaderboard(*, pk):
+def update_combined_leaderboard_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_combined_leaderboard(**kwargs)
+
+
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
+def update_combined_leaderboard(*, pk: str | uuid.UUID):
     from grandchallenge.evaluation.models import CombinedLeaderboard
 
     leaderboard = CombinedLeaderboard.objects.get(pk=pk)
     leaderboard.update_combined_ranks_cache()
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.assign_evaluation_permissions")
 @transaction.atomic
-def assign_evaluation_permissions(*, phase_pks: uuid.UUID):
+def assign_evaluation_permissions_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return assign_evaluation_permissions(**kwargs)
+
+
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
+def assign_evaluation_permissions(*, phase_pks: list[str | uuid.UUID]):
     from grandchallenge.evaluation.models import Evaluation
 
     evals = Evaluation.objects.filter(
@@ -596,8 +627,14 @@ def assign_evaluation_permissions(*, phase_pks: uuid.UUID):
         e.assign_permissions()
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.assign_submission_permissions")
 @transaction.atomic
+def assign_submission_permissions_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return assign_submission_permissions(**kwargs)
+
+
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
 def assign_submission_permissions(*, phase_pk: uuid.UUID):
     from grandchallenge.evaluation.models import Submission
 

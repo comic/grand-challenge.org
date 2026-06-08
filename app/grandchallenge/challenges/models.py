@@ -23,7 +23,6 @@ from django.db.models import (
     When,
 )
 from django.db.models.signals import post_delete
-from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
@@ -562,14 +561,8 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             self.create_default_onboarding_tasks()
 
         if adding or self.hidden != self._hidden_orig:
-            on_commit(
-                assign_evaluation_permissions.signature(
-                    kwargs={
-                        "phase_pks": list(
-                            self.phase_set.values_list("id", flat=True)
-                        )
-                    }
-                ).apply_async
+            assign_evaluation_permissions.execute_on_commit(
+                phase_pks=list(self.phase_set.values_list("id", flat=True))
             )
 
     def assign_permissions(self):

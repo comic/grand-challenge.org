@@ -18,7 +18,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import BLANK_CHOICE_DASH
-from django.db.transaction import on_commit
 from django.forms import (
     BooleanField,
     CharField,
@@ -772,10 +771,8 @@ class GroundTruthFromAnswersForm(SaveFormInitMixin, Form):
             question__reader_study=self._reader_study
         ).update(score=None)
 
-        on_commit(
-            bulk_assign_scores_for_reader_study.signature(
-                kwargs={"reader_study_pk": self._reader_study.pk}
-            ).apply_async
+        bulk_assign_scores_for_reader_study.execute_on_commit(
+            reader_study_pk=self._reader_study.pk
         )
 
 
@@ -819,13 +816,9 @@ class AnswersFromGroundTruthForm(SaveFormInitMixin, Form):
         return super().clean()
 
     def schedule_answers_from_ground_truth_task(self):
-        on_commit(
-            answers_from_ground_truth.signature(
-                kwargs={
-                    "reader_study_pk": self._reader_study.pk,
-                    "target_user_pk": self._user.pk,
-                }
-            ).apply_async
+        answers_from_ground_truth.execute_on_commit(
+            reader_study_pk=self._reader_study.pk,
+            target_user_pk=self._user.pk,
         )
 
 
@@ -937,10 +930,8 @@ class GroundTruthCSVForm(SaveFormInitMixin, UserMixin, Form):
         for answer in self._answers:
             answer.save()
 
-        on_commit(
-            bulk_assign_scores_for_reader_study.signature(
-                kwargs={"reader_study_pk": self._reader_study.pk}
-            ).apply_async
+        bulk_assign_scores_for_reader_study.execute_on_commit(
+            reader_study_pk=self._reader_study.pk
         )
 
 

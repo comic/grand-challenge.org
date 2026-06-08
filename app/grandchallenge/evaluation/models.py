@@ -13,7 +13,6 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, Q
 from django.db.models.functions import Coalesce
-from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -755,16 +754,10 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
         if self.has_changed("public"):
             self.assign_permissions()
-            on_commit(
-                assign_evaluation_permissions.signature(
-                    kwargs={"phase_pks": [self.pk]}
-                ).apply_async
+            assign_evaluation_permissions.execute_on_commit(
+                phase_pks=[self.pk]
             )
-            on_commit(
-                assign_submission_permissions.signature(
-                    kwargs={"phase_pk": self.pk}
-                ).apply_async
-            )
+            assign_submission_permissions.execute_on_commit(phase_pk=self.pk)
 
         if (
             self.give_algorithm_editors_job_view_permissions
@@ -773,11 +766,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             self.send_give_algorithm_editors_job_view_permissions_changed_email()
 
         if not skip_calculate_ranks:
-            on_commit(
-                calculate_ranks.signature(
-                    kwargs={"phase_pk": self.pk}
-                ).apply_async
-            )
+            calculate_ranks.execute_on_commit(phase_pk=self.pk)
 
     def clean(self):
         super().clean()
@@ -2215,11 +2204,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
         self.assign_permissions()
 
-        on_commit(
-            calculate_ranks.signature(
-                kwargs={"phase_pk": self.submission.phase.pk}
-            ).apply_async
-        )
+        calculate_ranks.execute_on_commit(phase_pk=self.submission.phase.pk)
 
     @property
     def title(self):
@@ -2673,11 +2658,7 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
             combined_ranks[idx]["rank"] = current_rank
 
     def schedule_combined_ranks_update(self):
-        on_commit(
-            update_combined_leaderboard.signature(
-                kwargs={"pk": self.pk}
-            ).apply_async
-        )
+        update_combined_leaderboard.execute_on_commit(pk=self.pk)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

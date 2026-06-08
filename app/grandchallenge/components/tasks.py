@@ -29,7 +29,11 @@ from lambda_tasks.logging import task_logger
 from lambda_tasks.models import SQSLambdaTask
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
-from config.lambda_tasks import LambdaTaskQueueChoices
+from config.lambda_tasks import (
+    LONG_TASK_HARD_TIMEOUT,
+    LONG_TASK_SOFT_TIMEOUT,
+    LambdaTaskQueueChoices,
+)
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
     DICOMImageSetUploadStatusChoices,
@@ -92,9 +96,13 @@ def assign_docker_image_from_upload(
         instance.user_upload.delete()
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task  # This task cannot be migrated as the maximum duration is beyond the lambda time limit
 def validate_docker_image(  # noqa C901
-    *, pk: str | UUID, app_label: str, model_name: str, mark_as_desired: bool
+    *,
+    pk: str | UUID,
+    app_label: str,
+    model_name: str,
+    mark_as_desired: bool,
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
@@ -125,7 +133,7 @@ def validate_docker_image(  # noqa C901
     )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task  # This task needs to be re-written as it assumes that there is no transaction
 def upload_to_registry_and_sagemaker(
     *, pk: str | UUID, app_label: str, model_name: str, mark_as_desired: bool
 ):
@@ -761,7 +769,10 @@ def lock_for_utilization_update(*, algorithm_image_pk):
 
 
 @lambda_task(
-    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+    queue=LambdaTaskQueueChoices.MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=LONG_TASK_HARD_TIMEOUT,
 )
 def provision_job(
     *,
@@ -1447,6 +1458,8 @@ def add_image_to_object(  # noqa: C901
 @lambda_task(
     queue=LambdaTaskQueueChoices.MEM8G,
     retry_on=(LockNotAcquiredException,),
+    soft_timeout=LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=LONG_TASK_HARD_TIMEOUT,
 )
 def add_file_to_object(
     *,
