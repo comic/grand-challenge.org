@@ -39,6 +39,7 @@
         <dt>Issued on</dt>
         <dd>{{ invoice.issued_on|default_if_none:"-" }}</dd>
 
+        {% if object.payment_status == object.PaymentStatusChoices.ISSUED %}
         <dt>Due on</dt>
         <dd>
             {{ object.due_date|default_if_none:"-" }}
@@ -47,7 +48,8 @@
             {% elif object.is_due %}
                 <i class="fas fa-exclamation-triangle text-warning" title="Invoice is due."></i>
             {% endif %}
-         </dd>
+        </dd>
+        {% endif %}
 
         {% if object.payment_type == object.PaymentTypeChoices.POSTPAID %}
             <dt>Follow-up on</dt>
