@@ -1,6 +1,9 @@
+import logging
 from subprocess import CalledProcessError
 
 from botocore.exceptions import ClientError
+
+logger = logging.getLogger(__name__)
 
 
 def sentry_before_send(event, hint):
@@ -23,10 +26,14 @@ def sentry_before_send(event, hint):
 
         for attr in ("stderr", "stdout"):
             value = getattr(exc_value, attr)
+
             if isinstance(value, str):
                 extra[attr] = value
             elif isinstance(value, bytes):
                 extra[attr] = value.decode("utf-8", "replace")
+
+            if extra[attr]:
+                logger.info(f"CalledProcessError {attr}: {extra[attr]}")
 
     elif isinstance(exc_value, ClientError):
         extra = event.setdefault("extra", {})
