@@ -29,7 +29,11 @@ from lambda_tasks.logging import task_logger
 from lambda_tasks.models import SQSLambdaTask
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
-from config.lambda_tasks import LambdaTaskQueueChoices
+from config.lambda_tasks import (
+    LONG_TASK_HARD_TIMEOUT,
+    LONG_TASK_SOFT_TIMEOUT,
+    LambdaTaskQueueChoices,
+)
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
     DICOMImageSetUploadStatusChoices,
@@ -766,7 +770,10 @@ def lock_for_utilization_update(*, algorithm_image_pk):
 
 
 @lambda_task(
-    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+    queue=LambdaTaskQueueChoices.MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=LONG_TASK_HARD_TIMEOUT,
 )
 def provision_job(
     *,
@@ -1452,6 +1459,8 @@ def add_image_to_object(  # noqa: C901
 @lambda_task(
     queue=LambdaTaskQueueChoices.MEM8G,
     retry_on=(LockNotAcquiredException,),
+    soft_timeout=LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=LONG_TASK_HARD_TIMEOUT,
 )
 def add_file_to_object(
     *,
