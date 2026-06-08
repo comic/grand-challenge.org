@@ -362,17 +362,47 @@ class Invoice(models.Model, FieldChangeMixin):
 
     @cached_property
     def available_compute_cost_euro_millicents(self):
-        utilized = self.compute_cost_euro_millicents
-        diff = self.compute_costs_euros * 1000 * 100 - utilized
-
-        if not self.is_budget_authorized:
-            return -utilized
-        elif self.is_expired:
-            # If the invoice is expired we cap the balance at 0 or below.
-            # Meaning the challenge cannot use more compute from this invoice.
-            return min(diff, 0)
+        if self.is_expired:
+            return 0
         else:
-            return diff
+            return (
+                self.approved_compute_cost_euro_millicents
+                - self.consumed_compute_cost_euro_millicents
+            )
+
+    @cached_property
+    def approved_compute_cost_euro_millicents(self):
+        return (
+            self.compute_costs_euros * 1000 * 100
+            if self.is_budget_authorized
+            else 0
+        )
+
+    @cached_property
+    def consumed_compute_cost_euro_millicents(self):
+        return min(
+            self.compute_cost_euro_millicents,
+            self.approved_compute_cost_euro_millicents,  # Cap
+        )
+
+    @cached_property
+    def write_off_compute_cost_euro_millicents(self):
+        balance = (
+            self.approved_compute_cost_euro_millicents
+            - self.compute_cost_euro_millicents
+        )
+        return abs(min(balance, 0))
+
+    @cached_property
+    def percent_budget_consumed(self):
+        if self.approved_compute_cost_euro_millicents > 0:
+            return int(
+                100
+                * self.consumed_compute_cost_euro_millicents
+                / self.approved_compute_cost_euro_millicents
+            )
+        else:
+            return None
 
     def clean(self):
         if (

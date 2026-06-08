@@ -105,8 +105,10 @@ def retry_with_backoff(exceptions, max_attempts=5, base_delay=1, max_delay=10):
 @acks_late_2xlarge_task
 def update_challenge_compute_costs():
     # TODO: remove the loop and do this live once the challenge.compute_cost_euro_millicents field is removed or deprecated
-    for challenge in Challenge.objects.with_available_compute().iterator(
-        chunk_size=1000
+    for challenge in (
+        Challenge.objects.with_available_compute()
+        .with_invoices_with_budget_authorization()
+        .iterator(chunk_size=1000)
     ):
         with transaction.atomic():
             annotate_challenge_compute_costs(challenge=challenge)

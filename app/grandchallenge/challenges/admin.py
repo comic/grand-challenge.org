@@ -59,7 +59,12 @@ class ChallengeAdmin(ModelAdmin):
     search_fields = ("short_name",)
 
     def get_queryset(self, *args, **kwargs):
-        return super().get_queryset(*args, **kwargs).with_available_compute()
+        return (
+            super()
+            .get_queryset(*args, **kwargs)
+            .with_available_compute()
+            .with_invoices_with_budget_authorization()
+        )
 
     def available_compute_euros(self, obj):
         return millicents_to_euro(obj.available_compute_euro_millicents)

@@ -4,6 +4,7 @@ from django.forms import ModelForm
 from django.utils.html import format_html
 
 from grandchallenge.challenges.exceptions import InsufficientBudgetError
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
     cancel_jobs,
@@ -170,8 +171,11 @@ def reevaluate_submissions(modeladmin, request, queryset):
                 messages.WARNING,
             )
         else:
+            challenge = Challenge.objects.with_invoices_with_budget_authorization().get(
+                pk=submission.phase.challenge.pk
+            )
             try:
-                invoice = submission.phase.challenge.active_invoice
+                invoice = challenge.active_invoice
             except InsufficientBudgetError:
                 modeladmin.message_user(
                     request,

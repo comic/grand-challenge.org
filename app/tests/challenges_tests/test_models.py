@@ -808,79 +808,6 @@ def test_challenge_queryset_with_user_roles_multiple_challenges():
 
 
 @pytest.mark.django_db
-def test_challenge_available_compute_euro_millicents():
-    challenge = ChallengeFactory()
-
-    challenge = (
-        Challenge.objects.with_invoices_with_budget_authorization().get(
-            pk=challenge.pk
-        )
-    )
-    assert challenge.available_compute_euro_millicents_via_invoices == 0
-
-    InvoiceFactory(
-        challenge=challenge,
-        payment_status=Invoice.PaymentStatusChoices.PAID,
-        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
-        compute_costs_euros=1,
-    )
-
-    challenge = (
-        Challenge.objects.with_invoices_with_budget_authorization().get(
-            pk=challenge.pk
-        )
-    )
-    assert (
-        challenge.available_compute_euro_millicents_via_invoices
-        == 1 * 1000 * 100
-    )
-
-    InvoiceFactory(
-        challenge=challenge,
-        payment_status=Invoice.PaymentStatusChoices.PAID,
-        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
-        compute_costs_euros=2,
-    )
-
-    # All these should be ignored
-    InvoiceFactory(
-        challenge=challenge,
-        payment_status=Invoice.PaymentStatusChoices.CANCELLED,  # Not authorized: should be ignored
-        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
-        compute_costs_euros=4,
-    )
-
-    InvoiceFactory(
-        challenge=challenge,
-        payment_status=Invoice.PaymentStatusChoices.PAID,
-        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
-        compute_costs_euros=8,
-        compute_cost_euro_millicents=9
-        * 1000
-        * 1000,  # Note, overcharge: should be ignored
-    )
-
-    InvoiceFactory(
-        challenge=challenge,
-        payment_status=Invoice.PaymentStatusChoices.PAID,
-        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
-        compute_costs_euros=16,
-        expires_on=now().date()
-        - timedelta(days=1),  # Expired: should be ignored
-    )
-
-    challenge = (
-        Challenge.objects.with_invoices_with_budget_authorization().get(
-            pk=challenge.pk
-        )
-    )
-    assert (
-        challenge.available_compute_euro_millicents_via_invoices
-        == (1 + 2) * 1000 * 100
-    )
-
-
-@pytest.mark.django_db
 def test_active_invoice():
     challenge = ChallengeFactory()
     invoice = InvoiceFactory(
@@ -890,12 +817,22 @@ def test_active_invoice():
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     assert challenge.active_invoice == invoice
 
 
 @pytest.mark.django_db
 def test_active_invoice_no_invoice():
     challenge = ChallengeFactory()
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     with pytest.raises(InsufficientBudgetError):
         challenge.active_invoice
 
@@ -910,6 +847,11 @@ def test_active_invoice_raises_on_negative_balance():
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     with pytest.raises(InsufficientBudgetError):
         challenge.active_invoice
 
@@ -923,6 +865,11 @@ def test_active_invoice_raises_on_zero_balance():
         compute_cost_euro_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
     )
     with pytest.raises(InsufficientBudgetError):
         challenge.active_invoice
@@ -951,17 +898,34 @@ def test_active_invoice_orders_by_expiry():
         expires_on=_fixed_now + timedelta(10),
     )
 
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     # All things being equal, use created time to determine order, so invoice0 should be active as it was created first
     assert challenge.active_invoice == invoice0
 
     invoice1.expires_on = _fixed_now + timedelta(5)
     invoice1.save()
     assert invoice1.expires_on < invoice0.expires_on, "Sanity"
+
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     assert challenge.active_invoice == invoice1
 
     invoice0.expires_on = _fixed_now + timedelta(4)
     invoice0.save()
     assert invoice0.expires_on < invoice1.expires_on, "Sanity"
+
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     assert challenge.active_invoice == invoice0
 
 
@@ -984,4 +948,43 @@ def test_active_invoice_ignores_invoices_with_negative_balance():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
     challenge.active_invoice
+
+
+@pytest.mark.django_db
+def test_budget_properties():
+    challenge = ChallengeFactory()
+
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
+    assert challenge.available_compute_cost_euro_millicents == 0
+    assert challenge.approved_compute_cost_euro_millicents == 0
+    assert challenge.consumed_compute_cost_euro_millicents == 0
+    assert challenge.write_off_compute_cost_euro_millicents == 0
+    assert challenge.percent_active_budget_consumed is None
+
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=10,
+        compute_cost_euro_millicents=6 * 1000 * 100,
+    )
+
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
+
+    assert challenge.available_compute_cost_euro_millicents == 4 * 1000 * 100
+    assert challenge.approved_compute_cost_euro_millicents == 10 * 1000 * 100
+    assert challenge.consumed_compute_cost_euro_millicents == 6 * 1000 * 100
+    assert challenge.write_off_compute_cost_euro_millicents == 0
+    assert challenge.percent_active_budget_consumed == 60

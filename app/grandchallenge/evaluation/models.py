@@ -237,7 +237,7 @@ class PhaseManager(models.Manager):
                 # to use a custom model manager with select_related
                 models.Prefetch(
                     "challenge",
-                    queryset=Challenge.objects.with_available_compute(),
+                    queryset=Challenge.objects.with_available_compute().with_invoices_with_budget_authorization(),
                 )
             )
         )
@@ -1110,7 +1110,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             self.public
             and self.submission_period_is_open_now
             and self.submissions_limit_per_user_per_period > 0
-            and self.challenge.available_compute_euro_millicents > 0
+            and self.challenge.available_compute_cost_euro_millicents > 0
         )
 
     @property

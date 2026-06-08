@@ -13,19 +13,43 @@ from tests.invoices_tests.factories import InvoiceFactory
 
 
 @pytest.mark.django_db
-def test_budget_authorization_errors_out_early():
+def test_percent_budget_consumed():
     challenge = ChallengeFactory()
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=2,
-        compute_cost_euro_millicents=0,
-        payment_type=PaymentTypeChoices.PREPAID,
-        payment_status=Invoice.PaymentStatusChoices.PAID,
+        compute_cost_euro_millicents=1 * 1000 * 100,
     )
-    with pytest.raises(
-        AttributeError, match="no attribute 'is_budget_authorized'"
-    ):
-        invoice.available_compute_cost_euro_millicents
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
+    assert invoice.percent_budget_consumed == 50
+
+
+@pytest.mark.django_db
+def test_percent_budget_consumed_over_charge():
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=2,
+        compute_cost_euro_millicents=3 * 1000 * 100,
+    )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
+    assert invoice.percent_budget_consumed == 100
+
+
+@pytest.mark.django_db
+def test_percent_budget_consumed_unauthorized():
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=2,
+        compute_cost_euro_millicents=3 * 1000 * 100,
+        payment_status=PaymentStatusChoices.CANCELLED,
+    )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
+    assert invoice.percent_budget_consumed is None
 
 
 ##########
@@ -42,7 +66,11 @@ def test_prepaid_no_utilization_positive_balance():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
     assert invoice.available_compute_cost_euro_millicents == 2 * 1000 * 100
+    assert invoice.approved_compute_cost_euro_millicents == 2 * 1000 * 100
+    assert invoice.consumed_compute_cost_euro_millicents == 0
+    assert invoice.write_off_compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
@@ -56,7 +84,11 @@ def test_prepaid_utilization_positive_balance():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
     assert invoice.available_compute_cost_euro_millicents == 1 * 1000 * 100
+    assert invoice.approved_compute_cost_euro_millicents == 2 * 1000 * 100
+    assert invoice.consumed_compute_cost_euro_millicents == 1 * 1000 * 100
+    assert invoice.write_off_compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
@@ -81,13 +113,17 @@ def test_prepaid_no_utilization_zero_balance(payment_status, expires_on):
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_cost_euro_millicents=0,
+        compute_cost_euro_millicents=1,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=payment_status,
         expires_on=expires_on,
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
     assert invoice.available_compute_cost_euro_millicents == 0
+    assert invoice.approved_compute_cost_euro_millicents == 0
+    assert invoice.consumed_compute_cost_euro_millicents == 0
+    assert invoice.write_off_compute_cost_euro_millicents == 1
 
 
 @pytest.mark.django_db
@@ -110,7 +146,11 @@ def test_prepaid_overutilization_negative_balance(payment_status):
         payment_status=payment_status,
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
-    assert invoice.available_compute_cost_euro_millicents == -3 * 1000 * 100
+
+    assert invoice.available_compute_cost_euro_millicents == 0
+    assert invoice.approved_compute_cost_euro_millicents == 0
+    assert invoice.consumed_compute_cost_euro_millicents == 0
+    assert invoice.write_off_compute_cost_euro_millicents == 3 * 1000 * 100
 
 
 @pytest.mark.django_db
@@ -125,7 +165,11 @@ def test_prepaid_utilization_expired_zero_balance():
         expires_on=now().date() - timedelta(days=2),
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
     assert invoice.available_compute_cost_euro_millicents == 0
+    assert invoice.approved_compute_cost_euro_millicents == 4 * 1000 * 100
+    assert invoice.consumed_compute_cost_euro_millicents == 1 * 1000 * 100
+    assert invoice.write_off_compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
@@ -140,7 +184,11 @@ def test_prepaid_overutilization_expired_negative_balance():
         expires_on=now().date() - timedelta(days=2),  # Expired
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
-    assert invoice.available_compute_cost_euro_millicents == -2 * 1000 * 100
+
+    assert invoice.available_compute_cost_euro_millicents == 0
+    assert invoice.approved_compute_cost_euro_millicents == 1 * 1000 * 100
+    assert invoice.consumed_compute_cost_euro_millicents == 1 * 1000 * 100
+    assert invoice.write_off_compute_cost_euro_millicents == 2 * 1000 * 100
 
 
 ##########
@@ -183,10 +231,17 @@ def test_postpaid_no_utilization(
     postpaid_invoice = Invoice.objects.with_budget_authorization().get(
         pk=postpaid_invoice.pk
     )
+
     assert (
         postpaid_invoice.available_compute_cost_euro_millicents
         == 2 * 1000 * 100
     )
+    assert (
+        postpaid_invoice.approved_compute_cost_euro_millicents
+        == 2 * 1000 * 100
+    )
+    assert postpaid_invoice.consumed_compute_cost_euro_millicents == 0
+    assert postpaid_invoice.write_off_compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
@@ -287,6 +342,9 @@ def test_postpaid_postpaid_status_interaction_zero_balance(
         pk=postpaid_invoice.pk
     )
     assert postpaid_invoice.available_compute_cost_euro_millicents == 0
+    assert postpaid_invoice.approved_compute_cost_euro_millicents == 0
+    assert postpaid_invoice.consumed_compute_cost_euro_millicents == 0
+    assert postpaid_invoice.write_off_compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
@@ -314,6 +372,12 @@ def test_postpaid_with_expired_paid_prepaid():
         postpaid_invoice.available_compute_cost_euro_millicents
         == 2 * 1000 * 100
     )
+    assert (
+        postpaid_invoice.approved_compute_cost_euro_millicents
+        == 2 * 1000 * 100
+    )
+    assert postpaid_invoice.consumed_compute_cost_euro_millicents == 0
+    assert postpaid_invoice.write_off_compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
@@ -337,10 +401,20 @@ def test_postpaid_utilized():
     postpaid_invoice = Invoice.objects.with_budget_authorization().get(
         pk=postpaid_invoice.pk
     )
+
     assert (
         postpaid_invoice.available_compute_cost_euro_millicents
         == 3 * 1000 * 100
     )
+    assert (
+        postpaid_invoice.approved_compute_cost_euro_millicents
+        == 4 * 1000 * 100
+    )
+    assert (
+        postpaid_invoice.consumed_compute_cost_euro_millicents
+        == 1 * 1000 * 100
+    )
+    assert postpaid_invoice.write_off_compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
@@ -367,6 +441,15 @@ def test_postpaid_utilized_but_expired():
         pk=postpaid_invoice.pk
     )
     assert postpaid_invoice.available_compute_cost_euro_millicents == 0
+    assert (
+        postpaid_invoice.approved_compute_cost_euro_millicents
+        == 4 * 1000 * 100
+    )
+    assert (
+        postpaid_invoice.consumed_compute_cost_euro_millicents
+        == 1 * 1000 * 100
+    )
+    assert postpaid_invoice.write_off_compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
@@ -390,9 +473,18 @@ def test_postpaid_overutilized():
     postpaid_invoice = Invoice.objects.with_budget_authorization().get(
         pk=postpaid_invoice.pk
     )
+    assert postpaid_invoice.available_compute_cost_euro_millicents == 0
     assert (
-        postpaid_invoice.available_compute_cost_euro_millicents
-        == -2 * 1000 * 100
+        postpaid_invoice.approved_compute_cost_euro_millicents
+        == 1 * 1000 * 100
+    )
+    assert (
+        postpaid_invoice.consumed_compute_cost_euro_millicents
+        == 1 * 1000 * 100
+    )
+    assert (
+        postpaid_invoice.write_off_compute_cost_euro_millicents
+        == 2 * 1000 * 100
     )
 
 
@@ -418,9 +510,18 @@ def test_postpaid_overutilized_but_expired():
     postpaid_invoice = Invoice.objects.with_budget_authorization().get(
         pk=postpaid_invoice.pk
     )
+    assert postpaid_invoice.available_compute_cost_euro_millicents == 0
     assert (
-        postpaid_invoice.available_compute_cost_euro_millicents
-        == -2 * 1000 * 100
+        postpaid_invoice.approved_compute_cost_euro_millicents
+        == 1 * 1000 * 100
+    )
+    assert (
+        postpaid_invoice.consumed_compute_cost_euro_millicents
+        == 1 * 1000 * 100
+    )
+    assert (
+        postpaid_invoice.write_off_compute_cost_euro_millicents
+        == 2 * 1000 * 100
     )
 
 
@@ -450,6 +551,9 @@ def test_complimentary_no_utilization_positive_balance(payment_status):
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 1 * 1000 * 100
+    assert invoice.approved_compute_cost_euro_millicents == 1 * 1000 * 100
+    assert invoice.consumed_compute_cost_euro_millicents == 0
+    assert invoice.write_off_compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
@@ -464,6 +568,9 @@ def test_complimentary_cancelled():
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 0
+    assert invoice.approved_compute_cost_euro_millicents == 0
+    assert invoice.consumed_compute_cost_euro_millicents == 0
+    assert invoice.write_off_compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
@@ -487,6 +594,9 @@ def test_complimentary_utilized(payment_status):
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 3 * 1000 * 100
+    assert invoice.approved_compute_cost_euro_millicents == 4 * 1000 * 100
+    assert invoice.consumed_compute_cost_euro_millicents == 1 * 1000 * 100
+    assert invoice.write_off_compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
@@ -511,6 +621,9 @@ def test_complimentary_utilized_but_expired(payment_status):
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 0
+    assert invoice.approved_compute_cost_euro_millicents == 4 * 1000 * 100
+    assert invoice.consumed_compute_cost_euro_millicents == 1 * 1000 * 100
+    assert invoice.write_off_compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
@@ -525,7 +638,10 @@ def test_complimentary_overutilized_but_expired():
         expires_on=now().date() - timedelta(days=2),
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
-    assert invoice.available_compute_cost_euro_millicents == -2 * 1000 * 100
+    assert invoice.available_compute_cost_euro_millicents == 0
+    assert invoice.approved_compute_cost_euro_millicents == 1 * 1000 * 100
+    assert invoice.consumed_compute_cost_euro_millicents == 1 * 1000 * 100
+    assert invoice.write_off_compute_cost_euro_millicents == 2 * 1000 * 100
 
 
 @pytest.mark.django_db

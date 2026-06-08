@@ -24,6 +24,7 @@ from django.utils.text import format_lazy
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.exceptions import InsufficientBudgetError
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.forms import (
     AdditionalInputsMixin,
     ContainerImageForm,
@@ -750,8 +751,14 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
                     "Please wait for the other evaluation to complete."
                 )
 
+        challenge = (
+            Challenge.objects.with_invoices_with_budget_authorization().get(
+                pk=cleaned_data["submission"].phase.challenge.pk
+            )
+        )
+
         try:
-            invoice = cleaned_data["submission"].phase.challenge.active_invoice
+            invoice = challenge.active_invoice
         except InsufficientBudgetError:
             raise ValidationError(
                 "Challenge has insufficient budget. Please contact support to add more funds."

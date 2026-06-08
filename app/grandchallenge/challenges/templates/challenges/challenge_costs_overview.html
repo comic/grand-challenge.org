@@ -35,13 +35,62 @@
                     <th>Status</th>
                     <th>Should be Open</th>
                     <th>Most Recent Submission</th>
-                    <th>Percentage Budget Consumed</th>
-                    <th>Approved Compute Costs</th>
-                    <th>Total Compute Costs Incurred</th>
-                    <th>Available Compute Costs</th>
-                     <th>Available Compute Costs (via Invoices)</th>
-                    <th>Object Storage Costs per Year</th>
-                    <th>Registry Storage Costs per Year</th>
+                    <th>
+                        % Active Budget Consumed
+                        <span data-toggle="tooltip" data-placement="right"
+                              title="Consumed costs as a percentage of the approved costs of the currently active (i.e., non-expired) invoices."
+                              class="text-muted">
+                            <i class="fas fa-question-circle"></i>
+                        </span>
+                    </th>
+                    <th>
+                        Available Compute Costs
+                        <span data-toggle="tooltip" data-placement="right"
+                              title="Total approved budget - total consumed costs of currently active invoices."
+                              class="text-muted">
+                            <i class="fas fa-question-circle"></i>
+                        </span>
+                    </th>
+                    <th>
+                        Total Approved Compute Costs
+                        <span data-toggle="tooltip" data-placement="right"
+                              title="Sum of approved compute budget of all invoices."
+                              class="text-muted">
+                            <i class="fas fa-question-circle"></i>
+                        </span>
+                    </th>
+                    <th>
+                        Total Consumed Compute Costs
+                        <span data-toggle="tooltip" data-placement="right"
+                              title="Total compute costs billed against all the invoices, capped at total approved."
+                              class="text-muted">
+                            <i class="fas fa-question-circle"></i>
+                        </span>
+                    </th>
+                    <th>
+                        Total Write-Off Compute Costs
+                        <span data-toggle="tooltip" data-placement="right"
+                              title="Costs written off and not charged to any budget."
+                              class="text-muted">
+                            <i class="fas fa-question-circle"></i>
+                        </span>
+                    </th>
+                    <th>
+                        Object Storage Costs per Year
+                        <span data-toggle="tooltip" data-placement="right"
+                              title="Estimated annual cost for storing challenge data in object storage."
+                              class="text-muted">
+                            <i class="fas fa-question-circle"></i>
+                        </span>
+                    </th>
+                    <th>
+                        Registry Storage Costs per Year
+                        <span data-toggle="tooltip" data-placement="right"
+                              title="Estimated annual cost for storing container images in the registry."
+                              class="text-muted">
+                            <i class="fas fa-question-circle"></i>
+                        </span>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -53,16 +102,21 @@
                         </td>
                         <td>{% if challenge.should_be_open_but_is_over_budget %}<i class="fa fa-exclamation-triangle text-danger"></i>{% endif %}</td>
                         <td data-order="{% if challenge.cached_latest_result %}{{ challenge.cached_latest_result|date:"c" }}{% else %}-1{% endif %}">{% if challenge.cached_latest_result %}{{ challenge.cached_latest_result|date }}{% endif %}</td>
-                        <td data-order="{% if challenge.percent_budget_consumed is None %}-1{% else %}{{ challenge.percent_budget_consumed }}{% endif %}" class="{% if challenge.percent_budget_consumed >= 100 %}text-danger{% elif challenge.percent_budget_consumed >= 70 %}text-warning{% else %}text-success{% endif %}">{% if challenge.percent_budget_consumed is not None %}{{ challenge.percent_budget_consumed }}&nbsp;%{% endif %}</td>
-                        <td>{{ challenge.approved_compute_costs_euro_millicents|millicents_to_euro }}</td>
-                        <td>{{ challenge.compute_cost_euro_millicents|millicents_to_euro }}</td>
-                        <td class="{% if challenge.available_compute_euro_millicents <= 0 %}text-danger{% endif %}">{{ challenge.available_compute_euro_millicents|millicents_to_euro }}</td>
-                        <td>{{ challenge.available_compute_euro_millicents_via_invoices|millicents_to_euro }}</td>
-                        <td>{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</td>
-                        <td>{{ challenge.size_in_registry|registry_bytes_to_euro_per_year }}</td>
+                        <td data-order="{% if challenge.percent_active_budget_consumed is None %}-1{% else %}{{ challenge.percent_active_budget_consumed }}{% endif %}" class="{% if challenge.percent_active_budget_consumed >= 100 %}text-danger{% elif challenge.percent_active_budget_consumed >= 70 %}text-warning{% else %}text-success{% endif %}">{% if challenge.percent_active_budget_consumed is not None %}{{ challenge.percent_active_budget_consumed }}&nbsp;%{% endif %}</td>
+                        <td data-order="{{ challenge.available_compute_cost_euro_millicents}}" class="{% if challenge.available_compute_cost_euro_millicents <= 0 %}text-danger{% endif %}">{{ challenge.available_compute_cost_euro_millicents|millicents_to_euro }}</td>
+                        <td data-order="{{ challenge.approved_compute_costs_euro_millicents }}">{{ challenge.approved_compute_costs_euro_millicents|millicents_to_euro }}</td>
+                        <td data-order="{{ challenge.consumed_compute_cost_euro_millicents }}">{{ challenge.consumed_compute_cost_euro_millicents|millicents_to_euro }}</td>
+                        <td data-order="{{ challenge.write_off_compute_cost_euro_millicents }}" class="{% if challenge.write_off_compute_cost_euro_millicents > 0 %}text-danger{% endif %}">{{ challenge.write_off_compute_cost_euro_millicents|millicents_to_euro }}</td>
+                        <td data-order="{{ challenge.size_in_storage }}">{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</td>
+                        <td data-order="{{ challenge.size_in_registry }}">{{ challenge.size_in_registry|registry_bytes_to_euro_per_year }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static "js/tooltips.js" %}"></script>
 {% endblock %}
