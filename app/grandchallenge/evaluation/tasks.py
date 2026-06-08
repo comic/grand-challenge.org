@@ -502,7 +502,7 @@ def filter_by_creators_best(*, evaluations, ranks):
     queue=LambdaTaskQueueChoices.MEM8G,
     retry_on=(LockNotAcquiredException,),
 )
-def calculate_ranks(*, phase_pk: uuid.UUID):
+def calculate_ranks(*, phase_pk: str | uuid.UUID):
     from grandchallenge.evaluation.models import Evaluation, Phase
 
     phase = Phase.objects.get(pk=phase_pk)
@@ -590,7 +590,7 @@ def assign_evaluation_permissions(*, phase_pks: list[str | uuid.UUID]):
 
 
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
-def assign_submission_permissions(*, phase_pk: uuid.UUID):
+def assign_submission_permissions(*, phase_pk: str | uuid.UUID):
     from grandchallenge.evaluation.models import Submission
 
     for sub in Submission.objects.filter(phase__id=phase_pk):
