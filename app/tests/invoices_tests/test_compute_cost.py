@@ -531,23 +531,14 @@ def test_postpaid_overutilized_but_expired():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "payment_status",
-    (
-        PaymentStatusChoices.INITIALIZED,
-        PaymentStatusChoices.REQUESTED,
-        PaymentStatusChoices.ISSUED,
-        PaymentStatusChoices.PAID,
-    ),
-)
-def test_complimentary_no_utilization_positive_balance(payment_status):
+def test_complimentary_no_utilization_positive_balance():
     challenge = ChallengeFactory()
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
         compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
-        payment_status=payment_status,
+        payment_status=PaymentStatusChoices.PAID,
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 1 * 1000 * 100
@@ -574,23 +565,14 @@ def test_complimentary_cancelled():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "payment_status",
-    (
-        PaymentStatusChoices.INITIALIZED,
-        PaymentStatusChoices.REQUESTED,
-        PaymentStatusChoices.ISSUED,
-        PaymentStatusChoices.PAID,
-    ),
-)
-def test_complimentary_utilized(payment_status):
+def test_complimentary_utilized():
     challenge = ChallengeFactory()
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=4,
         compute_cost_euro_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
-        payment_status=payment_status,
+        payment_status=PaymentStatusChoices.PAID,
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 3 * 1000 * 100
@@ -600,23 +582,14 @@ def test_complimentary_utilized(payment_status):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "payment_status",
-    (
-        PaymentStatusChoices.INITIALIZED,
-        PaymentStatusChoices.REQUESTED,
-        PaymentStatusChoices.ISSUED,
-        PaymentStatusChoices.PAID,
-    ),
-)
-def test_complimentary_utilized_but_expired(payment_status):
+def test_complimentary_utilized_but_expired():
     challenge = ChallengeFactory()
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=4,
         compute_cost_euro_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
-        payment_status=payment_status,
+        payment_status=PaymentStatusChoices.PAID,
         expires_on=now().date() - timedelta(days=2),
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)

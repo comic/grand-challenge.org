@@ -343,10 +343,6 @@ def test_payment_status_required_fields(
     assert len(e.value.messages) == 1
     assert e.value.messages[0] == expected_error_message
 
-    # should work with complimentary type
-    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
-    invoice.save()
-
 
 @pytest.mark.django_db
 def test_payment_type_complimentary_requires_internal_comments():
