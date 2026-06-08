@@ -647,7 +647,7 @@ def test_combined_leaderboards(
         assert len(callbacks) == 1
         assert (
             repr(callbacks[0])
-            == f"<bound method Signature.apply_async of grandchallenge.evaluation.tasks.update_combined_leaderboard(pk={leaderboard.pk!r})>"
+            == f"<bound method SQSLambdaTask._execute of SQSLambdaTask(message=SQSLambdaTaskMessage(task_name='grandchallenge.evaluation.tasks.update_combined_leaderboard', kwargs={{'pk': UUID('{leaderboard.pk}')}}, n_retries=0), delay=0, queue='default')>"
         )
 
     with django_assert_max_num_queries(7):
@@ -812,7 +812,7 @@ def test_combined_leaderboard_updated_on_save(
     assert len(callbacks) == 1
     assert (
         repr(callbacks[0])
-        == f"<bound method Signature.apply_async of grandchallenge.evaluation.tasks.update_combined_leaderboard(pk={leaderboard.pk!r})>"
+        == f"<bound method SQSLambdaTask._execute of SQSLambdaTask(message=SQSLambdaTaskMessage(task_name='grandchallenge.evaluation.tasks.update_combined_leaderboard', kwargs={{'pk': UUID('{leaderboard.pk}')}}, n_retries=0), delay=0, queue='default')>"
     )
 
 
@@ -827,7 +827,7 @@ def test_combined_leaderboard_updated_on_phase_change(
         assert len(callbacks) == 1
         assert (
             repr(callbacks[0])
-            == f"<bound method Signature.apply_async of grandchallenge.evaluation.tasks.update_combined_leaderboard(pk={leaderboard.pk!r})>"
+            == f"<bound method SQSLambdaTask._execute of SQSLambdaTask(message=SQSLambdaTaskMessage(task_name='grandchallenge.evaluation.tasks.update_combined_leaderboard', kwargs={{'pk': UUID('{leaderboard.pk}')}}, n_retries=0), delay=0, queue='default')>"
         )
 
     with django_capture_on_commit_callbacks() as callbacks:

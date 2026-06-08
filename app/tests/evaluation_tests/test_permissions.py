@@ -64,6 +64,8 @@ def test_hiding_phase_updates_perms(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
         submission__phase__public=True,
@@ -110,6 +112,8 @@ def test_unhiding_phase_updates_perms(
 ):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
@@ -280,6 +284,8 @@ def test_hiding_challenge_updates_perms(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
         submission__phase__challenge__hidden=False,
@@ -319,6 +325,8 @@ def test_unhiding_challenge_updates_perms(
     """If a challenge is unhidden then the viewer group should be updated"""
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    settings.LAMBDA_TASKS_EAGER = True
 
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,

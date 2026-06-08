@@ -598,7 +598,7 @@ def update_combined_leaderboard_celery(**kwargs):
 
 
 @lambda_task
-def update_combined_leaderboard(*, pk):
+def update_combined_leaderboard(*, pk: str | uuid.UUID):
     from grandchallenge.evaluation.models import CombinedLeaderboard
 
     leaderboard = CombinedLeaderboard.objects.get(pk=pk)
