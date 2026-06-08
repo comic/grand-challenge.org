@@ -2858,11 +2858,10 @@
             <span class="n">upload</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
             <span class="n">upload</span><span class="o">.</span><span class="n">user_uploads</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">dicom_upload_with_name</span><span class="o">.</span><span class="n">user_uploads</span><span class="p">)</span>
 
-            <span class="n">on_commit</span><span class="p">(</span>
-                <span class="n">import_dicom_to_health_imaging</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
-                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dicom_imageset_upload_pk&quot;</span><span class="p">:</span> <span class="n">upload</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
+            <span class="n">import_dicom_to_health_imaging</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span>
+                <span class="n">dicom_imageset_upload_pk</span><span class="o">=</span><span class="n">upload</span><span class="o">.</span><span class="n">pk</span>
             <span class="p">)</span>
+
         <span class="k">elif</span> <span class="n">current_civ</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># Nothing to do</span>
             <span class="k">pass</span>

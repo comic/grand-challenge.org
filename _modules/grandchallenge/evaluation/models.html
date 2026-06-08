@@ -51,7 +51,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Count</span><span class="p">,</span> <span class="n">Q</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Coalesce</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.transaction</span><span class="w"> </span><span class="kn">import</span> <span class="n">on_commit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.html</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_html</span>
@@ -797,16 +796,10 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;public&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
-            <span class="n">on_commit</span><span class="p">(</span>
-                <span class="n">assign_evaluation_permissions</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
-                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pks&quot;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">]}</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
+            <span class="n">assign_evaluation_permissions</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span>
+                <span class="n">phase_pks</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">]</span>
             <span class="p">)</span>
-            <span class="n">on_commit</span><span class="p">(</span>
-                <span class="n">assign_submission_permissions</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
-                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
-            <span class="p">)</span>
+            <span class="n">assign_submission_permissions</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span><span class="n">phase_pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">give_algorithm_editors_job_view_permissions</span>
@@ -815,11 +808,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">send_give_algorithm_editors_job_view_permissions_changed_email</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">skip_calculate_ranks</span><span class="p">:</span>
-            <span class="n">on_commit</span><span class="p">(</span>
-                <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
-                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
-            <span class="p">)</span></div>
+            <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span><span class="n">phase_pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Phase.clean">
@@ -2265,11 +2254,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
 
-        <span class="n">on_commit</span><span class="p">(</span>
-            <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
-                <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
-        <span class="p">)</span>
+        <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span><span class="n">phase_pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">title</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -2723,11 +2708,7 @@
             <span class="n">combined_ranks</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="s2">&quot;rank&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_rank</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">schedule_combined_ranks_update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">on_commit</span><span class="p">(</span>
-            <span class="n">update_combined_leaderboard</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
-                <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
-        <span class="p">)</span>
+        <span class="n">update_combined_leaderboard</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
