@@ -212,12 +212,12 @@
                             {% if not object.is_evaluated_with_active_image_and_ground_truth %} not {% endif %}
                             been evaluated with the active evaluation method and active ground truth for this phase
                             {% if additional_inputs_required %}, and can be re-evaluated with different inputs{% endif %}.
-                            {% if challenge.available_compute_euro_millicents <= 0 %}
+                            {% if challenge.available_compute_cost_euro_millicents <= 0 %}
                                 However, an evaluation cannot be created as this challenge has exceeded its budget.
                             {% endif %}
                         </p>
 
-                        {% if challenge.available_compute_euro_millicents > 0 %}
+                        {% if challenge.available_compute_cost_euro_millicents > 0 %}
                             {% if additional_inputs_required %}
                                 <a class="btn btn-sm btn-primary"
                                    href="{% url 'evaluation:evaluation-create' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">

@@ -52,7 +52,7 @@
     </div>
 {% endif %}
 
-{% if not phase.open_for_submissions and phase.challenge.available_compute_euro_millicents > 0 %}
+{% if not phase.open_for_submissions and phase.challenge.available_compute_cost_euro_millicents > 0 %}
     <div class="alert alert-danger" role="alert">
         <i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Participants are not able to submit to this phase
         as:
@@ -84,7 +84,7 @@
     </div>
 {% endif %}
 
-{% if phase.challenge.available_compute_euro_millicents <= 0 %}
+{% if phase.challenge.available_compute_cost_euro_millicents <= 0 %}
     <div class="alert alert-danger" role="alert">
         <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
         No submissions are possible as this challenge has exceeded its budget. Please contact support.
