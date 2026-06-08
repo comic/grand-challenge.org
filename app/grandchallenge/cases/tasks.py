@@ -464,7 +464,10 @@ def _handle_raw_files(
     }
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(
+    # This task cannot be migrated as the maximum duration is beyond the lambda time limit
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
 def execute_post_process_image_task(*, post_process_image_task_pk):
     with check_lock_acquired():
@@ -520,9 +523,18 @@ def _check_post_processor_result(*, post_processor_result, image):
         raise RuntimeError("Created image IDs do not match")
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException, RetryStep))
+@acks_late_2xlarge_task(name=f"{__name__}.import_dicom_to_health_imaging")
 @transaction.atomic
-def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk):
+def import_dicom_to_health_imaging_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return import_dicom_to_health_imaging(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G,
+    retry_on=(LockNotAcquiredException, RetryStep),
+)
+def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk: str | UUID):
     with check_lock_acquired():
         upload = DICOMImageSetUpload.objects.select_for_update(
             nowait=True

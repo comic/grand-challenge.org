@@ -2754,11 +2754,10 @@ class CIVForObjectMixin:
             upload.save()
             upload.user_uploads.set(dicom_upload_with_name.user_uploads)
 
-            on_commit(
-                import_dicom_to_health_imaging.signature(
-                    kwargs={"dicom_imageset_upload_pk": upload.pk}
-                ).apply_async
+            import_dicom_to_health_imaging.execute_on_commit(
+                dicom_imageset_upload_pk=upload.pk
             )
+
         elif current_civ is None:
             # Nothing to do
             pass

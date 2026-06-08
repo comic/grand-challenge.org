@@ -94,7 +94,12 @@ def assign_docker_image_from_upload(
 
 @acks_late_2xlarge_task
 def validate_docker_image(  # noqa C901
-    *, pk: str | UUID, app_label: str, model_name: str, mark_as_desired: bool
+    # This task cannot be migrated as the maximum duration is beyond the lambda time limit
+    *,
+    pk: str | UUID,
+    app_label: str,
+    model_name: str,
+    mark_as_desired: bool,
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)

@@ -1,5 +1,6 @@
 import json
 import logging
+from uuid import uuid4
 
 import boto3
 import botocore
@@ -49,6 +50,23 @@ def _create_buckets(*, client):
                 logger.info(f"{bucket_name} already exists, skipping creation")
             else:
                 raise
+
+        # Interact with the bucket to ensure that it is set up
+        test_uuid = uuid4().bytes
+        test_key = "local_s3_setup"
+
+        try:
+            client.put_object(Bucket=bucket_name, Key=test_key, Body=test_uuid)
+            response = client.get_object(Bucket=bucket_name, Key=test_key)
+
+            if response["Body"].read() == test_uuid:
+                logger.info(f"{bucket_name} is writable")
+            else:
+                raise RuntimeError(
+                    f"Test objects do not match in {bucket_name}"
+                )
+        finally:
+            client.delete_object(Bucket=bucket_name, Key=test_key)
 
 
 def _set_public_bucket_policy(*, client):
