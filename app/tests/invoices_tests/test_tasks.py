@@ -7,13 +7,15 @@ from django.core import mail
 from django.utils.formats import date_format
 from django.utils.timezone import datetime, now, timedelta
 
-from grandchallenge.invoices.models import Invoice
+from grandchallenge.challenges.tasks import update_challenge_compute_costs
+from grandchallenge.invoices.models import Invoice, PaymentStatusChoices
 from grandchallenge.invoices.tasks import (
     send_challenge_invoice_issued_notification_emails,
     send_challenge_invoice_overdue_reminder_emails,
     send_open_invoices_email,
     send_post_paid_invoice_follow_up_emails,
 )
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import ChallengeFactory, UserFactory
 from tests.invoices_tests.factories import InvoiceFactory
 
@@ -556,3 +558,154 @@ def test_send_post_paid_invoice_follow_up_emails_queryset(mocker):
             call(postpaid_relevant),
         ],
     )
+
+
+@pytest.mark.django_db
+def test_invoice_budget_alert_email(settings):
+    challenge = ChallengeFactory(short_name="test")
+    challenge_admin = UserFactory()
+    challenge.add_admin(challenge_admin)
+    staff_user = UserFactory(is_staff=True)
+    settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+        internal_invoice_number="154040051",
+    )
+    phase = PhaseFactory(challenge=challenge)
+    evaluation = EvaluationFactory(
+        submission__phase=phase,
+        time_limit=60,
+    )
+
+    evaluation.utilization.invoice = invoice
+    evaluation.utilization.compute_cost_euro_millicents = 5 * 1000 * 100
+    evaluation.utilization.save()
+    update_challenge_compute_costs()
+
+    # Budget alert threshold not exceeded
+    assert len(mail.outbox) == 0
+
+    evaluation = EvaluationFactory(
+        submission__phase=phase,
+        time_limit=60,
+    )
+    evaluation.utilization.invoice = invoice
+    evaluation.utilization.compute_cost_euro_millicents = 3 * 1000 * 100
+    evaluation.utilization.save()
+    update_challenge_compute_costs()
+
+    # Budget alert threshold exceeded
+    assert len(mail.outbox) == 3
+    recipients = {r for m in mail.outbox for r in m.to}
+    assert recipients == {
+        challenge.creator.email,
+        challenge_admin.email,
+        staff_user.email,
+    }
+
+    challenge_admin_email = [
+        m for m in mail.outbox if challenge_admin.email in m.to
+    ]
+    assert (
+        challenge_admin_email[0].subject
+        == "[testserver] [test] over 70% Budget Consumed Alert"
+    )
+    assert (
+        "We would like to inform you that more than 70% of the compute budget "
+        "for Prepaid invoice 154040051 of the test challenge has been used"
+        in challenge_admin_email[0].body
+    )
+
+    mail.outbox.clear()
+    evaluation = EvaluationFactory(
+        submission__phase=phase,
+        time_limit=60,
+    )
+    evaluation.utilization.invoice = invoice
+    evaluation.utilization.compute_cost_euro_millicents = 100000
+    evaluation.utilization.save()
+    update_challenge_compute_costs()
+
+    # Next budget alert threshold not exceeded
+    assert len(mail.outbox) == 0
+
+    evaluation = EvaluationFactory(
+        submission__phase=phase,
+        time_limit=60,
+    )
+    evaluation.utilization.invoice = invoice
+    evaluation.utilization.compute_cost_euro_millicents = 1
+    evaluation.utilization.save()
+    update_challenge_compute_costs()
+
+    # Next budget alert threshold exceeded
+    assert len(mail.outbox) != 0
+    assert (
+        mail.outbox[0].subject
+        == "[testserver] [test] over 90% Budget Consumed Alert"
+    )
+
+
+@pytest.mark.django_db
+def test_invoice_budget_alert_two_thresholds_one_email(settings):
+    challenge = ChallengeFactory(short_name="test")
+    assert challenge.percent_budget_consumed_warning_thresholds == [
+        70,
+        90,
+        100,
+    ]
+    challenge_admin = UserFactory()
+    challenge.add_admin(challenge_admin)
+    staff_user = UserFactory(is_staff=True)
+    settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    phase = PhaseFactory(challenge=challenge)
+    evaluation = EvaluationFactory(
+        submission__phase=phase,
+        time_limit=60,
+    )
+    evaluation.utilization.invoice = invoice
+    evaluation.utilization.compute_cost_euro_millicents = 950000
+    evaluation.utilization.save()
+    update_challenge_compute_costs()
+
+    # Two budget alert thresholds exceeded, alert only sent for last one.
+    assert len(mail.outbox) == 3
+    recipients = {r for m in mail.outbox for r in m.to}
+    assert recipients == {
+        challenge.creator.email,
+        challenge_admin.email,
+        staff_user.email,
+    }
+    assert (
+        mail.outbox[0].subject
+        == "[testserver] [test] over 90% Budget Consumed Alert"
+    )
+
+
+@pytest.mark.django_db
+def test_invoice_budget_alert_no_budget():
+    challenge = ChallengeFactory()
+    phase = PhaseFactory(challenge=challenge)
+    invoice = InvoiceFactory(challenge=challenge, compute_costs_euros=0)
+    evaluation = EvaluationFactory(
+        submission__phase=phase,
+        time_limit=60,
+    )
+    evaluation.utilization.invoice = invoice
+    evaluation.utilization.compute_cost_euro_millicents = 1
+    evaluation.utilization.save()
+    assert len(mail.outbox) == 0
+    update_challenge_compute_costs()
+    assert len(mail.outbox) != 0
+    assert "Budget Consumed Alert" in mail.outbox[0].subject
