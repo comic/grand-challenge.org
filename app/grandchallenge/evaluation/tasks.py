@@ -590,8 +590,14 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
         leaderboard.schedule_combined_ranks_update()
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.update_combined_leaderboard")
 @transaction.atomic
+def update_combined_leaderboard_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_combined_leaderboard(**kwargs)
+
+
+@lambda_task
 def update_combined_leaderboard(*, pk):
     from grandchallenge.evaluation.models import CombinedLeaderboard
 

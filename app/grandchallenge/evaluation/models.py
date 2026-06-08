@@ -2665,11 +2665,7 @@ class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
             combined_ranks[idx]["rank"] = current_rank
 
     def schedule_combined_ranks_update(self):
-        on_commit(
-            update_combined_leaderboard.signature(
-                kwargs={"pk": self.pk}
-            ).apply_async
-        )
+        update_combined_leaderboard.execute_on_commit(pk=self.pk)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
