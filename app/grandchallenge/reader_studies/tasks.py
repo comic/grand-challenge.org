@@ -118,7 +118,7 @@ def create_display_sets_for_upload_session(
             ds.values.add(civ)
 
 
-@lambda_task
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
 def add_image_to_answer(
     *, upload_session_pk: str | UUID, answer_pk: str | UUID
 ):
