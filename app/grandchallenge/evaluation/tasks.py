@@ -105,7 +105,10 @@ def check_prerequisites_for_evaluation_execution(
         )
 
 
-@acks_late_2xlarge_task(name=f"{__name__}.prepare_and_execute_evaluation")
+@acks_late_2xlarge_task(
+    name=f"{__name__}.prepare_and_execute_evaluation",
+    retry_on=(LockNotAcquiredException,),
+)
 @transaction.atomic
 def prepare_and_execute_evaluation_celery(**kwargs):
     # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
@@ -597,7 +600,7 @@ def update_combined_leaderboard_celery(**kwargs):
     return update_combined_leaderboard(**kwargs)
 
 
-@lambda_task
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
 def update_combined_leaderboard(*, pk: str | uuid.UUID):
     from grandchallenge.evaluation.models import CombinedLeaderboard
 

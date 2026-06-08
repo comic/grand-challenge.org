@@ -523,7 +523,10 @@ def _check_post_processor_result(*, post_processor_result, image):
         raise RuntimeError("Created image IDs do not match")
 
 
-@acks_late_2xlarge_task(name=f"{__name__}.import_dicom_to_health_imaging")
+@acks_late_2xlarge_task(
+    name=f"{__name__}.import_dicom_to_health_imaging",
+    retry_on=(LockNotAcquiredException, RetryStep),
+)
 @transaction.atomic
 def import_dicom_to_health_imaging_celery(**kwargs):
     # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
