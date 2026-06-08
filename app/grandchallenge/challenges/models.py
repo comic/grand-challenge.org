@@ -410,13 +410,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         ],
     )
 
-    compute_cost_euro_millicents = models.PositiveBigIntegerField(
-        # We store euro here as the costs were incurred at a time when
-        # the exchange rate may have been different
-        editable=False,
-        default=0,
-        help_text="The total compute cost for this challenge in Euro Cents, including Tax",
-    )
     size_in_storage = models.PositiveBigIntegerField(
         editable=False,
         default=0,
