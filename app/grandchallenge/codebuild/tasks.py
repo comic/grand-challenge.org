@@ -1,7 +1,10 @@
+from uuid import UUID
+
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.transaction import on_commit
+from django.db import transaction
 from lambda_tasks.decorators import lambda_task
 
+from config.lambda_tasks import LambdaTaskQueueChoices
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
 from grandchallenge.core.celery import acks_late_2xlarge_task
 
@@ -47,15 +50,18 @@ def handle_completed_build_event(*, build_arn: str, build_status: str):
     build.save()
 
     if build.status == build.BuildStatusChoices.SUCCEEDED:
-        on_commit(
-            add_image_to_algorithm.signature(
-                kwargs={"build_pk": str(build.pk)}
-            ).apply_async
-        )
+        add_image_to_algorithm.execute_on_commit(build_pk=build.pk)
 
 
-@acks_late_2xlarge_task
-def add_image_to_algorithm(*, build_pk):
+@acks_late_2xlarge_task(name=f"{__name__}.add_image_to_algorithm")
+@transaction.atomic
+def add_image_to_algorithm_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return add_image_to_algorithm(**kwargs)
+
+
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
+def add_image_to_algorithm(*, build_pk: str | UUID):
     from grandchallenge.codebuild.models import Build
 
     build = Build.objects.get(pk=build_pk)
