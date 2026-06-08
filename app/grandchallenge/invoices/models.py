@@ -10,6 +10,9 @@ from django.db.models.functions import Cast, Now
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.challenges.emails import (
+    send_email_percent_budget_consumed_alert,
+)
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
@@ -434,12 +437,34 @@ class Invoice(models.Model, FieldChangeMixin):
                 pk=self.pk
             )
 
+        if self.has_changed("compute_cost_euro_millicents"):
+            self.send_alert_if_budget_consumed_warning_threshold_exceeded()
+
     def assign_permissions(self):
         assign_perm(
             f"view_{self._meta.model_name}",
             self.challenge.admins_group,
             self,
         )
+
+    def send_alert_if_budget_consumed_warning_threshold_exceeded(self):
+        for percent_threshold in sorted(
+            self.challenge.percent_budget_consumed_warning_thresholds,
+            reverse=True,
+        ):
+            previous_cost = self.initial_value("compute_cost_euro_millicents")
+            threshold = (
+                self.approved_compute_cost_euro_millicents
+                * percent_threshold
+                / 100
+            )
+            current_cost = self.compute_cost_euro_millicents
+            if previous_cost <= threshold < current_cost:
+                send_email_percent_budget_consumed_alert(
+                    invoice=self,
+                    percent_threshold=percent_threshold,
+                )
+                break
 
 
 class InvoiceUserObjectPermission(UserObjectPermissionBase):

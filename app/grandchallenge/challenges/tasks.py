@@ -119,7 +119,11 @@ def update_challenge_compute_costs():
 
             save_challenge()
 
-    for invoice in Invoice.objects.iterator(chunk_size=1000):
+    for invoice in (
+        Invoice.objects.prefetch_related("challenge")
+        .with_budget_authorization()
+        .iterator(chunk_size=1000)
+    ):
         with transaction.atomic():
             annotate_invoice_compute_costs(invoice=invoice)
 

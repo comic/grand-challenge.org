@@ -114,17 +114,23 @@ def send_challenge_request_processed_update_email(
     )
 
 
-def send_email_percent_budget_consumed_alert(challenge, percent_threshold):
+def send_email_percent_budget_consumed_alert(*, invoice, percent_threshold):
+    challenge = invoice.challenge
     subject = format_html(
         "[{challenge_name}] over {percent_threshold}% Budget Consumed Alert",
         challenge_name=challenge.short_name,
         percent_threshold=percent_threshold,
     )
+
+    invoice_name = invoice.internal_invoice_number or invoice.pk
+
     challenge_admins_message = format_html(
         "We would like to inform you that more than {percent_threshold}% of the "
-        "compute budget for the {challenge_name} challenge has been used.",
+        "compute budget for {invoice_type} invoice {invoice_name} of the {challenge_name} challenge has been used.",
         challenge_name=challenge.short_name,
         percent_threshold=percent_threshold,
+        invoice_name=invoice_name,
+        invoice_type=invoice.get_payment_type_display(),
     )
     send_standard_email_batch(
         site=Site.objects.get_current(),
@@ -136,10 +142,12 @@ def send_email_percent_budget_consumed_alert(challenge, percent_threshold):
 
     managers_message = format_html(
         "More than {percent_threshold}% of the "
-        "compute budget for the {challenge_name} challenge has been used. "
+        "compute budget for {invoice_type} invoice {invoice_name} of the {challenge_name} challenge has been used."
         "See {statistics_url}.",
         challenge_name=challenge.short_name,
         percent_threshold=percent_threshold,
+        invoice_name=invoice_name,
+        invoice_type=invoice.get_payment_type_display(),
         statistics_url=reverse(
             "pages:statistics",
             kwargs={"challenge_short_name": challenge.short_name},
