@@ -1,13 +1,17 @@
 from itertools import chain
 
 import pytest
-from django.contrib.auth.models import Group
 from django.db.models import BLANK_CHOICE_DASH
 from django.urls import URLPattern, URLResolver
 
 from config.urls import challenge_subdomain
 from grandchallenge.pages.models import Page
-from tests.factories import ChallengeFactory, PageFactory, UserFactory
+from tests.factories import (
+    ChallengeFactory,
+    PageFactory,
+    UserFactory,
+    activate_2fa,
+)
 from tests.utils import get_view_for_user, validate_admin_only_view
 
 
@@ -475,7 +479,7 @@ def test_create_page_with_same_title(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_challenge_statistics_page_permissions(client, settings):
+def test_challenge_statistics_page_permissions(client):
     challenge = ChallengeFactory()
     user = UserFactory()
 
@@ -488,10 +492,10 @@ def test_challenge_statistics_page_permissions(client, settings):
     assert response.status_code == 200
     assert "Challenge Costs" not in response.rendered_content
 
-    reviewers = Group.objects.get(
-        name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
-    )
-    reviewers.user_set.add(user)
+    user.is_staff = True
+    user.save()
+
+    activate_2fa(user=user)
     response = get_view_for_user(
         viewname="pages:statistics",
         client=client,
