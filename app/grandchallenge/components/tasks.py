@@ -96,9 +96,8 @@ def assign_docker_image_from_upload(
         instance.user_upload.delete()
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task  # This task cannot be migrated as the maximum duration is beyond the lambda time limit
 def validate_docker_image(  # noqa C901
-    # This task cannot be migrated as the maximum duration is beyond the lambda time limit
     *,
     pk: str | UUID,
     app_label: str,

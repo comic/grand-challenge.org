@@ -1016,8 +1016,7 @@ def test_ground_truth_views(client, viewname):
 def test_ground_truth_from_answers_workflow(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     rs = ReaderStudyFactory(is_educational=True)
 

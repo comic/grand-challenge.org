@@ -944,6 +944,8 @@ def test_reader_study_copy_all_optional_fields_implemented(
     reader_study_with_optional_fields,
     optional_field_name,
 ):
+    settings.LAMBDA_TASKS_EAGER = True
+
     copied_reader_study = copy_reader_study_with_optional_field(
         settings=settings,
         client=client,
@@ -987,6 +989,8 @@ def test_reader_study_copy_selected_optional_field_only(
     optional_field_name_copied,
     optional_field_name_not_copied,
 ):
+    settings.LAMBDA_TASKS_EAGER = True
+
     copied_reader_study = copy_reader_study_with_optional_field(
         settings=settings,
         client=client,
@@ -2319,8 +2323,7 @@ def test_interactive_algorithm_field_permissions():
 def test_answers_from_ground_truth_form(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     rs = ReaderStudyFactory()
 
@@ -2419,8 +2422,7 @@ def test_answers_from_ground_truth_form(
 def test_ground_truth_from_answers_form(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     rs = ReaderStudyFactory()
 
