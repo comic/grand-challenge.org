@@ -142,13 +142,17 @@ def add_image_to_answer(
                 error=e
             )
             upload_session.save()
+            return {"status": "Voxel values for answer are invalid"}
         else:
             answer.answer_image = image
             answer.save()
             image.assign_view_perm_to_creator()
             image.update_viewer_groups_permissions()
+            return {"status": "Answer successfully updated"}
     else:
-        raise ValueError("Upload session for answer does not match")
+        return {
+            "status": f"Upload session for answer ({answer.answer}) does not match {upload_session_pk}"
+        }
 
 
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
