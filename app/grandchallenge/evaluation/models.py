@@ -13,7 +13,6 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, Q
 from django.db.models.functions import Coalesce
-from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -755,16 +754,10 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
         if self.has_changed("public"):
             self.assign_permissions()
-            on_commit(
-                assign_evaluation_permissions.signature(
-                    kwargs={"phase_pks": [self.pk]}
-                ).apply_async
+            assign_evaluation_permissions.execute_on_commit(
+                phase_pks=[self.pk]
             )
-            on_commit(
-                assign_submission_permissions.signature(
-                    kwargs={"phase_pk": self.pk}
-                ).apply_async
-            )
+            assign_submission_permissions.execute_on_commit(phase_pk=self.pk)
 
         if (
             self.give_algorithm_editors_job_view_permissions

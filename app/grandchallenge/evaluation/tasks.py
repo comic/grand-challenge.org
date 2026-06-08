@@ -605,9 +605,15 @@ def update_combined_leaderboard(*, pk):
     leaderboard.update_combined_ranks_cache()
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.assign_evaluation_permissions")
 @transaction.atomic
-def assign_evaluation_permissions(*, phase_pks: uuid.UUID):
+def assign_evaluation_permissions_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return assign_evaluation_permissions(**kwargs)
+
+
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
+def assign_evaluation_permissions(*, phase_pks: list[str | uuid.UUID]):
     from grandchallenge.evaluation.models import Evaluation
 
     evals = Evaluation.objects.filter(
@@ -618,8 +624,14 @@ def assign_evaluation_permissions(*, phase_pks: uuid.UUID):
         e.assign_permissions()
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.assign_submission_permissions")
 @transaction.atomic
+def assign_submission_permissions_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return assign_submission_permissions(**kwargs)
+
+
+@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
 def assign_submission_permissions(*, phase_pk: uuid.UUID):
     from grandchallenge.evaluation.models import Submission
 
