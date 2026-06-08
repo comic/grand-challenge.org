@@ -49,8 +49,10 @@
             {% endif %}
          </dd>
 
-        <dt>Follow-up on</dt>
-        <dd>{{ object.follow_up_on|default_if_none:"-" }}</dd>
+        {% if object.payment_type == object.PaymentTypeChoices.POSTPAID %}
+            <dt>Follow-up on</dt>
+            <dd>{{ object.follow_up_on|default_if_none:"-" }}</dd>
+        {% endif %}
 
         <dt>Expires on</dt>
         <dd>{{ object.expires_on }}</dd>
