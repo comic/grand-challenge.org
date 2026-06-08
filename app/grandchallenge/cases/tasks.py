@@ -523,16 +523,6 @@ def _check_post_processor_result(*, post_processor_result, image):
         raise RuntimeError("Created image IDs do not match")
 
 
-@acks_late_2xlarge_task(
-    name=f"{__name__}.import_dicom_to_health_imaging",
-    retry_on=(LockNotAcquiredException, RetryStep),
-)
-@transaction.atomic
-def import_dicom_to_health_imaging_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return import_dicom_to_health_imaging(**kwargs)
-
-
 @lambda_task(
     queue=LambdaTaskQueueChoices.MEM8G,
     retry_on=(LockNotAcquiredException, RetryStep),
@@ -565,7 +555,7 @@ def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk: str | UUID):
     except RejectedDICOMFileError as error:
         upload.handle_error(error_message=error.justification)
     except Exception as error:
-        logger.error(error, exc_info=True)
+        task_logger.error(error, exc_info=True)
         upload.handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
     else:
         upload.status = DICOMImageSetUploadStatusChoices.STARTED
