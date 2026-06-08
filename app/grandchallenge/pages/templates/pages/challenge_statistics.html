@@ -51,10 +51,11 @@
         {% endfor %}
     </dl>
 
-    {% if perms.challenges.view_challengerequest %}
-        <h4>Invoices</h4>
+    {% if request.user.is_staff %}
 
-        {% include "invoices/partials/invoice_table.html" with invoices=challenge.invoices.with_overdue_status %}
+    <div class="card card-danger border-danger">
+        <div class="card-header bg-danger text-white">Site Admin</div>
+        <div class="card-body">
 
         <h4>Challenge Costs</h4>
 
@@ -202,6 +203,8 @@
                 </tbody>
             </table>
         </div>
+        </div>
+    </div>
     {% endif %}
 {% endblock %}
 

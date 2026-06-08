@@ -1,5 +1,4 @@
 import pytest
-from guardian.shortcuts import assign_perm
 
 from tests.factories import ChallengeFactory, UserFactory
 from tests.invoices_tests.factories import InvoiceFactory
@@ -42,7 +41,6 @@ def test_invoice_list_view_permissions(
         ("user", 403),
         ("participant", 403),
         ("admin", 200),
-        ("challengerequest_viewer", 200),
     ),
 )
 def test_invoice_detail_view_permissions(
@@ -55,8 +53,6 @@ def test_invoice_detail_view_permissions(
         challenge.add_participant(user)
     elif user_type == "admin":
         challenge.add_admin(user)
-    elif user_type == "challengerequest_viewer":
-        assign_perm("challenges.view_challengerequest", user)
 
     invoice = InvoiceFactory(challenge=challenge)
 

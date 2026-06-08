@@ -1,4 +1,3 @@
-from django.contrib.auth.mixins import AccessMixin
 from django.views.generic import DetailView, ListView
 from guardian.mixins import LoginRequiredMixin
 
@@ -39,21 +38,13 @@ class InvoiceList(
 
 class InvoiceDetail(
     LoginRequiredMixin,
-    AccessMixin,
+    ObjectPermissionRequiredMixin,
     DetailView,
 ):
     model = Invoice
+    permission_required = "view_invoice"
     raise_exception = True
     login_url = reverse_lazy("account_login")
-
-    def dispatch(self, request, *args, **kwargs):
-        invoice = self.get_object()
-        if request.user.has_perm(
-            "challenges.view_challengerequest"
-        ) or request.user.has_perm("invoices.view_invoice", invoice):
-            return super().dispatch(request, *args, **kwargs)
-        else:
-            return self.handle_no_permission()
 
     def get_queryset(self):
         queryset = super().get_queryset()
