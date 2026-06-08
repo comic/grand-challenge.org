@@ -130,7 +130,7 @@ def validate_docker_image(  # noqa C901
     )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task  # This task needs to be re-written as it assumes that there is no transaction
 def upload_to_registry_and_sagemaker(
     *, pk: str | UUID, app_label: str, model_name: str, mark_as_desired: bool
 ):

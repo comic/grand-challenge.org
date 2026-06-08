@@ -6,7 +6,6 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Case, IntegerField, Value, When
-from django.db.transaction import on_commit
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 from lambda_tasks.logging import task_logger
@@ -101,15 +100,22 @@ def check_prerequisites_for_evaluation_execution(
         )
         return
     else:
-        e = prepare_and_execute_evaluation.signature(
-            kwargs={"evaluation_pk": evaluation.pk}, immutable=True
+        prepare_and_execute_evaluation.execute_on_commit(
+            evaluation_pk=evaluation.pk
         )
-        on_commit(e.apply_async)
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(name=f"{__name__}.prepare_and_execute_evaluation")
 @transaction.atomic
-def prepare_and_execute_evaluation(*, evaluation_pk):
+def prepare_and_execute_evaluation_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return prepare_and_execute_evaluation(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+)
+def prepare_and_execute_evaluation(*, evaluation_pk: str | uuid.UUID):
     """
     Prepares an evaluation object for execution
 
