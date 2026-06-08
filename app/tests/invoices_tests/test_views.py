@@ -1,4 +1,5 @@
 import pytest
+from guardian.shortcuts import assign_perm
 
 from tests.factories import ChallengeFactory, UserFactory
 from tests.invoices_tests.factories import InvoiceFactory
@@ -28,6 +29,41 @@ def test_invoice_list_view_permissions(
     response = get_view_for_user(
         viewname="invoices:list",
         client=client,
+        challenge=challenge,
+        user=user,
+    )
+    assert response.status_code == response_status_code
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_type, response_status_code",
+    (
+        ("user", 403),
+        ("participant", 403),
+        ("admin", 200),
+        ("challengerequest_viewer", 200),
+    ),
+)
+def test_invoice_detail_view_permissions(
+    client, user_type, response_status_code
+):
+    challenge = ChallengeFactory()
+
+    user = UserFactory()
+    if user_type == "participant":
+        challenge.add_participant(user)
+    elif user_type == "admin":
+        challenge.add_admin(user)
+    elif user_type == "challengerequest_viewer":
+        assign_perm("challenges.view_challengerequest", user)
+
+    invoice = InvoiceFactory(challenge=challenge)
+
+    response = get_view_for_user(
+        viewname="invoices:detail",
+        client=client,
+        reverse_kwargs={"pk": invoice.pk},
         challenge=challenge,
         user=user,
     )
