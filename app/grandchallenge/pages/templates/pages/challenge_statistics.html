@@ -128,13 +128,62 @@
                     <tr>
                         <th>Challenge Status</th>
                         <th>Should be Open</th>
-                        <th>% Active Budget Consumed</th>
-                        <th>Available Compute Costs</th>
-                        <th>Total Approved Compute Costs</th>
-                        <th>Total Consumed Compute Costs</th>
-                        <th>Total Write-Off Compute Costs</th>
-                        <th>Object Storage Costs per Year</th>
-                        <th>Registry Storage Costs per Year</th>
+                        <th>
+                            % Active Budget Consumed
+                        <span data-toggle="tooltip" data-placement="right"
+                                title="Consumed costs as a percentage of the approved costs of the currently active invoices."
+                                class="text-muted">
+                                <i class="fas fa-question-circle"></i>
+                            </span>
+                        </th>
+                        <th>
+                            Active Available Compute Costs
+                            <span data-toggle="tooltip" data-placement="right"
+                                title="Approved budget minus consumed costs of currently active invoices."
+                                class="text-muted">
+                                <i class="fas fa-question-circle"></i>
+                            </span>
+                        </th>
+                        <th>
+                            Total Approved Compute Costs
+                            <span data-toggle="tooltip" data-placement="right"
+                                title="Sum of  approved compute budget in all the invoices."
+                                class="text-muted">
+                                <i class="fas fa-question-circle"></i>
+                            </span>
+                        </th>
+                        <th>
+                            Total Consumed Compute Costs
+                            <span data-toggle="tooltip" data-placement="right"
+                                title="Total compute costs billed against all the invoices."
+                                class="text-muted">
+                                <i class="fas fa-question-circle"></i>
+                            </span>
+                        </th>
+                        <th>
+                            Total Write-Off Compute Costs
+                            <span data-toggle="tooltip" data-placement="right"
+                                title="Costs written off and not charged to any budget."
+                                class="text-muted">
+                                <i class="fas fa-question-circle"></i>
+                            </span>
+                        </th>
+                        <th>
+                            Object Storage Costs per Year
+                            <span data-toggle="tooltip" data-placement="right"
+                                title="Estimated annual cost for storing challenge data in object storage."
+                                class="text-muted">
+                                <i class="fas fa-question-circle"></i>
+                            </span>
+                        </th>
+                        <th>
+                            Registry Storage Costs per Year
+                            <span data-toggle="tooltip" data-placement="right"
+                                title="Estimated annual cost for storing container images in the registry."
+                                class="text-muted">
+                                <i class="fas fa-question-circle"></i>
+                            </span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -215,6 +264,7 @@
 {% block script %}
     {{ block.super }}
 
+    <script type="text/javascript" src="{% static "js/tooltips.js" %}"></script>
     <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
     <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
     <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
