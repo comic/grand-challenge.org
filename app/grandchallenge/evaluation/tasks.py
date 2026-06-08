@@ -1,10 +1,8 @@
 import uuid
 from datetime import timedelta
 
-from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.db.models import Case, IntegerField, Value, When
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
@@ -19,7 +17,6 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.components.tasks import lock_for_utilization_update
-from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_messages import (
     EvaluationErrorMessages,
     SystemErrorMessages,
@@ -28,8 +25,6 @@ from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
-
-logger = get_task_logger(__name__)
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
@@ -105,16 +100,6 @@ def check_prerequisites_for_evaluation_execution(
         )
 
 
-@acks_late_2xlarge_task(
-    name=f"{__name__}.prepare_and_execute_evaluation",
-    retry_on=(LockNotAcquiredException,),
-)
-@transaction.atomic
-def prepare_and_execute_evaluation_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return prepare_and_execute_evaluation(**kwargs)
-
-
 @lambda_task(
     queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
 )
@@ -141,13 +126,15 @@ def prepare_and_execute_evaluation(*, evaluation_pk: str | uuid.UUID):
         )
 
     if not evaluation.additional_inputs_complete:
-        logger.info("Nothing to do, inputs are still being validated.")
+        task_logger.info("Nothing to do, inputs are still being validated.")
         return
 
     if evaluation.status != evaluation.VALIDATING_INPUTS:
         # this task can be called multiple times with complete inputs,
         # and might have been queued for execution already, so ignore
-        logger.info("Evaluation has already been scheduled for execution.")
+        task_logger.info(
+            "Evaluation has already been scheduled for execution."
+        )
         return
 
     if (
@@ -208,7 +195,7 @@ def prepare_and_execute_evaluation(*, evaluation_pk: str | uuid.UUID):
             status=Evaluation.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
-        logger.error("No algorithm or predictions file found")
+        task_logger.error("No algorithm or predictions file found")
 
 
 @lambda_task(
@@ -511,22 +498,11 @@ def filter_by_creators_best(*, evaluations, ranks):
     return [r for r in best_result_per_user.values()]
 
 
-@acks_late_2xlarge_task(
-    name=f"{__name__}.calculate_ranks",
-    retry_on=(LockNotAcquiredException,),
-    delayed_retry=False,
-)
-@transaction.atomic
-def calculate_ranks_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return calculate_ranks(**kwargs)
-
-
 @lambda_task(
     queue=LambdaTaskQueueChoices.MEM8G,
     retry_on=(LockNotAcquiredException,),
 )
-def calculate_ranks(*, phase_pk: uuid.UUID):
+def calculate_ranks(*, phase_pk: str | uuid.UUID):
     from grandchallenge.evaluation.models import Evaluation, Phase
 
     phase = Phase.objects.get(pk=phase_pk)
@@ -593,26 +569,12 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
         leaderboard.schedule_combined_ranks_update()
 
 
-@acks_late_2xlarge_task(name=f"{__name__}.update_combined_leaderboard")
-@transaction.atomic
-def update_combined_leaderboard_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return update_combined_leaderboard(**kwargs)
-
-
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
 def update_combined_leaderboard(*, pk: str | uuid.UUID):
     from grandchallenge.evaluation.models import CombinedLeaderboard
 
     leaderboard = CombinedLeaderboard.objects.get(pk=pk)
     leaderboard.update_combined_ranks_cache()
-
-
-@acks_late_2xlarge_task(name=f"{__name__}.assign_evaluation_permissions")
-@transaction.atomic
-def assign_evaluation_permissions_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return assign_evaluation_permissions(**kwargs)
 
 
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
@@ -627,15 +589,8 @@ def assign_evaluation_permissions(*, phase_pks: list[str | uuid.UUID]):
         e.assign_permissions()
 
 
-@acks_late_2xlarge_task(name=f"{__name__}.assign_submission_permissions")
-@transaction.atomic
-def assign_submission_permissions_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return assign_submission_permissions(**kwargs)
-
-
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
-def assign_submission_permissions(*, phase_pk: uuid.UUID):
+def assign_submission_permissions(*, phase_pk: str | uuid.UUID):
     from grandchallenge.evaluation.models import Submission
 
     for sub in Submission.objects.filter(phase__id=phase_pk):

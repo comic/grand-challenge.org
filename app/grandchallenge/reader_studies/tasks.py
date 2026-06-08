@@ -2,7 +2,6 @@ from uuid import UUID
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from lambda_tasks.decorators import lambda_task
 
 from config.lambda_tasks import LambdaTaskQueueChoices
@@ -11,7 +10,6 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
 )
@@ -20,13 +18,6 @@ from grandchallenge.reader_studies.models import (
     DisplaySet,
     ReaderStudy,
 )
-
-
-@acks_late_2xlarge_task(name=f"{__name__}.answers_from_ground_truth")
-@transaction.atomic
-def answers_from_ground_truth_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return answers_from_ground_truth(**kwargs)
 
 
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
@@ -53,13 +44,6 @@ def answers_from_ground_truth(
             is_ground_truth=answer.is_ground_truth,
         )
         answer.save(calculate_score=False)
-
-
-@acks_late_2xlarge_task(name=f"{__name__}.bulk_assign_scores_for_reader_study")
-@transaction.atomic
-def bulk_assign_scores_for_reader_study_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return bulk_assign_scores_for_reader_study(**kwargs)
 
 
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
@@ -165,13 +149,6 @@ def add_image_to_answer(
             image.update_viewer_groups_permissions()
     else:
         raise ValueError("Upload session for answer does not match")
-
-
-@acks_late_2xlarge_task(name=f"{__name__}.copy_reader_study_display_sets")
-@transaction.atomic
-def copy_reader_study_display_sets_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return copy_reader_study_display_sets(**kwargs)
 
 
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
