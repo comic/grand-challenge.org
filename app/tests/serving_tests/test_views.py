@@ -308,8 +308,7 @@ def test_supplementary_file_serving(
     phase_is_public,
     challenge_is_public,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     user = UserFactory()
     challenge_admin = UserFactory()
