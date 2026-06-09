@@ -5,17 +5,19 @@ from django.utils.html import format_html
 register = template.Library()
 
 
-@register.filter
 def euro(value, decimal_places=2):
     try:
         return format_html("€&nbsp;{}", f"{value:,.{decimal_places}f}")
-    except (TypeError, ValueError):
-        return "-"
+    except ValueError:
+        return ""
 
 
 @register.filter
 def millicents_to_euro(millicents):
-    return euro(millicents / 1000 / 100)
+    try:
+        return euro(millicents / 1000 / 100)
+    except TypeError:
+        return "-"
 
 
 @register.filter
