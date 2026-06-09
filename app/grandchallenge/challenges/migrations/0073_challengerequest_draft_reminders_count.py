@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("challenges", "0071_alter_challengerequest_status_and_more"),
+        ("challenges", "0072_alter_challenge_compute_cost_euro_millicents"),
     ]
 
     operations = [
@@ -15,7 +15,6 @@ class Migration(migrations.Migration):
             name="draft_reminder_count",
             field=models.PositiveSmallIntegerField(
                 default=0,
-                editable=False,
                 help_text="Number of reminders sent to the challenge organizers to submit this draft for review.",
             ),
         ),
