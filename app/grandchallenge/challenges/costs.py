@@ -20,25 +20,6 @@ from grandchallenge.utilization.models import (
 )
 
 
-def annotate_challenge_compute_costs(*, challenge):
-    algorithm_job_utilizations = JobUtilization.objects.filter(
-        challenge=challenge
-    )
-    job_warm_pool_utilizations = JobWarmPoolUtilization.objects.filter(
-        challenge=challenge
-    )
-    evaluation_job_utilizations = EvaluationUtilization.objects.filter(
-        challenge=challenge
-    )
-
-    update_compute_cost_euro_millicents(
-        obj=challenge,
-        algorithm_job_utilizations=algorithm_job_utilizations,
-        job_warm_pool_utilizations=job_warm_pool_utilizations,
-        evaluation_job_utilizations=evaluation_job_utilizations,
-    )
-
-
 def annotate_invoice_compute_costs(*, invoice):
     algorithm_job_utilizations = JobUtilization.objects.filter(
         invoice=invoice,

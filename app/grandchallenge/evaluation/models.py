@@ -236,7 +236,7 @@ class PhaseManager(models.Manager):
                 # to use a custom model manager with select_related
                 models.Prefetch(
                     "challenge",
-                    queryset=Challenge.objects.with_available_compute().with_invoices_with_budget_authorization(),
+                    queryset=Challenge.objects.with_invoices_with_budget_authorization(),
                 )
             )
         )

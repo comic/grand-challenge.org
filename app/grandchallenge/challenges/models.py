@@ -14,11 +14,8 @@ from django.db.models import (
     BooleanField,
     Case,
     Count,
-    ExpressionWrapper,
-    F,
     Prefetch,
     Q,
-    Sum,
     Value,
     When,
 )
@@ -31,6 +28,7 @@ from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now, timedelta
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from guardian.compat import get_user_model
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
@@ -75,11 +73,7 @@ from grandchallenge.evaluation.utils import (
 )
 from grandchallenge.forge.models import ForgeChallenge
 from grandchallenge.incentives.models import Incentive
-from grandchallenge.invoices.models import (
-    Invoice,
-    PaymentStatusChoices,
-    PaymentTypeChoices,
-)
+from grandchallenge.invoices.models import Invoice
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
@@ -92,66 +86,6 @@ logger = logging.getLogger(__name__)
 
 
 class ChallengeQuerySet(models.QuerySet):
-    def with_available_compute(self):
-        return self.annotate(
-            complimentary_compute_costs_euros=(
-                Sum(
-                    "invoices__compute_costs_euros",
-                    filter=Q(
-                        invoices__payment_type=PaymentTypeChoices.COMPLIMENTARY
-                    ),
-                    output_field=models.PositiveBigIntegerField(),
-                    default=0,
-                )
-            ),
-            prepaid_compute_costs_euros=(
-                Sum(
-                    "invoices__compute_costs_euros",
-                    filter=Q(
-                        invoices__payment_type=PaymentTypeChoices.PREPAID,
-                        invoices__payment_status=PaymentStatusChoices.PAID,
-                    ),
-                    output_field=models.PositiveBigIntegerField(),
-                    default=0,
-                )
-            ),
-            postpaid_compute_costs_euros_if_anything_paid=(
-                Case(
-                    When(
-                        prepaid_compute_costs_euros__gt=0,
-                        then=Sum(
-                            "invoices__compute_costs_euros",
-                            filter=Q(
-                                invoices__payment_type=PaymentTypeChoices.POSTPAID
-                            )
-                            & ~Q(
-                                invoices__payment_status=PaymentStatusChoices.CANCELLED
-                            ),
-                            output_field=models.PositiveBigIntegerField(),
-                            default=0,
-                        ),
-                    ),
-                    default=0,
-                    output_field=models.PositiveBigIntegerField(),
-                )
-            ),
-            approved_compute_costs_euro_millicents=ExpressionWrapper(
-                (
-                    F("complimentary_compute_costs_euros")
-                    + F("prepaid_compute_costs_euros")
-                    + F("postpaid_compute_costs_euros_if_anything_paid")
-                )
-                * 1000
-                * 100,
-                output_field=models.PositiveBigIntegerField(),
-            ),
-            available_compute_euro_millicents=ExpressionWrapper(
-                F("approved_compute_costs_euro_millicents")
-                - F("compute_cost_euro_millicents"),
-                output_field=models.BigIntegerField(),
-            ),
-        )
-
     def with_user_roles(self, *, user):
         User = get_user_model()  # noqa: N806
         return self.annotate(
@@ -476,12 +410,13 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         ],
     )
 
-    compute_cost_euro_millicents = models.PositiveBigIntegerField(
-        # We store euro here as the costs were incurred at a time when
-        # the exchange rate may have been different
-        editable=False,
-        default=0,
-        help_text="The total compute cost for this challenge in Euro Cents, including Tax",
+    compute_cost_euro_millicents = deprecate_field(
+        models.PositiveBigIntegerField(
+            editable=False,
+            default=0,
+            help_text="The total compute cost for this challenge in Euro Cents, including Tax",
+        ),
+        raise_on_access=True,
     )
     size_in_storage = models.PositiveBigIntegerField(
         editable=False,

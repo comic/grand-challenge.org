@@ -588,7 +588,7 @@ class SubmissionForm(
             raise ValidationError(error_message)
 
         has_available_compute = (
-            self._phase.challenge.available_compute_euro_millicents > 0
+            self._phase.challenge.available_compute_cost_euro_millicents > 0
         )
         is_challenge_admin = self._phase.challenge.is_admin(user=creator)
         has_remaining_submissions = (

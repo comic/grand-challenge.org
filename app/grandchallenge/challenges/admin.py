@@ -47,7 +47,6 @@ class ChallengeAdmin(ModelAdmin):
         "hidden",
         "is_suspended",
         "is_active_until",
-        "compute_cost_euro_millicents",
         "size_in_storage",
         "size_in_registry",
         "available_compute_euros",
@@ -62,12 +61,11 @@ class ChallengeAdmin(ModelAdmin):
         return (
             super()
             .get_queryset(*args, **kwargs)
-            .with_available_compute()
             .with_invoices_with_budget_authorization()
         )
 
     def available_compute_euros(self, obj):
-        return millicents_to_euro(obj.available_compute_euro_millicents)
+        return millicents_to_euro(obj.available_compute_cost_euro_millicents)
 
     @staticmethod
     def algorithm_phase_configuration_link(obj):
