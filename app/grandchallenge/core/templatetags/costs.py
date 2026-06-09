@@ -9,16 +9,13 @@ register = template.Library()
 def euro(value, decimal_places=2):
     try:
         return format_html("€&nbsp;{}", f"{value:,.{decimal_places}f}")
-    except ValueError:
-        return ""
+    except (TypeError, ValueError):
+        return "-"
 
 
 @register.filter
 def millicents_to_euro(millicents):
-    try:
-        return euro(millicents / 1000 / 100)
-    except TypeError:
-        return "-"
+    return euro(millicents / 1000 / 100)
 
 
 @register.filter
