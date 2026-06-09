@@ -139,7 +139,7 @@
                         <td>{% if challenge.should_be_open_but_is_over_budget %}<i class="fa fa-exclamation-triangle text-danger"></i>{% endif %}</td>
                         <td data-order="{% if challenge.percent_active_budget_consumed is None %}-1{% else %}{{ challenge.percent_active_budget_consumed }}{% endif %}" class="{% if challenge.percent_active_budget_consumed >= 100 %}text-danger{% elif challenge.percent_active_budget_consumed >= 70 %}text-warning{% else %}text-success{% endif %}">{% if challenge.percent_active_budget_consumed is not None %}{{ challenge.percent_active_budget_consumed }}&nbsp;%{% endif %}</td>
                         <td class="{% if challenge.available_compute_cost_euro_millicents <= 0 %}text-danger{% endif %}">{{ challenge.available_compute_cost_euro_millicents|millicents_to_euro }}</td>
-                        <td>{{ challenge.approved_compute_costs_euro_millicents|millicents_to_euro }}</td>
+                        <td>{{ challenge.approved_compute_cost_euro_millicents|millicents_to_euro }}</td>
                         <td>{{ challenge.consumed_compute_cost_euro_millicents|millicents_to_euro }}</td>
                         <td class="{% if challenge.write_off_compute_cost_euro_millicents > 0 %}text-danger{% endif %}">{{ challenge.write_off_compute_cost_euro_millicents|millicents_to_euro }}</td>
                         <td>{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</td>
