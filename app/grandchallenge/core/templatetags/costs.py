@@ -5,6 +5,7 @@ from django.utils.html import format_html
 register = template.Library()
 
 
+@register.filter
 def euro(value, decimal_places=2):
     try:
         return format_html("€&nbsp;{}", f"{value:,.{decimal_places}f}")
