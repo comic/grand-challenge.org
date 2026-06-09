@@ -4,7 +4,6 @@ from zoneinfo import ZoneInfo
 
 import pytest
 from dateutil.utils import today
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.timezone import datetime, now
 
@@ -415,24 +414,6 @@ def test_postpaid_invoice_status_badge(invoice_kwargs, badge):
     (
         (
             dict(
-                payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
-            ),
-            '<span class="badge badge-success">Paid</span>',
-        ),
-        (
-            dict(
-                payment_status=Invoice.PaymentStatusChoices.REQUESTED,
-            ),
-            '<span class="badge badge-success">Paid</span>',
-        ),
-        (
-            dict(
-                payment_status=Invoice.PaymentStatusChoices.ISSUED,
-            ),
-            '<span class="badge badge-success">Paid</span>',
-        ),
-        (
-            dict(
                 payment_status=Invoice.PaymentStatusChoices.CANCELLED,
             ),
             '<span class="badge badge-danger">Cancelled</span>',
@@ -450,31 +431,6 @@ def test_postpaid_invoice_status_badge(invoice_kwargs, badge):
                 follow_up_on=now().date() - timedelta(days=30),
             ),
             '<span class="badge badge-danger">Expired</span>',
-        ),
-        (
-            dict(
-                payment_status=Invoice.PaymentStatusChoices.ISSUED,
-                issued_on=now()
-                - settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF
-                - timedelta(days=1),
-            ),
-            '<span class="badge badge-success">Paid</span>',
-        ),
-        (
-            dict(
-                payment_status=Invoice.PaymentStatusChoices.ISSUED,
-                issued_on=now()
-                - settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF
-                - timedelta(days=1),
-            ),
-            '<span class="badge badge-success">Paid</span>',
-        ),
-        (
-            dict(
-                payment_status=Invoice.PaymentStatusChoices.ISSUED,
-                issued_on=now() - settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF,
-            ),
-            '<span class="badge badge-success">Paid</span>',
         ),
     ),
 )
