@@ -83,6 +83,18 @@ class InvoiceAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Dates",
+            {
+                "fields": [
+                    "issued_on",
+                    "paid_on",
+                    "last_checked_on",
+                    "follow_up_on",
+                    "expires_on",
+                ]
+            },
+        ),
+        (
             "Budget Costs",
             {
                 "fields": [
@@ -101,18 +113,6 @@ class InvoiceAdmin(admin.ModelAdmin):
                     "approved_compute_cost",
                     "consumed_compute_cost",
                     "write_off_compute_cost",
-                ]
-            },
-        ),
-        (
-            "Dates",
-            {
-                "fields": [
-                    "issued_on",
-                    "paid_on",
-                    "last_checked_on",
-                    "follow_up_on",
-                    "expires_on",
                 ]
             },
         ),
