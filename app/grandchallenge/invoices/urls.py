@@ -6,5 +6,5 @@ app_name = "invoices"
 
 urlpatterns = [
     path("all/", InvoiceList.as_view(), name="list"),
-    path("<int:pk>/", InvoiceDetail.as_view(), name="detail"),
+    path("<uuid:external_pk>/", InvoiceDetail.as_view(), name="detail"),
 ]

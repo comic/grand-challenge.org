@@ -59,7 +59,7 @@ def test_invoice_detail_view_permissions(
     response = get_view_for_user(
         viewname="invoices:detail",
         client=client,
-        reverse_kwargs={"pk": invoice.pk},
+        reverse_kwargs={"external_pk": invoice.external_pk},
         challenge=challenge,
         user=user,
     )

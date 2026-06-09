@@ -1,3 +1,4 @@
+import uuid
 from datetime import timedelta
 from functools import cached_property
 
@@ -144,6 +145,10 @@ def default_invoice_expiry():
 
 class Invoice(models.Model, FieldChangeMixin):
     objects = InvoiceQuerySet.as_manager()
+
+    external_pk = models.UUIDField(
+        unique=True, default=uuid.uuid4, editable=False
+    )
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -345,6 +350,10 @@ class Invoice(models.Model, FieldChangeMixin):
                 | Q(follow_up_on__isnull=False),
                 violation_error_message="Follow-up date is required for initialized post-paid invoices.",
             ),
+        ]
+
+        indexes = [
+            models.Index(fields=["external_pk"]),
         ]
 
     def delete(self, *args, **kwargs):

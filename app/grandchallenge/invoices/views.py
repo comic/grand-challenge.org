@@ -46,6 +46,11 @@ class InvoiceDetail(
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
+    def get_object(self, queryset=None):
+        if queryset is None:
+            queryset = self.get_queryset()
+        return queryset.get(external_pk=self.kwargs["external_pk"])
+
     def get_queryset(self):
         queryset = super().get_queryset()
         return queryset.with_overdue_status()
