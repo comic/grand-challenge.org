@@ -8,6 +8,7 @@ class BrokenLinkAdmin(admin.ModelAdmin):
     list_display = ("path", "domain", "referer", "is_internal", "created")
     list_filter = ("is_internal",)
     search_fields = ("path", "referer", "domain")
+    date_hierarchy = "created"
     readonly_fields = (
         "created",
         "domain",
