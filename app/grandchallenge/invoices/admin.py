@@ -6,6 +6,7 @@ from grandchallenge.core.admin import (
     UserObjectPermissionAdmin,
 )
 from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.core.templatetags.costs import euro, millicents_to_euro
 from grandchallenge.invoices.models import (
     Invoice,
     InvoiceGroupObjectPermission,
@@ -50,17 +51,13 @@ class ToCheckFilter(admin.SimpleListFilter):
 class InvoiceAdmin(admin.ModelAdmin):
     list_display = (
         "challenge",
-        "issued_on",
-        "expires_on",
-        "follow_up_on",
-        "internal_invoice_number",
-        "internal_client_number",
-        "contact_email",
-        "total_amount_euros",
+        "internal_invoice_number_display",
         "payment_type",
         "payment_status",
-        "paid_on",
-        "last_checked_on",
+        "total_amount_euros",
+        "percent_budget_consumed_display",
+        "issued_on",
+        "follow_up_on",
         "internal_comments",
     )
     list_filter = (
@@ -70,8 +67,106 @@ class InvoiceAdmin(admin.ModelAdmin):
         "payment_type",
         "challenge__short_name",
     )
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": [
+                    "challenge",
+                    "payment_type",
+                    "payment_status",
+                    "total_amount_euros",
+                    "internal_comments",
+                    "internal_invoice_number",
+                    "internal_client_number",
+                ]
+            },
+        ),
+        (
+            "Budget Costs",
+            {
+                "fields": [
+                    "support_costs_euros",
+                    "compute_costs_euros",
+                    "storage_costs_euros",
+                ]
+            },
+        ),
+        (
+            "Budget Usage",
+            {
+                "fields": [
+                    "percent_budget_consumed_display",
+                    "available_compute_cost",
+                    "approved_compute_cost",
+                    "consumed_compute_cost",
+                    "write_off_compute_cost",
+                ]
+            },
+        ),
+        (
+            "Dates",
+            {
+                "fields": [
+                    "issued_on",
+                    "paid_on",
+                    "last_checked_on",
+                    "follow_up_on",
+                    "expires_on",
+                ]
+            },
+        ),
+        (
+            "Billing details",
+            {
+                "fields": [
+                    "external_reference",
+                    "billing_address",
+                    "contact_name",
+                    "contact_email",
+                    "vat_number",
+                    "invoice_request_text",
+                ]
+            },
+        ),
+    ]
     autocomplete_fields = ("challenge",)
-    readonly_fields = ["invoice_request_text", "compute_cost_euro_millicents"]
+    readonly_fields = [
+        "invoice_request_text",
+        "percent_budget_consumed_display",
+        "available_compute_cost",
+        "approved_compute_cost",
+        "consumed_compute_cost",
+        "write_off_compute_cost",
+        "total_amount_euros",
+    ]
+
+    @admin.display(description="Total")
+    def total_amount_euros(self, obj):
+        return euro(obj.total_amount_euros, decimal_places=0)
+
+    @admin.display(description="Number")
+    def internal_invoice_number_display(self, obj):
+        return obj.internal_invoice_number
+
+    def available_compute_cost(self, obj):
+        return millicents_to_euro(obj.available_compute_cost_euro_millicents)
+
+    def approved_compute_cost(self, obj):
+        return millicents_to_euro(obj.approved_compute_cost_euro_millicents)
+
+    def consumed_compute_cost(self, obj):
+        return millicents_to_euro(obj.consumed_compute_cost_euro_millicents)
+
+    def write_off_compute_cost(self, obj):
+        return millicents_to_euro(obj.write_off_compute_cost_euro_millicents)
+
+    @admin.display(description="Consumed budget")
+    def percent_budget_consumed_display(self, obj):
+        value = obj.percent_budget_consumed
+        if value is None:
+            return "-"
+        return f"{value}%"
 
     def has_delete_permission(self, request, obj=None):
         # invoices cannot be deleted
@@ -113,7 +208,12 @@ class InvoiceAdmin(admin.ModelAdmin):
         return md2html(warning_text + invoice_request_details)
 
     def get_queryset(self, request):
-        return super().get_queryset(request).with_overdue_status()
+        return (
+            super()
+            .get_queryset(request)
+            .with_overdue_status()
+            .with_budget_authorization()
+        )
 
 
 admin.site.register(InvoiceUserObjectPermission, UserObjectPermissionAdmin)
