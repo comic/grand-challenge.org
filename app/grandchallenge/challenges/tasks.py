@@ -3,7 +3,6 @@ from typing import NamedTuple
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import transaction
 from django.db.models import Count, Max, Min, Q
 from django.utils.timezone import datetime, now
 from lambda_tasks.decorators import lambda_task
@@ -25,7 +24,6 @@ from grandchallenge.challenges.models import (
     ChallengeRequest,
     OnboardingTask,
 )
-from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.evaluation.models import Evaluation, Phase
@@ -75,13 +73,6 @@ def update_challenge_results_cache():
             "cached_latest_result",
         ],
     )
-
-
-@acks_late_2xlarge_task(name=f"{__name__}.update_challenge_compute_costs")
-@transaction.atomic
-def update_challenge_compute_costs_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return update_challenge_compute_costs(**kwargs)
 
 
 @lambda_task
