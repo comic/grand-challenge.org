@@ -578,12 +578,17 @@ def test_send_post_paid_invoice_follow_up_emails_queryset(mocker):
 
 
 @pytest.mark.django_db
-def test_invoice_budget_alert_email(settings):
+def test_invoice_budget_alert_email(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
     challenge = ChallengeFactory(short_name="test")
     challenge_admin = UserFactory()
     challenge.add_admin(challenge_admin)
     staff_user = UserFactory(is_staff=True)
     settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
+
     invoice = InvoiceFactory(
         challenge=challenge,
         support_costs_euros=0,
@@ -601,7 +606,9 @@ def test_invoice_budget_alert_email(settings):
     evaluation.utilization.invoice = invoice
     evaluation.utilization.compute_cost_euro_millicents = 5 * 1000 * 100
     evaluation.utilization.save()
-    update_challenge_compute_costs()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        update_challenge_compute_costs()
 
     # Budget alert threshold not exceeded
     assert len(mail.outbox) == 0
@@ -613,7 +620,9 @@ def test_invoice_budget_alert_email(settings):
     evaluation.utilization.invoice = invoice
     evaluation.utilization.compute_cost_euro_millicents = 3 * 1000 * 100
     evaluation.utilization.save()
-    update_challenge_compute_costs()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        update_challenge_compute_costs()
 
     # Budget alert threshold exceeded
     assert len(mail.outbox) == 3
@@ -645,7 +654,9 @@ def test_invoice_budget_alert_email(settings):
     evaluation.utilization.invoice = invoice
     evaluation.utilization.compute_cost_euro_millicents = 100000
     evaluation.utilization.save()
-    update_challenge_compute_costs()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        update_challenge_compute_costs()
 
     # Next budget alert threshold not exceeded
     assert len(mail.outbox) == 0
@@ -657,7 +668,9 @@ def test_invoice_budget_alert_email(settings):
     evaluation.utilization.invoice = invoice
     evaluation.utilization.compute_cost_euro_millicents = 1
     evaluation.utilization.save()
-    update_challenge_compute_costs()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        update_challenge_compute_costs()
 
     # Next budget alert threshold exceeded
     assert len(mail.outbox) != 0
@@ -668,13 +681,19 @@ def test_invoice_budget_alert_email(settings):
 
 
 @pytest.mark.django_db
-def test_invoice_budget_alert_two_thresholds_one_email(settings):
+def test_invoice_budget_alert_two_thresholds_one_email(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
     challenge = ChallengeFactory(short_name="test")
+
     assert challenge.percent_budget_consumed_warning_thresholds == [
         70,
         90,
         100,
     ]
+
     challenge_admin = UserFactory()
     challenge.add_admin(challenge_admin)
     staff_user = UserFactory(is_staff=True)
@@ -694,7 +713,9 @@ def test_invoice_budget_alert_two_thresholds_one_email(settings):
     evaluation.utilization.invoice = invoice
     evaluation.utilization.compute_cost_euro_millicents = 950000
     evaluation.utilization.save()
-    update_challenge_compute_costs()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        update_challenge_compute_costs()
 
     # Two budget alert thresholds exceeded, alert only sent for last one.
     assert len(mail.outbox) == 3
@@ -711,7 +732,11 @@ def test_invoice_budget_alert_two_thresholds_one_email(settings):
 
 
 @pytest.mark.django_db
-def test_invoice_budget_alert_no_budget():
+def test_invoice_budget_alert_no_budget(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
     challenge = ChallengeFactory()
     phase = PhaseFactory(challenge=challenge)
     invoice = InvoiceFactory(challenge=challenge, compute_costs_euros=0)
@@ -722,7 +747,11 @@ def test_invoice_budget_alert_no_budget():
     evaluation.utilization.invoice = invoice
     evaluation.utilization.compute_cost_euro_millicents = 1
     evaluation.utilization.save()
+
     assert len(mail.outbox) == 0
-    update_challenge_compute_costs()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        update_challenge_compute_costs()
+
     assert len(mail.outbox) != 0
     assert "Budget Consumed Alert" in mail.outbox[0].subject

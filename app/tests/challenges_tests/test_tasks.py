@@ -308,22 +308,32 @@ def test_challenge_request_draft_reminder_emails(
 
 
 @pytest.mark.django_db
-def test_update_challenge_compute_costs_no_utilization():
+def test_update_challenge_compute_costs_no_utilization(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
     challenge = ChallengeFactory()
     invoice = InvoiceFactory(challenge=challenge)
 
     assert invoice.compute_cost_euro_millicents == 0
-    update_challenge_compute_costs()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        update_challenge_compute_costs()
+
     invoice.refresh_from_db()
     assert invoice.compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
-def test_update_challenge_compute_costs(settings):
+def test_update_challenge_compute_costs(
+    settings, django_capture_on_commit_callbacks
+):
 
     settings.COMPONENTS_DEFAULT_BACKEND = (
         "tests.utilization_tests.test_tasks.UtilizationExecutor"
     )
+    settings.LAMBDA_TASKS_EAGER = True
 
     challenge = ChallengeFactory()
     invoice = InvoiceFactory(challenge=challenge)
@@ -372,7 +382,8 @@ def test_update_challenge_compute_costs(settings):
 
     assert invoice.compute_cost_euro_millicents == 0
 
-    update_challenge_compute_costs()
+    with django_capture_on_commit_callbacks(execute=True):
+        update_challenge_compute_costs()
 
     invoice.refresh_from_db()
     assert invoice.compute_cost_euro_millicents == 1 + 2 + 4 + 8 + 8

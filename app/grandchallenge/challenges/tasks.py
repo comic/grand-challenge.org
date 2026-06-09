@@ -1,7 +1,4 @@
-import functools
 import math
-import random
-import time
 from typing import NamedTuple
 
 from django.conf import settings
@@ -11,7 +8,6 @@ from django.db.models import Count, Max, Min, Q
 from django.utils.timezone import datetime, now
 from lambda_tasks.decorators import lambda_task
 from lambda_tasks.settings import MAX_DELAY
-from psycopg.errors import LockNotAvailable
 
 from grandchallenge.challenges.costs import (
     annotate_invoice_compute_costs,
@@ -30,6 +26,8 @@ from grandchallenge.challenges.models import (
     OnboardingTask,
 )
 from grandchallenge.core.celery import acks_late_2xlarge_task
+from grandchallenge.core.exceptions import LockNotAcquiredException
+from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.evaluation.models import Evaluation, Phase
 from grandchallenge.invoices.models import Invoice
 
@@ -79,59 +77,49 @@ def update_challenge_results_cache():
     )
 
 
-def retry_with_backoff(exceptions, max_attempts=5, base_delay=1, max_delay=10):
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            for attempt in range(1, max_attempts + 1):
-                try:
-                    return func(*args, **kwargs)
-                except exceptions:
-                    if attempt == max_attempts:
-                        raise
-
-                    delay = min(base_delay * (2 ** (attempt - 1)), max_delay)
-                    jitter = random.uniform(0, delay)
-                    total_delay = delay + jitter
-
-                    time.sleep(total_delay)
-
-        return wrapper
-
-    return decorator
+@acks_late_2xlarge_task(name=f"{__name__}.update_challenge_compute_costs")
+@transaction.atomic
+def update_challenge_compute_costs_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_challenge_compute_costs(**kwargs)
 
 
-@acks_late_2xlarge_task
+@lambda_task
 def update_challenge_compute_costs():
-    for invoice in (
-        Invoice.objects.prefetch_related("challenge")
-        .with_budget_authorization()
-        .iterator(chunk_size=1000)
-    ):
-        with transaction.atomic():
-            annotate_invoice_compute_costs(invoice=invoice)
+    seconds_per_task = math.ceil(MAX_DELAY / max(Challenge.objects.count(), 1))
 
-            @retry_with_backoff((LockNotAvailable,))
-            def save_invoice():
-                invoice.save(update_fields=("compute_cost_euro_millicents",))
+    for idx, challenge in enumerate(Challenge.objects.only("pk")):
+        update_challenge_compute_cost.execute_on_commit(
+            pk=challenge.pk,
+            _delay=(idx * seconds_per_task) % MAX_DELAY,
+        )
 
-            save_invoice()
 
-    for phase in Phase.objects.iterator(chunk_size=1000):
-        with transaction.atomic():
-            annotate_job_duration_and_compute_costs(phase=phase)
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def update_challenge_compute_cost(*, pk: int):
+    with check_lock_acquired():
+        invoices = (
+            Invoice.objects.select_for_update(nowait=True, of=("self",))
+            .filter(challenge_id=pk)
+            .with_budget_authorization()
+        )
+        phases = Phase.objects.select_for_update(
+            nowait=True, of=("self",)
+        ).filter(challenge_id=pk)
 
-            @retry_with_backoff((LockNotAvailable,))
-            def save_phase():
-                phase.save(
-                    skip_calculate_ranks=True,
-                    update_fields=(
-                        "average_algorithm_job_duration",
-                        "compute_cost_euro_millicents",
-                    ),
-                )
+    for invoice in invoices:
+        annotate_invoice_compute_costs(invoice=invoice)
+        invoice.save(update_fields=("compute_cost_euro_millicents",))
 
-            save_phase()
+    for phase in phases:
+        annotate_job_duration_and_compute_costs(phase=phase)
+        phase.save(
+            skip_calculate_ranks=True,
+            update_fields=(
+                "average_algorithm_job_duration",
+                "compute_cost_euro_millicents",
+            ),
+        )
 
 
 @lambda_task

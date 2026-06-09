@@ -7,7 +7,6 @@ from itertools import product
 from pathlib import Path
 
 import sentry_sdk
-from celery.schedules import crontab
 from corsheaders.defaults import default_headers
 from csp import constants as csp_constants
 from disposable_email_domains import blocklist
@@ -1205,12 +1204,7 @@ EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
     os.environ.get("EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS", 86400)
 )
 
-CELERY_BEAT_SCHEDULE = {
-    "update_challenge_compute_costs": {  # short, retry_with_backoff, existing PR
-        "task": "grandchallenge.challenges.tasks.update_challenge_compute_costs",
-        "schedule": crontab(minute=45),
-    },
-}
+CELERY_BEAT_SCHEDULE = {}
 
 PUSH_CLOUDWATCH_METRICS = strtobool(
     os.environ.get("PUSH_CLOUDWATCH_METRICS", "False")
