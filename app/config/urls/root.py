@@ -173,6 +173,10 @@ urlpatterns = [
             namespace="hanging-protocols",
         ),
     ),
+    path(
+        "broken-links/",
+        include("grandchallenge.broken_links.urls", namespace="broken-links"),
+    ),
     path("emails/", include("grandchallenge.emails.urls", namespace="emails")),
     path(
         "components/",
