@@ -58,6 +58,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "percent_budget_consumed_display",
         "issued_on",
         "follow_up_on",
+        "is_active",
         "internal_comments",
     )
     list_filter = (
@@ -90,7 +91,10 @@ class InvoiceAdmin(admin.ModelAdmin):
                     "paid_on",
                     "last_checked_on",
                     "follow_up_on",
-                    "expires_on",
+                    (
+                        "expires_on",
+                        "is_active",
+                    ),
                 ]
             },
         ),
@@ -139,6 +143,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "consumed_compute_cost",
         "write_off_compute_cost",
         "total_amount_euros",
+        "is_active",
     ]
 
     @admin.display(description="Total")
@@ -148,6 +153,10 @@ class InvoiceAdmin(admin.ModelAdmin):
     @admin.display(description="Number")
     def internal_invoice_number_display(self, obj):
         return obj.internal_invoice_number
+
+    @admin.display(boolean=True)
+    def is_active(self, obj):
+        return not obj.is_expired
 
     def available_compute_cost(self, obj):
         return millicents_to_euro(obj.available_compute_cost_euro_millicents)
