@@ -6,7 +6,10 @@ from django.utils import timezone
 from django.views.generic import TemplateView
 from guardian.mixins import LoginRequiredMixin
 
-from grandchallenge.broken_links.models import BrokenLink
+from grandchallenge.broken_links.models import (
+    MAX_BROKEN_LINK_AGE_DAYS,
+    BrokenLink,
+)
 from grandchallenge.subdomains.utils import reverse_lazy
 
 
@@ -16,13 +19,7 @@ class BrokenLinkDashboard(
     template_name = "broken_links/dashboard.html"
     login_url = reverse_lazy("account_login")
     raise_exception = True
-
-    DAYS_CHOICES = (
-        1,
-        7,
-        30,
-        90,
-    )
+    DAYS_CHOICES = (1, 7, 30, MAX_BROKEN_LINK_AGE_DAYS)
 
     def test_func(self):
         return self.request.user.is_staff

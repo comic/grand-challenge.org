@@ -2,6 +2,8 @@ from django.db import models
 
 from grandchallenge.core.models import UUIDModel
 
+MAX_BROKEN_LINK_AGE_DAYS = 90
+
 
 class BrokenLink(UUIDModel):
     domain = models.CharField(max_length=255)
