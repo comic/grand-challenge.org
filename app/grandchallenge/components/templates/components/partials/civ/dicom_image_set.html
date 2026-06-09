@@ -1,13 +1,17 @@
 {% load pathlib %}
+{% load copy_button %}
 
-<div class="badge badge-primary"
-    title="{{ civ.interface.title }}"
->
-    {% if display_inline %}
-        {{ civ.interface.title|truncatechars:64 }}:
-        {{ civ.image.name|stem|truncatechars:32 }}
-    {% else %}
-        {{ civ.interface.title }}:
-        {{ civ.image.name|stem }}
-    {% endif %}
-</div>
+<span>
+    <div class="badge badge-primary"
+        title="{{ civ.interface.title }}"
+    >
+        {% if display_inline %}
+            {{ civ.interface.title|truncatechars:64 }}:
+            {{ civ.image.name|stem|truncatechars:32 }}
+        {% else %}
+            {{ civ.interface.title }}:
+            {{ civ.image.name|stem }}
+        {% endif %}
+    </div>
+    {% copy_button_only value=civ.image.pk title="Copy image pk to clipboard" %}
+</span>
