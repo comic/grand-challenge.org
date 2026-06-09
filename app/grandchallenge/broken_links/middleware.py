@@ -1,5 +1,6 @@
 import re
 
+from allauth.core.internal.httpkit import get_client_ip
 from django.conf import settings
 from django.middleware.common import BrokenLinkEmailsMiddleware
 
@@ -22,7 +23,7 @@ class BrokenLinkMiddleware(BrokenLinkEmailsMiddleware):
 
             if not self.is_ignorable_request(request, path, domain, referer):
                 ua = request.headers.get("user-agent", "<none>")
-                ip = request.META.get("REMOTE_ADDR", None)
+                ip = get_client_ip(request=request)
 
                 BrokenLink.objects.create(
                     domain=domain,

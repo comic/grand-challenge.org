@@ -639,6 +639,10 @@ SOCIALACCOUNT_PROVIDERS = {
 
 MFA_TOTP_TOLERANCE = 5
 
+ALLAUTH_TRUSTED_PROXY_COUNT = int(
+    os.environ.get("ALLAUTH_TRUSTED_PROXY_COUNT", "0")
+)
+
 # Use full paths as view name lookups do not work on subdomains
 LOGIN_URL = "/accounts/login/"
 LOGOUT_URL = "/accounts/logout/"
