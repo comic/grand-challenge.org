@@ -295,6 +295,13 @@ class Invoice(models.Model, FieldChangeMixin):
                 "complimentary in the internal comments.",
             ),
             models.CheckConstraint(
+                name="paid_or_cancelled_status_required_for_complimentary_payment_type",
+                condition=~Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                | Q(payment_status=PaymentStatusChoices.PAID)
+                | Q(payment_status=PaymentStatusChoices.CANCELLED),
+                violation_error_message="Complimentary invoices must have a 'Paid' or 'Cancelled' status.",
+            ),
+            models.CheckConstraint(
                 name="contact_name_required_for_non_complimentary_payment_type",
                 condition=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
                 | ~Q(contact_name=""),

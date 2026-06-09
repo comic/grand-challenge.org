@@ -136,7 +136,10 @@ def test_invoice_list_view_content(client, invoice_kwargs, badge_and_status):
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "payment_status",
-    Invoice.PaymentStatusChoices.values,
+    (
+        Invoice.PaymentStatusChoices.PAID,
+        Invoice.PaymentStatusChoices.CANCELLED,
+    ),
 )
 def test_invoice_list_view_content_complimentary_no_payment_status(
     client, payment_status

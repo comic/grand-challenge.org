@@ -102,7 +102,7 @@ def test_challenge_invoice_overdue_reminder_emails_sent(
         # Case: invoice issued, but of complimentary type
         dict(
             payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
-            payment_status=Invoice.PaymentStatusChoices.ISSUED,
+            payment_status=Invoice.PaymentStatusChoices.PAID,
             issued_on=_fixed_now - timedelta(weeks=5),
         ),
     ],
@@ -146,19 +146,36 @@ def test_no_invoices_reminder_emails_not_send():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "payment_type",
+    "payment_type,payment_status",
     [
-        Invoice.PaymentTypeChoices.COMPLIMENTARY,
-        Invoice.PaymentTypeChoices.PREPAID,
-        Invoice.PaymentTypeChoices.POSTPAID,
-    ],
-)
-@pytest.mark.parametrize(
-    "payment_status",
-    [
-        Invoice.PaymentStatusChoices.INITIALIZED,
-        Invoice.PaymentStatusChoices.REQUESTED,
-        Invoice.PaymentStatusChoices.PAID,
+        (
+            Invoice.PaymentTypeChoices.COMPLIMENTARY,
+            Invoice.PaymentStatusChoices.PAID,
+        ),
+        (
+            Invoice.PaymentTypeChoices.PREPAID,
+            Invoice.PaymentStatusChoices.PAID,
+        ),
+        (
+            Invoice.PaymentTypeChoices.POSTPAID,
+            Invoice.PaymentStatusChoices.PAID,
+        ),
+        (
+            Invoice.PaymentTypeChoices.PREPAID,
+            Invoice.PaymentStatusChoices.INITIALIZED,
+        ),
+        (
+            Invoice.PaymentTypeChoices.POSTPAID,
+            Invoice.PaymentStatusChoices.INITIALIZED,
+        ),
+        (
+            Invoice.PaymentTypeChoices.PREPAID,
+            Invoice.PaymentStatusChoices.REQUESTED,
+        ),
+        (
+            Invoice.PaymentTypeChoices.POSTPAID,
+            Invoice.PaymentStatusChoices.REQUESTED,
+        ),
     ],
 )
 def test_challenge_invoice_overdue_reminder_emails_not_sent(
@@ -423,7 +440,7 @@ def test_send_open_invoices_email(settings):
     i5 = InvoiceFactory(payment_status=Invoice.PaymentStatusChoices.PAID)
     i6 = InvoiceFactory(payment_status=Invoice.PaymentStatusChoices.CANCELLED)
     i7 = InvoiceFactory(
-        payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
         payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
     )
     i8 = InvoiceFactory(

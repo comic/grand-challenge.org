@@ -58,10 +58,6 @@ def test_payment_status_required_fields(
     assert len(e.value.messages) == 1
     assert e.value.messages[0] == expected_error_message
 
-    # should work with complimentary type
-    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
-    invoice.save()
-
 
 @pytest.mark.django_db
 def test_payment_type_complimentary_requires_internal_comments():
@@ -76,6 +72,46 @@ def test_payment_type_complimentary_requires_internal_comments():
         "Please explain why the invoice is complimentary in the internal comments."
         == e.value.messages[0]
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "payment_status, context",
+    (
+        (PaymentStatusChoices.PAID, nullcontext()),
+        (PaymentStatusChoices.CANCELLED, nullcontext()),
+        (
+            PaymentStatusChoices.ISSUED,
+            pytest.raises(
+                ValidationError,
+                match="Complimentary invoices must have a 'Paid' or 'Cancelled' status.",
+            ),
+        ),
+        (
+            PaymentStatusChoices.INITIALIZED,
+            pytest.raises(
+                ValidationError,
+                match="Complimentary invoices must have a 'Paid' or 'Cancelled' status.",
+            ),
+        ),
+        (
+            PaymentStatusChoices.REQUESTED,
+            pytest.raises(
+                ValidationError,
+                match="Complimentary invoices must have a 'Paid' or 'Cancelled' status.",
+            ),
+        ),
+    ),
+)
+def test_payment_type_complimentary_requires_paid_or_cancelled(
+    payment_status, context
+):
+    invoice = InvoiceFactory(
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
+    )
+    invoice.payment_status = payment_status
+    with context:
+        invoice.full_clean()
 
 
 @pytest.mark.django_db
