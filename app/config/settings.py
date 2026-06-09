@@ -496,7 +496,6 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "aws_xray_sdk.ext.django",  # tracing
     "django_celery_results",  # database results backend
-    "django_celery_beat",  # periodic tasks
     "guardian",  # per object permissions
     "rest_framework",  # provides REST API
     "knox",  # token auth for REST API
@@ -1203,8 +1202,6 @@ ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION = 5 * 60  # 5 minutes
 EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
     os.environ.get("EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS", 86400)
 )
-
-CELERY_BEAT_SCHEDULE = {}
 
 PUSH_CLOUDWATCH_METRICS = strtobool(
     os.environ.get("PUSH_CLOUDWATCH_METRICS", "False")
