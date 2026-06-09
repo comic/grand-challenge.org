@@ -450,9 +450,8 @@ MIDDLEWARE = (
     "aws_xray_sdk.ext.django.middleware.XRayMiddleware",  # xray near the top
     "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
     "csp.contrib.rate_limiting.RateLimitedCSPMiddleware",
-    # TODO: replace BrokenLinkEmailsMiddleware with an app
-    # "django.middleware.common.BrokenLinkEmailsMiddleware",
-    # Keep BrokenLinkEmailsMiddleware near the top
+    "grandchallenge.broken_links.middleware.BrokenLinkMiddleware",
+    # Keep BrokenLinkMiddleware near the top
     "django_permissions_policy.PermissionsPolicyMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -567,6 +566,7 @@ LOCAL_APPS = [
     "grandchallenge.invoices",
     "grandchallenge.direct_messages",
     "grandchallenge.incentives",
+    "grandchallenge.broken_links",
     "grandchallenge.browser_sessions",
     "grandchallenge.well_known",
     "grandchallenge.utilization",
