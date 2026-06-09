@@ -110,22 +110,6 @@ services:
               source: pytest-cache
               target: /tmp/.pytest_cache
 
-    celery_beat:
-        image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
-        environment:
-            <<: [*postgres-env, *s3-env, *django-env]
-        restart: always
-        command: >-
-            bash -c "
-            rm -f /tmp/celerybeat.pid
-            && celery --app config beat --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\"
-            "
-        depends_on:
-            postgres:
-                condition: service_healthy
-            redis:
-                condition: service_started
-
     registry:
         image: registry:2
         ports:
