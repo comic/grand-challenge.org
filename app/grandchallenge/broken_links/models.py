@@ -15,3 +15,18 @@ class BrokenLink(UUIDModel):
         indexes = [
             models.Index(fields=["-created"]),
         ]
+
+
+class IgnoredPattern(UUIDModel):
+    pattern = models.CharField(
+        max_length=512,
+        unique=True,
+        help_text="Regex pattern for paths to ignore.",
+    )
+
+    def __str__(self):
+        return self.pattern
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        BrokenLink.objects.filter(path__regex=self.pattern).delete()

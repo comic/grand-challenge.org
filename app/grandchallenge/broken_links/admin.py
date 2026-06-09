@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from grandchallenge.broken_links.models import BrokenLink
+from grandchallenge.broken_links.models import BrokenLink, IgnoredPattern
 
 
 @admin.register(BrokenLink)
@@ -17,4 +17,11 @@ class BrokenLinkAdmin(admin.ModelAdmin):
         "ip_address",
         "is_internal",
     )
+    ordering = ("-created",)
+
+
+@admin.register(IgnoredPattern)
+class IgnoredPatternAdmin(admin.ModelAdmin):
+    list_display = ("pattern", "created")
+    search_fields = ("pattern",)
     ordering = ("-created",)

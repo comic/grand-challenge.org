@@ -44,19 +44,7 @@ manager_email = os.environ.get("MANAGER_EMAIL", None)
 if manager_email:
     MANAGERS = [("Manager", manager_email)]
 
-IGNORABLE_404_URLS = [
-    re.compile(r".*\.(php|cgi|asp).*"),
-    re.compile(r"^/phpmyadmin.*"),
-    re.compile(r"^/gen204.*"),
-    re.compile(r"^/wp-content.*"),
-    re.compile(r"^/wp.*"),
-    re.compile(r"^/wordpress/.*"),
-    re.compile(r"^/old/.*", flags=re.IGNORECASE),
-    re.compile(r".*/trackback.*"),
-    re.compile(r"^/site/.*"),
-    re.compile(r"^/media/cache/.*"),
-    re.compile(r"^/favicon.ico$"),
-]
+IGNORABLE_404_URLS = []
 
 # Used as starting points for various other paths. realpath(__file__) starts in
 # the config dir. We need to  go one dir higher so path.join("..")

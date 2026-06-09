@@ -2,7 +2,7 @@ import pytest
 from django.test import RequestFactory
 
 from grandchallenge.broken_links.middleware import BrokenLinkMiddleware
-from grandchallenge.broken_links.models import BrokenLink
+from grandchallenge.broken_links.models import BrokenLink, IgnoredPattern
 
 
 @pytest.mark.django_db
@@ -63,7 +63,6 @@ class TestBrokenLinkMiddleware:
         settings.DEBUG = False
         factory = RequestFactory()
         request = factory.get("/missing-page/")
-        # Empty referer is ignorable
         request.META.pop("HTTP_REFERER", None)
 
         middleware = BrokenLinkMiddleware(get_response=lambda r: None)
@@ -75,3 +74,41 @@ class TestBrokenLinkMiddleware:
         middleware.process_response(request=request, response=response)
 
         assert BrokenLink.objects.count() == 0
+
+    def test_database_ignored_pattern_suppresses_broken_link(self, settings):
+        settings.DEBUG = False
+        IgnoredPattern.objects.create(pattern=r"^/ignored/.*$")
+
+        factory = RequestFactory()
+        request = factory.get("/ignored/something")
+        request.META["HTTP_REFERER"] = "http://testserver/page/"
+
+        middleware = BrokenLinkMiddleware(get_response=lambda r: None)
+
+        from django.http import HttpResponseNotFound
+
+        response = HttpResponseNotFound()
+
+        middleware.process_response(request=request, response=response)
+
+        assert BrokenLink.objects.count() == 0
+
+    def test_database_ignored_pattern_does_not_suppress_non_matching(
+        self, settings
+    ):
+        settings.DEBUG = False
+        IgnoredPattern.objects.create(pattern=r"^/ignored/.*$")
+
+        factory = RequestFactory()
+        request = factory.get("/not-ignored/page")
+        request.META["HTTP_REFERER"] = "http://testserver/page/"
+
+        middleware = BrokenLinkMiddleware(get_response=lambda r: None)
+
+        from django.http import HttpResponseNotFound
+
+        response = HttpResponseNotFound()
+
+        middleware.process_response(request=request, response=response)
+
+        assert BrokenLink.objects.count() == 1
