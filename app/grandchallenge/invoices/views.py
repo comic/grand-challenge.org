@@ -43,13 +43,12 @@ class InvoiceDetail(
 ):
     model = Invoice
     permission_required = "view_invoice"
+
+    slug_field = "external_pk"
+    slug_url_kwarg = "external_pk"
+
     raise_exception = True
     login_url = reverse_lazy("account_login")
-
-    def get_object(self, queryset=None):
-        if queryset is None:
-            queryset = self.get_queryset()
-        return queryset.get(external_pk=self.kwargs["external_pk"])
 
     def get_queryset(self):
         queryset = super().get_queryset()
