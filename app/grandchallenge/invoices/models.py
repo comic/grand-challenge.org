@@ -147,7 +147,12 @@ class Invoice(models.Model, FieldChangeMixin):
     objects = InvoiceQuerySet.as_manager()
 
     external_pk = models.UUIDField(
-        unique=True, default=uuid.uuid4, editable=False
+        # Use external_pk as lookups from the outside,
+        # This is to prevent enumeration attacks via the default incremental
+        # integer PK.
+        unique=True,
+        default=uuid.uuid4,
+        editable=False,
     )
 
     created = models.DateTimeField(auto_now_add=True)
