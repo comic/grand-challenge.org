@@ -274,7 +274,7 @@
                 <span class="c1"># to use a custom model manager with select_related</span>
                 <span class="n">models</span><span class="o">.</span><span class="n">Prefetch</span><span class="p">(</span>
                     <span class="s2">&quot;challenge&quot;</span><span class="p">,</span>
-                    <span class="n">queryset</span><span class="o">=</span><span class="n">Challenge</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">with_available_compute</span><span class="p">()</span><span class="o">.</span><span class="n">with_invoices_with_budget_authorization</span><span class="p">(),</span>
+                    <span class="n">queryset</span><span class="o">=</span><span class="n">Challenge</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">with_invoices_with_budget_authorization</span><span class="p">(),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="p">)</span>
