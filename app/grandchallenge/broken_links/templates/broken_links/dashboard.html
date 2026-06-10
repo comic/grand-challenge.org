@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Broken Links Dashboard - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active">Broken Links</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Broken Links Dashboard</h2>
+
+    <div class="mb-3">
+        <a href="?days=" class="btn btn-sm {% if not days %}btn-primary{% else %}btn-outline-primary{% endif %}">All time</a>
+        {% for d in days_choices %}
+            <a href="?days={{ d }}" class="btn btn-sm {% if days == d %}btn-primary{% else %}btn-outline-primary{% endif %}">Last {{ d }} days</a>
+        {% endfor %}
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total</h5>
+                    <p class="card-text display-6">{{ total_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Internal</h5>
+                    <p class="card-text display-6">{{ internal_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h3>Top Broken Paths (Internal)</h3>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>Path</th>
+                        <th class="text-right">Count</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in top_internal_paths %}
+                            <tr>
+                                <td class="text-break">{{ entry.path }}</td>
+                                <td class="text-right">{{ entry.count }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="2">No internal broken links.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <h3>Top Referers</h3>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>Referer</th>
+                        <th class="text-right">Count</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in top_referers %}
+                            <tr>
+                                <td class="text-break">{{ entry.referer }}</td>
+                                <td class="text-right">{{ entry.count }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="2">No broken links.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <h3>Top Broken Paths (All)</h3>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>Path</th>
+                        <th class="text-right">Count</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in top_paths %}
+                            <tr>
+                                <td class="text-break">{{ entry.path }}</td>
+                                <td class="text-right">{{ entry.count }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="2">No broken links.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <h3>Top IP Addresses</h3>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>IP Address</th>
+                        <th class="text-right">Count</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in top_ip_addresses %}
+                            <tr>
+                                <td class="text-break">{{ entry.ip_address }}</td>
+                                <td class="text-right">{{ entry.count }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="2">No broken links.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

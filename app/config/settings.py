@@ -43,19 +43,7 @@ manager_email = os.environ.get("MANAGER_EMAIL", None)
 if manager_email:
     MANAGERS = [("Manager", manager_email)]
 
-IGNORABLE_404_URLS = [
-    re.compile(r".*\.(php|cgi|asp).*"),
-    re.compile(r"^/phpmyadmin.*"),
-    re.compile(r"^/gen204.*"),
-    re.compile(r"^/wp-content.*"),
-    re.compile(r"^/wp.*"),
-    re.compile(r"^/wordpress/.*"),
-    re.compile(r"^/old/.*", flags=re.IGNORECASE),
-    re.compile(r".*/trackback.*"),
-    re.compile(r"^/site/.*"),
-    re.compile(r"^/media/cache/.*"),
-    re.compile(r"^/favicon.ico$"),
-]
+IGNORABLE_404_URLS = []
 
 # Used as starting points for various other paths. realpath(__file__) starts in
 # the config dir. We need to  go one dir higher so path.join("..")
@@ -449,9 +437,8 @@ MIDDLEWARE = (
     "aws_xray_sdk.ext.django.middleware.XRayMiddleware",  # xray near the top
     "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
     "csp.contrib.rate_limiting.RateLimitedCSPMiddleware",
-    # TODO: replace BrokenLinkEmailsMiddleware with an app
-    # "django.middleware.common.BrokenLinkEmailsMiddleware",
-    # Keep BrokenLinkEmailsMiddleware near the top
+    "grandchallenge.broken_links.middleware.BrokenLinkMiddleware",
+    # Keep BrokenLinkMiddleware near the top
     "django_permissions_policy.PermissionsPolicyMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -565,6 +552,7 @@ LOCAL_APPS = [
     "grandchallenge.invoices",
     "grandchallenge.direct_messages",
     "grandchallenge.incentives",
+    "grandchallenge.broken_links",
     "grandchallenge.browser_sessions",
     "grandchallenge.well_known",
     "grandchallenge.utilization",
@@ -648,6 +636,10 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 MFA_TOTP_TOLERANCE = 5
+
+ALLAUTH_TRUSTED_PROXY_COUNT = int(
+    os.environ.get("ALLAUTH_TRUSTED_PROXY_COUNT", "0")
+)
 
 # Use full paths as view name lookups do not work on subdomains
 LOGIN_URL = "/accounts/login/"
