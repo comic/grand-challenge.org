@@ -89,7 +89,7 @@
     </div>
 
     <div class="row mt-4">
-        <div class="col-12">
+        <div class="col-md-6">
             <h3>Top Broken Paths (All)</h3>
             <div class="table-responsive">
                 <table class="table table-hover table-sm">
@@ -103,6 +103,29 @@
                         {% for entry in top_paths %}
                             <tr>
                                 <td class="text-break">{{ entry.path }}</td>
+                                <td class="text-right">{{ entry.count }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="2">No broken links.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <h3>Top IP Addresses</h3>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>IP Address</th>
+                        <th class="text-right">Count</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in top_ip_addresses %}
+                            <tr>
+                                <td class="text-break">{{ entry.ip_address }}</td>
                                 <td class="text-right">{{ entry.count }}</td>
                             </tr>
                         {% empty %}

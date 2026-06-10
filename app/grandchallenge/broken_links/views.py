@@ -58,6 +58,11 @@ class BrokenLinkDashboard(
             .annotate(count=Count("id"))
             .order_by("-count")[:limit]
         )
+        context["top_ip_addresses"] = (
+            queryset.values("ip_address")
+            .annotate(count=Count("id"))
+            .order_by("-count")[:limit]
+        )
         context["total_count"] = queryset.count()
         context["internal_count"] = queryset.filter(is_internal=True).count()
         context["days"] = days
