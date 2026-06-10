@@ -754,18 +754,28 @@ def _get_image_api_method(*, config):
         return APIMethodChoices.EXEC
 
 
-def lock_for_utilization_update(*, algorithm_image_pk):
+def lock_for_utilization_update(*, algorithm_image_pk, invoice_pk):
     from grandchallenge.algorithms.models import AlgorithmImage
+    from grandchallenge.invoices.models import Invoice
 
-    # Lock the algorithm and algorithm image to avoid conflicts
+    # Lock the algorithm, algorithm image and invoice to avoid conflicts
     # when modifying JobUtilization objects
     with check_lock_acquired():
-        AlgorithmImage.objects.filter(pk=algorithm_image_pk).select_related(
-            "algorithm"
-        ).select_for_update(
-            nowait=True,
-            no_key=True,
-        ).get()
+        if algorithm_image_pk:
+            AlgorithmImage.objects.select_related(
+                "algorithm"
+            ).select_for_update(
+                nowait=True,
+                no_key=True,
+            ).get(
+                pk=algorithm_image_pk
+            )
+
+        if invoice_pk:
+            Invoice.objects.select_for_update(
+                nowait=True,
+                no_key=True,
+            ).get(pk=invoice_pk)
 
 
 @lambda_task(
@@ -932,7 +942,14 @@ def handle_event(*, event: dict, backend: str):
         return
 
     if hasattr(job, "algorithm_image"):
-        lock_for_utilization_update(algorithm_image_pk=job.algorithm_image_id)
+        algorithm_image_pk = job.algorithm_image_id
+    else:
+        algorithm_image_pk = None
+
+    lock_for_utilization_update(
+        algorithm_image_pk=algorithm_image_pk,
+        invoice_pk=job.utilization.invoice_id,
+    )
 
     try:
         executor.handle_event(event=event)

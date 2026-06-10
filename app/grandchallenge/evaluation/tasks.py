@@ -239,7 +239,8 @@ def create_algorithm_jobs_for_evaluation(
         return
 
     lock_for_utilization_update(
-        algorithm_image_pk=evaluation.submission.algorithm_image_id
+        algorithm_image_pk=evaluation.submission.algorithm_image_id,
+        invoice_pk=evaluation.utilization.invoice_id,
     )
 
     slots_available = min(
