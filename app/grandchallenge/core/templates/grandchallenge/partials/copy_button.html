@@ -1,0 +1,10 @@
+<span>
+    {% if link %}
+        <a href="{{ link }}">
+    {% endif %}
+            {{ display_value }}
+    {% if link %}
+        </a>
+    {% endif %}
+    {{ button }}
+</span>
