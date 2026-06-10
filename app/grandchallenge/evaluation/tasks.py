@@ -8,7 +8,11 @@ from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 from lambda_tasks.logging import task_logger
 
-from config.lambda_tasks import LambdaTaskQueueChoices
+from config.lambda_tasks import (
+    LONG_TASK_HARD_TIMEOUT,
+    LONG_TASK_SOFT_TIMEOUT,
+    LambdaTaskQueueChoices,
+)
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import AlgorithmModel, Job
 from grandchallenge.algorithms.tasks import create_algorithm_jobs
@@ -378,7 +382,10 @@ def handle_failed_jobs(*, evaluation_pk: str | uuid.UUID):
 
 
 @lambda_task(
-    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+    queue=LambdaTaskQueueChoices.MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=LONG_TASK_HARD_TIMEOUT,
 )
 def set_evaluation_inputs(*, evaluation_pk: str | uuid.UUID):
     """
