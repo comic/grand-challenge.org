@@ -100,7 +100,7 @@ class InvoiceQuerySet(models.QuerySet):
             )
         )
 
-        return self.annotate(
+        return self.with_is_expired().annotate(
             is_budget_authorized=ExpressionWrapper(
                 ~Q(payment_status=PaymentStatusChoices.CANCELLED)
                 & (
@@ -120,6 +120,9 @@ class InvoiceQuerySet(models.QuerySet):
                 output_field=models.BooleanField(),
             )
         )
+
+    def with_is_expired(self):
+        return self.annotate(is_expired=Q(expires_on__lt=Now()))
 
     def to_check(self):
         return self.filter(
@@ -427,10 +430,6 @@ class Invoice(models.Model, FieldChangeMixin):
             return "success"
         else:
             return "info"
-
-    @cached_property
-    def is_expired(self):
-        return self.expires_on < now().date()
 
     @cached_property
     def available_compute_cost_euro_millicents(self):

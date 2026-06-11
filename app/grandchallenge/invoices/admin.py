@@ -47,6 +47,21 @@ class ToCheckFilter(admin.SimpleListFilter):
         return queryset
 
 
+class IsActiveFilter(admin.SimpleListFilter):
+    title = "is active"
+    parameter_name = "is_active"
+
+    def lookups(self, request, model_admin):
+        return [("1", "Yes"), ("0", "No")]
+
+    def queryset(self, request, queryset):
+        if self.value() == "1":
+            return queryset.exclude(is_expired=True)
+        elif self.value() == "0":
+            return queryset.exclude(is_expired=False)
+        return queryset
+
+
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
     list_display = (
@@ -65,6 +80,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_filter = (
         OverdueListFilter,
         ToCheckFilter,
+        IsActiveFilter,
         "payment_status",
         "payment_type",
         "challenge__short_name",

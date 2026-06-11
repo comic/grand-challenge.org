@@ -31,9 +31,11 @@ class InvoiceList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(
-            challenge=self.request.challenge
-        ).with_overdue_status()
+        return (
+            queryset.filter(challenge=self.request.challenge)
+            .with_overdue_status()
+            .with_is_expired()
+        )
 
 
 class InvoiceDetail(
@@ -52,4 +54,4 @@ class InvoiceDetail(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.with_overdue_status()
+        return queryset.with_overdue_status().with_is_expired()
