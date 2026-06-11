@@ -57,7 +57,8 @@ class InvoiceAdmin(admin.ModelAdmin):
         "total_amount_euros",
         "percent_budget_consumed_display",
         "issued_on",
-        "follow_up_on",
+        "expires_on",
+        "last_checked_on",
         "is_active",
         "internal_comments",
     )
@@ -73,6 +74,7 @@ class InvoiceAdmin(admin.ModelAdmin):
             None,
             {
                 "fields": [
+                    "created",
                     "challenge",
                     "payment_type",
                     "payment_status",
@@ -136,6 +138,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     ]
     autocomplete_fields = ("challenge",)
     readonly_fields = [
+        "created",
         "invoice_request_text",
         "percent_budget_consumed_display",
         "available_compute_cost",
@@ -145,6 +148,8 @@ class InvoiceAdmin(admin.ModelAdmin):
         "total_amount_euros",
         "is_active",
     ]
+
+    ordering = ["expires_on", "created"]
 
     @admin.display(description="Total")
     def total_amount_euros(self, obj):
