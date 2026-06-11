@@ -2,6 +2,7 @@ import base64
 import itertools
 import logging
 import random
+from datetime import timedelta
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
@@ -50,8 +51,13 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
 )
 from grandchallenge.task_categories.models import TaskType
+from grandchallenge.utilization.models import SessionUtilization
 from grandchallenge.verifications.models import Verification
-from grandchallenge.workstations.models import Workstation
+from grandchallenge.workstations.models import (
+    Session,
+    Workstation,
+    WorkstationImage,
+)
 from scripts.algorithm_evaluation_fixtures import _gc_demo_algorithm
 from scripts.component_interface_value_fixtures import _create_image
 
@@ -410,6 +416,7 @@ def _create_reader_studies(users):
         logo=create_uploaded_image(),
         description="Test reader study",
         view_content={"main": ["generic-medical-image"]},
+        max_credits=5000,
     )
     reader_study.editors_group.user_set.add(users["readerstudy"])
     reader_study.readers_group.user_set.add(users["demo"])
@@ -453,6 +460,25 @@ def _create_reader_studies(users):
         display_set=display_set,
     )
     answer.save()
+
+    # Create session utilizations for the usage view
+    workstation_image = WorkstationImage.objects.create(
+        creator=users["workstation"],
+        workstation=Workstation.objects.last(),
+    )
+    for user_key, duration in [
+        ("demo", timedelta(hours=3, minutes=30)),
+        ("readerstudy", timedelta(hours=1, minutes=15)),
+    ]:
+        session = Session.objects.create(
+            creator=users[user_key],
+            workstation_image=workstation_image,
+        )
+        session.reader_studies.add(reader_study)
+        SessionUtilization.objects.create(
+            session=session,
+            duration=duration,
+        )
 
 
 def _create_archive(users):

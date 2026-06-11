@@ -1336,3 +1336,193 @@ def test_reader_study_users_list_is_filtered(client):
         assert expected_reader_studies == {
             *response.context[-1]["object_list"]
         }
+
+
+@pytest.mark.django_db
+def test_usage_view_permission(client):
+    editor, reader, user = UserFactory(), UserFactory(), UserFactory()
+    rs = ReaderStudyFactory()
+    rs.add_editor(user=editor)
+    rs.add_reader(user=reader)
+
+    # Anonymous user gets redirected
+    response = get_view_for_user(
+        viewname="reader-studies:usage",
+        client=client,
+        reverse_kwargs={"slug": rs.slug},
+    )
+    assert response.status_code == 302
+
+    # Reader gets 403
+    response = get_view_for_user(
+        viewname="reader-studies:usage",
+        client=client,
+        reverse_kwargs={"slug": rs.slug},
+        user=reader,
+    )
+    assert response.status_code == 403
+
+    # Regular user gets 403
+    response = get_view_for_user(
+        viewname="reader-studies:usage",
+        client=client,
+        reverse_kwargs={"slug": rs.slug},
+        user=user,
+    )
+    assert response.status_code == 403
+
+    # Editor gets 200
+    response = get_view_for_user(
+        viewname="reader-studies:usage",
+        client=client,
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_usage_view_displays_credits(client):
+    from datetime import timedelta
+
+    from grandchallenge.utilization.models import SessionUtilization
+
+    editor = UserFactory()
+    reader1, reader2 = UserFactory(), UserFactory()
+    rs = ReaderStudyFactory(max_credits=1000)
+    rs.add_editor(user=editor)
+    rs.add_reader(user=reader1)
+    rs.add_reader(user=reader2)
+
+    # Create session utilizations for readers
+    from tests.factories import SessionFactory
+
+    session1 = SessionFactory(creator=reader1)
+    session1.reader_studies.add(rs)
+    SessionUtilization.objects.create(
+        session=session1, duration=timedelta(hours=2)
+    )
+
+    session2 = SessionFactory(creator=reader2)
+    session2.reader_studies.add(rs)
+    SessionUtilization.objects.create(
+        session=session2, duration=timedelta(hours=1)
+    )
+
+    response = get_view_for_user(
+        viewname="reader-studies:usage",
+        client=client,
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+    )
+    assert response.status_code == 200
+
+    # Check that the template displays the max_credits
+    assert "1000" in response.rendered_content
+    # Check that readers appear in the content
+    assert reader1.username in response.rendered_content
+    assert reader2.username in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_usage_view_credits_divided_by_reader_study_count(client):
+    from datetime import timedelta
+
+    from grandchallenge.utilization.models import SessionUtilization
+
+    editor = UserFactory()
+    reader = UserFactory()
+    rs1 = ReaderStudyFactory()
+    rs2 = ReaderStudyFactory()
+    rs1.add_editor(user=editor)
+    rs1.add_reader(user=reader)
+    rs2.add_reader(user=reader)
+
+    from tests.factories import SessionFactory
+
+    # Session shared across two reader studies
+    session = SessionFactory(creator=reader)
+    session.reader_studies.add(rs1, rs2)
+    SessionUtilization.objects.create(
+        session=session, duration=timedelta(hours=1)
+    )
+
+    response = get_view_for_user(
+        viewname="reader-studies:usage",
+        client=client,
+        reverse_kwargs={"slug": rs1.slug},
+        user=editor,
+    )
+    assert response.status_code == 200
+
+    # 1 hour session = ceil(1 * 500) = 500 credits
+    # Shared across 2 reader studies, so credits for rs1 = 500 / 2 = 250
+    # The full duration should still be shown undivided
+    content = response.rendered_content
+    assert reader.username in content
+    assert "250" in content
+    assert "500" not in content
+    assert "an hour" in content
+
+
+@pytest.mark.django_db
+def test_usage_view_total_credits_matches_per_user_sum(client):
+    from datetime import timedelta
+
+    from grandchallenge.utilization.models import SessionUtilization
+
+    editor = UserFactory()
+    reader1, reader2 = UserFactory(), UserFactory()
+    rs1 = ReaderStudyFactory(max_credits=10000)
+    rs2 = ReaderStudyFactory()
+    rs1.add_editor(user=editor)
+    rs1.add_reader(user=reader1)
+    rs1.add_reader(user=reader2)
+
+    from tests.factories import SessionFactory
+
+    # reader1: one session exclusive to rs1
+    session1 = SessionFactory(creator=reader1)
+    session1.reader_studies.add(rs1)
+    SessionUtilization.objects.create(
+        session=session1, duration=timedelta(hours=2)
+    )
+
+    # reader1: one session shared with rs2
+    session2 = SessionFactory(creator=reader1)
+    session2.reader_studies.add(rs1, rs2)
+    SessionUtilization.objects.create(
+        session=session2, duration=timedelta(hours=4)
+    )
+
+    # reader2: one session exclusive to rs1
+    session3 = SessionFactory(creator=reader2)
+    session3.reader_studies.add(rs1)
+    SessionUtilization.objects.create(
+        session=session3, duration=timedelta(hours=1)
+    )
+
+    # reader2: one session shared with rs2
+    session4 = SessionFactory(creator=reader2)
+    session4.reader_studies.add(rs1, rs2)
+    SessionUtilization.objects.create(
+        session=session4, duration=timedelta(hours=3)
+    )
+
+    response = get_view_for_user(
+        viewname="reader-studies:usage",
+        client=client,
+        reverse_kwargs={"slug": rs1.slug},
+        user=editor,
+    )
+    assert response.status_code == 200
+
+    # Get the reader study with budget annotation
+    rs1_with_budget = ReaderStudy.objects.with_has_budget().get(pk=rs1.pk)
+
+    # Get per-user credits from the view context
+    user_usage = response.context["user_usage"]
+    per_user_total = sum(u.total_credits for u in user_usage)
+
+    assert per_user_total == rs1_with_budget.credits_consumed
+    assert len(user_usage) == 2

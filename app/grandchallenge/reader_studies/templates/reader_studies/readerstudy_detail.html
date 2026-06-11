@@ -50,6 +50,10 @@
                 ><i class="fas fa-tasks fa-fw"></i>&nbsp;Users Progress
                 </a>
                 <a class="nav-link"
+                   href="{% url 'reader-studies:usage' slug=object.slug %}"
+                ><i class="fas fa-tachometer-alt fa-fw"></i>&nbsp;Usage
+                </a>
+                <a class="nav-link"
                    href="{% url 'reader-studies:permission-request-list' slug=object.slug %}"
                 ><i class="fas fa-question fa-fw"></i>&nbsp;Requests&nbsp;<span
                         class="badge badge-pill badge-secondary align-middle">{{ pending_permission_requests }}</span>
