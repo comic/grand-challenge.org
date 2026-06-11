@@ -2,6 +2,7 @@
 {% load url %}
 {% load static %}
 {% load user_profile_link_username from profiles %}
+{% load naturaldelta %}
 
 {% block title %}
     Usage - {{ object }} - {{ block.super }}
@@ -19,7 +20,8 @@
 
     <h1>{{ object.title }} Usage</h1>
 
-    <h2>Summary</h2>
+    <h2>Credits</h2>
+
     <table class="table table-borderless table-sm">
         <tbody>
             <tr>
@@ -38,6 +40,7 @@
     </table>
 
     <h2>Usage per user</h2>
+
     <div class="table-responsive mt-3">
         <table
             data-data-table
@@ -58,8 +61,8 @@
                     <tr>
                         <td>{{ user.username|user_profile_link_username }}</td>
                         <td>{{ user.total_credits }}</td>
-                        <td>{{ user.session_duration }}</td>
-                        <td>{{ user.endpoint_duration }}</td>
+                        <td data-order="{{ user.session_duration.total_seconds }}">{{ user.session_duration|naturaldelta }}</td>
+                        <td data-order="{{ user.endpoint_duration.total_seconds }}">{% if user.endpoint_duration %}{{ user.endpoint_duration|naturaldelta }}{% else %}-{% endif %}</td>
                     </tr>
                 {% endfor %}
             </tbody>
