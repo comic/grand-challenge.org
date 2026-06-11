@@ -1462,4 +1462,67 @@ def test_usage_view_credits_divided_by_reader_study_count(client):
     assert reader.username in content
     assert "250" in content
     assert "500" not in content
-    assert "1:00:00" in content
+    assert "an hour" in content
+
+
+@pytest.mark.django_db
+def test_usage_view_total_credits_matches_per_user_sum(client):
+    from datetime import timedelta
+
+    from grandchallenge.utilization.models import SessionUtilization
+
+    editor = UserFactory()
+    reader1, reader2 = UserFactory(), UserFactory()
+    rs1 = ReaderStudyFactory(max_credits=10000)
+    rs2 = ReaderStudyFactory()
+    rs1.add_editor(user=editor)
+    rs1.add_reader(user=reader1)
+    rs1.add_reader(user=reader2)
+
+    from tests.factories import SessionFactory
+
+    # reader1: one session exclusive to rs1
+    session1 = SessionFactory(creator=reader1)
+    session1.reader_studies.add(rs1)
+    SessionUtilization.objects.create(
+        session=session1, duration=timedelta(hours=2)
+    )
+
+    # reader1: one session shared with rs2
+    session2 = SessionFactory(creator=reader1)
+    session2.reader_studies.add(rs1, rs2)
+    SessionUtilization.objects.create(
+        session=session2, duration=timedelta(hours=4)
+    )
+
+    # reader2: one session exclusive to rs1
+    session3 = SessionFactory(creator=reader2)
+    session3.reader_studies.add(rs1)
+    SessionUtilization.objects.create(
+        session=session3, duration=timedelta(hours=1)
+    )
+
+    # reader2: one session shared with rs2
+    session4 = SessionFactory(creator=reader2)
+    session4.reader_studies.add(rs1, rs2)
+    SessionUtilization.objects.create(
+        session=session4, duration=timedelta(hours=3)
+    )
+
+    response = get_view_for_user(
+        viewname="reader-studies:usage",
+        client=client,
+        reverse_kwargs={"slug": rs1.slug},
+        user=editor,
+    )
+    assert response.status_code == 200
+
+    # Get the reader study with budget annotation
+    rs1_with_budget = ReaderStudy.objects.with_has_budget().get(pk=rs1.pk)
+
+    # Get per-user credits from the view context
+    user_usage = response.context["user_usage"]
+    per_user_total = sum(u.total_credits for u in user_usage)
+
+    assert per_user_total == rs1_with_budget.credits_consumed
+    assert len(user_usage) == 2
