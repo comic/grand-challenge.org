@@ -150,7 +150,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     def total_amount_euros(self, obj):
         return euro(obj.total_amount_euros, decimal_places=0)
 
-    @admin.display(description="Number")
+    @admin.display(description="Number")  # Reduce column width
     def internal_invoice_number_display(self, obj):
         return obj.internal_invoice_number
 
