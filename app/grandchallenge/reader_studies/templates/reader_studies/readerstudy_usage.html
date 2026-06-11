@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load url %}
+{% load static %}
+{% load user_profile_link_username from profiles %}
+
+{% block title %}
+    Usage - {{ object }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader Studies</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Usage</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h1>{{ object.title }} Usage</h1>
+
+    <h2>Summary</h2>
+    <table class="table table-borderless table-sm">
+        <tbody>
+            <tr>
+                <th>Used</th>
+                <td>{{ object.credits_consumed }}</td>
+            </tr>
+            <tr>
+                <th>Remaining</th>
+                <td>{{ credits_remaining|default:"Unlimited" }}</td>
+            </tr>
+            <tr>
+                <th>Total</th>
+                <td>{{ object.max_credits|default:"Unlimited" }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Usage per user</h2>
+    <div class="table-responsive mt-3">
+        <table
+            data-data-table
+            data-page-length="100"
+            data-order='[[1, "desc"]]'
+            class="table table-hover table-borderless table-sm w-100"
+        >
+            <thead class="thead-light">
+                <tr>
+                    <th>User</th>
+                    <th>Credits used</th>
+                    <th>Total session duration</th>
+                    <th>Total endpoint duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in user_usage %}
+                    <tr>
+                        <td>{{ user.username|user_profile_link_username }}</td>
+                        <td>{{ user.total_credits }}</td>
+                        <td>{{ user.session_duration }}</td>
+                        <td>{{ user.endpoint_duration }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% endblock %}

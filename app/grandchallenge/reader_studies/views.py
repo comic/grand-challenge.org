@@ -1,5 +1,6 @@
 import csv
 import logging
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib import messages
@@ -11,7 +12,18 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Count, Prefetch, Q
+from django.db.models import (
+    Count,
+    F,
+    IntegerField,
+    OuterRef,
+    Prefetch,
+    Q,
+    Subquery,
+    Sum,
+    Value,
+)
+from django.db.models.functions import Coalesce
 from django.forms import Form
 from django.forms.utils import ErrorList
 from django.http import (
@@ -120,6 +132,10 @@ from grandchallenge.reader_studies.tasks import (
     create_display_sets_for_upload_session,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
+from grandchallenge.utilization.models import (
+    EndpointUtilizationReaderStudy,
+    SessionUtilizationReaderStudy,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -417,6 +433,137 @@ class ReaderStudyStatistics(
     queryset = ReaderStudy.objects.with_has_budget()
     # TODO: this view also contains the ground truth answer values.
     # If the permission is changed to 'read', we need to filter these values out.
+
+
+class ReaderStudyUsage(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = ReaderStudy
+    permission_required = "reader_studies.change_readerstudy"
+    raise_exception = True
+    template_name = "reader_studies/readerstudy_usage.html"
+    queryset = ReaderStudy.objects.with_has_budget()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        session_rs_count = Subquery(
+            SessionUtilizationReaderStudy.objects.filter(
+                session_utilization=OuterRef("session_utilization")
+            )
+            .values("session_utilization")
+            .annotate(count=Count("id"))
+            .values("count")[:1],
+            output_field=IntegerField(),
+        )
+        endpoint_rs_count = Subquery(
+            EndpointUtilizationReaderStudy.objects.filter(
+                endpoint_utilization=OuterRef("endpoint_utilization")
+            )
+            .values("endpoint_utilization")
+            .annotate(count=Count("id"))
+            .values("count")[:1],
+            output_field=IntegerField(),
+        )
+
+        session_credits_subquery = (
+            SessionUtilizationReaderStudy.objects.filter(
+                reader_study=self.object,
+                session_utilization__creator=OuterRef("pk"),
+            )
+            .annotate(reader_studies_count=session_rs_count)
+            .values("session_utilization__creator")
+            .annotate(
+                total=Sum(
+                    F("session_utilization__credits_consumed")
+                    / F("reader_studies_count")
+                )
+            )
+            .values("total")[:1]
+        )
+        session_duration_subquery = (
+            SessionUtilizationReaderStudy.objects.filter(
+                reader_study=self.object,
+                session_utilization__creator=OuterRef("pk"),
+            )
+            .values("session_utilization__creator")
+            .annotate(total=Sum("session_utilization__duration"))
+            .values("total")[:1]
+        )
+        endpoint_credits_subquery = (
+            EndpointUtilizationReaderStudy.objects.filter(
+                reader_study=self.object,
+                endpoint_utilization__creator=OuterRef("pk"),
+            )
+            .annotate(reader_studies_count=endpoint_rs_count)
+            .values("endpoint_utilization__creator")
+            .annotate(
+                total=Sum(
+                    F("endpoint_utilization__credits_consumed")
+                    / F("reader_studies_count")
+                )
+            )
+            .values("total")[:1]
+        )
+        endpoint_duration_subquery = (
+            EndpointUtilizationReaderStudy.objects.filter(
+                reader_study=self.object,
+                endpoint_utilization__creator=OuterRef("pk"),
+            )
+            .values("endpoint_utilization__creator")
+            .annotate(total=Sum("endpoint_utilization__duration"))
+            .values("total")[:1]
+        )
+
+        user_usage = (
+            get_user_model()
+            .objects.filter(
+                Q(
+                    pk__in=SessionUtilizationReaderStudy.objects.filter(
+                        reader_study=self.object
+                    ).values("session_utilization__creator")
+                )
+                | Q(
+                    pk__in=EndpointUtilizationReaderStudy.objects.filter(
+                        reader_study=self.object
+                    ).values("endpoint_utilization__creator")
+                )
+            )
+            .annotate(
+                session_credits=Coalesce(
+                    Subquery(session_credits_subquery), Value(0)
+                ),
+                endpoint_credits=Coalesce(
+                    Subquery(endpoint_credits_subquery), Value(0)
+                ),
+                total_credits=F("session_credits") + F("endpoint_credits"),
+                session_duration=Coalesce(
+                    Subquery(session_duration_subquery),
+                    Value(timedelta()),
+                ),
+                endpoint_duration=Coalesce(
+                    Subquery(endpoint_duration_subquery),
+                    Value(timedelta()),
+                ),
+            )
+            .select_related("user_profile", "verification")
+        )
+
+        if self.object.max_credits is not None:
+            credits_remaining = (
+                self.object.max_credits - self.object.credits_consumed
+            )
+        else:
+            credits_remaining = None
+
+        context.update(
+            {
+                "user_usage": user_usage,
+                "credits_remaining": credits_remaining,
+            }
+        )
+
+        return context
 
 
 class ReaderStudyDisplaySetList(ObjectPermissionRequiredMixin, CivSetListView):

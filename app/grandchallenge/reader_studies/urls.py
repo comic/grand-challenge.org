@@ -34,6 +34,7 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyPermissionRequestUpdate,
     ReaderStudyStatistics,
     ReaderStudyUpdate,
+    ReaderStudyUsage,
     ReadersUpdate,
     UsersProgress,
     UsersReaderStudyList,
@@ -62,6 +63,11 @@ urlpatterns = [
         "<slug:slug>/statistics/",
         ReaderStudyStatistics.as_view(),
         name="statistics",
+    ),
+    path(
+        "<slug:slug>/usage/",
+        ReaderStudyUsage.as_view(),
+        name="usage",
     ),
     path("<slug:slug>/copy/", ReaderStudyCopy.as_view(), name="copy"),
     path(
