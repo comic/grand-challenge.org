@@ -62,17 +62,21 @@ RUN mkdir -p /opt/git-lfs \
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false\
     COMPONENTS_SAGEMAKER_SHIM_VERSION=0.7.0\
-    PATH="/opt/grand-challenge/.venv/bin:${PATH}"
+    PATH="/opt/grand-challenge/.venv/bin:/home/django/.local/bin:${PATH}"
 
 RUN mkdir -p /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs \
-    && chmod -R a+rX /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs
+    && groupadd -r django && useradd -m -r -g django django \
+    && chown django:django /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs
+
+USER django:django
 
 # Fetch and install sagemaker shim for shimming containers
 RUN mkdir -p /opt/sagemaker-shim \
     && wget "https://github.com/DIAGNijmegen/rse-sagemaker-shim/releases/download/v${COMPONENTS_SAGEMAKER_SHIM_VERSION}/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" -P /opt/sagemaker-shim/ \
     && echo "aec4bc64f4ce90bd4368e89ebb8db571c84b10efe3908419bdd7fe17480f9ce0  /opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/sagemaker-shim/ -xzvf "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" \
-    && rm "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz"
+    && rm "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz" \
+    && chmod -R a+rX /opt/sagemaker-shim
 
 # Create virtual environments
 RUN mkdir -p /opt/virtualenvs \
@@ -95,6 +99,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ##################
 FROM base AS test-base
 
+USER root
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         # Add java and graphviz for plantuml documentation
@@ -111,6 +116,7 @@ RUN apt-get update \
         libgbm1 \
         libxkbcommon0 \
     && rm -rf /var/lib/apt/lists/*
+USER django:django
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
