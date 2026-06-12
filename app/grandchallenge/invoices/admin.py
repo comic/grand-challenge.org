@@ -95,6 +95,7 @@ class InvoiceAdmin(admin.ModelAdmin):
                     "challenge",
                     "payment_type",
                     "payment_status",
+                    "utilization_priority",
                     "total_amount_euros",
                     "internal_comments",
                     "internal_invoice_number",
