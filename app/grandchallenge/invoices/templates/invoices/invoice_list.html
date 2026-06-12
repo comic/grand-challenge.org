@@ -3,6 +3,7 @@
 {% load static %}
 {% load url %}
 {% load costs %}
+{% load humanize %}
 
 {% block title %}
     Invoices - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
@@ -16,7 +17,7 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Invoices</li>
+            aria-current="page">Invoices & Budget</li>
     </ol>
 {% endblock %}
 
@@ -33,57 +34,98 @@
             <i class="fas fa-exclamation-triangle"></i> There {{ num_is_due|pluralize:"is,are" }} {{ num_is_due }} invoice{{ num_is_due|pluralize }} due.
         </p>
     {% endif %}
+
+
     <p>
         If an invoice has been paid recently, the status will be updated soon.
         For any questions, please <a target="_blank" href="mailto:{{ SUPPORT_EMAIL }}">contact support</a>.
     </p>
 
-
     <div class="table-responsive">
-    <table
-        data-data-table
-        data-paginate="false"
-        data-length-change="false"
-        data-filter="false"
-        data-info="false"
-        data-order='[[1, "asc"]]'
-        class="table table-hover table-borderless table-sm w-100"
-    >
-        <thead class="thead-light">
-            <tr>
-            <th></th>
-                <th class="nonSortable">Invoice Number</th>
-                <th>Issued on</th>
-                <th>Due on</th>
-                <th>Amount</th>
-                <th>Used budget</th>
-                <th>Type</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for invoice in object_list %}
+        <table
+            data-data-table
+            data-paginate="false"
+            data-length-change="false"
+            data-filter="false"
+            data-info="false"
+            data-order='[[1, "asc"]]'
+            class="table table-hover table-borderless table-sm w-100"
+        >
+            <thead class="thead-light">
                 <tr>
-                    <td>
-                        <a href="{% url 'invoices:detail' challenge_short_name=invoice.challenge.short_name external_pk=invoice.external_pk %}" title="View invoice details"><i class="fas fa-info-circle"></i></a>
-                    </td>
-                    <td>{% firstof invoice.internal_invoice_number '-' %}</td>
-                    <td data-order="{{ invoice.issued_on|date:"c" }}">{{ invoice.issued_on|default_if_none:"-" }}</td>
-                    <td data-order="{{ invoice.due_date|date:"c" }}">
-                        {{ invoice.due_date|default_if_none:"-" }}
-                        {% if invoice.is_overdue %}
-                            <i class="fas fa-exclamation-triangle text-danger" title="Invoice is overdue."></i>
-                        {% elif invoice.is_due %}
-                            <i class="fas fa-exclamation-triangle text-warning" title="Invoice is due."></i>
-                        {% endif %}
-                    </td>
-                    <td>{{ invoice.total_amount_euros|euro:0 }}</td>
-                        <td data-order="{% if invoice.percent_compute_budget_consumed is None %}-1{% else %}{{ invoice.percent_compute_budget_consumed }}{% endif %}" class="{% if invoice.percent_compute_budget_consumed >= 100 %}text-danger{% elif invoice.percent_compute_budget_consumed >= 70 %}text-warning{% elif invoice.percent_compute_budget_consumed is not None %}text-success{% endif %}">{{ invoice.percent_compute_budget_consumed|default_if_none:"-" }}</td>
-                    <td>{{ invoice.get_payment_type_display }}</td>
-                    <td>{{ invoice.get_status_badge }}</td>
+                <th></th>
+                    <th class="nonSortable">Invoice Number</th>
+                    <th>Issued on</th>
+                    <th>Due on</th>
+                    <th>Amount</th>
+                    <th>Used compute budget</th>
+                    <th>Type</th>
+                    <th>Status</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+            </thead>
+            <tbody>
+                {% for invoice in object_list %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'invoices:detail' challenge_short_name=invoice.challenge.short_name external_pk=invoice.external_pk %}" title="View invoice details"><i class="fas fa-info-circle"></i></a>
+                        </td>
+                        <td>{% firstof invoice.internal_invoice_number '-' %}</td>
+                        <td data-order="{{ invoice.issued_on|date:"c" }}">{{ invoice.issued_on|default_if_none:"-" }}</td>
+                        <td data-order="{{ invoice.due_date|date:"c" }}">
+                            {{ invoice.due_date|default_if_none:"-" }}
+                            {% if invoice.is_overdue %}
+                                <i class="fas fa-exclamation-triangle text-danger" title="Invoice is overdue."></i>
+                            {% elif invoice.is_due %}
+                                <i class="fas fa-exclamation-triangle text-warning" title="Invoice is due."></i>
+                            {% endif %}
+                        </td>
+                        <td>{{ invoice.total_amount_euros|euro:0 }}</td>
+                        <td data-order="{% if invoice.percent_compute_budget_consumed is None %}-1{% else %}{{ invoice.percent_compute_budget_consumed }}{% endif %}" class="{% if invoice.percent_compute_budget_consumed >= 100 %}text-danger{% elif invoice.percent_compute_budget_consumed >= 70 %}text-warning{% elif invoice.percent_compute_budget_consumed is not None %}text-success{% endif %}">
+                            {% if invoice.percent_compute_budget_consumed is not None %} {{ invoice.percent_compute_budget_consumed }}% {% else %} - {% endif %}
+                        </td>
+                        <td>{{ invoice.get_payment_type_display }}</td>
+                        <td>{{ invoice.get_status_badge }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <hr>
+    <h3>Compute Capacity for {{ challenge.short_name }}</h3>
+
+    <dl>
+        <dt>Active budget</dt>
+        <dd>
+            <div class="progress">
+                <div
+                class="progress-bar {% if challenge.percent_active_compute_budget_consumed >= 100 %}bg-danger{% elif challenge.percent_active_compute_budget_consumed >= 70 %}bg-warning{% else %}bg-success{% endif %}"
+                style="width: {{ challenge.percent_active_compute_budget_consumed }}%"
+                >
+                {{ challenge.percent_active_compute_budget_consumed }}%
+                </div>
+            </div>
+        </dd>
+
+        <dt>Total used compute capacity</dt>
+        <dd>{{ challenge.consumed_compute_cost_euro_millicents|millicents_to_euro }}</dd>
+
+        <dt>Total available compute capacity</dt>
+         <dd>{{ challenge.available_compute_cost_euro_millicents|millicents_to_euro }}</dd>
+    </dl>
+
+    <hr>
+    <h3>Storage Capacity for {{ challenge.short_name }}</h3>
+
+    <dl>
+        <dt>Total available storage capacity</dt>
+        <dd>{{ challenge.approved_storage_cost_euro_millicents|millicents_to_euro }}</dd>
+
+        <dt>Total current object data storage</dt>
+        <dd>{{ challenge.size_in_storage|filesizeformat }}</dd>
+
+        <dt>Total current container registry storage</dt>
+        <dd>{{ challenge.size_in_registry|filesizeformat }}</dd>
+    </dl>
+
 {% endblock %}

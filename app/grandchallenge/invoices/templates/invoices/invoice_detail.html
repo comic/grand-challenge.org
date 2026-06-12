@@ -17,7 +17,7 @@
             <a href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="{% url 'invoices:list' challenge_short_name=challenge.short_name %}">Invoices</a>
+            <a href="{% url 'invoices:list' challenge_short_name=challenge.short_name %}">Invoices & Budget</a>
         </li>
         <li class="breadcrumb-item active" aria-current="page">Invoice {% firstof object.internal_invoice_number object.external_pk %}</li>
     </ol>
@@ -25,9 +25,6 @@
 
 {% block content %}
     <h2>Invoice for {{ challenge.short_name }}</h2>
-
-    <hr>
-
     <div class="row">
         <div class="col-md-6">
             <dl>
@@ -95,35 +92,31 @@
         </div>
     </div>
 
+    <hr>
 
     <h3>Compute Budget Consumption</h3>
 
-    <hr>
 
     {% if not object.is_budget_authorized %}
          <span class="text-muted">
             Any compute budget consumption will be shown here.
         </span>
     {% else %}
+
+    <div class="progress mb-3">
+        <div
+            class="progress-bar {% if object.percent_compute_budget_consumed >= 100 %}bg-danger{% elif object.percent_compute_budget_consumed >= 70 %}bg-warning{% else %}bg-success{% endif %}"
+            style="width: {{ object.percent_compute_budget_consumed }}%"
+        >
+            {{ object.percent_compute_budget_consumed }}%
+        </div>
+    </div>
+
     <dl>
-
-
-        <dt>Used compute budget</dt>
-        <dd>
-            <div class="progress">
-                <div
-                    class="progress-bar {% if object.percent_compute_budget_consumed >= 100 %}bg-danger{% elif object.percent_compute_budget_consumed >= 70 %}bg-warning{% else %}bg-success{% endif %}"
-                    style="width: {{ object.percent_compute_budget_consumed }}%"
-                >
-                    {{ object.percent_compute_budget_consumed }}%
-                </div>
-            </div>
-        </dd>
-
         <dt>Used compute capacity</dt>
         <dd>{{ object.consumed_compute_cost_euro_millicents|millicents_to_euro }}</dd>
 
-        <dt>Remaining compute capacity</dt>
+        <dt>Available compute capacity</dt>
         <dd>{{ object.available_compute_cost_euro_millicents|millicents_to_euro }}</dd>
 
     </dl>

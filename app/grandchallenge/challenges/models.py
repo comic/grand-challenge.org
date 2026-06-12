@@ -773,6 +773,13 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
 
     @cached_property
+    def approved_storage_cost_euro_millicents(self):
+        return sum(
+            invoice.storage_costs_euros * 1000 * 100
+            for invoice in self.invoices.all()
+        )
+
+    @cached_property
     def available_compute_cost_euro_millicents(self):
         return sum(
             invoice.available_compute_cost_euro_millicents
