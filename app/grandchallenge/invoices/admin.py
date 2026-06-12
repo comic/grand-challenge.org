@@ -6,6 +6,7 @@ from grandchallenge.core.admin import (
     UserObjectPermissionAdmin,
 )
 from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.core.templatetags.costs import euro, millicents_to_euro
 from grandchallenge.invoices.models import (
     Invoice,
     InvoiceGroupObjectPermission,
@@ -46,32 +47,159 @@ class ToCheckFilter(admin.SimpleListFilter):
         return queryset
 
 
+class IsExpiredFilter(admin.SimpleListFilter):
+    title = "is expired"
+    parameter_name = "is_expired"
+
+    def lookups(self, request, model_admin):
+        return [("1", "Yes"), ("0", "No")]
+
+    def queryset(self, request, queryset):
+        if self.value() == "1":
+            return queryset.filter(is_expired=True)
+        elif self.value() == "0":
+            return queryset.filter(is_expired=False)
+        return queryset
+
+
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
     list_display = (
         "challenge",
-        "issued_on",
-        "expires_on",
-        "follow_up_on",
-        "internal_invoice_number",
-        "internal_client_number",
-        "contact_email",
-        "total_amount_euros",
+        "internal_invoice_number_display",
         "payment_type",
         "payment_status",
-        "paid_on",
+        "total_amount_euros",
+        "percent_budget_consumed_display",
+        "issued_on",
+        "expires_on",
         "last_checked_on",
+        "is_not_expired",
         "internal_comments",
     )
     list_filter = (
         OverdueListFilter,
         ToCheckFilter,
+        IsExpiredFilter,
         "payment_status",
         "payment_type",
         "challenge__short_name",
     )
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": [
+                    "created",
+                    "challenge",
+                    "payment_type",
+                    "payment_status",
+                    "total_amount_euros",
+                    "internal_comments",
+                    "internal_invoice_number",
+                    "internal_client_number",
+                ]
+            },
+        ),
+        (
+            "Dates",
+            {
+                "fields": [
+                    "issued_on",
+                    "paid_on",
+                    "last_checked_on",
+                    "follow_up_on",
+                    (
+                        "expires_on",
+                        "is_not_expired",
+                    ),
+                ]
+            },
+        ),
+        (
+            "Budget Costs",
+            {
+                "fields": [
+                    "support_costs_euros",
+                    "compute_costs_euros",
+                    "storage_costs_euros",
+                ]
+            },
+        ),
+        (
+            "Budget Usage",
+            {
+                "fields": [
+                    "percent_budget_consumed_display",
+                    "available_compute_cost",
+                    "approved_compute_cost",
+                    "consumed_compute_cost",
+                    "write_off_compute_cost",
+                ]
+            },
+        ),
+        (
+            "Billing details",
+            {
+                "fields": [
+                    "external_reference",
+                    "billing_address",
+                    "contact_name",
+                    "contact_email",
+                    "vat_number",
+                    "invoice_request_text",
+                ]
+            },
+        ),
+    ]
     autocomplete_fields = ("challenge",)
-    readonly_fields = ["invoice_request_text", "compute_cost_euro_millicents"]
+    readonly_fields = [
+        "created",
+        "invoice_request_text",
+        "percent_budget_consumed_display",
+        "available_compute_cost",
+        "approved_compute_cost",
+        "consumed_compute_cost",
+        "write_off_compute_cost",
+        "total_amount_euros",
+        "is_not_expired",
+    ]
+
+    ordering = ["expires_on", "created"]
+
+    @admin.display(description="Total")
+    def total_amount_euros(self, obj):
+        if obj.total_amount_euros:
+            return euro(obj.total_amount_euros, decimal_places=0)
+        else:
+            return ""
+
+    @admin.display(description="Number")  # Reduce column width
+    def internal_invoice_number_display(self, obj):
+        return obj.internal_invoice_number
+
+    @admin.display(boolean=True)
+    def is_not_expired(self, obj):
+        return not obj.is_expired
+
+    def available_compute_cost(self, obj):
+        return millicents_to_euro(obj.available_compute_cost_euro_millicents)
+
+    def approved_compute_cost(self, obj):
+        return millicents_to_euro(obj.approved_compute_cost_euro_millicents)
+
+    def consumed_compute_cost(self, obj):
+        return millicents_to_euro(obj.consumed_compute_cost_euro_millicents)
+
+    def write_off_compute_cost(self, obj):
+        return millicents_to_euro(obj.write_off_compute_cost_euro_millicents)
+
+    @admin.display(description="Consumed budget")
+    def percent_budget_consumed_display(self, obj):
+        value = obj.percent_budget_consumed
+        if value is None:
+            return "-"
+        return f"{value}%"
 
     def has_delete_permission(self, request, obj=None):
         # invoices cannot be deleted
@@ -113,7 +241,12 @@ class InvoiceAdmin(admin.ModelAdmin):
         return md2html(warning_text + invoice_request_details)
 
     def get_queryset(self, request):
-        return super().get_queryset(request).with_overdue_status()
+        return (
+            super()
+            .get_queryset(request)
+            .with_overdue_status()
+            .with_budget_authorization()
+        )
 
 
 admin.site.register(InvoiceUserObjectPermission, UserObjectPermissionAdmin)
