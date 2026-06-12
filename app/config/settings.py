@@ -973,10 +973,10 @@ else:
 
 LAMBDA_TASKS_QUEUES = {
     LambdaTaskQueueChoices.DEFAULT: {
-        "queue_url": os.environ.get("LAMBDA_TASKS_DEFAULT_QUEUE_URL")
+        "queue_url": os.environ.get("LAMBDA_TASKS_DEFAULT_QUEUE_URL", "")
     },
     LambdaTaskQueueChoices.MEM8G: {
-        "queue_url": os.environ.get("LAMBDA_TASKS_MEM8G_QUEUE_URL")
+        "queue_url": os.environ.get("LAMBDA_TASKS_MEM8G_QUEUE_URL", "")
     },
 }
 LAMBDA_TASKS_LOCAL_WORKERS = int(
