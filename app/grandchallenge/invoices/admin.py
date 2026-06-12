@@ -47,18 +47,18 @@ class ToCheckFilter(admin.SimpleListFilter):
         return queryset
 
 
-class IsActiveFilter(admin.SimpleListFilter):
-    title = "is active"
-    parameter_name = "is_active"
+class IsExpiredFilter(admin.SimpleListFilter):
+    title = "is expired"
+    parameter_name = "is_expired"
 
     def lookups(self, request, model_admin):
         return [("1", "Yes"), ("0", "No")]
 
     def queryset(self, request, queryset):
         if self.value() == "1":
-            return queryset.exclude(is_expired=True)
+            return queryset.filter(is_expired=True)
         elif self.value() == "0":
-            return queryset.exclude(is_expired=False)
+            return queryset.filter(is_expired=False)
         return queryset
 
 
@@ -74,13 +74,13 @@ class InvoiceAdmin(admin.ModelAdmin):
         "issued_on",
         "expires_on",
         "last_checked_on",
-        "is_active",
+        "is_not_expired",
         "internal_comments",
     )
     list_filter = (
         OverdueListFilter,
         ToCheckFilter,
-        IsActiveFilter,
+        IsExpiredFilter,
         "payment_status",
         "payment_type",
         "challenge__short_name",
@@ -111,7 +111,7 @@ class InvoiceAdmin(admin.ModelAdmin):
                     "follow_up_on",
                     (
                         "expires_on",
-                        "is_active",
+                        "is_not_expired",
                     ),
                 ]
             },
@@ -162,7 +162,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "consumed_compute_cost",
         "write_off_compute_cost",
         "total_amount_euros",
-        "is_active",
+        "is_not_expired",
     ]
 
     ordering = ["expires_on", "created"]
@@ -179,7 +179,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         return obj.internal_invoice_number
 
     @admin.display(boolean=True)
-    def is_active(self, obj):
+    def is_not_expired(self, obj):
         return not obj.is_expired
 
     def available_compute_cost(self, obj):
