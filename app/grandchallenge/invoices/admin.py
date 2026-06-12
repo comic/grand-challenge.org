@@ -180,7 +180,9 @@ class InvoiceAdmin(admin.ModelAdmin):
     def internal_invoice_number_display(self, obj):
         return obj.internal_invoice_number
 
-    @admin.display(boolean=True)
+    @admin.display(
+        boolean=True, ordering="expires_on", description="Not expired"
+    )
     def is_not_expired(self, obj):
         return not obj.is_expired
 
