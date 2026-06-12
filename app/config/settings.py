@@ -972,12 +972,12 @@ else:
     CELERY_BROKER_URL = os.environ.get("BROKER_URL", f"{REDIS_ENDPOINT}/1")
 
 LAMBDA_TASKS_QUEUES = {
-    LambdaTaskQueueChoices.DEFAULT: os.environ.get(
-        "LAMBDA_TASKS_DEFAULT_QUEUE_URL"
-    ),
-    LambdaTaskQueueChoices.MEM8G: os.environ.get(
-        "LAMBDA_TASKS_MEM8G_QUEUE_URL"
-    ),
+    LambdaTaskQueueChoices.DEFAULT: {
+        "queue_url": os.environ.get("LAMBDA_TASKS_DEFAULT_QUEUE_URL")
+    },
+    LambdaTaskQueueChoices.MEM8G: {
+        "queue_url": os.environ.get("LAMBDA_TASKS_MEM8G_QUEUE_URL")
+    },
 }
 LAMBDA_TASKS_LOCAL_WORKERS = int(
     os.environ.get("LAMBDA_TASKS_LOCAL_WORKERS", "0")
