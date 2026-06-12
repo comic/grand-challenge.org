@@ -794,7 +794,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
 
     @cached_property
-    def percent_active_budget_consumed(self):
+    def percent_active_compute_budget_consumed(self):
         active_invoices = [
             invoice
             for invoice in self.invoices.all()

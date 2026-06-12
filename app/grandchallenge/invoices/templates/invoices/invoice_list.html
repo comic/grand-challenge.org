@@ -78,7 +78,7 @@
                         {% endif %}
                     </td>
                     <td>{{ invoice.total_amount_euros|euro:0 }}</td>
-                    <td data-order="{% if invoice.percent_budget_consumed is None %}-1{% else %}{{ invoice.percent_budget_consumed }}{% endif %}" class="{% if invoice.percent_budget_consumed >= 100 %}text-danger{% elif invoice.percent_budget_consumed >= 70 %}text-warning{% elif invoice.percent_budget_consumed is not None %}text-success{% endif %}">{{ invoice.percent_budget_consumed|default_if_none:"-" }}</td>
+                        <td data-order="{% if invoice.percent_compute_budget_consumed is None %}-1{% else %}{{ invoice.percent_compute_budget_consumed }}{% endif %}" class="{% if invoice.percent_compute_budget_consumed >= 100 %}text-danger{% elif invoice.percent_compute_budget_consumed >= 70 %}text-warning{% elif invoice.percent_compute_budget_consumed is not None %}text-success{% endif %}">{{ invoice.percent_compute_budget_consumed|default_if_none:"-" }}</td>
                     <td>{{ invoice.get_payment_type_display }}</td>
                     <td>{{ invoice.get_status_badge }}</td>
                 </tr>

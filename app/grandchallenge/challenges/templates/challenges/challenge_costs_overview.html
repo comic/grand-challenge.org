@@ -36,7 +36,7 @@
                     <th>Should be Open</th>
                     <th>Most Recent Submission</th>
                     <th>
-                        % Active Budget Consumed
+                        % Active Compute Budget Consumed
                         <span data-toggle="tooltip" data-placement="right"
                               title="Consumed costs as a percentage of the approved costs of the currently active (i.e., non-expired) invoices."
                               class="text-muted">
@@ -102,7 +102,7 @@
                         </td>
                         <td>{% if challenge.should_be_open_but_is_over_budget %}<i class="fa fa-exclamation-triangle text-danger"></i>{% endif %}</td>
                         <td data-order="{% if challenge.cached_latest_result %}{{ challenge.cached_latest_result|date:"c" }}{% else %}-1{% endif %}">{% if challenge.cached_latest_result %}{{ challenge.cached_latest_result|date }}{% endif %}</td>
-                        <td data-order="{% if challenge.percent_active_budget_consumed is None %}-1{% else %}{{ challenge.percent_active_budget_consumed }}{% endif %}" class="{% if challenge.percent_active_budget_consumed >= 100 %}text-danger{% elif challenge.percent_active_budget_consumed >= 70 %}text-warning{% else %}text-success{% endif %}">{% if challenge.percent_active_budget_consumed is not None %}{{ challenge.percent_active_budget_consumed }}&nbsp;%{% endif %}</td>
+                        <td data-order="{% if challenge.percent_active_compute_budget_consumed is None %}-1{% else %}{{ challenge.percent_active_compute_budget_consumed }}{% endif %}" class="{% if challenge.percent_active_compute_budget_consumed >= 100 %}text-danger{% elif challenge.percent_active_compute_budget_consumed >= 70 %}text-warning{% else %}text-success{% endif %}">{% if challenge.percent_active_compute_budget_consumed is not None %}{{ challenge.percent_active_compute_budget_consumed }}&nbsp;%{% endif %}</td>
                         <td data-order="{{ challenge.available_compute_cost_euro_millicents}}" class="{% if challenge.available_compute_cost_euro_millicents <= 0 %}text-danger{% endif %}">{{ challenge.available_compute_cost_euro_millicents|millicents_to_euro }}</td>
                         <td data-order="{{ challenge.approved_compute_cost_euro_millicents }}">{{ challenge.approved_compute_cost_euro_millicents|millicents_to_euro }}</td>
                         <td data-order="{{ challenge.consumed_compute_cost_euro_millicents }}">{{ challenge.consumed_compute_cost_euro_millicents|millicents_to_euro }}</td>

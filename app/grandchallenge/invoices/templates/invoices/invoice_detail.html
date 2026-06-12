@@ -96,31 +96,28 @@
     </div>
 
 
-    <h3>Budget Consumption</h3>
+    <h3>Compute Budget Consumption</h3>
 
     <hr>
 
     {% if not object.is_budget_authorized %}
          <span class="text-muted">
-            When authorized or paid, the budget consumption will be shown here.
+            Any compute budget consumption will be shown here.
         </span>
     {% else %}
     <dl>
 
 
-        <dt>Used budget</dt>
+        <dt>Used compute budget</dt>
         <dd>
             <div class="progress">
                 <div
-                    class="progress-bar {% if object.percent_budget_consumed >= 100 %}bg-danger{% elif object.percent_budget_consumed >= 70 %}bg-warning{% else %}bg-success{% endif %}"
-                    style="width: {{ object.percent_budget_consumed }}%"
+                    class="progress-bar {% if object.percent_compute_budget_consumed >= 100 %}bg-danger{% elif object.percent_compute_budget_consumed >= 70 %}bg-warning{% else %}bg-success{% endif %}"
+                    style="width: {{ object.percent_compute_budget_consumed }}%"
                 >
-                    {{ object.percent_budget_consumed }}%
+                    {{ object.percent_compute_budget_consumed }}%
                 </div>
             </div>
-
-
-
         </dd>
 
         <dt>Used compute capacity</dt>
@@ -130,6 +127,5 @@
         <dd>{{ object.available_compute_cost_euro_millicents|millicents_to_euro }}</dd>
 
     </dl>
-
     {% endif %}
 {% endblock %}
