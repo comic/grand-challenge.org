@@ -56,7 +56,6 @@ from grandchallenge.components.emails import (
 )
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
-from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -96,16 +95,6 @@ def assign_docker_image_from_upload(
     with transaction.atomic():
         instance.user_upload.copy_object(to_field=instance.image)
         instance.user_upload.delete()
-
-
-@acks_late_2xlarge_task(
-    name=f"{__name__}.validate_docker_image",
-    retry_on=(LockNotAcquiredException,),
-)
-@transaction.atomic
-def validate_docker_image_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return validate_container_image(**kwargs)
 
 
 @lambda_task(
@@ -151,16 +140,6 @@ def validate_container_image(
         pk=pk,
         mark_as_desired=mark_as_desired,
     )
-
-
-@acks_late_2xlarge_task(
-    name=f"{__name__}.upload_to_registry_and_sagemaker",
-    retry_on=(LockNotAcquiredException,),
-)
-@transaction.atomic
-def upload_to_registry_and_sagemaker_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return upload_to_registry_and_sagemaker(**kwargs)
 
 
 @lambda_task(

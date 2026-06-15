@@ -5,7 +5,6 @@ from uuid import UUID, uuid4
 
 import pytest
 from botocore.exceptions import ClientError
-from celery.exceptions import MaxRetriesExceededError
 from django.db import IntegrityError
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
@@ -34,7 +33,6 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
 )
-from grandchallenge.core.celery import _retry, acks_late_2xlarge_task
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.storage import protected_s3_storage
 from tests.algorithms_tests.factories import AlgorithmJobFactory
@@ -572,65 +570,6 @@ def test_handle_health_imaging_import_job_event_invalid_import(
     assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
 
 
-@acks_late_2xlarge_task
-def some_async_task(foo):
-    return foo
-
-
-@pytest.mark.django_db
-def test_retry_initial_options(django_capture_on_commit_callbacks):
-    with django_capture_on_commit_callbacks() as callbacks:
-        _retry(
-            task=some_async_task,
-            signature_kwargs={
-                "kwargs": {"foo": "bar"},
-                "options": {"queue": "mine"},
-            },
-            retries=0,
-        )
-    new_task = callbacks[0].__self__
-
-    assert new_task.options["queue"] == "mine-delay"
-    assert new_task.kwargs == {"foo": "bar", "_retries": 1}
-
-
-@pytest.mark.django_db
-def test_retry_initial(django_capture_on_commit_callbacks):
-    with django_capture_on_commit_callbacks() as callbacks:
-        _retry(
-            task=some_async_task,
-            signature_kwargs={"kwargs": {"foo": "bar"}},
-            retries=0,
-        )
-    new_task = callbacks[0].__self__
-
-    assert new_task.options["queue"] == "acks-late-2xlarge-delay"
-    assert new_task.kwargs == {"foo": "bar", "_retries": 1}
-
-
-@pytest.mark.django_db
-def test_retry_many(django_capture_on_commit_callbacks):
-    with django_capture_on_commit_callbacks() as callbacks:
-        _retry(
-            task=some_async_task,
-            signature_kwargs={"kwargs": {"foo": "bar"}},
-            retries=10,
-        )
-    new_task = callbacks[0].__self__
-
-    assert new_task.options["queue"] == "acks-late-2xlarge-delay"
-    assert new_task.kwargs == {"foo": "bar", "_retries": 11}
-
-
-def test_retry_too_many():
-    with pytest.raises(MaxRetriesExceededError):
-        _retry(
-            task=some_async_task,
-            signature_kwargs={"kwargs": {"foo": "bar"}},
-            retries=100_000,
-        )
-
-
 @pytest.mark.django_db
 def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validation_fail(
     settings,
@@ -648,9 +587,6 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
         status=DICOMImageSetUploadStatusChoices.STARTED,
         linked_object=obj,
         linked_socket_pk=ci.pk,
-        task_on_success=some_async_task.signature(
-            kwargs={"foo": "bar"}, immutable=True
-        ),
     )
     import_job_event = {
         "jobName": di_upload._import_job_name,
@@ -665,7 +601,7 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
         DICOMImageSetUpload, "delete_input_files"
     )
 
-    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+    with django_capture_on_commit_callbacks(execute=True):
         handle_health_imaging_import_job_event(
             event=import_job_event,
         )
@@ -684,4 +620,3 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
     assert SystemErrorMessages.UNEXPECTED_ERROR in str(
         obj.detailed_error_message
     )
-    assert "some_async_task" not in str(callbacks)
