@@ -15,7 +15,6 @@ from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
-from django.db import transaction
 from django.utils._os import safe_join
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
@@ -46,7 +45,6 @@ from grandchallenge.cases.panimg import convert, post_process
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.components.backends.utils import UUID4_REGEX, safe_extract
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
@@ -455,16 +453,6 @@ def _handle_raw_files(
             if k not in consumed_files
         },
     }
-
-
-@acks_late_2xlarge_task(
-    name=f"{__name__}.execute_post_process_image_task",
-    retry_on=(LockNotAcquiredException,),
-)
-@transaction.atomic
-def execute_post_process_image_task_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return execute_post_process_image_task(**kwargs)
 
 
 @lambda_task(
