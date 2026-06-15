@@ -880,60 +880,6 @@ def test_active_invoice_raises_on_zero_balance():
 
 
 @pytest.mark.django_db
-def test_active_invoice_orders_by_expiry():
-    challenge = ChallengeFactory()
-
-    _fixed_now = now()
-
-    invoice0 = InvoiceFactory(
-        challenge=challenge,
-        compute_costs_euros=1,
-        compute_cost_euro_millicents=0,
-        payment_type=PaymentTypeChoices.PREPAID,
-        payment_status=Invoice.PaymentStatusChoices.PAID,
-        expires_on=_fixed_now + timedelta(10),
-    )
-    invoice1 = InvoiceFactory(
-        challenge=challenge,
-        compute_costs_euros=1,
-        compute_cost_euro_millicents=0,
-        payment_type=PaymentTypeChoices.PREPAID,
-        payment_status=Invoice.PaymentStatusChoices.PAID,
-        expires_on=_fixed_now + timedelta(10),
-    )
-
-    challenge = (
-        Challenge.objects.with_invoices_with_budget_authorization().get(
-            pk=challenge.pk
-        )
-    )
-    # All things being equal, use created time to determine order, so invoice0 should be active as it was created first
-    assert challenge.active_invoice == invoice0
-
-    invoice1.expires_on = _fixed_now + timedelta(5)
-    invoice1.save()
-    assert invoice1.expires_on < invoice0.expires_on, "Sanity"
-
-    challenge = (
-        Challenge.objects.with_invoices_with_budget_authorization().get(
-            pk=challenge.pk
-        )
-    )
-    assert challenge.active_invoice == invoice1
-
-    invoice0.expires_on = _fixed_now + timedelta(4)
-    invoice0.save()
-    assert invoice0.expires_on < invoice1.expires_on, "Sanity"
-
-    challenge = (
-        Challenge.objects.with_invoices_with_budget_authorization().get(
-            pk=challenge.pk
-        )
-    )
-    assert challenge.active_invoice == invoice0
-
-
-@pytest.mark.django_db
 def test_active_invoice_ignores_invoices_with_negative_balance():
     challenge = ChallengeFactory()
 

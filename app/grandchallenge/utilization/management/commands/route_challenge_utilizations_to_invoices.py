@@ -35,7 +35,8 @@ def get_invoice_map():
     for invoice in (
         Invoice.objects.with_budget_authorization()
         .exclude(is_budget_authorized=False)
-        .order_by("expires_on", "created")
+        .with_utilization_priority_per_challenge()
+        .order_by("utilization_priority")
     ):
         invoices[invoice.challenge_id].append(invoice)
         invoice._original_compute_cost_euro_millicents = (

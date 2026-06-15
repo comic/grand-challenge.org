@@ -877,9 +877,16 @@ class Challenge(ChallengeBase, FieldChangeMixin):
 
     @property
     def active_invoice(self):
-        for invoice in self.invoices.order_by("expires_on", "created").all():
+        prioritized_invoices = (
+            self.invoices.with_utilization_priority_per_challenge().order_by(
+                "utilization_priority"
+            )
+        )
+
+        for invoice in prioritized_invoices:
             if invoice.available_compute_cost_euro_millicents > 0:
                 return invoice
+
         raise InsufficientBudgetError
 
     @cached_property
