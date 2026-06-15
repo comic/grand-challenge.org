@@ -1459,8 +1459,7 @@ def test_algorithm_image_activate(
         AlgorithmImage, "calculate_size_in_registry", lambda x: 100
     )
 
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     alg = AlgorithmFactory()
     i1, i2 = AlgorithmImageFactory.create_batch(

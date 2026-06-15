@@ -160,8 +160,7 @@ def test_remove_inactive_container_images(django_capture_on_commit_callbacks):
 def test_validate_docker_image(
     invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     alg = AlgorithmFactory()
     image = AlgorithmImageFactory(
@@ -182,6 +181,7 @@ def test_validate_docker_image(
     assert not image.is_desired_version
 
     image.is_manifest_valid = None
+    image.import_status = ImportStatusChoices.STARTED
     image.save()
 
     with django_capture_on_commit_callbacks(execute=True):
@@ -200,19 +200,16 @@ def test_validate_docker_image(
 def test_upload_to_registry_and_sagemaker(
     invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     alg = AlgorithmFactory()
     image = AlgorithmImageFactory(
-        algorithm=alg,
-        is_manifest_valid=True,
-        image__from_path=invoke_container_image,
+        algorithm=alg, image__from_path=invoke_container_image
     )
-    assert not image.is_in_registry
+    assert image.is_manifest_valid is None
 
     with django_capture_on_commit_callbacks(execute=True):
-        upload_to_registry_and_sagemaker(
+        validate_docker_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,
@@ -222,6 +219,9 @@ def test_upload_to_registry_and_sagemaker(
     image = AlgorithmImage.objects.get(pk=image.pk)
     assert image.is_in_registry
     assert not image.is_desired_version
+
+    image.import_status = ImportStatusChoices.STARTED
+    image.save()
 
     with django_capture_on_commit_callbacks(execute=True):
         upload_to_registry_and_sagemaker(
@@ -240,8 +240,7 @@ def test_upload_to_registry_and_sagemaker(
 def test_api_method_extraction(
     invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     alg = AlgorithmFactory()
     image = AlgorithmImageFactory(
@@ -335,8 +334,7 @@ def test_update_sagemaker_shim(
     tmp_path,
     mocker,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     mock_remove_tag_from_registry = mocker.patch(
         # remove_tag_from_registry is only implemented for ECR
@@ -354,14 +352,12 @@ def test_update_sagemaker_shim(
 
     alg = AlgorithmFactory()
     image = AlgorithmImageFactory(
-        algorithm=alg,
-        is_manifest_valid=True,
-        image__from_path=invoke_container_image,
+        algorithm=alg, image__from_path=invoke_container_image
     )
-    assert not image.is_in_registry
+    assert image.is_manifest_valid is None
 
     with django_capture_on_commit_callbacks(execute=True):
-        upload_to_registry_and_sagemaker(
+        validate_docker_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,
