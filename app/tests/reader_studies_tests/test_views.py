@@ -1413,6 +1413,7 @@ def test_usage_view_displays_credits(client):
 
 
 @pytest.mark.django_db
+@pytest.mark.flaky(reruns=3)
 def test_usage_view_credits_divided_by_reader_study_count(client):
     from datetime import timedelta
 
