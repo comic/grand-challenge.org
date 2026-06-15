@@ -13,9 +13,6 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from uuid import UUID
 
 import boto3
-from billiard.exceptions import (
-    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
-)
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
@@ -917,10 +914,7 @@ def execute_job(
             error_message=str(e),
             detailed_error_message=e.message_details,
         )
-    except (
-        CelerySoftTimeLimitExceeded,
-        SoftTimeLimitExceeded,
-    ):
+    except SoftTimeLimitExceeded:
         job.update_status(
             status=job.FAILURE,
             stdout=executor.stdout,

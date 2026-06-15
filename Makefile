@@ -97,35 +97,35 @@ development_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		celery_worker \
+		gc.localhost \
 		bash -c "python manage.py runscript local_s3 && python manage.py migrate && python manage.py runscript development_fixtures"
 
 algorithm_evaluation_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		celery_worker \
+		gc.localhost \
 		python manage.py runscript algorithm_evaluation_fixtures
 
 external_algorithm_evaluation_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		celery_worker_evaluation \
+		gc.localhost \
 		python manage.py runscript external_algorithm_evaluation_fixtures
 
 cost_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		celery_worker \
+		gc.localhost \
 		python manage.py runscript cost_fixtures
 
 component_interface_value_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		celery_worker \
+		gc.localhost \
 		python manage.py runscript component_interface_value_fixtures
 
 superuser:

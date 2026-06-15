@@ -75,6 +75,10 @@ services:
             - type: bind
               source: ./app
               target: /app/
+            # The pytest_cache is only needed for testing
+            - type: volume
+              source: pytest-cache
+              target: /tmp/.pytest_cache
 
     redis:
         image: redis:6
@@ -82,33 +86,6 @@ services:
             - "127.0.0.1:6379:6379"
         command: redis-server --appendonly yes
         restart: always
-
-    celery_worker:
-        image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
-        environment:
-            <<: [*postgres-env, *s3-env, *django-env]
-        restart: always
-        command: watchfiles --filter python "celery --app config worker --loglevel info --concurrency 1 --pool prefork --queues acks-late-2xlarge,acks-late-2xlarge-delay" /app
-        scale: 1
-        hostname: "celery-worker-evaluation"
-        depends_on:
-            postgres:
-                condition: service_healthy
-            s3.localhost:
-                condition: service_started
-            redis:
-                condition: service_started
-            registry:
-                condition: service_started
-        volumes:
-            # Bind the app directory for live reloading in development
-            - type: bind
-              source: ./app
-              target: /app/
-            # The pytest_cache is only needed for testing
-            - type: volume
-              source: pytest-cache
-              target: /tmp/.pytest_cache
 
     registry:
         image: registry:2

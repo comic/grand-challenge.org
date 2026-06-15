@@ -5,9 +5,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, call
 
 import pytest
-from billiard.exceptions import (
-    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
-)
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.files.base import ContentFile
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
@@ -1818,11 +1815,6 @@ def test_component_interface_value_manager():
         # Ensure all resource errors are covered
         (
             MemoryError,
-            ValidationError,
-            "The file was too large",
-        ),
-        (
-            CelerySoftTimeLimitExceeded,
             ValidationError,
             "The file was too large",
         ),
