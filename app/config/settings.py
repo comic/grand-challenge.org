@@ -556,7 +556,6 @@ LOCAL_APPS = [
     "grandchallenge.utilization",
     "grandchallenge.discussion_forums",
     "grandchallenge.forge",
-    "grandchallenge.background_tasks",
 ]
 
 LEGACY_APPS = [
