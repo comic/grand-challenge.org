@@ -978,6 +978,14 @@ LAMBDA_TASKS_QUEUES = {
     LambdaTaskQueueChoices.MEM8G: {
         "queue_url": os.environ.get("LAMBDA_TASKS_MEM8G_QUEUE_URL", "")
     },
+    LambdaTaskQueueChoices.BATCH_MEM8G: {
+        "job_queue_arn": os.environ.get(
+            "LAMBDA_TASKS_BATCH_MEM8G_JOB_QUEUE_ARN", ""
+        ),
+        "job_definition_arn": os.environ.get(
+            "LAMBDA_TASKS_BATCH_MEM8G_JOB_DEFINITION_ARN", ""
+        ),
+    },
 }
 LAMBDA_TASKS_LOCAL_WORKERS = int(
     os.environ.get("LAMBDA_TASKS_LOCAL_WORKERS", "0")

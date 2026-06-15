@@ -1,3 +1,4 @@
+import time
 from datetime import timedelta
 
 import boto3
@@ -8,6 +9,8 @@ from django.utils import timezone
 from django.utils.timezone import now
 from django_celery_results.models import TaskResult
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.logging import task_logger
+from lambda_tasks.models import TaskRecord
 from pictures.tasks import _process_picture
 
 from config.lambda_tasks import LambdaTaskQueueChoices
@@ -16,6 +19,7 @@ from grandchallenge.cases.models import (
     PostProcessImageTask,
     RawImageUploadSession,
 )
+from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.evaluation.models import Evaluation, Method
 from grandchallenge.workstations.models import Session
 
@@ -155,3 +159,24 @@ def process_picture(
     old: list | tuple | None = None,
 ):
     _process_picture(storage=storage, file_name=file_name, new=new, old=old)
+
+
+@lambda_task(queue=LambdaTaskQueueChoices.BATCH_MEM8G, retry_on=(RetryStep,))
+def run_batch(*, mode: int):
+    task_logger.info(f"Running run_batch with {mode=}")
+
+    if mode == 0:
+        task_logger.info("Success")
+        return 0
+    elif mode == 1:
+        raise RuntimeError("Failure")
+    elif mode == 2:
+        raise RetryStep("Retrying")
+    elif mode == 3:
+        return TaskRecord.objects.count()
+    elif mode == 4:
+        task_logger.error("Error from run_batch")
+        return 1
+    else:
+        time.sleep(mode)
+        return 0
