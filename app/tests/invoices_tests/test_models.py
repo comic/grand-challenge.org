@@ -5,13 +5,16 @@ from zoneinfo import ZoneInfo
 import pytest
 from dateutil.utils import today
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.utils.timezone import datetime, now
 
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.invoices.models import (
     Invoice,
     PaymentStatusChoices,
     PaymentTypeChoices,
 )
+from tests.factories import ChallengeFactory
 from tests.invoices_tests.factories import InvoiceFactory
 
 
@@ -446,3 +449,44 @@ def test_complimentary_invoice_status_badge(invoice_kwargs, badge):
     )
     invoice = Invoice.objects.with_is_expired().get(pk=invoice.pk)
     assert invoice.get_status_badge() == badge
+
+
+@pytest.mark.django_db
+def test_postpaid_suggested_costs_properties():
+    challenge = ChallengeFactory(
+        size_in_storage=30 * 1024**3,
+        size_in_registry=70 * 1024**3,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=100,
+        storage_costs_euros=100,
+        compute_cost_euro_millicents=110 * 1000 * 100,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    # Postpaid invoice (initialized)
+    postpaid_invoice = InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=50,
+        storage_costs_euros=0,
+        compute_cost_euro_millicents=30 * 1000 * 100,
+        payment_type=PaymentTypeChoices.POSTPAID,
+        payment_status=PaymentStatusChoices.INITIALIZED,
+    )
+    postpaid_invoice = (
+        Invoice.objects.prefetch_related(
+            models.Prefetch(
+                "challenge",
+                queryset=Challenge.objects.with_invoices_with_budget_authorization(),
+            )
+        )
+        .with_budget_authorization()
+        .get(pk=postpaid_invoice.pk)
+    )
+
+    assert postpaid_invoice.total_unpaid_costs_euros == 30
+    assert postpaid_invoice.suggested_total_postpaid_amount == 250
+    assert postpaid_invoice.surplus == 220
+    assert postpaid_invoice.suggested_compute_cost_euros == 179
+    assert postpaid_invoice.suggested_storage_cost_euros == 71

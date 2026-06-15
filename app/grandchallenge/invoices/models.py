@@ -1,3 +1,4 @@
+import math
 import uuid
 from datetime import timedelta
 from functools import cached_property
@@ -474,6 +475,81 @@ class Invoice(models.Model, FieldChangeMixin):
             )
         else:
             return None
+
+    @cached_property
+    def total_unpaid_costs_euros(self):
+        if (
+            not self.payment_type == PaymentTypeChoices.POSTPAID
+            or not self.payment_status == PaymentStatusChoices.INITIALIZED
+        ):
+            return None
+        else:
+            return (
+                self.challenge.unpaid_storage_costs_euros
+                + self.consumed_compute_cost_euro_millicents / 1000 / 100
+            )
+
+    @cached_property
+    def suggested_total_postpaid_amount(self):
+        if (
+            not self.payment_type == PaymentTypeChoices.POSTPAID
+            or not self.payment_status == PaymentStatusChoices.INITIALIZED
+        ):
+            return None
+        elif self.total_unpaid_costs_euros > 0:
+            return (
+                math.ceil(
+                    self.total_unpaid_costs_euros
+                    / settings.CHALLENGE_POSTPAID_INVOICE_ROUNDING_INCREMENT
+                )
+                * settings.CHALLENGE_POSTPAID_INVOICE_ROUNDING_INCREMENT
+            )
+        else:
+            return 0
+
+    @cached_property
+    def surplus(self):
+        if (
+            not self.payment_type == PaymentTypeChoices.POSTPAID
+            or not self.payment_status == PaymentStatusChoices.INITIALIZED
+        ):
+            return None
+        elif self.total_unpaid_costs_euros > 0:
+            return (
+                settings.CHALLENGE_POSTPAID_INVOICE_ROUNDING_INCREMENT
+                - self.total_unpaid_costs_euros
+            )
+        else:
+            return 0
+
+    @cached_property
+    def suggested_compute_cost_euros(self):
+        if (
+            not self.payment_type == PaymentTypeChoices.POSTPAID
+            or not self.payment_status == PaymentStatusChoices.INITIALIZED
+        ):
+            return None
+        else:
+            return round(
+                (
+                    self.consumed_compute_cost_euro_millicents / 1000 / 100
+                    + self.challenge.compute_ratio * self.surplus
+                ),
+                0,
+            )
+
+    @cached_property
+    def suggested_storage_cost_euros(self):
+        if (
+            not self.payment_type == PaymentTypeChoices.POSTPAID
+            or not self.payment_status == PaymentStatusChoices.INITIALIZED
+        ):
+            return None
+        else:
+            return (
+                self.suggested_total_postpaid_amount
+                - self.suggested_compute_cost_euros
+            )
 
     def clean(self):
         if (

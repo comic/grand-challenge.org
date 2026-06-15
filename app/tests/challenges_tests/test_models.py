@@ -17,7 +17,11 @@ from grandchallenge.challenges.models import (
     OnboardingTask,
 )
 from grandchallenge.discussion_forums.models import ForumTopicKindChoices
-from grandchallenge.invoices.models import Invoice, PaymentTypeChoices
+from grandchallenge.invoices.models import (
+    Invoice,
+    PaymentStatusChoices,
+    PaymentTypeChoices,
+)
 from grandchallenge.notifications.models import Notification
 from tests.discussion_forums_tests.factories import ForumTopicFactory
 from tests.factories import (
@@ -988,3 +992,47 @@ def test_budget_properties():
     assert challenge.consumed_compute_cost_euro_millicents == 6 * 1000 * 100
     assert challenge.write_off_compute_cost_euro_millicents == 0
     assert challenge.percent_active_budget_consumed == 60
+
+
+@pytest.mark.django_db
+def test_total_costs_properties():
+    challenge = ChallengeFactory(
+        size_in_storage=30 * 1024**3,
+        size_in_registry=70 * 1024**3,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=200,
+        storage_costs_euros=100,
+        compute_cost_euro_millicents=10 * 1000 * 100,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=100,
+        storage_costs_euros=50,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    # This one should not count (cancelled)
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=500,
+        storage_costs_euros=250,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=PaymentStatusChoices.CANCELLED,
+    )
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
+
+    assert challenge.total_projected_storage_cost_euros == 67
+    assert challenge.total_consumed_compute_costs_with_write_off_euros == 10
+    assert challenge.total_consumed_costs_euros == 77
+    assert challenge.total_paid_compute_costs_euros == 300
+    assert challenge.total_paid_storage_costs_euros == 150
+    assert challenge.unpaid_storage_costs_euros == 0
+    assert round(challenge.compute_ratio, 2) == 0.13
