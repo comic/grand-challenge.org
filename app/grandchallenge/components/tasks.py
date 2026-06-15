@@ -221,7 +221,11 @@ def mark_desired_container_version(
         instance = model.objects.select_for_update(nowait=True).get(pk=pk)
 
         # Acquire a lock on the peer images
-        _ = list(instance.get_peer_images().select_for_update(nowait=True))
+        _ = list(
+            instance.get_peer_images()
+            .select_for_update(nowait=True)
+            .values_list("pk", flat=True)
+        )
 
     if instance.import_status != instance.ImportStatusChoices.STARTED:
         raise RuntimeError("Container Image is not ready for validation")
