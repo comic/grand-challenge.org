@@ -27,6 +27,8 @@ from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from panimg_models import ImageBuilderOptions, PanImgResult
 
 from config.lambda_tasks import (
+    BATCH_LONG_TASK_HARD_TIMEOUT,
+    BATCH_LONG_TASK_SOFT_TIMEOUT,
     LONG_TASK_HARD_TIMEOUT,
     LONG_TASK_SOFT_TIMEOUT,
     LambdaTaskQueueChoices,
@@ -468,6 +470,8 @@ def execute_post_process_image_task_celery(**kwargs):
 @lambda_task(
     queue=LambdaTaskQueueChoices.BATCH_MEM8G,
     retry_on=(LockNotAcquiredException,),
+    soft_timeout=BATCH_LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=BATCH_LONG_TASK_HARD_TIMEOUT,
 )
 def execute_post_process_image_task(*, post_process_image_task_pk: str | UUID):
     with check_lock_acquired():
