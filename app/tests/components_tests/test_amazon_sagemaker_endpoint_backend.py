@@ -14,6 +14,7 @@ from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
 )
 from grandchallenge.components.backends.base import (
     InferenceResult,
+    RuntimeSetupResult,
     s3_upload_content,
 )
 from grandchallenge.components.models import InterfaceKindChoices
@@ -82,6 +83,9 @@ class TestEndpointOrchestratorProperties:
         settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = (
             "algorithm-endpoints-input"
         )
+        settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME = (
+            "algorithm-endpoints-output"
+        )
         endpoint = EndpointFactory.build(
             signing_key=b"totallysecret",
         )
@@ -95,6 +99,8 @@ class TestEndpointOrchestratorProperties:
             "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX": "746f74616c6c79736563726574",
             "GRAND_CHALLENGE_COMPONENT_API_METHOD": endpoint.algorithm_image.api_method,
             "GRAND_CHALLENGE_COMPONENT_MODEL": f"s3://algorithm-endpoints-input//auxiliary-data/algorithms/endpoint/{endpoint.pk}/algorithm-model.tar.gz",
+            "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_BUCKET_NAME": "algorithm-endpoints-output",
+            "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_PREFIX": f"/io/algorithms/endpoint/{endpoint.pk}",
         }
 
         orchestrator = EndpointFactory.build(algorithm_model=None).orchestrator
@@ -139,6 +145,27 @@ class TestEndpointOrchestratorProperties:
         assert (
             orchestrator._executor._output_bucket_name
             == "algorithm-endpoints-output"
+        )
+
+    def test_runtime_setup_result_key(self):
+        endpoint = EndpointFactory.build()
+        orchestrator = endpoint.orchestrator
+
+        assert orchestrator.runtime_setup_result_key == (
+            f"/io/algorithms/endpoint/{endpoint.pk}/.sagemaker_shim/runtime_setup_result.json"
+        )
+
+    def test_runtime_setup_result_key_invocation(self):
+        invocation = InvocationFactory.build()
+        endpoint = invocation.endpoint
+        orchestrator = invocation.orchestrator
+
+        assert (
+            orchestrator.runtime_setup_result_key
+            == endpoint.orchestrator.runtime_setup_result_key
+            == (
+                f"/io/algorithms/endpoint/{endpoint.pk}/.sagemaker_shim/runtime_setup_result.json"
+            )
         )
 
 
@@ -620,6 +647,26 @@ def test_get_invocation_params_match(settings):
 def test_handle_completed_invocation(settings):
     invocation = InvocationFactory.build(endpoint__signing_key=b"itsasecret")
     orchestrator = invocation.orchestrator
+    runtime_setup_result = RuntimeSetupResult(
+        return_code=0,
+        sagemaker_shim_version="0.8.0",
+    )
+    runtime_setup_result_content = (
+        runtime_setup_result.model_dump_json().encode("utf-8")
+    )
+    signature = hmac.new(
+        key=b"itsasecret",
+        msg=runtime_setup_result_content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    orchestrator._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(runtime_setup_result_content),
+        Bucket=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
+        Key=orchestrator.runtime_setup_result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
     inference_result = InferenceResult(
         pk=f"algorithms-invocation-{invocation.pk}",
         return_code=0,

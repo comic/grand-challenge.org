@@ -40,7 +40,6 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     UncleanExit,
 )
-from grandchallenge.components.backends.utils import user_error
 from grandchallenge.components.models import (
     APIMethodChoices,
     ComponentInterface,
@@ -284,6 +283,14 @@ async def s3_stream_response(
                 raise
 
 
+class RuntimeSetupResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    return_code: int
+    user_safe_error_message: str = ""
+    sagemaker_shim_version: str
+
+
 class InferenceIO(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -308,6 +315,7 @@ class InferenceResult(BaseModel):
 
     pk: str
     return_code: int
+    user_safe_error_message: str = ""
     exec_duration: timedelta | None
     invoke_duration: timedelta | None
     outputs: list[InferenceIO]
@@ -354,8 +362,6 @@ class Executor(ABC):
         self._invoke_duration = None
         self._stdout = []
         self._stderr = []
-
-        self._inference_result_skipped = False
 
         self.__s3_client = None
 
@@ -466,6 +472,8 @@ class Executor(ABC):
                 self._signing_key
             ).decode("ascii"),
             "GRAND_CHALLENGE_COMPONENT_API_METHOD": self._api_method,
+            "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_PREFIX": self._io_prefix,
+            "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_BUCKET_NAME": self._output_bucket_name,
         }
 
         if self._algorithm_model:
@@ -515,6 +523,12 @@ class Executor(ABC):
     @property
     def _invocation_key(self):
         return safe_join(self._invocation_prefix, "invocation.json")
+
+    @property
+    def runtime_setup_result_key(self):
+        return safe_join(
+            self._io_prefix, ".sagemaker_shim", "runtime_setup_result.json"
+        )
 
     @property
     def _inference_result_key(self):
@@ -819,6 +833,51 @@ class Executor(ABC):
             key=key,
         )
 
+    def _get_runtime_setup_result(self):
+        try:
+            response = self._s3_client.get_object(
+                Bucket=self._output_bucket_name,
+                Key=self.runtime_setup_result_key,
+            )
+        except botocore.exceptions.ClientError as error:
+            if error.response["Error"]["Code"] in {"404", "NoSuchKey"}:
+                raise UncleanExit(
+                    "The runtime setup did not write a result"
+                ) from error
+            else:
+                raise
+
+        body = response["Body"].read()
+
+        signature_hmac_sha256 = response["Metadata"]["signature_hmac_sha256"]
+        body_signature_hmac_sha256 = hmac.new(
+            key=self._signing_key, msg=body, digestmod=hashlib.sha256
+        ).hexdigest()
+
+        if not secrets.compare_digest(
+            body_signature_hmac_sha256, signature_hmac_sha256
+        ):
+            logger.error(
+                "The runtime setup response object has been tampered with"
+            )
+            raise ComponentException(
+                "The runtime setup response object has been tampered with"
+            )
+
+        try:
+            runtime_setup_result = RuntimeSetupResult.model_validate_json(
+                json_data=body
+            )
+        except pydantic.ValidationError as error:
+            logger.error(error, exc_info=True)
+            raise ComponentException(
+                "The runtime setup result is not valid json"
+            )
+
+        logger.info(f"{runtime_setup_result=}")
+
+        return runtime_setup_result
+
     def _get_inference_result(self):
         try:
             response = self._s3_client.get_object(
@@ -868,8 +927,12 @@ class Executor(ABC):
         return inference_result
 
     def _handle_completed_job(self):
-        if self._inference_result_skipped:
-            raise ComponentException(user_error(self.stderr))
+        runtime_setup_result = self._get_runtime_setup_result()
+
+        if runtime_setup_result.return_code != 0:
+            raise ComponentException(
+                runtime_setup_result.user_safe_error_message
+            )
 
         inference_result = self._get_inference_result()
 
@@ -884,7 +947,7 @@ class Executor(ABC):
         elif users_process_exit_code == 137:
             raise ComponentException(SystemErrorMessages.MEMORY_LIMIT_EXCEEDED)
         else:
-            raise ComponentException(user_error(self.stderr))
+            raise ComponentException(inference_result.user_safe_error_message)
 
     def _create_images_result(self, *, interface):
         prefix = safe_join(self._io_prefix, interface.relative_path)

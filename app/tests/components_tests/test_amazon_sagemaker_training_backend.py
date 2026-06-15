@@ -14,7 +14,10 @@ from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.components.backends.amazon_sagemaker_training import (
     AmazonSageMakerTrainingExecutor,
 )
-from grandchallenge.components.backends.base import InferenceResult
+from grandchallenge.components.backends.base import (
+    InferenceResult,
+    RuntimeSetupResult,
+)
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     TaskCancelled,
@@ -215,6 +218,8 @@ def test_invocation_json(settings):
                     "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX": "746f74616c6c79736563726574",
                     "GRAND_CHALLENGE_COMPONENT_API_METHOD": "exec",
                     "GRAND_CHALLENGE_COMPONENT_MODEL": f"s3://grand-challenge-components-inputs//auxiliary-data/algorithms/job/{job.pk}-00/algorithm-model.tar.gz",
+                    "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_BUCKET_NAME": "grand-challenge-components-outputs",
+                    "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_PREFIX": f"/io/algorithms/job/{job.pk}-00",
                 },
                 "VpcConfig": {
                     "SecurityGroupIds": [
@@ -578,6 +583,26 @@ def test_handle_completed_job(settings):
         api_method=APIMethodChoices.EXEC,
     )
 
+    runtime_setup_result = RuntimeSetupResult(
+        return_code=0,
+        sagemaker_shim_version="0.8.0",
+    )
+    runtime_setup_result_content = (
+        runtime_setup_result.model_dump_json().encode("utf-8")
+    )
+    signature = hmac.new(
+        key=b"itsasecret",
+        msg=runtime_setup_result_content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    executor._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(runtime_setup_result_content),
+        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        Key=executor.runtime_setup_result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
     inference_result = InferenceResult(
         pk=f"algorithms-job-{pk}",
         return_code=0,
@@ -610,104 +635,7 @@ def test_handle_completed_job(settings):
     assert executor.invoke_duration == timedelta(seconds=1543)
 
 
-def test_inference_result_skipped_in_log_sets_flag(settings):
-    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
-
-    pk = uuid4()
-    executor = AmazonSageMakerTrainingExecutor(
-        job_id=f"algorithms-job-{pk}",
-        exec_image_repo_tag="",
-        memory_limit=4,
-        time_limit=60,
-        requires_gpu_type=GPUTypeChoices.NO_GPU,
-        use_warm_pool=False,
-        signing_key=b"itsasecret",
-        api_method=APIMethodChoices.EXEC,
-    )
-
-    assert executor._inference_result_skipped is False
-
-    with Stubber(executor._logs_client) as logs:
-        logs.add_response(
-            method="describe_log_streams",
-            service_response={
-                "logStreams": [
-                    {"logStreamName": f"localhost-A-{pk}/i-whatever"},
-                ]
-            },
-            expected_params={
-                "logGroupName": "/aws/sagemaker/TrainingJobs",
-                "logStreamNamePrefix": f"localhost-A-{pk}",
-            },
-        )
-        logs.add_response(
-            method="get_log_events",
-            service_response={
-                "events": [
-                    {
-                        "message": json.dumps(
-                            {
-                                "log": "Could not set up model",
-                                "source": "stderr",
-                                "internal": False,
-                                "inference_result_skipped": True,
-                            }
-                        ),
-                        "timestamp": 1654683838000,
-                    },
-                ],
-                "nextBackwardToken": "foo",
-            },
-            expected_params={
-                "logGroupName": "/aws/sagemaker/TrainingJobs",
-                "logStreamName": f"localhost-A-{pk}/i-whatever",
-                "startFromHead": False,
-                "startTime": 1654767467000,
-                "endTime": 1654767481000,
-            },
-        )
-        logs.add_response(
-            method="get_log_events",
-            service_response={
-                "events": [
-                    {
-                        "message": json.dumps(
-                            {
-                                "log": "some message",
-                                "source": "stdout",
-                                "internal": False,
-                                "inference_result_skipped": False,
-                            }
-                        ),
-                        "timestamp": 1654683838000,
-                    },
-                ],
-                "nextBackwardToken": "foo",
-            },
-            expected_params={
-                "logGroupName": "/aws/sagemaker/TrainingJobs",
-                "logStreamName": f"localhost-A-{pk}/i-whatever",
-                "startFromHead": False,
-                "startTime": 1654767467000,
-                "endTime": 1654767481000,
-                "nextToken": "foo",
-            },
-        )
-        executor._set_task_logs(
-            event={
-                "TrainingStartTime": 1654767467000,
-                "TrainingEndTime": 1654767481000,
-                "ResourceConfig": {
-                    "InstanceType": "ml.m7i.large",
-                    "InstanceCount": 1,
-                },
-            }
-        )
-
-    assert executor._inference_result_skipped is True
-
-
-def test_handle_completed_job_with_inference_result_skipped():
+def test_handle_completed_job_with_runtime_setup_failed(settings):
     pk = uuid4()
     executor = AmazonSageMakerTrainingExecutor(
         job_id=f"algorithms-job-{pk}",
@@ -719,15 +647,33 @@ def test_handle_completed_job_with_inference_result_skipped():
         signing_key=b"itsasecret",
         api_method=APIMethodChoices.INVOKE,
     )
-
-    executor._stderr = ["setup failed"]
-    executor._inference_result_skipped = True
+    runtime_setup_result = RuntimeSetupResult(
+        return_code=1,
+        user_safe_error_message="setup failed",
+        sagemaker_shim_version="0.8.0",
+    )
+    runtime_setup_result_content = (
+        runtime_setup_result.model_dump_json().encode("utf-8")
+    )
+    signature = hmac.new(
+        key=b"itsasecret",
+        msg=runtime_setup_result_content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    executor._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(runtime_setup_result_content),
+        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        Key=executor.runtime_setup_result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
 
     with pytest.raises(ComponentException, match="setup failed"):
         executor._handle_completed_job()
 
 
-def test_handle_completed_job_without_inference_result_skipped_missing_result():
+def test_handle_completed_job_missing_runtime_setup_result():
     pk = uuid4()
     executor = AmazonSageMakerTrainingExecutor(
         job_id=f"algorithms-job-{pk}",
@@ -740,7 +686,42 @@ def test_handle_completed_job_without_inference_result_skipped_missing_result():
         api_method=APIMethodChoices.INVOKE,
     )
 
-    assert executor._inference_result_skipped is False
+    with pytest.raises(UncleanExit):
+        executor._handle_completed_job()
+
+
+def test_handle_completed_job_missing_inference_result(settings):
+    pk = uuid4()
+    executor = AmazonSageMakerTrainingExecutor(
+        job_id=f"algorithms-job-{pk}",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"itsasecret",
+        api_method=APIMethodChoices.INVOKE,
+    )
+    runtime_setup_result = RuntimeSetupResult(
+        return_code=0,
+        sagemaker_shim_version="0.8.0",
+    )
+    runtime_setup_result_content = (
+        runtime_setup_result.model_dump_json().encode("utf-8")
+    )
+    signature = hmac.new(
+        key=b"itsasecret",
+        msg=runtime_setup_result_content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    executor._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(runtime_setup_result_content),
+        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        Key=executor.runtime_setup_result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
 
     with pytest.raises(UncleanExit):
         executor._handle_completed_job()
