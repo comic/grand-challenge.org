@@ -5,9 +5,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, call
 
 import pytest
-from billiard.exceptions import (
-    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
-)
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.files.base import ContentFile
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
@@ -1665,9 +1662,6 @@ def test_correct_storage_set(factory, expected_storage, download_context):
 def test_displacement_field_validation(
     image, succeeds, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     image_paths = [Path(__file__).parent.absolute() / "resources" / image]
@@ -1821,11 +1815,6 @@ def test_component_interface_value_manager():
         # Ensure all resource errors are covered
         (
             MemoryError,
-            ValidationError,
-            "The file was too large",
-        ),
-        (
-            CelerySoftTimeLimitExceeded,
             ValidationError,
             "The file was too large",
         ),

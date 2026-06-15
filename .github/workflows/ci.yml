@@ -43,7 +43,7 @@ jobs:
               timeout-minutes: 30
               run: |
                   make local_s3
-                  docker compose run --rm celery_worker pytest --durations 10
+                  docker compose run --rm gc.localhost pytest --durations 10
 
     forge-integration-tests:
         runs-on: ubuntu-latest

@@ -198,9 +198,6 @@ def test_algorithm_job_post_serializer_validations(
 def test_algorithm_job_post_serializer_create(
     rf, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     # setup
@@ -282,11 +279,8 @@ def test_algorithm_job_post_serializer_create(
 
 @pytest.mark.django_db
 def test_algorithm_job_post_serializer_create_with_image_user_uploads(
-    request, settings, django_capture_on_commit_callbacks, mocker
+    request, django_capture_on_commit_callbacks, mocker
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2, creator=user)
     uploads[1].filename += "a"
@@ -729,9 +723,6 @@ def test_input_validation_on_invocation_serializer(inputs, interface, rf):
 def test_invocation_post_serializer_create(
     request, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     user = UserFactory()

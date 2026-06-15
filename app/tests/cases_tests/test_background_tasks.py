@@ -17,9 +17,6 @@ from tests.utils import create_raw_upload_image_session
 
 @pytest.mark.django_db
 def test_image_file_creation(settings, django_capture_on_commit_callbacks):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     images = [
@@ -67,9 +64,6 @@ def test_image_file_creation(settings, django_capture_on_commit_callbacks):
 
 @pytest.mark.django_db
 def test_no_convertible_file(settings, django_capture_on_commit_callbacks):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     images = ["no_image", "image10x10x10.mhd", "referring_to_system_file.mhd"]
@@ -92,9 +86,6 @@ def test_no_convertible_file(settings, django_capture_on_commit_callbacks):
 def test_errors_on_files_with_duplicate_file_names(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     images = [
@@ -123,9 +114,6 @@ def test_errors_on_files_with_duplicate_file_names(
 def test_mhd_file_annotation_creation(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     images = ["image5x6x7.mhd", "image5x6x7.zraw"]
@@ -207,9 +195,6 @@ def test_check_compressed_and_extract_same_name(
 
 @pytest.mark.django_db
 def test_build_zip_file(settings, django_capture_on_commit_callbacks):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     # valid.zip contains a tarred version of the dicom folder,
@@ -244,9 +229,6 @@ def test_build_zip_file(settings, django_capture_on_commit_callbacks):
 
 @pytest.mark.django_db
 def test_soft_time_limit(settings, django_capture_on_commit_callbacks, mocker):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     session = UploadSessionFactory()
@@ -270,9 +252,6 @@ def test_soft_time_limit(settings, django_capture_on_commit_callbacks, mocker):
 def test_failed_image_import_notification(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     images = ["corrupt.png"]

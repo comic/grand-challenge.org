@@ -429,9 +429,6 @@ def test_add_image_to_object(
     object_factory,
     factory_kwargs,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     obj = object_factory(**factory_kwargs)
@@ -550,9 +547,6 @@ def test_add_dicom_image_set_to_object(
     object_factory,
     factory_kwargs,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     obj = object_factory(**factory_kwargs)
@@ -732,15 +726,11 @@ def test_add_dicom_image_set_to_object_sends_notification_on_validation_fail(
 )
 @pytest.mark.django_db
 def test_task_add_image_to_object_handles_deleted_object(
-    settings,
     django_capture_on_commit_callbacks,
     object_factory,
     factory_kwargs,
     context,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     obj = object_factory(**factory_kwargs)
 
     linked_task = some_async_task.serialize(foo="bar")
@@ -788,15 +778,11 @@ def test_task_add_image_to_object_handles_deleted_object(
 )
 @pytest.mark.django_db
 def test_task_add_file_to_object_handles_deleted_object(
-    settings,
     django_capture_on_commit_callbacks,
     object_factory,
     factory_kwargs,
     context,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     obj = object_factory(**factory_kwargs)
     user_upload = UserUploadFactory()
     linked_task = some_async_task.serialize(foo="bar")
@@ -839,9 +825,6 @@ def test_add_file_to_object(
     object_factory,
     factory_kwargs,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     creator = UserFactory()
@@ -888,13 +871,9 @@ def test_add_file_to_object(
 )
 @pytest.mark.django_db
 def test_add_file_to_object_sends_notification_on_validation_fail(
-    settings,
     django_capture_on_commit_callbacks,
     object_factory,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     creator = UserFactory()
     obj = object_factory()
     linked_task = some_async_task.serialize(foo="bar")
@@ -1090,11 +1069,8 @@ def test_get_image_config_and_sha256(container_image_file):
 )
 @pytest.mark.django_db()
 def test_assign_tarball_from_upload(
-    settings, factory, related_factory, related_model_lookup, field_to_copy
+    factory, related_factory, related_model_lookup, field_to_copy
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     user = UserFactory()
     base_obj = related_factory()
     upload = create_upload_from_file(

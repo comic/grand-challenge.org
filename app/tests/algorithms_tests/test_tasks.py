@@ -285,9 +285,6 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
 def test_algorithm(client, settings, django_capture_on_commit_callbacks):
     settings.LAMBDA_TASKS_EAGER = True
 
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     assert Job.objects.count() == 0
 
     # Create the algorithm image
@@ -434,9 +431,6 @@ def test_algorithm_with_invalid_output(
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     assert Job.objects.count() == 0
 
     ai = AlgorithmImageFactory(
@@ -507,10 +501,7 @@ def test_algorithm_with_invalid_output(
 
 
 @pytest.mark.django_db
-def test_execute_algorithm_job_for_missing_inputs(settings):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
+def test_execute_algorithm_job_for_missing_inputs():
     creator = UserFactory()
 
     # Create the algorithm image
@@ -540,11 +531,8 @@ def test_execute_algorithm_job_for_missing_inputs(settings):
 
 @pytest.mark.django_db
 def test_execute_algorithm_job_sets_on_failed_jobs(
-    settings, django_capture_on_commit_callbacks
+    django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     creator = UserFactory()
 
     # Create the algorithm image
@@ -767,12 +755,7 @@ class TestJobCreation:
 
 
 @pytest.mark.django_db
-def test_failed_job_notifications(
-    client, settings, django_capture_on_commit_callbacks
-):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
+def test_failed_job_notifications(client, django_capture_on_commit_callbacks):
     creator = UserFactory()
     editor = UserFactory()
 

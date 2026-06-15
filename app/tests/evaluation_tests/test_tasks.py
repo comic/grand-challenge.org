@@ -68,9 +68,6 @@ def test_submission_evaluation(
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     # Upload a submission and create an evaluation
     phase = PhaseFactory(
         submission_kind=SubmissionKindChoices.CSV,
@@ -675,9 +672,6 @@ def test_non_zip_submission_failure(
     submission_file,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     phase = PhaseFactory(
@@ -746,9 +740,6 @@ def test_evaluation_notifications(
     django_capture_on_commit_callbacks,
 ):
     settings.LAMBDA_TASKS_EAGER = True
-
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     # Try to upload a submission
     phase = PhaseFactory(
@@ -874,10 +865,7 @@ def test_cache_lock():
 
 
 @pytest.mark.django_db
-def test_cancel_external_evaluations_past_timeout(settings):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
+def test_cancel_external_evaluations_past_timeout():
     challenge = ChallengeFactory()
     participant = UserFactory()
     admin = challenge.admins_group.user_set.get()

@@ -15,7 +15,6 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils._os import safe_join
 from django.utils.timezone import now
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
-from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 
@@ -482,7 +481,6 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "aws_xray_sdk.ext.django",  # tracing
-    "django_celery_results",  # database results backend
     "guardian",  # per object permissions
     "rest_framework",  # provides REST API
     "knox",  # token auth for REST API
@@ -829,7 +827,6 @@ if SENTRY_DSN:
         integrations=[
             DjangoIntegration(),
             AwsLambdaIntegration(),
-            CeleryIntegration(),
         ],
         release=COMMIT_ID,
         traces_sample_rate=float(
@@ -907,69 +904,9 @@ CORS_ALLOW_HEADERS = (
 
 ###############################################################################
 #
-# celery
+# Lambda Tasks
 #
 ###############################################################################
-
-CELERY_SOLO_QUEUES = {
-    element
-    for queue in {
-        "acks-late-2xlarge",
-    }
-    for element in {queue, f"{queue}-delay"}
-}
-CELERY_WORKER_MAX_MEMORY_MB = int(
-    os.environ.get("CELERY_WORKER_MAX_MEMORY_MB", "0")
-)
-ECS_ENABLE_CELERY_SCALE_IN_PROTECTION = strtobool(
-    os.environ.get("ECS_ENABLE_CELERY_SCALE_IN_PROTECTION", "False"),
-)
-
-CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
-CELERY_RESULT_PERSISTENT = True
-CELERY_RESULT_EXTENDED = True
-CELERY_RESULT_EXPIRES = 0  # We handle cleanup of results ourselves
-CELERY_TASK_PROTOCOL = 1
-CELERY_TASK_SERIALIZER = "json"
-CELERY_TASK_ACKS_LATE = strtobool(
-    os.environ.get("CELERY_TASK_ACKS_LATE", "False")
-)
-CELERY_WORKER_SEND_TASK_EVENTS = True
-CELERY_WORKER_PREFETCH_MULTIPLIER = int(
-    os.environ.get("CELERY_WORKER_PREFETCH_MULTIPLIER", "1")
-)
-CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", "7200"))
-# The soft time limit must always be shorter than the hard time limit
-# https://github.com/celery/celery/issues/9125
-CELERY_TASK_SOFT_TIME_LIMIT = int(0.9 * CELERY_TASK_TIME_LIMIT)
-CELERY_TASK_TRACK_STARTED = True
-CELERY_BROKER_TRANSPORT_OPTIONS = {
-    "visibility_timeout": int(1.1 * CELERY_TASK_TIME_LIMIT)
-}
-CELERY_BROKER_CONNECTION_MAX_RETRIES = 0
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-
-if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
-    CELERY_BROKER_URL = "sqs://"
-
-    CELERY_WORKER_ENABLE_REMOTE_CONTROL = False
-    CELERY_BROKER_USE_SSL = True
-
-    CELERY_BROKER_TRANSPORT_OPTIONS.update(
-        {
-            "queue_name_prefix": os.environ.get(
-                "CELERY_BROKER_QUEUE_NAME_PREFIX", "gclocalhost-"
-            ),
-            "region": os.environ.get(
-                "CELERY_BROKER_REGION", AWS_DEFAULT_REGION
-            ),
-            "polling_interval": int(
-                os.environ.get("CELERY_BROKER_POLLING_INTERVAL", "1")
-            ),
-        }
-    )
-else:
-    CELERY_BROKER_URL = os.environ.get("BROKER_URL", f"{REDIS_ENDPOINT}/1")
 
 LAMBDA_TASKS_QUEUES = {
     LambdaTaskQueueChoices.DEFAULT: {

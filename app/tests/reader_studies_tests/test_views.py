@@ -431,9 +431,6 @@ def test_display_set_detail_permissions(client):
 def test_display_set_update(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     user = UserFactory()
@@ -622,9 +619,6 @@ def test_display_set_update(
 def test_add_display_set_to_reader_study(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     u1, u2 = UserFactory.create_batch(2)
@@ -728,11 +722,8 @@ def test_add_display_set_to_reader_study(
 
 @pytest.mark.django_db
 def test_add_display_set_to_reader_study_with_empty_value(
-    client, settings, django_capture_on_commit_callbacks
+    client, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     editor = UserFactory()
     reader_study = ReaderStudyFactory()
     existing_display_set = DisplaySetFactory(reader_study=reader_study)
@@ -936,9 +927,6 @@ def test_question_interactive_algorithms_view_permissions(client):
 def test_display_set_upload_corrupt_image(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     editor = UserFactory()

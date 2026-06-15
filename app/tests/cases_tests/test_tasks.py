@@ -5,7 +5,6 @@ from uuid import UUID, uuid4
 
 import pytest
 from botocore.exceptions import ClientError
-from celery.exceptions import MaxRetriesExceededError
 from django.db import IntegrityError
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
@@ -34,7 +33,6 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
 )
-from grandchallenge.core.celery import _retry, acks_late_2xlarge_task
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.storage import protected_s3_storage
 from tests.algorithms_tests.factories import AlgorithmJobFactory
@@ -136,12 +134,8 @@ def test_check_post_processor_result():
 @pytest.mark.django_db
 def test_no_post_processing_mha(
     tmp_path,
-    settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     filename = "image10x10x10.mha"
 
     temp_file = Path(tmp_path / filename)
@@ -161,9 +155,6 @@ def test_post_processing(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     filename = "valid_tiff.tif"
@@ -270,9 +261,6 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory()
@@ -308,9 +296,6 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
 def test_error_in_start_dicom_import_job(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory()
@@ -350,9 +335,6 @@ def test_error_in_start_dicom_import_job(
 def test_start_dicom_import_job_sets_error_message_when_deid_fails(
     settings, django_capture_on_commit_callbacks, mocker
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory()
@@ -419,11 +401,8 @@ def import_job_summary(*, di_upload, **kwargs):
 
 @pytest.mark.django_db
 def test_handle_health_imaging_import_job_event_completed_and_valid(
-    settings, django_capture_on_commit_callbacks, mocker
+    django_capture_on_commit_callbacks, mocker
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     di_upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.STARTED
     )
@@ -458,9 +437,6 @@ def test_handle_health_imaging_import_job_event_completed_and_valid(
 def test_handle_health_imaging_import_job_event_failed_status(
     settings, django_capture_on_commit_callbacks, mocker
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory(
@@ -494,9 +470,6 @@ def test_handle_health_imaging_import_job_event_failed_status(
 def test_handle_health_imaging_import_job_event_invalid_status(
     settings, django_capture_on_commit_callbacks, mocker
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory(
@@ -530,9 +503,6 @@ def test_handle_health_imaging_import_job_event_invalid_status(
 def test_handle_health_imaging_import_job_event_invalid_import(
     settings, django_capture_on_commit_callbacks, mocker
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory(
@@ -572,74 +542,12 @@ def test_handle_health_imaging_import_job_event_invalid_import(
     assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
 
 
-@acks_late_2xlarge_task
-def some_async_task(foo):
-    return foo
-
-
-@pytest.mark.django_db
-def test_retry_initial_options(django_capture_on_commit_callbacks):
-    with django_capture_on_commit_callbacks() as callbacks:
-        _retry(
-            task=some_async_task,
-            signature_kwargs={
-                "kwargs": {"foo": "bar"},
-                "options": {"queue": "mine"},
-            },
-            retries=0,
-        )
-    new_task = callbacks[0].__self__
-
-    assert new_task.options["queue"] == "mine-delay"
-    assert new_task.kwargs == {"foo": "bar", "_retries": 1}
-
-
-@pytest.mark.django_db
-def test_retry_initial(django_capture_on_commit_callbacks):
-    with django_capture_on_commit_callbacks() as callbacks:
-        _retry(
-            task=some_async_task,
-            signature_kwargs={"kwargs": {"foo": "bar"}},
-            retries=0,
-        )
-    new_task = callbacks[0].__self__
-
-    assert new_task.options["queue"] == "acks-late-2xlarge-delay"
-    assert new_task.kwargs == {"foo": "bar", "_retries": 1}
-
-
-@pytest.mark.django_db
-def test_retry_many(django_capture_on_commit_callbacks):
-    with django_capture_on_commit_callbacks() as callbacks:
-        _retry(
-            task=some_async_task,
-            signature_kwargs={"kwargs": {"foo": "bar"}},
-            retries=10,
-        )
-    new_task = callbacks[0].__self__
-
-    assert new_task.options["queue"] == "acks-late-2xlarge-delay"
-    assert new_task.kwargs == {"foo": "bar", "_retries": 11}
-
-
-def test_retry_too_many():
-    with pytest.raises(MaxRetriesExceededError):
-        _retry(
-            task=some_async_task,
-            signature_kwargs={"kwargs": {"foo": "bar"}},
-            retries=100_000,
-        )
-
-
 @pytest.mark.django_db
 def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validation_fail(
     settings,
     django_capture_on_commit_callbacks,
     mocker,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     obj = AlgorithmJobFactory(time_limit=10)
@@ -648,9 +556,6 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
         status=DICOMImageSetUploadStatusChoices.STARTED,
         linked_object=obj,
         linked_socket_pk=ci.pk,
-        task_on_success=some_async_task.signature(
-            kwargs={"foo": "bar"}, immutable=True
-        ),
     )
     import_job_event = {
         "jobName": di_upload._import_job_name,
@@ -665,7 +570,7 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
         DICOMImageSetUpload, "delete_input_files"
     )
 
-    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+    with django_capture_on_commit_callbacks(execute=True):
         handle_health_imaging_import_job_event(
             event=import_job_event,
         )
@@ -684,4 +589,3 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
     assert SystemErrorMessages.UNEXPECTED_ERROR in str(
         obj.detailed_error_message
     )
-    assert "some_async_task" not in str(callbacks)

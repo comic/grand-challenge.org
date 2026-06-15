@@ -762,9 +762,6 @@ def test_create_job_with_json_file(
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     ai = AlgorithmImageFactory(
         is_manifest_valid=True,
         is_in_registry=True,
@@ -818,9 +815,6 @@ def test_algorithm_job_create_with_image_input(
     client, settings, django_capture_on_commit_callbacks
 ):
     settings.LAMBDA_TASKS_EAGER = True
-
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     ai = AlgorithmImageFactory(
         is_manifest_valid=True,
@@ -986,9 +980,6 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
-
         settings.LAMBDA_TASKS_EAGER = True
 
         # configure multiple inputs
@@ -1100,9 +1091,6 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
-
         settings.LAMBDA_TASKS_EAGER = True
 
         # configure multiple inputs
@@ -1177,13 +1165,9 @@ class TestJobCreateView:
     def test_create_job_is_idempotent(
         self,
         client,
-        settings,
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
-
         # configure multiple inputs
         interface = AlgorithmInterfaceFactory(
             inputs=[
@@ -1250,9 +1234,6 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
-
         settings.LAMBDA_TASKS_EAGER = True
 
         # configure file input
@@ -1301,13 +1282,9 @@ class TestJobCreateView:
     def test_create_job_with_faulty_json_input(
         self,
         client,
-        settings,
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
-
         interface = AlgorithmInterfaceFactory(
             inputs=[algorithm_with_multiple_inputs.ci_json_in_db_with_schema],
             outputs=[ComponentInterfaceFactory()],
@@ -1340,9 +1317,6 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
-
         settings.LAMBDA_TASKS_EAGER = True
 
         interface = AlgorithmInterfaceFactory(
@@ -1389,9 +1363,6 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
-
         settings.LAMBDA_TASKS_EAGER = True
 
         # configure multiple inputs

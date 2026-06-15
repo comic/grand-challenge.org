@@ -15,7 +15,7 @@ Container_Boundary(s1, "API") {
 }
 
 ContainerDb(postgres, "Database", "RDS/PostgreSQL", "Stores user information, medical imaging metadata, job results etc.")
-Container(message_queue, "Message Queue", "SQS/Redis", "Queue of units of work Celery messages.")
+Container(message_queue, "Message Queue", "SQS", "Queue of units of work Lambda Tasks messages.")
 Container(protected_s3, "Protected Data Store", "S3", "Stores protected medical imaging objects.")
 Container(private_s3, "Private Data Store", "S3", "Stores private objects, container images etc.")
 
@@ -30,7 +30,7 @@ Rel(gc_web_app, cdn, "Sends static data to", "HTTPS")
 Rel(gc_web_app, postgres, "Reads and writes to", "SSL, SQL")
 Rel(gc_web_app, protected_s3, "Stores objects in, and proxies access to", "HTTPS, S3")
 Rel(gc_web_app, private_s3, "Stores objects in", "HTTPS, S3")
-Rel(gc_web_app, message_queue, "Puts messages on", "SSL, SQS/Redis, Celery")
+Rel(gc_web_app, message_queue, "Puts messages on", "SSL, SQS, Lambda Tasks")
 Rel_Neighbor(gc_web_app, redis, "Uses", "HTTP")
 
 Rel(nginx, gc_web_app, "Proxies", "HTTP, HTML, JSON")

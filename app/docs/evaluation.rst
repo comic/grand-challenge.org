@@ -3,7 +3,7 @@ Evaluation
 
 |project_name| has a system for automatically evaluating new submissions.
 Challenge administrators upload their own Docker containers that will be
-executed by Celery workers when a new submission in uploaded by a participant.
+executed by Lambda Tasks when a new submission in uploaded by a participant.
 
 Evaluation Container Requirements
 ---------------------------------

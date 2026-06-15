@@ -61,9 +61,6 @@ def test_phase_permissions():
 def test_hiding_phase_updates_perms(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     e: Evaluation = EvaluationFactory(
@@ -110,9 +107,6 @@ def test_hiding_phase_updates_perms(
 def test_unhiding_phase_updates_perms(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     e: Evaluation = EvaluationFactory(
@@ -281,9 +275,6 @@ def test_hiding_challenge_updates_perms(
 ):
     """If a challenge is hidden then the viewer group should be updated"""
 
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     e: Evaluation = EvaluationFactory(
@@ -323,9 +314,6 @@ def test_unhiding_challenge_updates_perms(
     settings, django_capture_on_commit_callbacks
 ):
     """If a challenge is unhidden then the viewer group should be updated"""
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     e: Evaluation = EvaluationFactory(
