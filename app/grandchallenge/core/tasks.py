@@ -1,12 +1,8 @@
-from datetime import timedelta
-
 import boto3
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db.models import Count
 from django.utils import timezone
-from django.utils.timezone import now
-from django_celery_results.models import TaskResult
 from lambda_tasks.decorators import lambda_task
 from pictures.tasks import _process_picture
 
@@ -18,18 +14,6 @@ from grandchallenge.cases.models import (
 )
 from grandchallenge.evaluation.models import Evaluation, Method
 from grandchallenge.workstations.models import Session
-
-
-@lambda_task
-def cleanup_celery_backend():
-    """Cleanup the Celery backend."""
-    deleted_count, _ = (
-        TaskResult.objects.filter(date_created__lt=now() - timedelta(days=7))
-        .only("pk")
-        .delete()
-    )
-    return deleted_count
-
 
 CLOUDWATCH_METRICS_LIMIT = 1000
 
