@@ -93,6 +93,12 @@
 
     <h3 class="mt-3">Challenge Compute Costs</h3>
 
+    {% if not challenge.approved_compute_cost_euro_millicents %}
+         <span class="text-muted">
+            Any compute budget consumption will be shown here.
+        </span>
+    {% else %}
+
     <dl class="mt-1">
         <dt>Total compute budget spent</dt>
         <dd>
@@ -113,8 +119,15 @@
          <dd>{{ challenge.available_compute_cost_euro_millicents|millicents_to_euro }}</dd>
     </dl>
 
+    {% endif %}
 
-    <h3 class="mt-3">Challenge Storage Costs</h3>
+    <h3 class="mt-3">Challenge Storage Usage</h3>
+
+    {% if not challenge.approved_storage_cost_euro_millicents %}
+         <span class="text-muted">
+            Any storage costs and usage will be shown here.
+        </span>
+    {% else %}
 
     <dl class="mt-1">
         <dt>Total storage budget available</dt>
@@ -126,5 +139,7 @@
         <dt>Total container registry storage</dt>
         <dd>{{ challenge.size_in_registry|filesizeformat }}</dd>
     </dl>
+
+    {% endif %}
 
 {% endblock %}
