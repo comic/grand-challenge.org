@@ -27,7 +27,7 @@ from grandchallenge.components.models import (
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import (
     upload_to_registry_and_sagemaker,
-    validate_docker_image,
+    validate_container_image,
 )
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
@@ -859,7 +859,7 @@ def test_importing_same_sha_fails(
 
     for im in [im1, im2]:
         with django_capture_on_commit_callbacks(execute=True):
-            validate_docker_image(
+            validate_container_image(
                 pk=im.pk,
                 app_label=im._meta.app_label,
                 model_name=im._meta.model_name,

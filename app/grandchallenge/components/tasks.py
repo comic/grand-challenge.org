@@ -51,7 +51,7 @@ from grandchallenge.components.backends.exceptions import (
     TaskCancelled,
 )
 from grandchallenge.components.emails import (
-    send_docker_not_made_active,
+    send_container_image_not_made_active,
     send_invalid_dockerfile_email,
 )
 from grandchallenge.components.exceptions import PriorStepFailed
@@ -105,7 +105,7 @@ def assign_docker_image_from_upload(
 @transaction.atomic
 def validate_docker_image_celery(**kwargs):
     # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return validate_docker_image(**kwargs)
+    return validate_container_image(**kwargs)
 
 
 @lambda_task(
@@ -114,7 +114,7 @@ def validate_docker_image_celery(**kwargs):
     soft_timeout=BATCH_LONG_TASK_SOFT_TIMEOUT,
     hard_timeout=BATCH_LONG_TASK_HARD_TIMEOUT,
 )
-def validate_docker_image(
+def validate_container_image(
     *,
     pk: str | UUID,
     app_label: str,
@@ -200,16 +200,41 @@ def upload_to_registry_and_sagemaker(
         shim_container_image(instance=instance)
         instance.save()
 
+    if mark_as_desired:
+        mark_desired_container_version.execute_on_commit(
+            app_label=app_label,
+            model_name=model_name,
+            pk=pk,
+        )
+    else:
+        instance.import_status = instance.ImportStatusChoices.COMPLETED
+        instance.save()
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def mark_desired_container_version(
+    *, pk: str | UUID, app_label: str, model_name: str
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
+    with check_lock_acquired():
+        instance = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+        # Acquire a lock on the peer images
+        _ = list(instance.get_peer_images().select_for_update(nowait=True))
+
+    if instance.import_status != instance.ImportStatusChoices.STARTED:
+        raise RuntimeError("Container Image is not ready for validation")
+
     instance.import_status = instance.ImportStatusChoices.COMPLETED
     instance.save()
 
-    if mark_as_desired:
-        try:
-            instance.mark_desired_version()
-        except ValidationError as error:
-            send_docker_not_made_active(
-                container_image=instance, error_message=str(error)
-            )
+    try:
+        instance.mark_desired_version()
+    except ValidationError as error:
+        send_container_image_not_made_active(
+            container_image=instance, error_message=str(error)
+        )
 
 
 @lambda_task

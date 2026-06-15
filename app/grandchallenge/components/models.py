@@ -59,7 +59,7 @@ from grandchallenge.components.tasks import (
     assign_docker_image_from_upload,
     deprovision_job,
     provision_job,
-    validate_docker_image,
+    validate_container_image,
 )
 from grandchallenge.components.validators import (
     validate_biom_format,
@@ -2235,7 +2235,7 @@ class ComponentImage(FieldChangeMixin, models.Model):
         super().save(*args, **kwargs)
 
         if validate_image_now:
-            validate_docker_image.execute_on_commit(
+            validate_container_image.execute_on_commit(
                 app_label=self._meta.app_label,
                 model_name=self._meta.model_name,
                 pk=self.pk,

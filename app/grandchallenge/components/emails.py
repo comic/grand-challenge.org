@@ -29,7 +29,7 @@ def send_invalid_dockerfile_email(*, container_image):
         )
 
 
-def send_docker_not_made_active(*, container_image, error_message):
+def send_container_image_not_made_active(*, container_image, error_message):
     container_image.refresh_from_db()
 
     if container_image.creator:

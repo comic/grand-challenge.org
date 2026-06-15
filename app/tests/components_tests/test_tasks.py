@@ -58,7 +58,7 @@ from grandchallenge.components.tasks import (
     stop_expired_endpoints,
     update_container_image_shim,
     upload_to_registry_and_sagemaker,
-    validate_docker_image,
+    validate_container_image,
 )
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.notifications.models import Notification
@@ -157,7 +157,7 @@ def test_remove_inactive_container_images(django_capture_on_commit_callbacks):
 
 
 @pytest.mark.django_db
-def test_validate_docker_image(
+def test_validate_container_image(
     invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
     settings.LAMBDA_TASKS_EAGER = True
@@ -169,7 +169,7 @@ def test_validate_docker_image(
     assert image.is_manifest_valid is None
 
     with django_capture_on_commit_callbacks(execute=True):
-        validate_docker_image(
+        validate_container_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,
@@ -185,7 +185,7 @@ def test_validate_docker_image(
     image.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        validate_docker_image(
+        validate_container_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,
@@ -209,7 +209,7 @@ def test_upload_to_registry_and_sagemaker(
     assert image.is_manifest_valid is None
 
     with django_capture_on_commit_callbacks(execute=True):
-        validate_docker_image(
+        validate_container_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,
@@ -250,7 +250,7 @@ def test_api_method_extraction(
     assert image.api_method == APIMethodChoices.EXEC
 
     with django_capture_on_commit_callbacks(execute=True):
-        validate_docker_image(
+        validate_container_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,
@@ -357,7 +357,7 @@ def test_update_sagemaker_shim(
     assert image.is_manifest_valid is None
 
     with django_capture_on_commit_callbacks(execute=True):
-        validate_docker_image(
+        validate_container_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,

@@ -1402,7 +1402,7 @@ def test_one_job_with_image(django_capture_on_commit_callbacks):
         ai = AlgorithmImageFactory()
 
     assert len(callbacks) == 1
-    assert "grandchallenge.components.tasks.validate_docker_image" in str(
+    assert "grandchallenge.components.tasks.validate_container_image" in str(
         callbacks[0]
     )
     assert ai.import_status == ImportStatusChoices.STARTED
@@ -1417,7 +1417,7 @@ def test_can_change_from_empty(django_capture_on_commit_callbacks):
         ai.save()
 
     assert len(callbacks) == 1
-    assert "grandchallenge.components.tasks.validate_docker_image" in str(
+    assert "grandchallenge.components.tasks.validate_container_image" in str(
         callbacks[0]
     )
     assert ai.import_status == ImportStatusChoices.STARTED
