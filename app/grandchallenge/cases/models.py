@@ -224,7 +224,7 @@ class RawImageUploadSession(UUIDModel):
         upload_session_complete_task: UploadSessionCompleteTask | None = None,
     ):
         """
-        Starts the Celery task to import this RawImageUploadSession.
+        Starts the Lambda task to import this RawImageUploadSession.
 
         Parameters
         ----------

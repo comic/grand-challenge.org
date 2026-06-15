@@ -5,8 +5,6 @@ authors = [
 license = {text = "Apache-2.0"}
 requires-python = "==3.13.*"
 dependencies = [
-    "celery[redis,sqs]!=5.0.6,!=5.3.0,!=5.5.*",
-    "kombu!=5.3.0,!=5.5.*,!=5.6.*",
     "django<5.3",
     "django-countries",
     "django-crispy-forms",
@@ -17,7 +15,6 @@ dependencies = [
     "gunicorn",
     "uvicorn[standard]",
     "django-select2",
-    "django-celery-results!=2.4.0",
     "bleach[css]",
     "jsonschema",
     "django-autocomplete-light",
@@ -98,7 +95,6 @@ dev = [
     "sphinx-exec-code",
     "pytest-asyncio",
     "boto3-stubs[cloudwatch,codebuild,ecr,lambda,logs,medical-imaging,rds,s3,sagemaker,ses]",
-    "celery-types",
     "psutil",
     "pytest-timeout",
 ]

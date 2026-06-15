@@ -160,7 +160,7 @@ class WorkstationImageMoveForm(SaveFormInitMixin, Form):
 
         # We only handle executable images here so that the
         # change happens quickly. For support of non-executable
-        # images Celery tasks need to be invoked for both the
+        # images Lambda tasks need to be invoked for both the
         # old and new workstation images. See AlgorithmImageActivate.
         workstation_executable_images = (
             WorkstationImage.objects.executable_images()
