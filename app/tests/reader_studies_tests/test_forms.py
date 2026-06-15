@@ -943,7 +943,6 @@ def test_reader_study_copy_all_optional_fields_implemented(
     settings.LAMBDA_TASKS_EAGER = True
 
     copied_reader_study = copy_reader_study_with_optional_field(
-        settings=settings,
         client=client,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         reader_study=reader_study_with_optional_fields,
@@ -988,7 +987,6 @@ def test_reader_study_copy_selected_optional_field_only(
     settings.LAMBDA_TASKS_EAGER = True
 
     copied_reader_study = copy_reader_study_with_optional_field(
-        settings=settings,
         client=client,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         reader_study=reader_study_with_optional_fields,
