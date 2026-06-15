@@ -11,7 +11,6 @@ from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q, Window
 from django.db.models.functions import Rank
-from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -541,18 +540,14 @@ class AlgorithmImageActivate(
         if algorithm_image.can_execute:
             algorithm_image.mark_desired_version()
         else:
-            algorithm_image.import_status = ImportStatusChoices.QUEUED
+            algorithm_image.import_status = ImportStatusChoices.STARTED
             algorithm_image.save()
 
-            on_commit(
-                upload_to_registry_and_sagemaker.signature(
-                    kwargs={
-                        "app_label": algorithm_image._meta.app_label,
-                        "model_name": algorithm_image._meta.model_name,
-                        "pk": algorithm_image.pk,
-                        "mark_as_desired": True,
-                    }
-                ).apply_async
+            upload_to_registry_and_sagemaker.execute_on_commit(
+                app_label=algorithm_image._meta.app_label,
+                model_name=algorithm_image._meta.model_name,
+                pk=algorithm_image.pk,
+                mark_as_desired=True,
             )
 
         return response

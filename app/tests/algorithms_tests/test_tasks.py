@@ -21,12 +21,13 @@ from grandchallenge.components.models import (
     APIMethodChoices,
     ComponentInterface,
     ComponentInterfaceValue,
+    ImportStatusChoices,
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import (
     upload_to_registry_and_sagemaker,
-    validate_docker_image,
+    validate_container_image,
 )
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
@@ -848,8 +849,7 @@ def test_failed_job_notifications(
 def test_importing_same_sha_fails(
     settings, django_capture_on_commit_callbacks, invoke_container_image
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     alg = AlgorithmFactory()
 
@@ -859,7 +859,7 @@ def test_importing_same_sha_fails(
 
     for im in [im1, im2]:
         with django_capture_on_commit_callbacks(execute=True):
-            validate_docker_image(
+            validate_container_image(
                 pk=im.pk,
                 app_label=im._meta.app_label,
                 model_name=im._meta.model_name,
@@ -925,19 +925,24 @@ def test_deactivate_old_algorithm_images(django_capture_on_commit_callbacks):
 def test_non_invoke_api_method_image_not_marked_as_desired_version_after_import(
     settings, invoke_container_image, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
-    algorithm_image = AlgorithmImageFactory(
-        is_manifest_valid=True,
-        image__from_path=invoke_container_image,
-        api_method=APIMethodChoices.EXEC,
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        algorithm_image = AlgorithmImageFactory(
+            image__from_path=invoke_container_image,
+        )
+
     ReaderStudyAlgorithmImplementationFactory(
         algorithm=algorithm_image.algorithm
     )
 
     assert len(mail.outbox) == 0
+
+    algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image.pk)
+    algorithm_image.import_status = ImportStatusChoices.STARTED
+    algorithm_image.api_method = APIMethodChoices.EXEC
+    algorithm_image.is_desired_version = False
+    algorithm_image.save()
 
     with django_capture_on_commit_callbacks(execute=True):
         upload_to_registry_and_sagemaker(

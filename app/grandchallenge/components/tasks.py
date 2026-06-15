@@ -30,6 +30,8 @@ from lambda_tasks.models import SQSLambdaTask
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
 from config.lambda_tasks import (
+    BATCH_LONG_TASK_HARD_TIMEOUT,
+    BATCH_LONG_TASK_SOFT_TIMEOUT,
     LONG_TASK_HARD_TIMEOUT,
     LONG_TASK_SOFT_TIMEOUT,
     LambdaTaskQueueChoices,
@@ -49,7 +51,7 @@ from grandchallenge.components.backends.exceptions import (
     TaskCancelled,
 )
 from grandchallenge.components.emails import (
-    send_docker_not_made_active,
+    send_container_image_not_made_active,
     send_invalid_dockerfile_email,
 )
 from grandchallenge.components.exceptions import PriorStepFailed
@@ -96,8 +98,23 @@ def assign_docker_image_from_upload(
         instance.user_upload.delete()
 
 
-@acks_late_2xlarge_task  # This task cannot be migrated as the maximum duration is beyond the lambda time limit
-def validate_docker_image(  # noqa C901
+@acks_late_2xlarge_task(
+    name=f"{__name__}.validate_docker_image",
+    retry_on=(LockNotAcquiredException,),
+)
+@transaction.atomic
+def validate_docker_image_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return validate_container_image(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.BATCH_MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=BATCH_LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=BATCH_LONG_TASK_HARD_TIMEOUT,
+)
+def validate_container_image(
     *,
     pk: str | UUID,
     app_label: str,
@@ -105,9 +122,12 @@ def validate_docker_image(  # noqa C901
     mark_as_desired: bool,
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    instance = model.objects.get(pk=pk)
-    instance.import_status = instance.ImportStatusChoices.STARTED
-    instance.save()
+
+    with check_lock_acquired():
+        instance = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if instance.import_status != instance.ImportStatusChoices.STARTED:
+        raise RuntimeError("Container Image is not ready for validation")
 
     if instance.is_manifest_valid is None:
         try:
@@ -125,7 +145,7 @@ def validate_docker_image(  # noqa C901
         # Nothing to do
         return
 
-    upload_to_registry_and_sagemaker(
+    upload_to_registry_and_sagemaker.execute_on_commit(
         app_label=app_label,
         model_name=model_name,
         pk=pk,
@@ -133,15 +153,32 @@ def validate_docker_image(  # noqa C901
     )
 
 
-@acks_late_2xlarge_task  # This task needs to be re-written as it assumes that there is no transaction
+@acks_late_2xlarge_task(
+    name=f"{__name__}.upload_to_registry_and_sagemaker",
+    retry_on=(LockNotAcquiredException,),
+)
+@transaction.atomic
+def upload_to_registry_and_sagemaker_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return upload_to_registry_and_sagemaker(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.BATCH_MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=BATCH_LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=BATCH_LONG_TASK_HARD_TIMEOUT,
+)
 def upload_to_registry_and_sagemaker(
     *, pk: str | UUID, app_label: str, model_name: str, mark_as_desired: bool
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    instance = model.objects.get(pk=pk)
 
-    instance.import_status = instance.ImportStatusChoices.STARTED
-    instance.save()
+    with check_lock_acquired():
+        instance = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if instance.import_status != instance.ImportStatusChoices.STARTED:
+        raise RuntimeError("Container Image is not ready for validation")
 
     if not instance.is_in_registry:
         try:
@@ -163,16 +200,45 @@ def upload_to_registry_and_sagemaker(
         shim_container_image(instance=instance)
         instance.save()
 
+    if mark_as_desired:
+        mark_desired_container_version.execute_on_commit(
+            app_label=app_label,
+            model_name=model_name,
+            pk=pk,
+        )
+    else:
+        instance.import_status = instance.ImportStatusChoices.COMPLETED
+        instance.save()
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def mark_desired_container_version(
+    *, pk: str | UUID, app_label: str, model_name: str
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
+    with check_lock_acquired():
+        instance = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+        # Acquire a lock on the peer images
+        _ = list(
+            instance.get_peer_images()
+            .select_for_update(nowait=True)
+            .values_list("pk", flat=True)
+        )
+
+    if instance.import_status != instance.ImportStatusChoices.STARTED:
+        raise RuntimeError("Container Image is not ready for validation")
+
     instance.import_status = instance.ImportStatusChoices.COMPLETED
     instance.save()
 
-    if mark_as_desired:
-        try:
-            instance.mark_desired_version()
-        except ValidationError as error:
-            send_docker_not_made_active(
-                container_image=instance, error_message=str(error)
-            )
+    try:
+        instance.mark_desired_version()
+    except ValidationError as error:
+        send_container_image_not_made_active(
+            container_image=instance, error_message=str(error)
+        )
 
 
 @lambda_task

@@ -27,7 +27,6 @@ from django.core.validators import (
 )
 from django.db import models, transaction
 from django.db.models import IntegerChoices, QuerySet, TextChoices
-from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
 from django.template.defaultfilters import truncatewords
 from django.utils.functional import cached_property
@@ -60,7 +59,7 @@ from grandchallenge.components.tasks import (
     assign_docker_image_from_upload,
     deprovision_job,
     provision_job,
-    validate_docker_image,
+    validate_container_image,
 )
 from grandchallenge.components.validators import (
     validate_biom_format,
@@ -2225,7 +2224,7 @@ class ComponentImage(FieldChangeMixin, models.Model):
         )
 
         if image_needs_validation:
-            self.import_status = ImportStatusChoices.QUEUED
+            self.import_status = ImportStatusChoices.STARTED
             validate_image_now = True
         else:
             validate_image_now = False
@@ -2236,16 +2235,11 @@ class ComponentImage(FieldChangeMixin, models.Model):
         super().save(*args, **kwargs)
 
         if validate_image_now:
-            on_commit(
-                validate_docker_image.signature(
-                    kwargs={
-                        "app_label": self._meta.app_label,
-                        "model_name": self._meta.model_name,
-                        "pk": self.pk,
-                        "mark_as_desired": True,
-                    },
-                    immutable=True,
-                ).apply_async
+            validate_container_image.execute_on_commit(
+                app_label=self._meta.app_label,
+                model_name=self._meta.model_name,
+                pk=self.pk,
+                mark_as_desired=True,
             )
 
     def assign_docker_image_from_upload(self):
