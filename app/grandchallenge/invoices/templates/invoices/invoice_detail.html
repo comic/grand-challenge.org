@@ -70,7 +70,7 @@
                 {% endif %}
             </dl>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6 pl-3 border-left rounded">
             <dl>
                 <dt>Base contribution</dt>
                 <dd>€&nbsp;{{ object.support_costs_euros }}</dd>
@@ -81,9 +81,9 @@
                 <dt>Storage capacity reservation</dt>
                 <dd class="mb-0">€&nbsp;{{ object.storage_costs_euros }}</dd>
 
-                <hr class="mt-1 mb-3 ml-0" style="width: 60%">
+                <hr class="mt-3 ml-0" style="width: 44%">
 
-                <dt>Total Amount</dt>
+                <dt>Total amount</dt>
                 <dd>{{ invoice.total_amount_euros|euro:0 }}</dd>
             </dl>
         </div>
@@ -91,7 +91,7 @@
 
     <hr>
 
-    <h3>Compute Budget Consumption</h3>
+    <h3>Compute Costs</h3>
 
 
     {% if not object.is_budget_authorized %}
@@ -100,20 +100,24 @@
         </span>
     {% else %}
 
-    <div class="progress mb-3">
-        <div
-            class="progress-bar {% if object.percent_compute_budget_consumed >= 100 %}bg-danger{% elif object.percent_compute_budget_consumed >= 70 %}bg-warning{% else %}bg-success{% endif %}"
-            style="width: {{ object.percent_compute_budget_consumed }}%"
-        >
-            {{ object.percent_compute_budget_consumed }}%
-        </div>
-    </div>
 
-    <dl>
-        <dt>Used compute capacity</dt>
+    <dl class="mt-3 px-3 border-left rounded">
+        <dt>Compute budget spent</dt>
+        <dd>
+            <div class="progress my-1">
+                <div
+                class="progress-bar {% if object.percent_compute_budget_consumed >= 100 %}bg-danger{% elif object.percent_compute_budget_consumed >= 70 %}bg-warning{% else %}bg-success{% endif %}"
+                style="width: {{ object.percent_compute_budget_consumed }}%"
+                >
+                    {{ object.percent_compute_budget_consumed }}%
+                </div>
+            </div>
+        </dd>
+
+        <dt>Compute budget used</dt>
         <dd>{{ object.consumed_compute_cost_euro_millicents|millicents_to_euro }}</dd>
 
-        <dt>Available compute capacity</dt>
+        <dt>Compute budget remaining</dt>
         <dd>{{ object.available_compute_cost_euro_millicents|millicents_to_euro }}</dd>
 
     </dl>

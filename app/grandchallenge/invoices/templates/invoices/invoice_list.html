@@ -58,7 +58,7 @@
                     <th>Issued on</th>
                     <th>Due on</th>
                     <th>Amount</th>
-                    <th>Used compute budget</th>
+                    <th>Compute budget spent</th>
                     <th>Type</th>
                     <th>Status</th>
                 </tr>
@@ -71,7 +71,7 @@
                         </td>
                         <td>{% firstof invoice.internal_invoice_number '-' %}</td>
                         <td data-order="{{ invoice.issued_on|date:"c" }}">{{ invoice.issued_on|default_if_none:"-" }}</td>
-                        <td data-order="{{ invoice.due_date|date:"c" }}">
+                        <td class="text-nowrap" data-order="{{ invoice.due_date|date:"c" }}">
                             {{ invoice.due_date|default_if_none:"-" }}
                             {% if invoice.is_overdue %}
                                 <i class="fas fa-exclamation-triangle text-danger" title="Invoice is overdue."></i>
@@ -91,13 +91,12 @@
         </table>
     </div>
 
-    <hr>
-    <h3>Compute Capacity for {{ challenge.short_name }}</h3>
+    <h3>Total Compute Costs for {{ challenge.short_name }}</h3>
 
-    <dl>
-        <dt>Active budget</dt>
+    <dl class="mt-3 px-3 border-left rounded">
+        <dt>Total compute budget spent</dt>
         <dd>
-            <div class="progress">
+            <div class="progress my-1">
                 <div
                 class="progress-bar {% if challenge.percent_active_compute_budget_consumed >= 100 %}bg-danger{% elif challenge.percent_active_compute_budget_consumed >= 70 %}bg-warning{% else %}bg-success{% endif %}"
                 style="width: {{ challenge.percent_active_compute_budget_consumed }}%"
@@ -107,24 +106,24 @@
             </div>
         </dd>
 
-        <dt>Total used compute capacity</dt>
+        <dt>Total compute budget used</dt>
         <dd>{{ challenge.consumed_compute_cost_euro_millicents|millicents_to_euro }}</dd>
 
-        <dt>Total available compute capacity</dt>
+        <dt>Total compute budget remaining</dt>
          <dd>{{ challenge.available_compute_cost_euro_millicents|millicents_to_euro }}</dd>
     </dl>
 
-    <hr>
-    <h3>Storage Capacity for {{ challenge.short_name }}</h3>
 
-    <dl>
-        <dt>Total available storage capacity</dt>
+    <h3>Total Storage Costs for {{ challenge.short_name }}</h3>
+
+    <dl class="mt-3 px-3 border-left rounded">
+        <dt>Total storage budget available</dt>
         <dd>{{ challenge.approved_storage_cost_euro_millicents|millicents_to_euro }}</dd>
 
-        <dt>Total current object data storage</dt>
+        <dt>Total object data storage</dt>
         <dd>{{ challenge.size_in_storage|filesizeformat }}</dd>
 
-        <dt>Total current container registry storage</dt>
+        <dt>Total container registry storage</dt>
         <dd>{{ challenge.size_in_registry|filesizeformat }}</dd>
     </dl>
 
