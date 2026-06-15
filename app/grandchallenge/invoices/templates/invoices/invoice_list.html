@@ -91,9 +91,9 @@
         </table>
     </div>
 
-    <h3>Total Compute Costs for {{ challenge.short_name }}</h3>
+    <h3 class="mt-3">Challenge Compute Costs</h3>
 
-    <dl class="mt-3 px-3 border-left rounded">
+    <dl class="mt-1">
         <dt>Total compute budget spent</dt>
         <dd>
             <div class="progress my-1">
@@ -114,9 +114,9 @@
     </dl>
 
 
-    <h3>Total Storage Costs for {{ challenge.short_name }}</h3>
+    <h3 class="mt-3">Challenge Storage Costs</h3>
 
-    <dl class="mt-3 px-3 border-left rounded">
+    <dl class="mt-1">
         <dt>Total storage budget available</dt>
         <dd>{{ challenge.approved_storage_cost_euro_millicents|millicents_to_euro }}</dd>
 
