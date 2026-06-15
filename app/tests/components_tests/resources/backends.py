@@ -16,6 +16,7 @@ from grandchallenge.components.backends.base import (
     Executor,
     InferenceResult,
     JobParams,
+    RuntimeSetupResult,
 )
 from grandchallenge.components.backends.utils import UUID4_REGEX
 from grandchallenge.components.tasks import handle_event
@@ -31,6 +32,27 @@ class IOCopyExecutor(Executor):
 
     def execute(self):
         try:
+            runtime_setup_result = RuntimeSetupResult(
+                return_code=0,
+                sagemaker_shim_version="0.8.0",
+            )
+            runtime_setup_result_content = (
+                runtime_setup_result.model_dump_json().encode("utf-8")
+            )
+            signature = hmac.new(
+                key=self._signing_key,
+                msg=runtime_setup_result_content,
+                digestmod=hashlib.sha256,
+            ).hexdigest()
+            self._s3_client.upload_fileobj(
+                Fileobj=io.BytesIO(runtime_setup_result_content),
+                Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                Key=self.runtime_setup_result_key,
+                ExtraArgs={
+                    "Metadata": {"signature_hmac_sha256": signature},
+                },
+            )
+
             with io.BytesIO() as f:
                 self._s3_client.download_fileobj(
                     Fileobj=f,

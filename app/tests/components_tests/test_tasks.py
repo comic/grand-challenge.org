@@ -30,7 +30,10 @@ from grandchallenge.cases.models import (
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
     EndpointOrchestrator,
 )
-from grandchallenge.components.backends.base import InferenceResult
+from grandchallenge.components.backends.base import (
+    InferenceResult,
+    RuntimeSetupResult,
+)
 from grandchallenge.components.models import (
     APIMethodChoices,
     ComponentInterfaceValue,
@@ -1671,6 +1674,26 @@ def test_handle_endpoint_invocation_completed_event(settings):
         endpoint__signing_key=b"itsasecret",
     )
     orchestrator = invocation.orchestrator
+    runtime_setup_result = RuntimeSetupResult(
+        return_code=0,
+        sagemaker_shim_version="0.8.0",
+    )
+    runtime_setup_result_content = (
+        runtime_setup_result.model_dump_json().encode("utf-8")
+    )
+    signature = hmac.new(
+        key=b"itsasecret",
+        msg=runtime_setup_result_content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    orchestrator._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(runtime_setup_result_content),
+        Bucket=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
+        Key=orchestrator.runtime_setup_result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
     inference_result = InferenceResult(
         pk=f"algorithms-invocation-{invocation.pk}",
         return_code=0,

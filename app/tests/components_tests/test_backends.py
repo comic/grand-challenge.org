@@ -19,6 +19,7 @@ from grandchallenge.components.backends.base import (
     ASYNC_BOTO_CONFIG,
     ASYNC_CONCURRENCY,
     InferenceResult,
+    RuntimeSetupResult,
     s3_stream_response,
 )
 from grandchallenge.components.backends.exceptions import ComponentException
@@ -776,6 +777,88 @@ def test_api_method_env_set():
         executor.invocation_environment["GRAND_CHALLENGE_COMPONENT_API_METHOD"]
         == "invoke"
     )
+
+
+def test_runtime_setup_result_signature_unverified(settings):
+    job_pk = uuid4()
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"correct-key",
+        api_method=APIMethodChoices.EXEC,
+    )
+
+    runtime_setup_result = RuntimeSetupResult(
+        return_code=0,
+        sagemaker_shim_version="0.8.0",
+    )
+    runtime_setup_result_content = (
+        runtime_setup_result.model_dump_json().encode("utf-8")
+    )
+    signature = hmac.new(
+        key=b"wrong-key",
+        msg=runtime_setup_result_content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    executor._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(runtime_setup_result_content),
+        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        Key=executor.runtime_setup_result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
+
+    with pytest.raises(ComponentException) as error:
+        executor._get_runtime_setup_result()
+
+    assert (
+        str(error.value)
+        == "The runtime setup response object has been tampered with"
+    )
+
+
+def test_runtime_setup_result_signature_verified(settings):
+    job_pk = uuid4()
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"correct-key",
+        api_method=APIMethodChoices.EXEC,
+    )
+
+    runtime_setup_result = RuntimeSetupResult(
+        return_code=0,
+        sagemaker_shim_version="0.8.0",
+    )
+    runtime_setup_result_content = (
+        runtime_setup_result.model_dump_json().encode("utf-8")
+    )
+    signature = hmac.new(
+        key=b"correct-key",
+        msg=runtime_setup_result_content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    executor._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(runtime_setup_result_content),
+        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        Key=executor.runtime_setup_result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
+
+    assert executor._get_runtime_setup_result() == runtime_setup_result
 
 
 def test_invocation_results_signature_unverified(settings):
