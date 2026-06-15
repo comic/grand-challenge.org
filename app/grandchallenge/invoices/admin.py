@@ -218,9 +218,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         return self.consumed_compute_cost(obj)
 
     def challenge_total_consumed_compute_including_write_off(self, obj):
-        return euro(
-            obj.challenge.total_consumed_compute_costs_with_write_off_euros
-        )
+        return euro(obj.challenge.compute_cost_euro_millicents / 1000 / 100)
 
     @admin.display(
         description="Challenge projected total storage costs (for 5 years)"
