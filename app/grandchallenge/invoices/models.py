@@ -6,8 +6,16 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Count, Exists, ExpressionWrapper, F, OuterRef, Q
-from django.db.models.functions import Cast, Now
+from django.db.models import (
+    Count,
+    Exists,
+    ExpressionWrapper,
+    F,
+    OuterRef,
+    Q,
+    Window,
+)
+from django.db.models.functions import Cast, Now, RowNumber
 from django.utils.html import format_html
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
@@ -136,6 +144,17 @@ class InvoiceQuerySet(models.QuerySet):
                 payment_type=Invoice.PaymentTypeChoices.POSTPAID,
                 payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
                 follow_up_on__lte=now().date(),
+            )
+        )
+
+    def with_utilization_priority_per_challenge(self):
+        return self.annotate(
+            is_paid=Q(payment_status=Invoice.PaymentStatusChoices.PAID)
+        ).annotate(
+            utilization_priority=Window(
+                expression=RowNumber(),
+                partition_by=[F("challenge_id")],
+                order_by=["-is_paid", "expires_on", "created"],
             )
         )
 

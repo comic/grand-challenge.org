@@ -12,6 +12,7 @@ from grandchallenge.invoices.models import (
     PaymentStatusChoices,
     PaymentTypeChoices,
 )
+from tests.factories import ChallengeFactory
 from tests.invoices_tests.factories import InvoiceFactory
 
 
@@ -446,3 +447,147 @@ def test_complimentary_invoice_status_badge(invoice_kwargs, badge):
     )
     invoice = Invoice.objects.with_is_expired().get(pk=invoice.pk)
     assert invoice.get_status_badge() == badge
+
+
+@pytest.mark.django_db
+def test_utilization_priority_per_challenge():
+    challenge_0 = ChallengeFactory()
+    challenge_1 = ChallengeFactory()
+
+    invoice_0_0 = InvoiceFactory(challenge=challenge_0)
+    invoice_0_1 = InvoiceFactory(challenge=challenge_0)
+    invoice_1_0 = InvoiceFactory(challenge=challenge_1)
+    invoice_1_1 = InvoiceFactory(challenge=challenge_1)
+
+    prioritized_invoices = (
+        Invoice.objects.with_utilization_priority_per_challenge().order_by(
+            "utilization_priority"
+        )
+    )
+
+    challenge_0_prioritized_invoices = prioritized_invoices.filter(
+        challenge=challenge_0
+    )
+    assert list(
+        challenge_0_prioritized_invoices.values_list("pk", flat=True)
+    ) == [invoice_0_0.pk, invoice_0_1.pk]
+    assert list(
+        challenge_0_prioritized_invoices.values_list(
+            "utilization_priority", flat=True
+        )
+    ) == [1, 2]
+
+    challenge_1_prioritized_invoices = prioritized_invoices.filter(
+        challenge=challenge_1
+    )
+    assert list(
+        challenge_1_prioritized_invoices.values_list("pk", flat=True)
+    ) == [invoice_1_0.pk, invoice_1_1.pk]
+    assert list(
+        challenge_1_prioritized_invoices.values_list(
+            "utilization_priority", flat=True
+        )
+    ) == [1, 2]
+
+
+@pytest.mark.django_db
+def test_utilization_priority_created():
+    challenge = ChallengeFactory()
+
+    invoice_0 = InvoiceFactory(challenge=challenge)
+    invoice_1 = InvoiceFactory(challenge=challenge)
+
+    prioritized_invoices = (
+        Invoice.objects.with_utilization_priority_per_challenge().order_by(
+            "utilization_priority"
+        )
+    )
+
+    assert list(prioritized_invoices.values_list("pk", flat=True)) == [
+        invoice_0.pk,
+        invoice_1.pk,
+    ]
+
+    invoice_1.created = now() - timedelta(days=7)
+    invoice_1.save()
+
+    prioritized_invoices = (
+        Invoice.objects.with_utilization_priority_per_challenge().order_by(
+            "utilization_priority"
+        )
+    )
+
+    assert list(prioritized_invoices.values_list("pk", flat=True)) == [
+        invoice_1.pk,
+        invoice_0.pk,
+    ]
+
+
+@pytest.mark.django_db
+def test_utilization_priority_expiry_date():
+    challenge = ChallengeFactory()
+
+    invoice_0 = InvoiceFactory(challenge=challenge)
+    invoice_1 = InvoiceFactory(challenge=challenge)
+
+    prioritized_invoices = (
+        Invoice.objects.with_utilization_priority_per_challenge().order_by(
+            "utilization_priority"
+        )
+    )
+
+    assert list(prioritized_invoices.values_list("pk", flat=True)) == [
+        invoice_0.pk,
+        invoice_1.pk,
+    ]
+
+    invoice_1.expires_on = now().date() - timedelta(days=7)
+    invoice_1.save()
+
+    prioritized_invoices = (
+        Invoice.objects.with_utilization_priority_per_challenge().order_by(
+            "utilization_priority"
+        )
+    )
+
+    assert list(prioritized_invoices.values_list("pk", flat=True)) == [
+        invoice_1.pk,
+        invoice_0.pk,
+    ]
+
+
+@pytest.mark.django_db
+def test_utilization_priority_paid_status():
+    challenge = ChallengeFactory()
+
+    invoice_0 = InvoiceFactory(
+        challenge=challenge, payment_status=PaymentStatusChoices.PAID
+    )
+    invoice_1 = InvoiceFactory(
+        challenge=challenge, payment_status=PaymentStatusChoices.PAID
+    )
+
+    prioritized_invoices = (
+        Invoice.objects.with_utilization_priority_per_challenge().order_by(
+            "utilization_priority"
+        )
+    )
+
+    assert list(prioritized_invoices.values_list("pk", flat=True)) == [
+        invoice_0.pk,
+        invoice_1.pk,
+    ]
+
+    invoice_0.payment_status = PaymentStatusChoices.CANCELLED
+    invoice_0.save()
+
+    prioritized_invoices = (
+        Invoice.objects.with_utilization_priority_per_challenge().order_by(
+            "utilization_priority"
+        )
+    )
+
+    assert list(prioritized_invoices.values_list("pk", flat=True)) == [
+        invoice_1.pk,
+        invoice_0.pk,
+    ]

@@ -75,6 +75,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "expires_on",
         "last_checked_on",
         "is_not_expired",
+        "utilization_priority",
         "internal_comments",
     )
     list_filter = (
@@ -94,6 +95,7 @@ class InvoiceAdmin(admin.ModelAdmin):
                     "challenge",
                     "payment_type",
                     "payment_status",
+                    "utilization_priority",
                     "total_amount_euros",
                     "internal_comments",
                     "internal_invoice_number",
@@ -163,9 +165,10 @@ class InvoiceAdmin(admin.ModelAdmin):
         "write_off_compute_cost",
         "total_amount_euros",
         "is_not_expired",
+        "utilization_priority",
     ]
 
-    ordering = ["expires_on", "created"]
+    ordering = ["created"]
 
     @admin.display(description="Total")
     def total_amount_euros(self, obj):
@@ -178,7 +181,9 @@ class InvoiceAdmin(admin.ModelAdmin):
     def internal_invoice_number_display(self, obj):
         return obj.internal_invoice_number
 
-    @admin.display(boolean=True)
+    @admin.display(
+        boolean=True, ordering="expires_on", description="Not expired"
+    )
     def is_not_expired(self, obj):
         return not obj.is_expired
 
@@ -193,6 +198,10 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     def write_off_compute_cost(self, obj):
         return millicents_to_euro(obj.write_off_compute_cost_euro_millicents)
+
+    @admin.display(ordering="utilization_priority")
+    def utilization_priority(self, obj):
+        return obj.utilization_priority
 
     @admin.display(description="Consumed compute budget")
     def percent_compute_budget_consumed_display(self, obj):
@@ -246,6 +255,7 @@ class InvoiceAdmin(admin.ModelAdmin):
             .get_queryset(request)
             .with_overdue_status()
             .with_budget_authorization()
+            .with_utilization_priority_per_challenge()
         )
 
 
