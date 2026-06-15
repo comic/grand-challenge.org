@@ -10,11 +10,7 @@ from uuid import UUID
 
 import boto3
 import botocore.exceptions
-from billiard.exceptions import (
-    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
-)
 from botocore.exceptions import ClientError
-from celery.utils.log import get_task_logger
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -31,6 +27,8 @@ from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from panimg_models import ImageBuilderOptions, PanImgResult
 
 from config.lambda_tasks import (
+    BATCH_LONG_TASK_HARD_TIMEOUT,
+    BATCH_LONG_TASK_SOFT_TIMEOUT,
     LONG_TASK_HARD_TIMEOUT,
     LONG_TASK_SOFT_TIMEOUT,
     LambdaTaskQueueChoices,
@@ -53,8 +51,6 @@ from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.uploads.models import UserUpload
-
-logger = get_task_logger(__name__)
 
 
 class DuplicateFilesException(ValueError):
@@ -216,10 +212,7 @@ def build_images(  # noqa:C901
             ),
         )
         return
-    except (
-        CelerySoftTimeLimitExceeded,
-        SoftTimeLimitExceeded,
-    ):
+    except SoftTimeLimitExceeded:
         _handle_error(error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED)
         return
     except Exception as error:
@@ -465,18 +458,29 @@ def _handle_raw_files(
 
 
 @acks_late_2xlarge_task(
-    # This task cannot be migrated as the maximum duration is beyond the lambda time limit
+    name=f"{__name__}.execute_post_process_image_task",
     retry_on=(LockNotAcquiredException,),
 )
 @transaction.atomic
-def execute_post_process_image_task(*, post_process_image_task_pk):
+def execute_post_process_image_task_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return execute_post_process_image_task(**kwargs)
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.BATCH_MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=BATCH_LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=BATCH_LONG_TASK_HARD_TIMEOUT,
+)
+def execute_post_process_image_task(*, post_process_image_task_pk: str | UUID):
     with check_lock_acquired():
         task = PostProcessImageTask.objects.select_for_update(nowait=True).get(
             pk=post_process_image_task_pk
         )
 
     if task.status != PostProcessImageTaskStatusChoices.INITIALIZED:
-        logger.info(f"Task status is {task.status}, nothing to do")
+        task_logger.info(f"Task status is {task.status}, nothing to do")
         return
 
     try:
@@ -509,7 +513,7 @@ def execute_post_process_image_task(*, post_process_image_task_pk):
     except Exception as error:
         task.status = PostProcessImageTaskStatusChoices.FAILED
         task.save()
-        logger.error(error, exc_info=True)
+        task_logger.error(error, exc_info=True)
         return
 
 

@@ -164,6 +164,8 @@ def test_post_processing(
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
+    settings.LAMBDA_TASKS_EAGER = True
+
     filename = "valid_tiff.tif"
 
     temp_file = Path(tmp_path / filename)
