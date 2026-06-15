@@ -90,11 +90,8 @@ def test_archive_logged_in_permissions(client, settings):
 )
 @pytest.mark.django_db
 def test_api_archive_item_update_permissions(
-    client, settings, add_to_group, status, django_capture_on_commit_callbacks
+    client, add_to_group, status, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     archive = ArchiveFactory()
     user = UserFactory()
     item = ArchiveItemFactory(archive=archive)

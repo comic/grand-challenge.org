@@ -2425,9 +2425,6 @@ class TestSubmissionCreationWithExtraInputs:
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
-
         settings.LAMBDA_TASKS_EAGER = True
 
         # configure multiple additional evaluation inputs
@@ -2546,9 +2543,6 @@ class TestSubmissionCreationWithExtraInputs:
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
-
         settings.LAMBDA_TASKS_EAGER = True
 
         # configure multiple inputs
@@ -2626,9 +2620,6 @@ class TestSubmissionCreationWithExtraInputs:
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
-
         settings.LAMBDA_TASKS_EAGER = True
 
         # configure file input
@@ -2684,13 +2675,9 @@ class TestSubmissionCreationWithExtraInputs:
     def test_create_job_with_faulty_json_input(
         self,
         client,
-        settings,
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
-
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
                 algorithm_phase_with_multiple_inputs.ci_json_in_db_with_schema,
@@ -2727,9 +2714,6 @@ class TestSubmissionCreationWithExtraInputs:
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
-
         settings.LAMBDA_TASKS_EAGER = True
 
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
@@ -2819,11 +2803,8 @@ def test_parent_phase_algorithm_interfaces_locked(client):
 
 @pytest.mark.django_db
 def test_reschedule_evaluation_with_additional_inputs(
-    client, settings, django_capture_on_commit_callbacks
+    client, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     # create phase with inputs
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
@@ -3061,9 +3042,6 @@ def test_create_evaluation_blocked_if_failed_jobs_exist(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
@@ -3142,9 +3120,6 @@ def test_create_evaluation_blocked_if_failed_jobs_exist(
 def test_reschedule_evaluation_blocked_if_failed_jobs_with_complete_inputs_exist(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)

@@ -1665,9 +1665,6 @@ def test_correct_storage_set(factory, expected_storage, download_context):
 def test_displacement_field_validation(
     image, succeeds, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     image_paths = [Path(__file__).parent.absolute() / "resources" / image]

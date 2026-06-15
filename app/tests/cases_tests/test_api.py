@@ -375,9 +375,6 @@ def test_archive_upload_session_create(client, obj, factory):
 def test_session_with_user_upload_to_archive(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     user = UserFactory()
@@ -467,9 +464,6 @@ def test_session_with_user_duplicate_upload(client):
 def test_user_upload_to_archive_item_with_new_interface(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     user = UserFactory()
@@ -517,9 +511,6 @@ def test_user_upload_to_archive_item_with_new_interface(
 def test_user_upload_to_archive_item_with_existing_interface(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     user = UserFactory()
@@ -560,11 +551,8 @@ def test_user_upload_to_archive_item_with_existing_interface(
 
 @pytest.mark.django_db
 def test_user_upload_to_archive_item_without_interface(
-    client, settings, django_capture_on_commit_callbacks
+    client, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     user = UserFactory()
     archive = ArchiveFactory()
     archive.add_editor(user=user)
@@ -598,11 +586,8 @@ def test_user_upload_to_archive_item_without_interface(
 
 @pytest.mark.django_db
 def test_user_upload_to_display_set_without_interface(
-    client, settings, django_capture_on_commit_callbacks
+    client, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     user = UserFactory()
     rs = ReaderStudyFactory()
     rs.add_editor(user=user)

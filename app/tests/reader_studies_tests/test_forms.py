@@ -896,14 +896,10 @@ def reader_study_with_optional_fields():
 
 def copy_reader_study_with_optional_field(
     client,
-    settings,
     django_capture_on_commit_callbacks,
     reader_study,
     field_name,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     admin = UserFactory()
     reader_study.add_editor(admin)
     add_perm = Permission.objects.get(
@@ -1226,10 +1222,7 @@ def test_reader_study_delete(client):
 
 
 @pytest.mark.django_db
-def test_reader_study_add_ground_truth_csv(client, settings):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
+def test_reader_study_add_ground_truth_csv(client):
     rs = ReaderStudyFactory()
     q = QuestionFactory(
         reader_study=rs,
@@ -1419,10 +1412,7 @@ def test_reader_study_add_ground_truth_csv(client, settings):
 
 
 @pytest.mark.django_db
-def test_reader_study_add_ground_truth_ds(client, settings):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
+def test_reader_study_add_ground_truth_ds(client):
     rs = ReaderStudyFactory()
     QuestionFactory(
         reader_study=rs,

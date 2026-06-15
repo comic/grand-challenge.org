@@ -134,12 +134,8 @@ def test_check_post_processor_result():
 @pytest.mark.django_db
 def test_no_post_processing_mha(
     tmp_path,
-    settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     filename = "image10x10x10.mha"
 
     temp_file = Path(tmp_path / filename)
@@ -159,9 +155,6 @@ def test_post_processing(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     filename = "valid_tiff.tif"
@@ -268,9 +261,6 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory()
@@ -306,9 +296,6 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
 def test_error_in_start_dicom_import_job(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory()
@@ -348,9 +335,6 @@ def test_error_in_start_dicom_import_job(
 def test_start_dicom_import_job_sets_error_message_when_deid_fails(
     settings, django_capture_on_commit_callbacks, mocker
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory()
@@ -417,11 +401,8 @@ def import_job_summary(*, di_upload, **kwargs):
 
 @pytest.mark.django_db
 def test_handle_health_imaging_import_job_event_completed_and_valid(
-    settings, django_capture_on_commit_callbacks, mocker
+    django_capture_on_commit_callbacks, mocker
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     di_upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.STARTED
     )
@@ -456,9 +437,6 @@ def test_handle_health_imaging_import_job_event_completed_and_valid(
 def test_handle_health_imaging_import_job_event_failed_status(
     settings, django_capture_on_commit_callbacks, mocker
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory(
@@ -492,9 +470,6 @@ def test_handle_health_imaging_import_job_event_failed_status(
 def test_handle_health_imaging_import_job_event_invalid_status(
     settings, django_capture_on_commit_callbacks, mocker
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory(
@@ -528,9 +503,6 @@ def test_handle_health_imaging_import_job_event_invalid_status(
 def test_handle_health_imaging_import_job_event_invalid_import(
     settings, django_capture_on_commit_callbacks, mocker
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     di_upload = DICOMImageSetUploadFactory(
@@ -576,9 +548,6 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
     django_capture_on_commit_callbacks,
     mocker,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     obj = AlgorithmJobFactory(time_limit=10)
