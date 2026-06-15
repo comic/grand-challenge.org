@@ -52,6 +52,32 @@ def test_percent_compute_budget_consumed_unauthorized():
     assert invoice.percent_compute_budget_consumed is None
 
 
+@pytest.mark.django_db
+def test_approved_storage_costs_authorized():
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        storage_costs_euros=2,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
+    assert invoice.approved_storage_cost_euro_millicents == 2 * 1000 * 100
+
+
+@pytest.mark.django_db
+def test_approved_storage_costs_unauthorized():
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        storage_costs_euros=2,
+        payment_status=PaymentStatusChoices.CANCELLED,
+    )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
+    assert invoice.approved_storage_cost_euro_millicents == 0
+
+
 ##########
 # PREPAID
 #########
