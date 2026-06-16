@@ -66,6 +66,8 @@ from grandchallenge.uploads.models import UserUpload
 @lambda_task
 def update_all_container_image_shims():
     """Updates existing images to new versions of sagemaker shim"""
+    n_tasks = 0
+
     for app_label, model_name in (
         ("algorithms", "algorithmimage"),
         ("evaluation", "method"),
@@ -80,6 +82,9 @@ def update_all_container_image_shims():
                 app_label=instance._meta.app_label,
                 model_name=instance._meta.model_name,
             )
+            n_tasks += 1
+
+    return n_tasks
 
 
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
