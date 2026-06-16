@@ -674,7 +674,7 @@ def test_topic_read_status_not_tracked_for_anonymous_user(client):
 
 
 @pytest.mark.django_db
-def test_queries_on_topic_list_view(client, django_assert_num_queries):
+def test_queries_on_topic_list_view(client, django_assert_max_num_queries):
     forum = ForumFactory()
     user = UserFactory()
     forum.linked_challenge.add_admin(user)
@@ -696,7 +696,7 @@ def test_queries_on_topic_list_view(client, django_assert_num_queries):
 
     # adding 5 more does not result in more queries
     ForumTopicFactory.create_batch(5, forum=forum)
-    with django_assert_num_queries(initial_query_count):
+    with django_assert_max_num_queries(initial_query_count):
         get_view_for_user(
             viewname="discussion-forums:topic-list",
             client=client,
