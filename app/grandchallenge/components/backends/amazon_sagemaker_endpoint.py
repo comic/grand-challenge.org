@@ -27,6 +27,8 @@ class ObjectParams(NamedTuple):
     pk: UUID
 
 
+# TODO: refactor EndpointOrchestrator, AmazonSageMakerEndpointExecutor,
+#  AmazonSageMakerTrainingExecutor and AmazonSageMakerBaseExecutor to simplify
 class AmazonSageMakerEndpointExecutor(AmazonSageMakerTrainingExecutor):
     def __init__(self, *args, runtime_setup_result_key=None, **kwargs):
         super().__init__(*args, **kwargs)
