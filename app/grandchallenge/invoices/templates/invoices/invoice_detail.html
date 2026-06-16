@@ -89,35 +89,37 @@
         </div>
     </div>
 
-    <hr>
+    {% if not object.is_expired %}
+        <hr>
 
-    <h3 class="mt-3">Compute Costs</h3>
+        <h3 class="mt-3">Compute Costs</h3>
 
-    {% if not object.approved_compute_cost_euro_millicents %}
-         <span class="text-muted">
-            Any compute budget consumption will be shown here.
-        </span>
-    {% else %}
+        {% if not object.approved_compute_cost_euro_millicents %}
+            <span class="text-muted">
+                Any compute budget consumption will be shown here.
+            </span>
+        {% else %}
 
-    <dl class="mt-1">
-        <dt>Compute budget spent</dt>
-        <dd>
-            <div class="progress my-1">
-                <div
-                class="progress-bar {% if object.percent_compute_budget_consumed >= 100 %}bg-danger{% elif object.percent_compute_budget_consumed >= 70 %}bg-warning{% else %}bg-success{% endif %}"
-                style="width: {{ object.percent_compute_budget_consumed }}%"
-                >
-                    {{ object.percent_compute_budget_consumed }}%
+        <dl class="mt-1">
+            <dt>Compute budget spent</dt>
+            <dd>
+                <div class="progress my-1">
+                    <div
+                    class="progress-bar {% if object.percent_compute_budget_consumed >= 100 %}bg-danger{% elif object.percent_compute_budget_consumed >= 70 %}bg-warning{% else %}bg-success{% endif %}"
+                    style="width: {{ object.percent_compute_budget_consumed }}%"
+                    >
+                        {{ object.percent_compute_budget_consumed }}%
+                    </div>
                 </div>
-            </div>
-        </dd>
+            </dd>
 
-        <dt>Compute budget used</dt>
-        <dd>{{ object.consumed_compute_cost_euro_millicents|millicents_to_euro }}</dd>
+            <dt>Compute budget used</dt>
+            <dd>{{ object.consumed_compute_cost_euro_millicents|millicents_to_euro }}</dd>
 
-        <dt>Compute budget remaining</dt>
-        <dd>{{ object.available_compute_cost_euro_millicents|millicents_to_euro }}</dd>
+            <dt>Compute budget remaining</dt>
+            <dd>{{ object.available_compute_cost_euro_millicents|millicents_to_euro }}</dd>
 
-    </dl>
+        </dl>
+        {% endif %}
     {% endif %}
 {% endblock %}

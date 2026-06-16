@@ -1,4 +1,5 @@
 import pytest
+from django.utils.timezone import now, timedelta
 
 from tests.factories import ChallengeFactory, UserFactory
 from tests.invoices_tests.factories import InvoiceFactory
@@ -88,3 +89,38 @@ def test_invoice_list_view_num_invoices_shown(client):
         )
         assert response.status_code == 200
         assert len(response.context_data["object_list"]) == num_invoices
+
+
+@pytest.mark.django_db
+def test_invoice_detail_hide_compute_when_expired(client):
+    challenge = ChallengeFactory()
+
+    user = UserFactory()
+    challenge.add_admin(user)
+
+    invoice = InvoiceFactory(challenge=challenge)
+
+    response = get_view_for_user(
+        viewname="invoices:detail",
+        client=client,
+        reverse_kwargs={"external_pk": invoice.external_pk},
+        challenge=challenge,
+        user=user,
+    )
+    assert response.status_code == 200
+
+    assert "Compute Costs" in response.rendered_content
+
+    invoice.expires_on = now().date() - timedelta(days=1)
+    invoice.save()
+
+    response = get_view_for_user(
+        viewname="invoices:detail",
+        client=client,
+        reverse_kwargs={"external_pk": invoice.external_pk},
+        challenge=challenge,
+        user=user,
+    )
+    assert response.status_code == 200
+
+    assert "Compute Costs" not in response.rendered_content
