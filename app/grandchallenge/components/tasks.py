@@ -243,6 +243,8 @@ def update_container_image_shim(
     elif isinstance(instance, Method):
         if Evaluation.objects.active().filter(method=instance).exists():
             raise RuntimeError("Method has an active evaluation")
+    else:
+        raise NotImplementedError
 
     if (
         instance.is_in_registry
