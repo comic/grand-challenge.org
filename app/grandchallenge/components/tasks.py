@@ -217,7 +217,7 @@ def mark_desired_container_version(
         )
 
 
-@lambda_task
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def update_container_image_shim(
     *,
     pk: str | UUID,
@@ -225,7 +225,19 @@ def update_container_image_shim(
     model_name: str,
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    instance = model.objects.get(pk=pk)
+
+    with check_lock_acquired():
+        instance = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    from grandchallenge.algorithms.models import AlgorithmImage, Job
+    from grandchallenge.evaluation.models import Evaluation, Method
+
+    if isinstance(instance, AlgorithmImage):
+        if Job.objects.active().filter(algorithm_image=instance).exists():
+            raise RuntimeError("Algorithm image has an active job")
+    elif isinstance(instance, Method):
+        if Evaluation.objects.active().filter(method=instance).exists():
+            raise RuntimeError("Method has an active evaluation")
 
     if (
         instance.is_in_registry
