@@ -215,6 +215,8 @@ def test_invocation_json(settings):
                     "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX": "746f74616c6c79736563726574",
                     "GRAND_CHALLENGE_COMPONENT_API_METHOD": "exec",
                     "GRAND_CHALLENGE_COMPONENT_MODEL": f"s3://grand-challenge-components-inputs//auxiliary-data/algorithms/job/{job.pk}-00/algorithm-model.tar.gz",
+                    "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_BUCKET_NAME": "grand-challenge-components-outputs",
+                    "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_PREFIX": f"/io/algorithms/job/{job.pk}-00",
                 },
                 "VpcConfig": {
                     "SecurityGroupIds": [

@@ -466,6 +466,8 @@ class Executor(ABC):
                 self._signing_key
             ).decode("ascii"),
             "GRAND_CHALLENGE_COMPONENT_API_METHOD": self._api_method,
+            "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_PREFIX": self._io_prefix,
+            "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_BUCKET_NAME": self._output_bucket_name,
         }
 
         if self._algorithm_model:

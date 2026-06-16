@@ -82,6 +82,9 @@ class TestEndpointOrchestratorProperties:
         settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = (
             "algorithm-endpoints-input"
         )
+        settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME = (
+            "algorithm-endpoints-output"
+        )
         endpoint = EndpointFactory.build(
             signing_key=b"totallysecret",
         )
@@ -95,6 +98,8 @@ class TestEndpointOrchestratorProperties:
             "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX": "746f74616c6c79736563726574",
             "GRAND_CHALLENGE_COMPONENT_API_METHOD": endpoint.algorithm_image.api_method,
             "GRAND_CHALLENGE_COMPONENT_MODEL": f"s3://algorithm-endpoints-input//auxiliary-data/algorithms/endpoint/{endpoint.pk}/algorithm-model.tar.gz",
+            "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_BUCKET_NAME": "algorithm-endpoints-output",
+            "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_PREFIX": f"/io/algorithms/endpoint/{endpoint.pk}",
         }
 
         orchestrator = EndpointFactory.build(algorithm_model=None).orchestrator
