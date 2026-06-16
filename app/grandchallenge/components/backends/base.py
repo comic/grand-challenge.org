@@ -38,7 +38,6 @@ from pydantic_core import to_json
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
-    InvalidObjectSignature,
     UncleanExit,
 )
 from grandchallenge.components.models import (
@@ -834,7 +833,7 @@ class Executor(ABC):
             key=key,
         )
 
-    def _get_and_validate_object(self, *, bucket_name, object_key):
+    def _get_and_validate_object(self, *, bucket_name, object_key, model):
         try:
             response = self._s3_client.get_object(
                 Bucket=bucket_name,
@@ -842,7 +841,9 @@ class Executor(ABC):
             )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] in {"404", "NoSuchKey"}:
-                raise FileNotFoundError from error
+                raise UncleanExit(
+                    f"Required object {object_key} was not found"
+                ) from error
             else:
                 raise
 
@@ -856,71 +857,36 @@ class Executor(ABC):
         if not secrets.compare_digest(
             body_signature_hmac_sha256, signature_hmac_sha256
         ):
-            raise InvalidObjectSignature
-
-        return body
-
-    def _get_runtime_setup_result(self):
-        try:
-            body = self._get_and_validate_object(
-                bucket_name=self._output_bucket_name,
-                object_key=self.runtime_setup_result_key,
-            )
-        except FileNotFoundError as error:
-            raise UncleanExit(
-                "The runtime setup did not write a result"
-            ) from error
-        except InvalidObjectSignature:
-            logger.error(
-                "The runtime setup response object has been tampered with"
-            )
+            logger.error(f"{object_key} has been tampered with")
             raise ComponentException(
-                "The runtime setup response object has been tampered with"
+                "A required output file has been tampered with"
             )
 
         try:
-            runtime_setup_result = RuntimeSetupResult.model_validate_json(
-                json_data=body
-            )
+            validated_result = model.model_validate_json(json_data=body)
         except pydantic.ValidationError as error:
             logger.error(error, exc_info=True)
-            raise ComponentException(
-                "The runtime setup result is not valid json"
-            )
+            raise ComponentException("A required output file was not valid")
 
-        logger.info(f"{runtime_setup_result=}")
+        logger.info(f"{validated_result=}")
+
+        return validated_result
+
+    def _get_runtime_setup_result(self):
+        runtime_setup_result = self._get_and_validate_object(
+            bucket_name=self._output_bucket_name,
+            object_key=self.runtime_setup_result_key,
+            model=RuntimeSetupResult,
+        )
 
         return runtime_setup_result
 
     def _get_inference_result(self):
-        try:
-            body = self._get_and_validate_object(
-                bucket_name=self._output_bucket_name,
-                object_key=self._inference_result_key,
-            )
-        except FileNotFoundError as error:
-            raise UncleanExit(
-                "The invocation request did not return a result"
-            ) from error
-        except InvalidObjectSignature:
-            logger.error(
-                "The invocation response object has been tampered with"
-            )
-            raise ComponentException(
-                "The invocation response object has been tampered with"
-            )
-
-        try:
-            inference_result = InferenceResult.model_validate_json(
-                json_data=body
-            )
-        except pydantic.ValidationError as error:
-            logger.error(error, exc_info=True)
-            raise ComponentException(
-                "The invocation request did not return valid json"
-            )
-
-        logger.info(f"{inference_result=}")
+        inference_result = self._get_and_validate_object(
+            bucket_name=self._output_bucket_name,
+            object_key=self._inference_result_key,
+            model=InferenceResult,
+        )
 
         if inference_result.pk != self._job_id:
             raise RuntimeError("Wrong result key for this job")
