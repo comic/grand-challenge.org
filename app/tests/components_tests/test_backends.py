@@ -904,10 +904,7 @@ def test_invocation_results_signature_unverified(settings):
     with pytest.raises(ComponentException) as error:
         executor._get_inference_result()
 
-    assert (
-        str(error.value)
-        == "The invocation response object has been tampered with"
-    )
+    assert str(error.value) == "A required output file has been tampered with"
 
 
 def test_invocation_results_signature_verified(settings):
