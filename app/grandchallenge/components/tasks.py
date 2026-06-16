@@ -24,6 +24,7 @@ from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 from lambda_tasks.logging import task_logger
 from lambda_tasks.models import SQSLambdaTask
+from lambda_tasks.settings import MAX_DELAY
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
 from config.lambda_tasks import (
@@ -81,6 +82,7 @@ def update_all_container_image_shims():
                 pk=instance.pk,
                 app_label=instance._meta.app_label,
                 model_name=instance._meta.model_name,
+                _delay=n_tasks % MAX_DELAY,
             )
             n_tasks += 1
 
