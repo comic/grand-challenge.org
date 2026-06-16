@@ -817,10 +817,7 @@ def test_runtime_setup_result_signature_unverified(settings):
     with pytest.raises(ComponentException) as error:
         executor._get_runtime_setup_result()
 
-    assert (
-        str(error.value)
-        == "The runtime setup response object has been tampered with"
-    )
+    assert str(error.value) == "A required output file has been tampered with"
 
 
 def test_runtime_setup_result_signature_verified(settings):
