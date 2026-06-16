@@ -38,6 +38,7 @@ from pydantic_core import to_json
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
+    InvalidObjectSignature,
     UncleanExit,
 )
 from grandchallenge.components.models import (
@@ -833,17 +834,15 @@ class Executor(ABC):
             key=key,
         )
 
-    def _get_runtime_setup_result(self):
+    def _get_and_validate_object(self, *, bucket_name, object_key):
         try:
             response = self._s3_client.get_object(
-                Bucket=self._output_bucket_name,
-                Key=self.runtime_setup_result_key,
+                Bucket=bucket_name,
+                Key=object_key,
             )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] in {"404", "NoSuchKey"}:
-                raise UncleanExit(
-                    "The runtime setup did not write a result"
-                ) from error
+                raise FileNotFoundError from error
             else:
                 raise
 
@@ -857,6 +856,21 @@ class Executor(ABC):
         if not secrets.compare_digest(
             body_signature_hmac_sha256, signature_hmac_sha256
         ):
+            raise InvalidObjectSignature
+
+        return body
+
+    def _get_runtime_setup_result(self):
+        try:
+            body = self._get_and_validate_object(
+                bucket_name=self._output_bucket_name,
+                object_key=self.runtime_setup_result_key,
+            )
+        except FileNotFoundError as error:
+            raise UncleanExit(
+                "The runtime setup did not write a result"
+            ) from error
+        except InvalidObjectSignature:
             logger.error(
                 "The runtime setup response object has been tampered with"
             )
@@ -880,28 +894,15 @@ class Executor(ABC):
 
     def _get_inference_result(self):
         try:
-            response = self._s3_client.get_object(
-                Bucket=self._output_bucket_name,
-                Key=self._inference_result_key,
+            body = self._get_and_validate_object(
+                bucket_name=self._output_bucket_name,
+                object_key=self._inference_result_key,
             )
-        except botocore.exceptions.ClientError as error:
-            if error.response["Error"]["Code"] in {"404", "NoSuchKey"}:
-                raise UncleanExit(
-                    "The invocation request did not return a result"
-                ) from error
-            else:
-                raise
-
-        body = response["Body"].read()
-
-        signature_hmac_sha256 = response["Metadata"]["signature_hmac_sha256"]
-        body_signature_hmac_sha256 = hmac.new(
-            key=self._signing_key, msg=body, digestmod=hashlib.sha256
-        ).hexdigest()
-
-        if not secrets.compare_digest(
-            body_signature_hmac_sha256, signature_hmac_sha256
-        ):
+        except FileNotFoundError as error:
+            raise UncleanExit(
+                "The invocation request did not return a result"
+            ) from error
+        except InvalidObjectSignature:
             logger.error(
                 "The invocation response object has been tampered with"
             )

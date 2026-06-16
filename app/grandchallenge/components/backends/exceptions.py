@@ -32,3 +32,7 @@ class CIVNotEditableException(ComponentBaseException):
     Raised during attempt to update an archive item,
     display set or algorithm job when they were not editable
     """
+
+
+class InvalidObjectSignature(ComponentBaseException):
+    """Raised if compared signatures do not match"""
