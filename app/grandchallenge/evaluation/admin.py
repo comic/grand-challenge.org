@@ -208,6 +208,8 @@ class SubmissionAdmin(admin.ModelAdmin):
         "phase",
         "predictions_file",
         "algorithm_image",
+        "user_upload",
+        "algorithm_model",
     )
     actions = (reevaluate_submissions,)
 
