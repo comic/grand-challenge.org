@@ -472,7 +472,7 @@ class SubmissionForm(
             )
 
         try:
-            invoice = self._phase.challenge.active_invoice
+            invoice = self._phase.challenge.utilization_invoice
         except InsufficientBudgetError:
             raise ValidationError(
                 "Challenge has insufficient budget. Please contact the challenge organizers."
@@ -758,7 +758,7 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
         )
 
         try:
-            invoice = challenge.active_invoice
+            invoice = challenge.utilization_invoice
         except InsufficientBudgetError:
             raise ValidationError(
                 "Challenge has insufficient budget. Please contact support to add more funds."

@@ -80,9 +80,13 @@
                             {% endif %}
                         </td>
                         <td>{{ invoice.total_amount_euros|euro:0 }}</td>
-                        <td data-order="{% if invoice.percent_compute_budget_consumed is None %}-1{% else %}{{ invoice.percent_compute_budget_consumed }}{% endif %}" class="{% if invoice.percent_compute_budget_consumed >= 100 %}text-danger{% elif invoice.percent_compute_budget_consumed >= 70 %}text-warning{% elif invoice.percent_compute_budget_consumed is not None %}text-success{% endif %}">
-                            {% if invoice.percent_compute_budget_consumed is not None %} {{ invoice.percent_compute_budget_consumed }}% {% else %} - {% endif %}
-                        </td>
+                        {% if not invoice.is_expired %}
+                            <td data-order="{% if invoice.percent_compute_budget_consumed is None %}-1{% else %}{{ invoice.percent_compute_budget_consumed }}{% endif %}" class="{% if invoice.percent_compute_budget_consumed >= 100 %}text-danger{% elif invoice.percent_compute_budget_consumed >= 70 %}text-warning{% elif invoice.percent_compute_budget_consumed is not None %}text-success{% endif %}">
+                                {% if invoice.percent_compute_budget_consumed is not None %} {{ invoice.percent_compute_budget_consumed }}% {% else %} - {% endif %}
+                            </td>
+                        {% else %}
+                            <td data-order="-1">-</td>
+                        {% endif %}
                         <td>{{ invoice.get_payment_type_display }}</td>
                         <td>{{ invoice.get_status_badge }}</td>
                     </tr>
@@ -91,16 +95,16 @@
         </table>
     </div>
 
-    <h3 class="mt-3">Challenge Compute Costs</h3>
+    <h3 class="mt-3">Challenge Active Compute Costs</h3>
 
-    {% if not challenge.approved_compute_cost_euro_millicents %}
+    {% if not challenge.active_approved_compute_cost_euro_millicents %}
          <span class="text-muted">
             Any compute budget consumption will be shown here.
         </span>
     {% else %}
 
     <dl class="mt-1">
-        <dt>Total compute budget spent</dt>
+        <dt>Total active compute budget spent</dt>
         <dd>
             <div class="progress my-1">
                 <div
@@ -112,26 +116,26 @@
             </div>
         </dd>
 
-        <dt>Total compute budget used</dt>
-        <dd>{{ challenge.consumed_compute_cost_euro_millicents|millicents_to_euro }}</dd>
+        <dt>Total active compute budget used</dt>
+        <dd>{{ challenge.active_consumed_compute_cost_euro_millicents|millicents_to_euro }}</dd>
 
-        <dt>Total compute budget remaining</dt>
-         <dd>{{ challenge.available_compute_cost_euro_millicents|millicents_to_euro }}</dd>
+        <dt>Total active compute budget remaining</dt>
+        <dd>{{ challenge.active_available_compute_cost_euro_millicents|millicents_to_euro }}</dd>
+
     </dl>
 
     {% endif %}
 
-    <h3 class="mt-3">Challenge Storage Usage</h3>
+    <h3 class="mt-3">Challenge Active Storage Usage</h3>
 
-    {% if not challenge.approved_storage_cost_euro_millicents %}
+    {% if not challenge.active_approved_storage_cost_euro_millicents %}
          <span class="text-muted">
-            Any storage costs and usage will be shown here.
+            Any storage usage will be shown here.
         </span>
     {% else %}
-
     <dl class="mt-1">
         <dt>Total storage budget available</dt>
-        <dd>{{ challenge.approved_storage_cost_euro_millicents|millicents_to_euro }}</dd>
+        <dd>{{ challenge.active_approved_storage_cost_euro_millicents|millicents_to_euro }}</dd>
 
         <dt>Total object data storage</dt>
         <dd>{{ challenge.size_in_storage|filesizeformat }}</dd>
@@ -139,7 +143,5 @@
         <dt>Total container registry storage</dt>
         <dd>{{ challenge.size_in_registry|filesizeformat }}</dd>
     </dl>
-
     {% endif %}
-
 {% endblock %}
