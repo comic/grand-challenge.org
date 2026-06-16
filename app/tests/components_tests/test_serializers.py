@@ -336,7 +336,7 @@ def test_civ_post_objects_do_not_exist():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.json)
+@pytest.mark.parametrize("kind", InterfaceKinds.json)
 def test_civ_post_value_validation(kind):
     interface = ComponentInterfaceFactory(kind=kind)
 
@@ -532,7 +532,7 @@ def test_civ_post_user_upload_valid(kind, request):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
+@pytest.mark.parametrize("kind", InterfaceKinds.panimg)
 def test_civ_post_image_or_upload_required_validation(kind):
     interface = ComponentInterfaceFactory(kind=kind)
 
@@ -600,7 +600,7 @@ def test_civ_post_dicom_image_or_upload_required_validation(request):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.image)
+@pytest.mark.parametrize("kind", InterfaceKinds.image)
 def test_civ_post_image_permission_validation(kind, request):
     user = UserFactory()
     image = ImageFactory()
@@ -620,7 +620,7 @@ def test_civ_post_image_permission_validation(kind, request):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
+@pytest.mark.parametrize("kind", InterfaceKinds.panimg)
 def test_civ_post_upload_session_permission_validation(kind, request):
     user = UserFactory()
     upload = UploadSessionFactory()
@@ -640,7 +640,7 @@ def test_civ_post_upload_session_permission_validation(kind, request):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.image)
+@pytest.mark.parametrize("kind", InterfaceKinds.image)
 def test_civ_post_user_uploads_permission_validation(request, kind):
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2)
@@ -680,7 +680,7 @@ def test_civ_post_dicom_image_name_empty_value_invalid():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.image)
+@pytest.mark.parametrize("kind", InterfaceKinds.image)
 def test_civ_post_user_uploads_empty_value_invalid(kind):
     interface = ComponentInterfaceFactory(kind=kind)
 
@@ -713,7 +713,7 @@ def test_civ_post_user_uploads_empty_value_invalid(kind):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.image)
+@pytest.mark.parametrize("kind", InterfaceKinds.image)
 def test_civ_post_image_not_ready_validation(kind, request):
     user = UserFactory()
     upload = UploadSessionFactory(
@@ -791,7 +791,7 @@ def test_civ_post_panimg_image_valid(kind, request):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
+@pytest.mark.parametrize("kind", InterfaceKinds.panimg)
 def test_civ_post_image_upload_session_valid(kind, request):
     user = UserFactory()
     upload = UploadSessionFactory(
@@ -818,7 +818,7 @@ def test_civ_post_image_upload_session_valid(kind, request):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
+@pytest.mark.parametrize("kind", InterfaceKinds.panimg)
 def test_civ_post_panimg_image_upload_valid(request, kind):
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2, creator=user)
