@@ -2,7 +2,7 @@ name: Dependency Update
 
 on:
     schedule:
-        - cron: "27 6 * * 2"
+        - cron: "27 1 * * 2"
     workflow_dispatch:
 
 env:
