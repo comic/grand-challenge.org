@@ -124,7 +124,6 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         source="reader_study.view_content", read_only=True
     )
     index = SerializerMethodField()
-    title = CharField(write_only=True)
     title_safe = SerializerMethodField()
 
     def get_index(self, obj) -> int | None:
@@ -144,7 +143,6 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         model = DisplaySet
         fields = (
             "pk",
-            "title",  # Can be set by users, deprecated for reads, can be made write only after 2025.10
             "title_safe",  # Safe to use in rendered html
             "reader_study",
             "values",
@@ -175,6 +173,13 @@ class DisplaySetPostSerializer(
                 user=user,
                 codename="change_readerstudy",
             )
+
+    class Meta:
+        model = DisplaySet
+        fields = (
+            *DisplaySetSerializer.Meta.fields,
+            "title",
+        )
 
 
 class ReaderStudySerializer(HyperlinkedModelSerializer):
