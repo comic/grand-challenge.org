@@ -22,7 +22,7 @@ from django.core.validators import (
     MinValueValidator,
     RegexValidator,
 )
-from django.db import models, transaction
+from django.db import models
 from django.db.models import IntegerChoices, QuerySet, TextChoices
 from django.forms import ModelChoiceField
 from django.template.defaultfilters import truncatewords
@@ -2248,7 +2248,6 @@ class ComponentImage(FieldChangeMixin, models.Model):
     def get_peer_images(self):
         raise NotImplementedError
 
-    @transaction.atomic
     def mark_desired_version(self):
         self.clear_can_execute_cache()
         if self.is_manifest_valid and self.can_execute:
@@ -2913,7 +2912,6 @@ class Tarball(UUIDModel):
     def linked_file(self):
         raise NotImplementedError
 
-    @transaction.atomic
     def mark_desired_version(self, peer_tarballs=None):
         peer_tarballs = list(peer_tarballs or self.get_peer_tarballs())
         for tb in peer_tarballs:
