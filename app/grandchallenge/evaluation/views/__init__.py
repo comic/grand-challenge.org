@@ -94,7 +94,7 @@ class CachedPhaseMixin:
             Phase, slug=self.kwargs["slug"], challenge=self.request.challenge
         )
 
-    def get_context_data(self, *, object_list=None, **kwargs):
+    def get_context_data(self, *args, **kwargs):
         context = super().get_context_data()
         context.update({"phase": self.phase})
         return context
@@ -471,11 +471,11 @@ class SubmissionDetail(
             .prefetch_related("phase__optional_hanging_protocols")
         )
 
-    def get_context_data(self, *args, object_list=None, **kwargs):
+    def get_context_data(self, *args, **kwargs):
         self.permission_checker.prefetch_perms(
             objects=self.object.evaluation_set.all()
         )
-        return super().get_context_data(*args, object_list=None, **kwargs)
+        return super().get_context_data(*args, **kwargs)
 
 
 class TeamContextMixin:
