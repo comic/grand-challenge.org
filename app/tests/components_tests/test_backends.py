@@ -18,6 +18,7 @@ from django.template.defaultfilters import title
 from grandchallenge.components.backends.base import (
     ASYNC_BOTO_CONFIG,
     ASYNC_CONCURRENCY,
+    Executor,
     InferenceResult,
     RuntimeSetupResult,
     s3_stream_response,
@@ -981,3 +982,57 @@ def test_parse_structured_logs_filters_task():
     parsed_log = parse_structured_log(log=log_without_task, task=None)
 
     assert parsed_log.message == "message without task"
+
+
+@pytest.mark.parametrize(
+    (
+        "return_code",
+        "user_safe_error_message",
+        "user_process_last_stderr_lines",
+        "expected_error_message",
+    ),
+    (
+        (1, "user safe error", [], "user safe error"),
+        (1, "user safe error", [""], "user safe error"),
+        (1, "user safe error", ["foo"], "user safe error"),
+        (1, "user safe error", ["foo", "bar"], "user safe error"),
+        (
+            1,
+            "",
+            [],
+            "User process returned non-zero exit code without error message",
+        ),
+        (
+            1,
+            "",
+            [""],
+            "User process returned non-zero exit code without error message",
+        ),
+        (1, "", ["user process error"], "user process error"),
+        (1, "", ["earlier error", "user process error"], "user process error"),
+        (0, "", [], ""),
+        (0, "", [""], ""),
+    ),
+)
+def test_get_error_message_from_inference_result(
+    return_code,
+    user_safe_error_message,
+    user_process_last_stderr_lines,
+    expected_error_message,
+):
+    inference_result = InferenceResult(
+        pk="algorithms-job-1",
+        return_code=return_code,
+        user_safe_error_message=user_safe_error_message,
+        user_process_last_stderr_lines=user_process_last_stderr_lines,
+        exec_duration=timedelta(seconds=1),
+        invoke_duration=timedelta(seconds=1),
+        outputs=[],
+        sagemaker_shim_version="0.8.1",
+    )
+
+    error_message = Executor._get_error_message(
+        inference_result=inference_result
+    )
+
+    assert error_message == expected_error_message

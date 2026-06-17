@@ -316,6 +316,7 @@ class InferenceResult(BaseModel):
     pk: str
     return_code: int
     user_safe_error_message: str = ""
+    user_process_last_stderr_lines: list[str] = []
     exec_duration: timedelta | None
     invoke_duration: timedelta | None
     outputs: list[InferenceIO]
@@ -893,6 +894,18 @@ class Executor(ABC):
 
         return inference_result
 
+    @staticmethod
+    def _get_error_message(*, inference_result):
+        error_message = inference_result.user_safe_error_message
+        if not error_message:
+            if inference_result.user_process_last_stderr_lines:
+                error_message = (
+                    inference_result.user_process_last_stderr_lines[-1]
+                )
+        if not error_message and inference_result.return_code != 0:
+            error_message = "User process returned non-zero exit code without error message"
+        return error_message
+
     def _handle_completed_job(self):
         runtime_setup_result = self._get_runtime_setup_result()
 
@@ -914,7 +927,9 @@ class Executor(ABC):
         elif users_process_exit_code == 137:
             raise ComponentException(SystemErrorMessages.MEMORY_LIMIT_EXCEEDED)
         else:
-            raise ComponentException(inference_result.user_safe_error_message)
+            raise ComponentException(
+                self._get_error_message(inference_result=inference_result)
+            )
 
     def _create_images_result(self, *, interface):
         prefix = safe_join(self._io_prefix, interface.relative_path)
