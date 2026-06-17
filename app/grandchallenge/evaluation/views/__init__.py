@@ -471,11 +471,11 @@ class SubmissionDetail(
             .prefetch_related("phase__optional_hanging_protocols")
         )
 
-    def get_context_data(self, *args, **kwargs):
+    def get_context_data(self, *args, object_list=None, **kwargs):
         self.permission_checker.prefetch_perms(
             objects=self.object.evaluation_set.all()
         )
-        return super().get_context_data(self, *args, **kwargs)
+        return super().get_context_data(*args, object_list=None, **kwargs)
 
 
 class TeamContextMixin:
