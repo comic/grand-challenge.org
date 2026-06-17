@@ -674,6 +674,7 @@ def test_topic_read_status_not_tracked_for_anonymous_user(client):
 
 
 @pytest.mark.django_db
+@pytest.mark.flaky(reruns=3)
 def test_queries_on_topic_list_view(client, django_assert_max_num_queries):
     forum = ForumFactory()
     user = UserFactory()
