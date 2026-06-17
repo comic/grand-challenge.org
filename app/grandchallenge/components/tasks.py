@@ -1927,29 +1927,26 @@ def handle_endpoint_invocation_event(*, event: dict):
             status=invocation.StatusChoices.FAILURE,
             error_message=str(error),
             detailed_error_message=error.message_details,
-            stdout=orchestrator.stdout,
-            stderr=orchestrator.stderr,
-            # TODO: set runtime metrics
+        )
+        parse_endpoint_invocation_logs.execute_on_commit(
+            **invocation.task_kwargs, event=event
         )
     except Exception as error:
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
-            stdout=orchestrator.stdout,
-            stderr=orchestrator.stderr,
-            # TODO: set stdout, stderr and runtime metrics
         )
         task_logger.error(str(error), exc_info=True)
+        parse_endpoint_invocation_logs.execute_on_commit(
+            **invocation.task_kwargs, event=event
+        )
     else:
         invocation.update_status(
             status=invocation.StatusChoices.EXECUTED,
             invoke_duration=orchestrator.invoke_duration,
-            stdout=orchestrator.stdout,
-            stderr=orchestrator.stderr,
-            # TODO: set runtime metrics
         )
         parse_endpoint_invocation_outputs.execute_on_commit(
-            **invocation.task_kwargs
+            **invocation.task_kwargs, event=event
         )
 
 
@@ -1957,7 +1954,7 @@ def handle_endpoint_invocation_event(*, event: dict):
     queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
 )
 def parse_endpoint_invocation_outputs(
-    *, pk: str | UUID, app_label: str, model_name: str
+    *, pk: str | UUID, app_label: str, model_name: str, event: dict
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
@@ -1994,3 +1991,38 @@ def parse_endpoint_invocation_outputs(
     else:
         invocation.outputs.add(*outputs)
         invocation.update_status(status=invocation.StatusChoices.SUCCESS)
+    finally:
+        parse_endpoint_invocation_logs.execute_on_commit(
+            **invocation.task_kwargs, event=event
+        )
+
+
+@lambda_task(retry_on=(LockNotAcquiredException, RetryStep), retry_delay=120)
+def parse_endpoint_invocation_logs(
+    *, pk: str | UUID, app_label: str, model_name: str, event: dict
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
+    with check_lock_acquired():
+        invocation = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if invocation.status == invocation.StatusChoices.CANCELLED:
+        # Nothing to do
+        return
+    elif invocation.status not in (
+        invocation.StatusChoices.FAILURE,
+        invocation.StatusChoices.SUCCESS,
+    ):
+        raise RuntimeError("Invocation is not ready for log parsing")
+
+    orchestrator = invocation.orchestrator
+
+    orchestrator.set_task_logs(event=event)
+
+    # todo check expected last log line
+
+    invocation.set_logs(
+        stdout=orchestrator.stdout,
+        stderr=orchestrator.stderr,
+        # TODO: set runtime metrics
+    )

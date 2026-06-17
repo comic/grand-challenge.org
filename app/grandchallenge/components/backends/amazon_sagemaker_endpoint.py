@@ -381,9 +381,6 @@ class EndpointOrchestrator:
     def handle_event(self, *, event):
         invocation_status = self._get_invocation_status(event=event)
 
-        self._set_task_logs(event=event)
-        # TODO: set runtime metrics
-
         if invocation_status == "Completed":
             self._handle_completed_invocation()
         elif invocation_status == "Expired":
@@ -411,5 +408,5 @@ class EndpointOrchestrator:
     def get_outputs(self, *, output_interfaces):
         return self._executor.get_outputs(output_interfaces=output_interfaces)
 
-    def _set_task_logs(self, *, event):
+    def set_task_logs(self, *, event):
         self._executor._set_task_logs(event=event, task=self._executor._job_id)
