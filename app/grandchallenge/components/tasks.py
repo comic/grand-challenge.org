@@ -241,10 +241,12 @@ def update_container_image_shim(
 
     if isinstance(instance, AlgorithmImage):
         if Job.objects.active().filter(algorithm_image=instance).exists():
-            raise RuntimeError("Algorithm image has an active job")
+            task_logger.info("Skipping - Algorithm image has an active job")
+            return instance.latest_shimmed_version
     elif isinstance(instance, Method):
         if Evaluation.objects.active().filter(method=instance).exists():
-            raise RuntimeError("Method has an active evaluation")
+            task_logger.info("Skipping - Method has an active evaluation")
+            return instance.latest_shimmed_version
     else:
         raise NotImplementedError
 
@@ -264,6 +266,8 @@ def update_container_image_shim(
 
         shim_container_image(instance=instance)
         instance.save()
+
+    return instance.latest_shimmed_version
 
 
 @lambda_task
