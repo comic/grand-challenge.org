@@ -59,25 +59,16 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     help_text_safe = SerializerMethodField()
     empty_answer_confirmation_label_safe = SerializerMethodField()
 
-    # Deprecated fields, remove after 2025.10
-    help_text = SerializerMethodField(method_name="get_help_text_safe")
-    question_text = SerializerMethodField(method_name="get_question_text_safe")
-    empty_answer_confirmation_label = SerializerMethodField(
-        method_name="get_empty_answer_confirmation_label_safe"
-    )
-
     class Meta:
         model = Question
         fields = (
             "answer_type",
             "api_url",
             "form_direction",
-            "help_text",  # Deprecated, remove after 2025.10
             "help_text_safe",  # Safe to use in rendered html
             "image_port",
             "default_annotation_color",
             "pk",
-            "question_text",  # Deprecated, remove after 2025.10
             "question_text_safe",  # Safe to use in rendered html
             "reader_study",
             "required",
@@ -93,7 +84,6 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "answer_max_length",
             "answer_match_pattern",
             "empty_answer_confirmation",
-            "empty_answer_confirmation_label",  # Deprecated, remove after 2025.10
             "empty_answer_confirmation_label_safe",  # Safe to use in rendered html
             "interactive_algorithms",
         )
@@ -153,7 +143,6 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         model = DisplaySet
         fields = (
             "pk",
-            "title",  # Can be set by users, deprecated for reads, can be made write only after 2025.10
             "title_safe",  # Safe to use in rendered html
             "reader_study",
             "values",
@@ -185,6 +174,13 @@ class DisplaySetPostSerializer(
                 codename="change_readerstudy",
             )
 
+    class Meta:
+        model = DisplaySet
+        fields = (
+            *DisplaySetSerializer.Meta.fields,
+            "title",
+        )
+
 
 class ReaderStudySerializer(HyperlinkedModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
@@ -192,10 +188,6 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
     help_text_safe = SerializerMethodField()
     end_of_study_text_safe = SerializerMethodField()
     title_safe = SerializerMethodField()
-
-    # Deprecated fields, remove after 2025.10
-    help_text = SerializerMethodField(method_name="get_help_text_safe")
-    title = SerializerMethodField(method_name="get_title_safe")
 
     def get_help_text_safe(self, obj) -> str:
         return md2html(
@@ -222,11 +214,9 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "slug",
             "logo",
             "description",
-            "help_text",  # Deprecated, remove after 2025.10
             "help_text_safe",  # Safe to use in rendered html
             "pk",
             "questions",
-            "title",  # Deprecated, remove after 2025.10
             "title_safe",  # Safe to use in rendered html
             "is_educational",
             "instant_verification",
