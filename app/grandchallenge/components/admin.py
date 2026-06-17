@@ -195,6 +195,7 @@ def deprovision_jobs(modeladmin, request, queryset):
 
 @admin.action(
     description="Stop endpoints",
+    permissions=("change",),
 )
 def stop_endpoints(modeladmin, request, queryset):
     for endpoint in queryset:
