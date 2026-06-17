@@ -125,7 +125,7 @@
             </thead>
             <tbody>
             {% for evaluation in object.evaluation_set.all %}
-                {% get_obj_perms request.user for evaluation as "evaluation_perms" %}
+                {% get_obj_perms request.user for evaluation as "evaluation_perms" checker %}
                 <tr>
                     <td>
                         <span title="{% if "view_evaluation" in evaluation_perms %}View evaluation details{% else %}You cannot view the details of this evaluation.{% endif %}">
@@ -152,7 +152,9 @@
                     </td>
                     <td>
                         {% if evaluation.status == evaluation.SUCCESS %}
-                            {% if not evaluation.published %}
+                            {% if evaluation.published %}
+                                Evaluation is published.
+                            {% else %}
                                 Evaluation is under review by the challenge admins.
                             {% endif %}
                         {% elif evaluation.status == evaluation.FAILURE or evaluation.status == evaluation.CANCELLED %}
