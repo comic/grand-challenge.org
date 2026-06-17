@@ -232,7 +232,9 @@ def update_container_image_shim(
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     with check_lock_acquired():
-        instance = model.objects.select_for_update(nowait=True).get(pk=pk)
+        instance = model.objects.select_for_update(
+            nowait=True, of=("self",)
+        ).get(pk=pk)
 
     from grandchallenge.algorithms.models import AlgorithmImage, Job
     from grandchallenge.evaluation.models import Evaluation, Method
