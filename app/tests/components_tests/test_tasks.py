@@ -1949,7 +1949,7 @@ def test_parse_endpoint_invocation_outputs(settings):
 
     assert invocation.outputs.count() == 0
 
-    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
     invocation.refresh_from_db()
 
     assert invocation.error_message == ""
@@ -1972,7 +1972,7 @@ def test_parse_endpoint_invocation_outputs_failure(mocker):
         side_effect=Exception,
     )
 
-    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
 
     invocation.refresh_from_db()
 
@@ -1997,7 +1997,7 @@ def test_parse_endpoint_invocation_outputs_wrong_state_raises(mocker, status):
     with pytest.raises(
         RuntimeError, match="Invocation is not ready for output parsing"
     ):
-        parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+        parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
     invocation.refresh_from_db()
 
     mock_get_outputs.assert_not_called()
@@ -2013,7 +2013,7 @@ def test_parse_endpoint_invocation_outputs_cancelled_skipped(mocker):
         "get_outputs",
     )
 
-    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
     invocation.refresh_from_db()
 
     mock_get_outputs.assert_not_called()
@@ -2289,7 +2289,7 @@ class TestParseEndpointInvocationLogs:
             )
 
             with mocker.patch(
-                "app.grandchallenge.components.backends.amazon_sagemaker_base.boto3.client",
+                "grandchallenge.components.backends.amazon_sagemaker_base.boto3.client",
                 return_value=logs_client,
             ):
                 parse_endpoint_invocation_logs(
