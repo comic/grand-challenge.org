@@ -4,6 +4,7 @@
 {% load static %}
 {% load evaluation_extras %}
 {% load copy_button %}
+{% load guardian_tags %}
 {% load user_profile_link from profiles %}
 
 {% block title %}
@@ -109,6 +110,7 @@
         >
             <thead class="thead-light">
             <tr>
+                <th></th>
                 <th>Evaluation Id</th>
                 <th>Created</th>
                 <th>Updated</th>
@@ -123,7 +125,17 @@
             </thead>
             <tbody>
             {% for evaluation in object.evaluation_set.all %}
+                {% get_obj_perms request.user for evaluation as "evaluation_perms" checker %}
                 <tr>
+                    <td>
+                        <span title="{% if "view_evaluation" in evaluation_perms %}View evaluation details{% else %}You cannot view the details of this evaluation.{% endif %}">
+                            <a {% if "view_evaluation" in evaluation_perms %}href="{{ evaluation.get_absolute_url }}"{% endif %}
+                                class="btn p-0 m-0 text-info {% if not "view_evaluation" in evaluation_perms %}disabled{% endif %}"
+                            >
+                                <i class="fas fa-info-circle mr-1"></i>
+                            </a>
+                        </span>
+                    </td>
                     <td>{{ evaluation.pk|copy_button }}</td>
                     <td data-order="{{ evaluation.created|date:"c" }}">{{ evaluation.created }}</td>
                     <td data-order="{{ evaluation.modified|date:"c" }}">{{ evaluation.modified }}</td>
@@ -141,16 +153,11 @@
                     <td>
                         {% if evaluation.status == evaluation.SUCCESS %}
                             {% if evaluation.published %}
-                                <a href="{{ evaluation.get_absolute_url }}"><i class="fas fa-info-circle mr-1"></i></a>View public result
-                            {% elif "change_challenge" in challenge_perms %}
-                                <a href="{{ evaluation.get_absolute_url }}"><i class="fas fa-info-circle mr-1"></i></a>View private result
+                                Evaluation is published.
                             {% else %}
                                 Evaluation is under review by the challenge admins.
                             {% endif %}
-                        {% elif evaluation.status == evaluation.FAILURE or evaluaton.status == evaluation.CANCELLED %}
-                            {% if "change_challenge" in challenge_perms %}
-                                <a href="{{ evaluation.get_absolute_url }}" title="View evaluation details"><i class="fas fa-info-circle mr-1"></i></a>
-                            {% endif %}
+                        {% elif evaluation.status == evaluation.FAILURE or evaluation.status == evaluation.CANCELLED %}
                             {{ evaluation.error_message }}
                         {% endif %}
                     </td>
