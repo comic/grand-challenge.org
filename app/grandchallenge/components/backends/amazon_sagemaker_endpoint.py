@@ -27,6 +27,21 @@ class ObjectParams(NamedTuple):
     pk: UUID
 
 
+# TODO: refactor EndpointOrchestrator, AmazonSageMakerEndpointExecutor,
+#  AmazonSageMakerTrainingExecutor and AmazonSageMakerBaseExecutor to simplify
+class AmazonSageMakerEndpointExecutor(AmazonSageMakerTrainingExecutor):
+    def __init__(self, *args, runtime_setup_result_key=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__runtime_setup_result_key = runtime_setup_result_key
+
+    @property
+    def runtime_setup_result_key(self):
+        if self.__runtime_setup_result_key:
+            return self.__runtime_setup_result_key
+        else:
+            return super().runtime_setup_result_key
+
+
 class EndpointOrchestrator:
     def __init__(
         self,
@@ -39,8 +54,9 @@ class EndpointOrchestrator:
         signing_key,
         time_limit=settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION,
         algorithm_model=None,
+        runtime_setup_result_key=None,
     ):
-        self._executor = AmazonSageMakerTrainingExecutor(
+        self._executor = AmazonSageMakerEndpointExecutor(
             job_id=job_id,
             exec_image_repo_tag=exec_image_repo_tag,
             memory_limit=memory_limit,
@@ -53,6 +69,7 @@ class EndpointOrchestrator:
             input_bucket_name=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
             output_bucket_name=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
             use_task_list=False,
+            runtime_setup_result_key=runtime_setup_result_key,
         )
         self._endpoint_name = endpoint_name
         self._exec_image_repo_tag = exec_image_repo_tag
@@ -143,6 +160,10 @@ class EndpointOrchestrator:
     @property
     def _time_limit(self):
         return self._executor._time_limit
+
+    @property
+    def runtime_setup_result_key(self):
+        return self._executor.runtime_setup_result_key
 
     def provision_auxiliary_data(self):
         if self._algorithm_model:
