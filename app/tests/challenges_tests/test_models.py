@@ -976,6 +976,7 @@ def test_total_costs_properties():
     )
 
     assert challenge.total_projected_storage_cost_euros == 67
+    assert challenge.total_consumed_compute_costs_with_write_off_euros == 10
     assert challenge.total_consumed_costs_euros == 77
     assert challenge.total_paid_compute_costs_euros == 300
     assert challenge.total_paid_storage_costs_euros == 150

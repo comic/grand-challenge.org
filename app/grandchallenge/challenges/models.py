@@ -823,9 +823,20 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         ) * ChallengeRequest().storage_costs_euros_per_gb
 
     @cached_property
+    def total_consumed_compute_costs_with_write_off_euros(self):
+        return (
+            (
+                self.consumed_compute_cost_euro_millicents
+                + self.write_off_compute_cost_euro_millicents
+            )
+            / 1000
+            / 100
+        )
+
+    @cached_property
     def total_consumed_costs_euros(self):
         return (
-            self.compute_cost_euro_millicents / 1000 / 100
+            self.total_consumed_compute_costs_with_write_off_euros
             + self.total_projected_storage_cost_euros
         )
 
@@ -860,9 +871,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     @cached_property
     def compute_ratio(self):
         return (
-            self.compute_cost_euro_millicents
-            / 1000
-            / 100
+            self.total_consumed_compute_costs_with_write_off_euros
             / self.total_consumed_costs_euros
         )
 
