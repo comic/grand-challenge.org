@@ -854,10 +854,10 @@ def test_set_invocation_logs(settings):
                 "nextToken": "foo",
             },
         )
-        orchestrator._set_task_logs(
+        orchestrator.set_task_logs(
             event={
                 "receivedTime": "2022-06-09T09:37:47.000Z",
-                "eventTime": "2022-06-09T09:38:01.000Z",
+                "eventTime": "2022-06-09T09:37:51.000Z",
             },
         )
 
