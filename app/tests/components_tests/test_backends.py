@@ -794,6 +794,7 @@ def test_runtime_setup_result_signature_unverified(settings):
 
     runtime_setup_result = RuntimeSetupResult(
         return_code=0,
+        user_safe_error_message="",
         sagemaker_shim_version="0.8.0",
     )
     runtime_setup_result_content = (
@@ -835,6 +836,7 @@ def test_runtime_setup_result_signature_verified(settings):
 
     runtime_setup_result = RuntimeSetupResult(
         return_code=0,
+        user_safe_error_message="",
         sagemaker_shim_version="0.8.0",
     )
     runtime_setup_result_content = (
@@ -874,6 +876,8 @@ def test_invocation_results_signature_unverified(settings):
     inference_result = InferenceResult(
         pk=f"test-test-{job_pk}",
         return_code=0,
+        user_safe_error_message="",
+        user_process_last_stderr_lines=[],
         exec_duration=timedelta(seconds=1337),
         invoke_duration=None,
         outputs=[],
@@ -920,6 +924,8 @@ def test_invocation_results_signature_verified(settings):
     inference_result = InferenceResult(
         pk=f"test-test-{job_pk}",
         return_code=0,
+        user_safe_error_message="",
+        user_process_last_stderr_lines=[],
         exec_duration=timedelta(seconds=1337),
         invoke_duration=None,
         outputs=[],

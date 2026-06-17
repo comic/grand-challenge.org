@@ -34,6 +34,7 @@ class IOCopyExecutor(Executor):
         try:
             runtime_setup_result = RuntimeSetupResult(
                 return_code=0,
+                user_safe_error_message="",
                 sagemaker_shim_version="0.8.0",
             )
             runtime_setup_result_content = (
@@ -110,6 +111,8 @@ class IOCopyExecutor(Executor):
             inference_result = InferenceResult(
                 pk=self._job_id,
                 return_code=0,
+                user_safe_error_message="",
+                user_process_last_stderr_lines=[],
                 exec_duration=timedelta(seconds=1337),
                 invoke_duration=timedelta(seconds=1874),
                 outputs=[],

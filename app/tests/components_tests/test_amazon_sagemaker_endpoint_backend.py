@@ -649,6 +649,7 @@ def test_handle_completed_invocation(settings):
     orchestrator = invocation.orchestrator
     runtime_setup_result = RuntimeSetupResult(
         return_code=0,
+        user_safe_error_message="",
         sagemaker_shim_version="0.8.0",
     )
     runtime_setup_result_content = (
@@ -670,6 +671,8 @@ def test_handle_completed_invocation(settings):
     inference_result = InferenceResult(
         pk=f"algorithms-invocation-{invocation.pk}",
         return_code=0,
+        user_safe_error_message="",
+        user_process_last_stderr_lines=[],
         exec_duration=None,
         invoke_duration=timedelta(seconds=12),
         outputs=[],

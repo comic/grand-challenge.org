@@ -291,7 +291,7 @@ class RuntimeSetupResult(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     return_code: int
-    user_safe_error_message: str = ""
+    user_safe_error_message: str
     sagemaker_shim_version: str
 
 
@@ -319,8 +319,8 @@ class InferenceResult(BaseModel):
 
     pk: str
     return_code: int
-    user_safe_error_message: str = ""
-    user_process_last_stderr_lines: list[str] = []
+    user_safe_error_message: str
+    user_process_last_stderr_lines: list[str]
     exec_duration: timedelta | None
     invoke_duration: timedelta | None
     outputs: list[InferenceIO]
