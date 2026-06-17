@@ -192,7 +192,11 @@ def build_images(  # noqa:C901
                 upload_session=upload_session,
             )
     except CalledProcessError as error:
-        if error.returncode == 137:
+        too_big_messages = {"std::bad_alloc", "No space left on device"}
+
+        if error.returncode == 137 or any(
+            message in error.stderr for message in too_big_messages
+        ):
             _handle_error(
                 error_message=(
                     "The uploaded images were too large to process, "
