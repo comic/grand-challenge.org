@@ -89,14 +89,16 @@ def update_challenge_compute_costs():
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def update_challenge_compute_cost(*, pk: int):
     with check_lock_acquired():
-        invoices = (
+        invoices = list(
             Invoice.objects.select_for_update(nowait=True, of=("self",))
             .filter(challenge_id=pk)
             .with_budget_authorization()
         )
-        phases = Phase.objects.select_for_update(
-            nowait=True, of=("self",)
-        ).filter(challenge_id=pk)
+        phases = list(
+            Phase.objects.select_for_update(nowait=True, of=("self",)).filter(
+                challenge_id=pk
+            )
+        )
 
     for invoice in invoices:
         annotate_invoice_compute_costs(invoice=invoice)
