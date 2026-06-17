@@ -56,6 +56,7 @@ from grandchallenge.components.tasks import (
     start_endpoint,
     stop_endpoint,
     stop_expired_endpoints,
+    update_all_container_image_shims,
     update_container_image_shim,
     upload_to_registry_and_sagemaker,
     validate_container_image,
@@ -327,7 +328,7 @@ def test_api_method_extraction_bad_label():
 
 
 @pytest.mark.django_db
-def test_update_sagemaker_shim(
+def test_update_container_image_shim(
     invoke_container_image,
     settings,
     django_capture_on_commit_callbacks,
@@ -404,6 +405,138 @@ def test_update_sagemaker_shim(
     mock_remove_tag_from_registry.assert_has_calls(
         expected_calls, any_order=False
     )
+
+
+@pytest.mark.django_db
+class TestUpdateContainerImageShimEarlyExits:
+    def test_skips_algorithm_image_with_active_job(self):
+        ai = AlgorithmImageFactory(latest_shimmed_version="old")
+        AlgorithmJobFactory(
+            algorithm_image=ai,
+            status=Job.EXECUTING,
+            time_limit=60,
+        )
+
+        result = update_container_image_shim(
+            pk=ai.pk,
+            app_label=ai._meta.app_label,
+            model_name=ai._meta.model_name,
+        )
+
+        assert result == "old"
+
+    def test_skips_method_with_active_evaluation(self):
+        method = MethodFactory(latest_shimmed_version="old")
+        EvaluationFactory(method=method, status=Job.EXECUTING, time_limit=60)
+
+        result = update_container_image_shim(
+            pk=method.pk,
+            app_label=method._meta.app_label,
+            model_name=method._meta.model_name,
+        )
+
+        assert result == "old"
+
+    def test_does_not_skip_algorithm_image_without_active_job(self):
+        ai = AlgorithmImageFactory(latest_shimmed_version="old")
+        AlgorithmJobFactory(
+            algorithm_image=ai,
+            status=Job.SUCCESS,
+            time_limit=60,
+        )
+
+        result = update_container_image_shim(
+            pk=ai.pk,
+            app_label=ai._meta.app_label,
+            model_name=ai._meta.model_name,
+        )
+
+        # No early exit, but image is not in registry so no shim happens
+        assert result == "old"
+
+    def test_does_not_skip_method_without_active_evaluation(self):
+        method = MethodFactory(latest_shimmed_version="old")
+        EvaluationFactory(method=method, status=Job.SUCCESS, time_limit=60)
+
+        result = update_container_image_shim(
+            pk=method.pk,
+            app_label=method._meta.app_label,
+            model_name=method._meta.model_name,
+        )
+
+        # No early exit, but image is not in registry so no shim happens
+        assert result == "old"
+
+    def test_raises_not_implemented_for_unknown_model(self):
+        wi = WorkstationImageFactory()
+
+        with pytest.raises(NotImplementedError):
+            update_container_image_shim(
+                pk=wi.pk,
+                app_label=wi._meta.app_label,
+                model_name=wi._meta.model_name,
+            )
+
+
+@pytest.mark.django_db
+class TestUpdateAllContainerImageShims:
+    def test_schedules_outdated_executable_images(
+        self, settings, django_capture_on_commit_callbacks
+    ):
+        settings.COMPONENTS_SAGEMAKER_SHIM_VERSION = "new"
+
+        AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            latest_shimmed_version="old",
+        )
+        MethodFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            latest_shimmed_version="old",
+        )
+
+        with django_capture_on_commit_callbacks() as callbacks:
+            n_tasks = update_all_container_image_shims()
+
+        assert n_tasks == 2
+        assert len(callbacks) == 2
+        assert all(
+            "grandchallenge.components.tasks.update_container_image_shim"
+            in repr(cb)
+            for cb in callbacks
+        )
+
+    def test_skips_images_already_at_current_version(self, settings):
+        settings.COMPONENTS_SAGEMAKER_SHIM_VERSION = "current"
+
+        AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            latest_shimmed_version="current",
+        )
+
+        n_tasks = update_all_container_image_shims()
+
+        assert n_tasks == 0
+
+    def test_skips_non_executable_images(self, settings):
+        settings.COMPONENTS_SAGEMAKER_SHIM_VERSION = "new"
+
+        AlgorithmImageFactory(
+            is_manifest_valid=False,
+            is_in_registry=True,
+            latest_shimmed_version="old",
+        )
+        AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=False,
+            latest_shimmed_version="old",
+        )
+
+        n_tasks = update_all_container_image_shims()
+
+        assert n_tasks == 0
 
 
 @lambda_task
