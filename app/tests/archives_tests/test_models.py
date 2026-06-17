@@ -93,13 +93,15 @@ def test_archive_item_set_title():
 
     # Duplication attempt via edit
     ai1.title = ai0.title
-    with transaction.atomic():
-        with pytest.raises(IntegrityError):
+    with pytest.raises(IntegrityError):
+        with transaction.atomic():
+            # Atomic block required for later db queries in this test
             ai1.save()
 
     # Duplication attempt via save
-    with transaction.atomic():
-        with pytest.raises(IntegrityError):
+    with pytest.raises(IntegrityError):
+        with transaction.atomic():
+            # Atomic block required for later db queries in this test
             ArchiveItemFactory(
                 archive=archive,
                 title=ai1.title,

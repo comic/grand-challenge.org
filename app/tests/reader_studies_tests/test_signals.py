@@ -41,6 +41,7 @@ def test_assert_modification_allowed():
 
     with pytest.raises(ValidationError):
         with transaction.atomic():
+            # Atomic block required for later db queries in this test
             ds.values.remove(civ2)
 
     assert ds.values.count() == 1

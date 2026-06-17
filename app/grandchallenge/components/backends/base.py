@@ -28,7 +28,6 @@ from botocore.auth import SigV4Auth
 from botocore.config import Config
 from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
-from django.db import transaction
 from django.utils._os import safe_join
 from django.utils.functional import cached_property
 from panimg_models import ImageBuilderOptions
@@ -379,18 +378,15 @@ class Executor(ABC):
         """Create ComponentInterfaceValues from the output interfaces"""
         outputs = []
 
-        with transaction.atomic():
-            # Atomic block required as create_instance needs to
-            # create interfaces in order to store the files
-            for interface in output_interfaces:
-                if interface.is_image_kind:
-                    res = self._create_images_result(interface=interface)
-                elif interface.is_json_kind:
-                    res = self._create_json_result(interface=interface)
-                else:
-                    res = self._create_file_result(interface=interface)
+        for interface in output_interfaces:
+            if interface.is_image_kind:
+                res = self._create_images_result(interface=interface)
+            elif interface.is_json_kind:
+                res = self._create_json_result(interface=interface)
+            else:
+                res = self._create_file_result(interface=interface)
 
-                outputs.append(res)
+            outputs.append(res)
 
         return outputs
 

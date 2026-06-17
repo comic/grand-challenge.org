@@ -17,7 +17,6 @@ from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.db.models import Count, DateTimeField, ExpressionWrapper, F, Q
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
@@ -96,9 +95,8 @@ def assign_docker_image_from_upload(
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
 
-    with transaction.atomic():
-        instance.user_upload.copy_object(to_field=instance.image)
-        instance.user_upload.delete()
+    instance.user_upload.copy_object(to_field=instance.image)
+    instance.user_upload.delete()
 
 
 @lambda_task(
