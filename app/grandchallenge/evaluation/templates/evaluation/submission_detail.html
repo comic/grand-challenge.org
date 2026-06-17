@@ -154,8 +154,6 @@
                         {% if evaluation.status == evaluation.SUCCESS %}
                             {% if not evaluation.published %}
                                 Evaluation is under review by the challenge admins.
-                            {% else %}
-                                -
                             {% endif %}
                         {% elif evaluation.status == evaluation.FAILURE or evaluation.status == evaluation.CANCELLED %}
                             {{ evaluation.error_message }}
