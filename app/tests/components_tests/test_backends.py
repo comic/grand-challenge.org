@@ -25,6 +25,7 @@ from grandchallenge.components.backends.base import (
 )
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.backends.utils import (
+    NO_ERRORS_IN_LOG_MESSAGE,
     _filter_members,
     parse_structured_log,
     user_error,
@@ -57,13 +58,10 @@ def test_user_error(with_timestamp):
     assert user_error(obj=f"{timestamp}foo\n{timestamp}bar\n\n") == "bar"
     assert user_error(obj=f"{timestamp}foo\n{timestamp}    a b\n\n") == "a b"
     assert user_error(obj=f"{timestamp}foo\nbar\n\n") == "bar"
-    assert (
-        user_error(obj=f"{timestamp}\n")
-        == "No errors were reported in the logs."
-    )
+    assert user_error(obj=f"{timestamp}\n") == NO_ERRORS_IN_LOG_MESSAGE
     assert (
         user_error(obj=f"{timestamp}\n{timestamp}\n")
-        == "No errors were reported in the logs."
+        == NO_ERRORS_IN_LOG_MESSAGE
     )
 
 
@@ -986,43 +984,42 @@ def test_parse_structured_logs_filters_task():
 
 @pytest.mark.parametrize(
     (
-        "return_code",
         "user_safe_error_message",
         "user_process_last_stderr_lines",
         "expected_error_message",
     ),
     (
-        (1, "user safe error", [], "user safe error"),
-        (1, "user safe error", [""], "user safe error"),
-        (1, "user safe error", ["foo"], "user safe error"),
-        (1, "user safe error", ["foo", "bar"], "user safe error"),
+        ("user safe error", [], "user safe error"),
+        ("user safe error", [""], "user safe error"),
+        ("user safe error", ["foo"], "user safe error"),
+        ("user safe error", ["foo", "bar"], "user safe error"),
         (
-            1,
             "",
             [],
-            "User process returned non-zero exit code without error message",
+            NO_ERRORS_IN_LOG_MESSAGE,
         ),
         (
-            1,
             "",
             [""],
-            "User process returned non-zero exit code without error message",
+            NO_ERRORS_IN_LOG_MESSAGE,
         ),
-        (1, "", ["user process error"], "user process error"),
-        (1, "", ["earlier error", "user process error"], "user process error"),
-        (0, "", [], ""),
-        (0, "", [""], ""),
+        ("", ["user process error"], "user process error"),
+        ("", ["pre error", "user process error"], "user process error"),
+        (
+            "",
+            ["pre error", "\nuser process error \n\r\n", " ", "\n\n \n \r\n "],
+            "user process error",
+        ),
     ),
 )
 def test_get_error_message_from_inference_result(
-    return_code,
     user_safe_error_message,
     user_process_last_stderr_lines,
     expected_error_message,
 ):
     inference_result = InferenceResult(
         pk="algorithms-job-1",
-        return_code=return_code,
+        return_code=1,
         user_safe_error_message=user_safe_error_message,
         user_process_last_stderr_lines=user_process_last_stderr_lines,
         exec_duration=timedelta(seconds=1),

@@ -40,6 +40,10 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     UncleanExit,
 )
+from grandchallenge.components.backends.utils import (
+    NO_ERRORS_IN_LOG_MESSAGE,
+    user_error,
+)
 from grandchallenge.components.models import (
     APIMethodChoices,
     ComponentInterface,
@@ -899,11 +903,14 @@ class Executor(ABC):
         error_message = inference_result.user_safe_error_message
         if not error_message:
             if inference_result.user_process_last_stderr_lines:
-                error_message = (
-                    inference_result.user_process_last_stderr_lines[-1]
-                )
-        if not error_message and inference_result.return_code != 0:
-            error_message = "User process returned non-zero exit code without error message"
+                for line in reversed(
+                    inference_result.user_process_last_stderr_lines
+                ):
+                    error_message = user_error(line)
+                    if error_message != NO_ERRORS_IN_LOG_MESSAGE:
+                        break
+            else:
+                error_message = NO_ERRORS_IN_LOG_MESSAGE
         return error_message
 
     def _handle_completed_job(self):

@@ -23,6 +23,8 @@ UUID4_REGEX = (
     r"[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}"
 )
 
+NO_ERRORS_IN_LOG_MESSAGE = "No errors were reported in the logs."
+
 
 def user_error(obj: str):
     """
@@ -34,7 +36,7 @@ def user_error(obj: str):
     """
     pattern = re.compile(LOGLINE_REGEX, re.MULTILINE)
 
-    error_message = "No errors were reported in the logs."
+    error_message = NO_ERRORS_IN_LOG_MESSAGE
 
     for m in re.finditer(pattern, obj):
         e = m.group("error_message").strip()
