@@ -1396,7 +1396,7 @@ if strtobool(os.environ.get("CSP_REPORT_ONLY", "False")):
     CONTENT_SECURITY_POLICY_REPORT_ONLY = CONTENT_SECURITY_POLICY
     del CONTENT_SECURITY_POLICY
 
-ENABLE_DEBUG_TOOLBAR = True
+ENABLE_DEBUG_TOOLBAR = False
 
 if DEBUG:
     # Allow localhost in development
