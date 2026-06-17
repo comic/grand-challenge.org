@@ -825,9 +825,9 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     @cached_property
     def total_consumed_compute_costs_with_write_off_euros(self):
         return (
-            (
-                self.consumed_compute_cost_euro_millicents
-                + self.write_off_compute_cost_euro_millicents
+            sum(
+                invoice.compute_cost_euro_millicents
+                for invoice in self.invoices.all()
             )
             / 1000
             / 100
