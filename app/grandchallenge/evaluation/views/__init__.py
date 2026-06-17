@@ -95,7 +95,7 @@ class CachedPhaseMixin:
         )
 
     def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data()
+        context = super().get_context_data(*args, **kwargs)
         context.update({"phase": self.phase})
         return context
 
