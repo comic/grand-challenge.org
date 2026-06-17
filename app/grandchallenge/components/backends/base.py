@@ -366,6 +366,7 @@ class Executor(ABC):
         self._invoke_duration = None
         self._stdout = []
         self._stderr = []
+        self._logs_complete = False
 
         self.__s3_client = None
 
@@ -431,6 +432,10 @@ class Executor(ABC):
     @property
     def stderr(self):
         return "\n".join(self._stderr)
+
+    @property
+    def logs_complete(self):
+        return self._logs_complete
 
     @property
     @abstractmethod

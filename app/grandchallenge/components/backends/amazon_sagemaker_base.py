@@ -22,6 +22,8 @@ from grandchallenge.components.backends.utils import (
     LOGLINES,
     UUID4_REGEX,
     SourceChoices,
+    get_structured_log,
+    is_completion_message,
     ms_timestamp_to_datetime,
     parse_structured_log,
 )
@@ -564,14 +566,21 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     def _set_task_logs(self, *, event, task=None):
         stdout = []
         stderr = []
+        logs_complete = False
 
         for log_event in self._get_log_events(event=event):
             try:
+                structured_log = get_structured_log(
+                    log=log_event["message"].replace("\x00", "")
+                )
                 parsed_log = parse_structured_log(
-                    log=log_event["message"].replace("\x00", ""),
+                    structured_log=structured_log,
                     task=task,
                 )
                 timestamp = ms_timestamp_to_datetime(log_event["timestamp"])
+                logs_complete |= is_completion_message(
+                    structured_log=structured_log, task=task
+                )
             except (JSONDecodeError, KeyError, ValueError):
                 logger.warning("Could not parse log")
                 continue
@@ -587,6 +596,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
 
         self._stdout = stdout[-LOGLINES:] if len(stdout) > LOGLINES else stdout
         self._stderr = stderr[-LOGLINES:] if len(stderr) > LOGLINES else stderr
+        self._logs_complete = logs_complete
 
     def _get_log_events(self, *, event):
         log_events = []
