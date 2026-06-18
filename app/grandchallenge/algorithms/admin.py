@@ -33,6 +33,7 @@ from grandchallenge.components.admin import (
     cancel_jobs,
     deprovision_jobs,
     requeue_jobs,
+    stop_endpoints,
 )
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
@@ -373,6 +374,13 @@ class EndpointAdmin(admin.ModelAdmin):
         "algorithm_image__pk",
     )
     readonly_fields = (
+        "created",
+        "modified",
+        "algorithm_image",
+        "algorithm_model",
+        "creator",
+        "maximum_duration",
+        "status",
         "stdout",
         "stderr",
         "runtime_metrics",
@@ -381,15 +389,13 @@ class EndpointAdmin(admin.ModelAdmin):
         "requires_memory_gb",
         "viewers_group",
     )
+    actions = (stop_endpoints,)
 
     @staticmethod
     def algorithm(obj):
         return obj.algorithm_image.algorithm
 
     def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
         return False
 
 
