@@ -8,7 +8,9 @@ from datetime import timedelta
 from pathlib import Path
 from unittest.mock import call, patch
 
+import boto3
 import pytest
+from botocore.stub import Stubber
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
@@ -52,6 +54,7 @@ from grandchallenge.components.tasks import (
     encode_b64j,
     handle_endpoint_invocation_event,
     handle_endpoint_status_event,
+    parse_endpoint_invocation_logs,
     parse_endpoint_invocation_outputs,
     preload_interactive_algorithms,
     remove_container_image_from_registry,
@@ -1945,7 +1948,7 @@ def test_parse_endpoint_invocation_outputs(settings):
 
     assert invocation.outputs.count() == 0
 
-    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
     invocation.refresh_from_db()
 
     assert invocation.error_message == ""
@@ -1968,7 +1971,7 @@ def test_parse_endpoint_invocation_outputs_failure(mocker):
         side_effect=Exception,
     )
 
-    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
 
     invocation.refresh_from_db()
 
@@ -1993,7 +1996,7 @@ def test_parse_endpoint_invocation_outputs_wrong_state_raises(mocker, status):
     with pytest.raises(
         RuntimeError, match="Invocation is not ready for output parsing"
     ):
-        parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+        parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
     invocation.refresh_from_db()
 
     mock_get_outputs.assert_not_called()
@@ -2009,9 +2012,273 @@ def test_parse_endpoint_invocation_outputs_cancelled_skipped(mocker):
         "get_outputs",
     )
 
-    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
     invocation.refresh_from_db()
 
     mock_get_outputs.assert_not_called()
     assert invocation.status == InvocationStatusChoices.CANCELLED
     assert invocation.outputs.count() == 0
+
+
+@pytest.mark.django_db
+class TestParseEndpointInvocationLogs:
+    def test_skips_cancelled_invocation(self, mocker):
+        invocation = InvocationFactory(
+            status=InvocationStatusChoices.CANCELLED
+        )
+
+        mock_set_task_logs = mocker.patch.object(
+            EndpointOrchestrator,
+            "set_task_logs",
+        )
+
+        parse_endpoint_invocation_logs(
+            pk=invocation.pk,
+            app_label=invocation._meta.app_label,
+            model_name=invocation._meta.model_name,
+            event={},
+        )
+
+        mock_set_task_logs.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "status",
+        set(InvocationStatusChoices).difference(
+            [
+                InvocationStatusChoices.FAILURE,
+                InvocationStatusChoices.SUCCESS,
+                InvocationStatusChoices.CANCELLED,
+            ]
+        ),
+    )
+    def test_raises_for_non_terminal_status(self, status):
+        invocation = InvocationFactory(status=status)
+
+        with pytest.raises(
+            RuntimeError,
+            match="Invocation is not ready for log parsing",
+        ):
+            parse_endpoint_invocation_logs(
+                pk=invocation.pk,
+                app_label=invocation._meta.app_label,
+                model_name=invocation._meta.model_name,
+                event={},
+            )
+
+    @pytest.mark.parametrize(
+        "status",
+        [InvocationStatusChoices.FAILURE, InvocationStatusChoices.SUCCESS],
+    )
+    def test_sets_logs_for_terminal_status(self, status, mocker):
+        invocation = InvocationFactory(status=status)
+
+        mocker.patch.object(
+            EndpointOrchestrator,
+            "stdout",
+            "stdout log",
+        )
+        mocker.patch.object(
+            EndpointOrchestrator,
+            "stderr",
+            "stderr log",
+        )
+        mock_set_task_logs = mocker.patch.object(
+            EndpointOrchestrator,
+            "set_task_logs",
+        )
+
+        parse_endpoint_invocation_logs(
+            pk=invocation.pk,
+            app_label=invocation._meta.app_label,
+            model_name=invocation._meta.model_name,
+            event={"foo": "bar"},
+        )
+        invocation.refresh_from_db()
+
+        assert invocation.stdout == "stdout log"
+        assert invocation.stderr == "stderr log"
+
+        mock_set_task_logs.assert_called_once_with(event={"foo": "bar"})
+
+    def test_set_logs(self, mocker):
+        logs_client = boto3.client("logs", region_name="us-east-1")
+
+        invocation = InvocationFactory(status=InvocationStatusChoices.SUCCESS)
+        endpoint = invocation.endpoint
+
+        with Stubber(logs_client) as logs:
+            logs.add_response(
+                method="describe_log_streams",
+                service_response={
+                    "logStreams": [
+                        {
+                            "logStreamName": f"localhost-AE-{endpoint.pk}/i-whatever"
+                        },
+                    ]
+                },
+                expected_params={
+                    "logGroupName": f"/aws/sagemaker/Endpoints/localhost-AE-{endpoint.pk}",
+                    "logStreamNamePrefix": f"localhost-AE-{endpoint.pk}",
+                },
+            )
+            logs.add_response(
+                method="get_log_events",
+                service_response={
+                    "events": [
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": f"Invocation self.pk='algorithms-invocation-{invocation.pk}' complete",
+                                    "source": "stdout",
+                                    "internal": True,
+                                    "task": "",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "hello from stdout",
+                                    "source": "stdout",
+                                    "internal": False,
+                                    "task": f"algorithms-invocation-{invocation.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "hello from stderr",
+                                    "source": "stderr",
+                                    "internal": False,
+                                    "task": f"algorithms-invocation-{invocation.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "endpoint stderr",
+                                    "source": "stderr",
+                                    "internal": False,
+                                    "task": f"algorithms-endpoint-{endpoint.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "endpoint stdout",
+                                    "source": "stdout",
+                                    "internal": False,
+                                    "task": f"algorithms-endpoint-{endpoint.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "internal stderr",
+                                    "source": "stderr",
+                                    "internal": True,
+                                    "task": f"algorithms-invocation-{invocation.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "internal stdout",
+                                    "source": "stdout",
+                                    "internal": True,
+                                    "task": f"algorithms-invocation-{invocation.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": "unstructured log",
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps({"err": "wrong"}),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "wrong source",
+                                    "source": "fdgfgsdfdg",
+                                    "internal": False,
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                    ],
+                    "nextBackwardToken": "foo",
+                },
+                expected_params={
+                    "logGroupName": f"/aws/sagemaker/Endpoints/localhost-AE-{endpoint.pk}",
+                    "logStreamName": f"localhost-AE-{endpoint.pk}/i-whatever",
+                    "startFromHead": False,
+                    "startTime": 1654767467000,
+                    "endTime": 1654767481000,
+                },
+            )
+            logs.add_response(
+                method="get_log_events",
+                service_response={
+                    "events": [
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "first message",
+                                    "source": "stdout",
+                                    "internal": False,
+                                    "task": f"algorithms-invocation-{invocation.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                    ],
+                    "nextBackwardToken": "foo",
+                },
+                expected_params={
+                    "logGroupName": f"/aws/sagemaker/Endpoints/localhost-AE-{endpoint.pk}",
+                    "logStreamName": f"localhost-AE-{endpoint.pk}/i-whatever",
+                    "startFromHead": False,
+                    "startTime": 1654767467000,
+                    "endTime": 1654767481000,
+                    "nextToken": "foo",
+                },
+            )
+
+            with mocker.patch(
+                "grandchallenge.components.backends.amazon_sagemaker_base.boto3.client",
+                return_value=logs_client,
+            ):
+                parse_endpoint_invocation_logs(
+                    pk=invocation.pk,
+                    app_label=invocation._meta.app_label,
+                    model_name=invocation._meta.model_name,
+                    event={
+                        "receivedTime": "2022-06-09T09:37:47.000Z",
+                        "eventTime": "2022-06-09T09:37:51.000Z",
+                    },
+                )
+
+        invocation.refresh_from_db()
+
+        assert (
+            invocation.stdout
+            == "2022-06-08T10:23:58+00:00 first message\n2022-06-08T10:23:58+00:00 hello from stdout"
+        )
+        assert (
+            invocation.stderr == "2022-06-08T10:23:58+00:00 hello from stderr"
+        )

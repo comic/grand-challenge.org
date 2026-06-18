@@ -1927,3 +1927,8 @@ class Invocation(CIVForObjectMixin, UUIDModel):
             user=user,
             linked_task=linked_task,
         )
+
+    def set_logs(self, *, stdout, stderr):
+        self.stdout = stdout
+        self.stderr = stderr
+        self.save()
