@@ -356,6 +356,12 @@ def test_session_cleanup(django_capture_on_commit_callbacks):
         maximum_duration=timedelta(seconds=0),
     )
     SessionFactory(
+        # Unclaimed sessions should be left running
+        creator=None,
+        status=Session.RUNNING,
+        maximum_duration=timedelta(seconds=0),
+    )
+    SessionFactory(
         status=Session.STOPPED,
         maximum_duration=timedelta(seconds=0),
     )

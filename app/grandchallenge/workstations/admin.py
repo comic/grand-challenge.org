@@ -34,8 +34,9 @@ class SessionAdmin(admin.ModelAdmin):
     list_display = [
         "pk",
         "get_logs",
-        "created",
         "creator",
+        "created",
+        "claimed_at",
         "status",
         "maximum_duration",
         "region",

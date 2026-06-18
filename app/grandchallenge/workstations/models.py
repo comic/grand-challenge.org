@@ -13,14 +13,13 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
-from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
-from knox.models import AuthToken
 from pictures.models import PictureField
 
 from grandchallenge.components.models import ComponentImage
@@ -444,12 +443,7 @@ class Session(FieldChangeMixin, UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    auth_token = deprecate_field(
-        models.ForeignKey(
-            AuthToken, null=True, blank=True, on_delete=models.SET_NULL
-        ),
-        raise_on_access=True,
-    )
+    claimed_at = models.DateTimeField(null=True, editable=False)
     workstation_image = models.ForeignKey(
         WorkstationImage, on_delete=models.PROTECT
     )
@@ -467,6 +461,13 @@ class Session(FieldChangeMixin, UUIDModel):
 
     class Meta(UUIDModel.Meta):
         ordering = ("created", "creator")
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(creator__isnull=True)
+                | Q(claimed_at__isnull=False),
+                name="creator_requires_claimed_at",
+            )
+        ]
 
     def __str__(self):
         return f"Session {self.pk}"
@@ -498,7 +499,7 @@ class Session(FieldChangeMixin, UUIDModel):
         -------
             The time when this session expires.
         """
-        return self.created + self.maximum_duration
+        return self.claimed_at + self.maximum_duration
 
     @property
     def environment(self) -> dict:
@@ -590,16 +591,26 @@ class Session(FieldChangeMixin, UUIDModel):
 
     def save(self, *args, **kwargs) -> None:
         """Save the session instance, starting or stopping the service if needed."""
-        created = self._state.adding
+        adding = self._state.adding
 
-        if created and not self.region:
+        if self.initial_value("creator") and self.has_changed("creator"):
+            raise ValidationError(
+                "You cannot change the creator, please create a new session instead"
+            )
+
+        if adding and not self.region:
             # Launch in the first active region if no preference set
             self.region = settings.WORKSTATIONS_ACTIVE_REGIONS[0]
 
+        if self.creator and not self.claimed_at:
+            self.claimed_at = now()
+
         super().save(*args, **kwargs)
 
-        if created:
+        if self.creator:
             self.assign_permissions()
+
+        if adding:
             start_service.execute_on_commit(**self.task_kwargs)
         elif self.user_finished and self.status != self.STOPPED:
             stop_service.execute_on_commit(**self.task_kwargs)
@@ -676,7 +687,7 @@ class Session(FieldChangeMixin, UUIDModel):
     def handle_session_stopped(self):
         SessionUtilization.objects.create(
             session=self,
-            duration=now() - self.created,
+            duration=now() - self.claimed_at,
         )
 
         for endpoint in self.associated_endpoints:
