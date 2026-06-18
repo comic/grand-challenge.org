@@ -622,7 +622,7 @@ def test_invocation_invoke_endpoint(settings):
                 "ContentType": "application/json",
                 "InputLocation": orchestrator._invocation_s3_uri,
                 "InferenceId": invocation.inference_id,
-                "InvocationTimeoutSeconds": 42,
+                "InvocationTimeoutSeconds": 52,  # 10 seconds added buffer time
             },
         )
 
