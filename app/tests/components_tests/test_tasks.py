@@ -36,7 +36,6 @@ from grandchallenge.components.backends.base import (
     InferenceResult,
     RuntimeSetupResult,
 )
-from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.components.models import (
     APIMethodChoices,
     ComponentInterfaceValue,
@@ -2066,34 +2065,11 @@ class TestParseEndpointInvocationLogs:
                 event={},
             )
 
-    def test_retries_when_logs_are_incomplete(self, mocker):
-        invocation = InvocationFactory(status=InvocationStatusChoices.SUCCESS)
-
-        mocker.patch.object(
-            EndpointOrchestrator,
-            "logs_complete",
-            False,
-        )
-        mock_set_task_logs = mocker.patch.object(
-            EndpointOrchestrator,
-            "set_task_logs",
-        )
-
-        with pytest.raises(RetryStep, match="Logs are incomplete"):
-            parse_endpoint_invocation_logs(
-                pk=invocation.pk,
-                app_label=invocation._meta.app_label,
-                model_name=invocation._meta.model_name,
-                event={"foo": "bar"},
-            )
-
-        mock_set_task_logs.assert_called_once_with(event={"foo": "bar"})
-
     @pytest.mark.parametrize(
         "status",
         [InvocationStatusChoices.FAILURE, InvocationStatusChoices.SUCCESS],
     )
-    def test_sets_logs_when_complete(self, status, mocker):
+    def test_sets_logs_for_terminal_status(self, status, mocker):
         invocation = InvocationFactory(status=status)
 
         mocker.patch.object(
@@ -2105,11 +2081,6 @@ class TestParseEndpointInvocationLogs:
             EndpointOrchestrator,
             "stderr",
             "stderr log",
-        )
-        mocker.patch.object(
-            EndpointOrchestrator,
-            "logs_complete",
-            True,
         )
         mock_set_task_logs = mocker.patch.object(
             EndpointOrchestrator,
