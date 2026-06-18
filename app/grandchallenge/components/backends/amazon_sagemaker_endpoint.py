@@ -199,10 +199,6 @@ class EndpointOrchestrator:
     def stderr(self):
         return self._executor.stderr
 
-    @property
-    def logs_complete(self):
-        return self._executor.logs_complete
-
     def provision_auxiliary_data(self):
         if self._algorithm_model:
             self._s3_client.copy(
