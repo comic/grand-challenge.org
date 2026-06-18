@@ -1997,7 +1997,7 @@ def parse_endpoint_invocation_outputs(
         )
 
 
-@lambda_task(retry_on=(LockNotAcquiredException, RetryStep), retry_delay=120)
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def parse_endpoint_invocation_logs(
     *, pk: str | UUID, app_label: str, model_name: str, event: dict
 ):
@@ -2018,8 +2018,6 @@ def parse_endpoint_invocation_logs(
     orchestrator = invocation.orchestrator
 
     orchestrator.set_task_logs(event=event)
-
-    # todo check expected last log line
 
     invocation.set_logs(
         stdout=orchestrator.stdout,
