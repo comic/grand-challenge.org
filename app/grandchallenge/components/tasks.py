@@ -1929,7 +1929,7 @@ def handle_endpoint_invocation_event(*, event: dict):
             detailed_error_message=error.message_details,
         )
         parse_endpoint_invocation_logs.execute_on_commit(
-            **invocation.task_kwargs, event=event
+            **invocation.task_kwargs, event=event, _delay=120
         )
     except Exception as error:
         invocation.update_status(
@@ -1938,7 +1938,7 @@ def handle_endpoint_invocation_event(*, event: dict):
         )
         task_logger.error(str(error), exc_info=True)
         parse_endpoint_invocation_logs.execute_on_commit(
-            **invocation.task_kwargs, event=event
+            **invocation.task_kwargs, event=event, _delay=120
         )
     else:
         invocation.update_status(
@@ -1993,7 +1993,7 @@ def parse_endpoint_invocation_outputs(
         invocation.update_status(status=invocation.StatusChoices.SUCCESS)
     finally:
         parse_endpoint_invocation_logs.execute_on_commit(
-            **invocation.task_kwargs, event=event
+            **invocation.task_kwargs, event=event, _delay=120
         )
 
 
