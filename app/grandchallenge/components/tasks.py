@@ -2022,5 +2022,4 @@ def parse_endpoint_invocation_logs(
     invocation.set_logs(
         stdout=orchestrator.stdout,
         stderr=orchestrator.stderr,
-        # TODO: set runtime metrics
     )
