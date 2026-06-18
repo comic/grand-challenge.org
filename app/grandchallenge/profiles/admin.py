@@ -38,9 +38,11 @@ class UserProfileAdmin(UserAdmin):
     list_display = (
         "username",
         "date_joined",
+        "last_login",
         "email",
         "first_name",
         "last_name",
+        "is_active",
         "is_staff",
         "has_2fa_enabled",
     )
