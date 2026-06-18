@@ -1927,12 +1927,16 @@ def handle_endpoint_invocation_event(*, event: dict):
             status=invocation.StatusChoices.FAILURE,
             error_message=str(error),
             detailed_error_message=error.message_details,
-            # TODO: set stdout, stderr and runtime metrics
+            stdout=orchestrator.stdout,
+            stderr=orchestrator.stderr,
+            # TODO: set runtime metrics
         )
     except Exception as error:
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            stdout=orchestrator.stdout,
+            stderr=orchestrator.stderr,
             # TODO: set stdout, stderr and runtime metrics
         )
         task_logger.error(str(error), exc_info=True)
@@ -1940,7 +1944,9 @@ def handle_endpoint_invocation_event(*, event: dict):
         invocation.update_status(
             status=invocation.StatusChoices.EXECUTED,
             invoke_duration=orchestrator.invoke_duration,
-            # TODO: set stdout, stderr and runtime metrics
+            stdout=orchestrator.stdout,
+            stderr=orchestrator.stderr,
+            # TODO: set runtime metrics
         )
         parse_endpoint_invocation_outputs.execute_on_commit(
             **invocation.task_kwargs

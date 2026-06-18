@@ -1880,11 +1880,19 @@ class Invocation(CIVForObjectMixin, UUIDModel):
         self,
         *,
         status: InvocationStatusChoices,
+        stdout: str = "",
+        stderr: str = "",
         error_message="",
         detailed_error_message=None,
         invoke_duration=None,
     ):
         self.status = status
+
+        if stdout:
+            self.stdout = stdout
+
+        if stderr:
+            self.stderr = stderr
 
         if error_message:
             self.error_message = error_message[:1024]
