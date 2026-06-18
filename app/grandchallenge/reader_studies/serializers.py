@@ -14,6 +14,7 @@ from rest_framework.serializers import (
     SerializerMethodField,
 )
 
+from grandchallenge.algorithms.serializers import AlgorithmInterfaceSerializer
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.components.serializers import (
     CIVSetPostSerializerMixin,
@@ -31,6 +32,8 @@ from grandchallenge.reader_studies.models import (
     DisplaySet,
     Question,
     ReaderStudy,
+    ReaderStudyAlgorithm,
+    ReaderStudyAlgorithmImplementation,
 )
 from grandchallenge.workstation_configs.serializers import (
     LookUpTableSerializer,
@@ -41,6 +44,25 @@ class CategoricalOptionSerializer(ModelSerializer):
     class Meta:
         model = CategoricalOption
         fields = ("id", "title", "default")
+
+
+class ReaderStudyAlgorithmSerializer(ModelSerializer):
+    interfaces = AlgorithmInterfaceSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ReaderStudyAlgorithm
+        fields = ("interfaces",)
+
+
+class ReaderStudyAlgorithmImplementationSerializer(HyperlinkedModelSerializer):
+    algorithm = HyperlinkedRelatedField(
+        view_name="api:algorithm-detail", read_only=True
+    )
+    reader_study_algorithm = ReaderStudyAlgorithmSerializer(read_only=True)
+
+    class Meta:
+        model = ReaderStudyAlgorithmImplementation
+        fields = ("algorithm", "reader_study_algorithm")
 
 
 class QuestionSerializer(HyperlinkedModelSerializer):
@@ -55,6 +77,9 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     look_up_table = LookUpTableSerializer(read_only=True, allow_null=True)
     widget = CharField(source="get_widget_display", read_only=True)
     interactive_algorithms = SerializerMethodField()
+    algorithms = ReaderStudyAlgorithmImplementationSerializer(
+        many=True, read_only=True
+    )
     question_text_safe = SerializerMethodField()
     help_text_safe = SerializerMethodField()
     empty_answer_confirmation_label_safe = SerializerMethodField()
@@ -86,6 +111,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "empty_answer_confirmation",
             "empty_answer_confirmation_label_safe",  # Safe to use in rendered html
             "interactive_algorithms",
+            "algorithms",
         )
 
     def get_interactive_algorithms(self, obj) -> list[str]:
