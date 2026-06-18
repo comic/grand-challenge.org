@@ -373,16 +373,27 @@ class EndpointAdmin(admin.ModelAdmin):
         "algorithm_image__algorithm__slug",
         "algorithm_image__pk",
     )
+    readonly_fields = (
+        "created",
+        "modified",
+        "algorithm_image",
+        "algorithm_model",
+        "creator",
+        "maximum_duration",
+        "status",
+        "stdout",
+        "stderr",
+        "runtime_metrics",
+        "error_message",
+        "requires_gpu_type",
+        "requires_memory_gb",
+        "viewers_group",
+    )
     actions = (stop_endpoints,)
 
     @staticmethod
     def algorithm(obj):
         return obj.algorithm_image.algorithm
-
-    def get_readonly_fields(self, request, obj=None):
-        if obj:
-            return [f.name for f in self.model._meta.fields]
-        return self.readonly_fields
 
     def has_add_permission(self, request, obj=None):
         return False
