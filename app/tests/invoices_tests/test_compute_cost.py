@@ -13,7 +13,7 @@ from tests.invoices_tests.factories import InvoiceFactory
 
 
 @pytest.mark.django_db
-def test_percent_budget_consumed():
+def test_percent_compute_budget_consumed():
     challenge = ChallengeFactory()
     invoice = InvoiceFactory(
         challenge=challenge,
@@ -22,11 +22,11 @@ def test_percent_budget_consumed():
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
 
-    assert invoice.percent_budget_consumed == 50
+    assert invoice.percent_compute_budget_consumed == 50
 
 
 @pytest.mark.django_db
-def test_percent_budget_consumed_over_charge():
+def test_percent_compute_budget_consumed_over_charge():
     challenge = ChallengeFactory()
     invoice = InvoiceFactory(
         challenge=challenge,
@@ -35,11 +35,11 @@ def test_percent_budget_consumed_over_charge():
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
 
-    assert invoice.percent_budget_consumed == 100
+    assert invoice.percent_compute_budget_consumed == 100
 
 
 @pytest.mark.django_db
-def test_percent_budget_consumed_unauthorized():
+def test_percent_compute_budget_consumed_unauthorized():
     challenge = ChallengeFactory()
     invoice = InvoiceFactory(
         challenge=challenge,
@@ -49,7 +49,33 @@ def test_percent_budget_consumed_unauthorized():
     )
     invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
 
-    assert invoice.percent_budget_consumed is None
+    assert invoice.percent_compute_budget_consumed is None
+
+
+@pytest.mark.django_db
+def test_approved_storage_costs_authorized():
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        storage_costs_euros=2,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
+    assert invoice.approved_storage_cost_euro_millicents == 2 * 1000 * 100
+
+
+@pytest.mark.django_db
+def test_approved_storage_costs_unauthorized():
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        storage_costs_euros=2,
+        payment_status=PaymentStatusChoices.CANCELLED,
+    )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
+
+    assert invoice.approved_storage_cost_euro_millicents == 0
 
 
 ##########

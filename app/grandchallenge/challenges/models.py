@@ -766,10 +766,35 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
 
     @cached_property
+    def active_invoices(self):
+        return self.invoices.filter(is_expired=False)
+
+    @cached_property
     def approved_compute_cost_euro_millicents(self):
         return sum(
             invoice.approved_compute_cost_euro_millicents
             for invoice in self.invoices.all()
+        )
+
+    @cached_property
+    def active_approved_compute_cost_euro_millicents(self):
+        return sum(
+            invoice.approved_compute_cost_euro_millicents
+            for invoice in self.active_invoices
+        )
+
+    @cached_property
+    def approved_storage_cost_euro_millicents(self):
+        return sum(
+            invoice.approved_storage_cost_euro_millicents
+            for invoice in self.invoices.all()
+        )
+
+    @cached_property
+    def active_approved_storage_cost_euro_millicents(self):
+        return sum(
+            invoice.approved_storage_cost_euro_millicents
+            for invoice in self.active_invoices
         )
 
     @cached_property
@@ -780,10 +805,24 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
 
     @cached_property
+    def active_available_compute_cost_euro_millicents(self):
+        return sum(
+            invoice.available_compute_cost_euro_millicents
+            for invoice in self.active_invoices
+        )
+
+    @cached_property
     def consumed_compute_cost_euro_millicents(self):
         return sum(
             invoice.consumed_compute_cost_euro_millicents
             for invoice in self.invoices.all()
+        )
+
+    @cached_property
+    def active_consumed_compute_cost_euro_millicents(self):
+        return sum(
+            invoice.consumed_compute_cost_euro_millicents
+            for invoice in self.active_invoices
         )
 
     @cached_property
@@ -794,28 +833,17 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
 
     @cached_property
-    def percent_active_budget_consumed(self):
-        active_invoices = [
-            invoice
-            for invoice in self.invoices.all()
-            if not invoice.is_expired
-        ]
+    def percent_active_compute_budget_consumed(self):
+        consumed = self.active_consumed_compute_cost_euro_millicents
+        approved = self.active_approved_compute_cost_euro_millicents
 
-        consumed = sum(
-            invoice.consumed_compute_cost_euro_millicents
-            for invoice in active_invoices
-        )
-        approved = sum(
-            invoice.approved_compute_cost_euro_millicents
-            for invoice in active_invoices
-        )
         if approved > 0:
             return int(100 * consumed / approved)
         else:
             return None
 
     @property
-    def active_invoice(self):
+    def utilization_invoice(self):
         prioritized_invoices = (
             self.invoices.with_utilization_priority_per_challenge().order_by(
                 "utilization_priority"
