@@ -56,24 +56,10 @@ class ParsedLog(NamedTuple):
     source: SourceChoices
 
 
-def get_structured_log(log: str) -> dict:
-    return json.loads(log.strip())
-
-
-def is_completion_message(*, structured_log: dict, task=None):
-    if (
-        structured_log["internal"] is True
-        and structured_log["log"] == f"Invocation self.pk='{task}' complete"
-    ):
-        return True
-    else:
-        return False
-
-
-def parse_structured_log(
-    *, structured_log: dict, task=None
-) -> ParsedLog | None:
+def parse_structured_log(*, log: str, task=None) -> ParsedLog | None:
     """Parse the structured logs from SageMaker Shim"""
+    structured_log = json.loads(log.strip())
+
     message = structured_log["log"]
     source = SourceChoices(structured_log["source"])
 
