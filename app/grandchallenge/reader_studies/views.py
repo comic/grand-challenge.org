@@ -118,6 +118,7 @@ from grandchallenge.reader_studies.models import (
     DisplaySet,
     Question,
     ReaderStudy,
+    ReaderStudyAlgorithmImplementation,
     ReaderStudyPermissionRequest,
 )
 from grandchallenge.reader_studies.serializers import (
@@ -1354,7 +1355,22 @@ class DisplaySetViewSet(
 
 class QuestionViewSet(ReadOnlyModelViewSet):
     serializer_class = QuestionSerializer
-    queryset = Question.objects.all().select_related("reader_study")
+    queryset = Question.objects.select_related(
+        "reader_study"
+    ).prefetch_related(
+        "options",
+        Prefetch(
+            "algorithms",
+            queryset=ReaderStudyAlgorithmImplementation.objects.select_related(
+                "algorithm",
+                "reader_study_algorithm",
+            ).prefetch_related(
+                "reader_study_algorithm__interfaces",
+                "reader_study_algorithm__interfaces__inputs",
+                "reader_study_algorithm__interfaces__outputs",
+            ),
+        ),
+    )
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_fields = ["reader_study"]
