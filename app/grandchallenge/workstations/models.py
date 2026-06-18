@@ -604,10 +604,13 @@ class Session(FieldChangeMixin, UUIDModel):
 
         if self.creator and not self.claimed_at:
             self.claimed_at = now()
+            permission_assigment_required = True
+        else:
+            permission_assigment_required = False
 
         super().save(*args, **kwargs)
 
-        if self.creator:
+        if permission_assigment_required:
             self.assign_permissions()
 
         if adding:
