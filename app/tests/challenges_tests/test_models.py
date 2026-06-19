@@ -982,7 +982,7 @@ def test_total_costs_properties():
     assert challenge.total_paid_compute_costs_euros == 300
     assert challenge.total_paid_storage_costs_euros == 150
     assert challenge.unpaid_storage_costs_euros == 0
-    assert round(challenge.compute_ratio, 2) == 0.13
+    assert round(challenge.compute_cost_share, 2) == 0.13
 
 
 @pytest.mark.django_db

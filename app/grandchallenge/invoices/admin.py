@@ -175,7 +175,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "challenge_total_paid_storage_costs",
         "challenge_unpaid_storage_costs",
         "suggested_total_postpaid_amount",
-        "compute_ratio",
+        "compute_cost_share",
         "surplus",
         "suggested_compute_cost_for_postpaid",
         "suggested_storage_cost_for_postpaid",
@@ -261,8 +261,8 @@ class InvoiceAdmin(admin.ModelAdmin):
     @admin.display(
         description="Compute ratio based on all costs incurred for the challenge"
     )
-    def compute_ratio(self, obj):
-        return f"{round(obj.challenge.compute_ratio * 100, 2)} %"
+    def compute_cost_share(self, obj):
+        return f"{round(obj.challenge.compute_cost_share * 100, 2)} %"
 
     def suggested_compute_cost_for_postpaid(self, obj):
         if obj.suggested_compute_cost_euros >= 0:
@@ -360,7 +360,7 @@ class InvoiceAdmin(admin.ModelAdmin):
                             "challenge_unpaid_storage_costs",
                             "invoice_consumed_compute_cost",
                             "suggested_total_postpaid_amount",
-                            "compute_ratio",
+                            "compute_cost_share",
                             "surplus",
                             "suggested_compute_cost_for_postpaid",
                             "suggested_storage_cost_for_postpaid",

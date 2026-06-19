@@ -898,7 +898,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
 
     @cached_property
-    def compute_ratio(self):
+    def compute_cost_share(self):
         return (
             self.total_consumed_compute_costs_with_write_off_euros
             / self.total_consumed_costs_euros

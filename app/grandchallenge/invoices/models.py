@@ -560,7 +560,7 @@ class Invoice(models.Model, FieldChangeMixin):
             return round(
                 (
                     self.consumed_compute_cost_euro_millicents / 1000 / 100
-                    + self.challenge.compute_ratio * self.surplus
+                    + self.challenge.compute_cost_share * self.surplus
                 ),
                 0,
             )
