@@ -937,7 +937,7 @@ def test_budget_properties():
     assert challenge.approved_compute_cost_euro_millicents == 10 * 1000 * 100
     assert challenge.consumed_compute_cost_euro_millicents == 6 * 1000 * 100
     assert challenge.write_off_compute_cost_euro_millicents == 0
-    assert challenge.percent_active_budget_consumed == 60
+    assert challenge.percent_active_compute_budget_consumed == 60
 
 
 @pytest.mark.django_db
