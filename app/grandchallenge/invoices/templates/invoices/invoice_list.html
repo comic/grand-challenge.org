@@ -125,23 +125,4 @@
     </dl>
 
     {% endif %}
-
-    <h3 class="mt-3">Challenge Active Storage Usage</h3>
-
-    {% if not challenge.active_approved_storage_cost_euro_millicents %}
-         <span class="text-muted">
-            Any storage usage will be shown here.
-        </span>
-    {% else %}
-    <dl class="mt-1">
-        <dt>Total storage budget available</dt>
-        <dd>{{ challenge.active_approved_storage_cost_euro_millicents|millicents_to_euro }}</dd>
-
-        <dt>Total object data storage</dt>
-        <dd>{{ challenge.size_in_storage|filesizeformat }}</dd>
-
-        <dt>Total container registry storage</dt>
-        <dd>{{ challenge.size_in_registry|filesizeformat }}</dd>
-    </dl>
-    {% endif %}
 {% endblock %}

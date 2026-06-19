@@ -51,6 +51,17 @@
         {% endfor %}
     </dl>
 
+    <h4>Storage Usage</h4>
+
+    <dl class="inline">
+        <dt>Total object data storage</dt>
+        <dd>{{ challenge.size_in_storage|filesizeformat }}</dd>
+
+        <dt>Total container registry storage</dt>
+        <dd>{{ challenge.size_in_registry|filesizeformat }}</dd>
+    </dl>
+
+
     {% if request.user.is_staff %}
 
     <div class="card card-danger border-danger">
