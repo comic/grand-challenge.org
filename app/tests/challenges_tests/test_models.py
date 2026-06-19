@@ -282,7 +282,7 @@ def test_challenge_request_budget_calculation(settings):
             "compute_and_storage_costs_euros": 9782.44,
         },
     ]
-    assert challenge_request.storage_costs_euros_per_gb == 0.67
+    assert challenge_request.storage_costs_euros_per_gb() == 0.67
     for i_phase in range(2):
         assert (
             costs_for_phases[i_phase]["compute_and_storage_costs_euros"]

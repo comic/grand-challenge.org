@@ -847,8 +847,9 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     @cached_property
     def total_projected_storage_cost_euros(self):
         return (
-            self.size_in_storage / 1024**3 + self.size_in_registry / 1024**3
-        ) * ChallengeRequest().storage_costs_euros_per_gb
+            self.size_in_storage / settings.GIGABYTE
+            + self.size_in_registry / settings.GIGABYTE
+        ) * ChallengeRequest.storage_costs_euros_per_gb()
 
     @cached_property
     def total_consumed_compute_costs_with_write_off_euros(self):
@@ -1771,8 +1772,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             for task_index in self.task_index_for_phases
         ]
 
-    @property
-    def storage_costs_euros_per_gb(self):
+    @staticmethod
+    def storage_costs_euros_per_gb():
         return round(
             settings.CHALLENGE_NUM_SUPPORT_YEARS
             * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB_EXCLUDING_TAX
@@ -1799,7 +1800,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @cached_property
     def data_storage_costs_euros_for_phases(self):
         return [
-            self.storage_costs_euros_per_gb * size_gb
+            self.storage_costs_euros_per_gb() * size_gb
             for size_gb in self.data_storage_size_gb_for_phases
         ]
 
@@ -1847,7 +1848,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @property
     def docker_storage_costs_euros_for_tasks(self):
         return [
-            self.storage_costs_euros_per_gb * size_gb
+            self.storage_costs_euros_per_gb() * size_gb
             for size_gb in self.docker_storage_size_gb_for_tasks
         ]
 
