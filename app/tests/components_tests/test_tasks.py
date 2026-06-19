@@ -8,7 +8,9 @@ from datetime import timedelta
 from pathlib import Path
 from unittest.mock import call, patch
 
+import boto3
 import pytest
+from botocore.stub import Stubber
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
@@ -30,7 +32,10 @@ from grandchallenge.cases.models import (
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
     EndpointOrchestrator,
 )
-from grandchallenge.components.backends.base import InferenceResult
+from grandchallenge.components.backends.base import (
+    InferenceResult,
+    RuntimeSetupResult,
+)
 from grandchallenge.components.models import (
     APIMethodChoices,
     ComponentInterfaceValue,
@@ -49,6 +54,7 @@ from grandchallenge.components.tasks import (
     encode_b64j,
     handle_endpoint_invocation_event,
     handle_endpoint_status_event,
+    parse_endpoint_invocation_logs,
     parse_endpoint_invocation_outputs,
     preload_interactive_algorithms,
     remove_container_image_from_registry,
@@ -56,9 +62,10 @@ from grandchallenge.components.tasks import (
     start_endpoint,
     stop_endpoint,
     stop_expired_endpoints,
+    update_all_container_image_shims,
     update_container_image_shim,
     upload_to_registry_and_sagemaker,
-    validate_docker_image,
+    validate_container_image,
 )
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.notifications.models import Notification
@@ -157,11 +164,10 @@ def test_remove_inactive_container_images(django_capture_on_commit_callbacks):
 
 
 @pytest.mark.django_db
-def test_validate_docker_image(
+def test_validate_container_image(
     invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     alg = AlgorithmFactory()
     image = AlgorithmImageFactory(
@@ -170,7 +176,7 @@ def test_validate_docker_image(
     assert image.is_manifest_valid is None
 
     with django_capture_on_commit_callbacks(execute=True):
-        validate_docker_image(
+        validate_container_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,
@@ -182,10 +188,11 @@ def test_validate_docker_image(
     assert not image.is_desired_version
 
     image.is_manifest_valid = None
+    image.import_status = ImportStatusChoices.STARTED
     image.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        validate_docker_image(
+        validate_container_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,
@@ -200,19 +207,16 @@ def test_validate_docker_image(
 def test_upload_to_registry_and_sagemaker(
     invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     alg = AlgorithmFactory()
     image = AlgorithmImageFactory(
-        algorithm=alg,
-        is_manifest_valid=True,
-        image__from_path=invoke_container_image,
+        algorithm=alg, image__from_path=invoke_container_image
     )
-    assert not image.is_in_registry
+    assert image.is_manifest_valid is None
 
     with django_capture_on_commit_callbacks(execute=True):
-        upload_to_registry_and_sagemaker(
+        validate_container_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,
@@ -222,6 +226,9 @@ def test_upload_to_registry_and_sagemaker(
     image = AlgorithmImage.objects.get(pk=image.pk)
     assert image.is_in_registry
     assert not image.is_desired_version
+
+    image.import_status = ImportStatusChoices.STARTED
+    image.save()
 
     with django_capture_on_commit_callbacks(execute=True):
         upload_to_registry_and_sagemaker(
@@ -240,8 +247,7 @@ def test_upload_to_registry_and_sagemaker(
 def test_api_method_extraction(
     invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     alg = AlgorithmFactory()
     image = AlgorithmImageFactory(
@@ -251,7 +257,7 @@ def test_api_method_extraction(
     assert image.api_method == APIMethodChoices.EXEC
 
     with django_capture_on_commit_callbacks(execute=True):
-        validate_docker_image(
+        validate_container_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,
@@ -328,15 +334,14 @@ def test_api_method_extraction_bad_label():
 
 
 @pytest.mark.django_db
-def test_update_sagemaker_shim(
+def test_update_container_image_shim(
     invoke_container_image,
     settings,
     django_capture_on_commit_callbacks,
     tmp_path,
     mocker,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     mock_remove_tag_from_registry = mocker.patch(
         # remove_tag_from_registry is only implemented for ECR
@@ -354,14 +359,12 @@ def test_update_sagemaker_shim(
 
     alg = AlgorithmFactory()
     image = AlgorithmImageFactory(
-        algorithm=alg,
-        is_manifest_valid=True,
-        image__from_path=invoke_container_image,
+        algorithm=alg, image__from_path=invoke_container_image
     )
-    assert not image.is_in_registry
+    assert image.is_manifest_valid is None
 
     with django_capture_on_commit_callbacks(execute=True):
-        upload_to_registry_and_sagemaker(
+        validate_container_image(
             pk=image.pk,
             app_label=image._meta.app_label,
             model_name=image._meta.model_name,
@@ -410,6 +413,138 @@ def test_update_sagemaker_shim(
     )
 
 
+@pytest.mark.django_db
+class TestUpdateContainerImageShimEarlyExits:
+    def test_skips_algorithm_image_with_active_job(self):
+        ai = AlgorithmImageFactory(latest_shimmed_version="old")
+        AlgorithmJobFactory(
+            algorithm_image=ai,
+            status=Job.EXECUTING,
+            time_limit=60,
+        )
+
+        result = update_container_image_shim(
+            pk=ai.pk,
+            app_label=ai._meta.app_label,
+            model_name=ai._meta.model_name,
+        )
+
+        assert result == "old"
+
+    def test_skips_method_with_active_evaluation(self):
+        method = MethodFactory(latest_shimmed_version="old")
+        EvaluationFactory(method=method, status=Job.EXECUTING, time_limit=60)
+
+        result = update_container_image_shim(
+            pk=method.pk,
+            app_label=method._meta.app_label,
+            model_name=method._meta.model_name,
+        )
+
+        assert result == "old"
+
+    def test_does_not_skip_algorithm_image_without_active_job(self):
+        ai = AlgorithmImageFactory(latest_shimmed_version="old")
+        AlgorithmJobFactory(
+            algorithm_image=ai,
+            status=Job.SUCCESS,
+            time_limit=60,
+        )
+
+        result = update_container_image_shim(
+            pk=ai.pk,
+            app_label=ai._meta.app_label,
+            model_name=ai._meta.model_name,
+        )
+
+        # No early exit, but image is not in registry so no shim happens
+        assert result == "old"
+
+    def test_does_not_skip_method_without_active_evaluation(self):
+        method = MethodFactory(latest_shimmed_version="old")
+        EvaluationFactory(method=method, status=Job.SUCCESS, time_limit=60)
+
+        result = update_container_image_shim(
+            pk=method.pk,
+            app_label=method._meta.app_label,
+            model_name=method._meta.model_name,
+        )
+
+        # No early exit, but image is not in registry so no shim happens
+        assert result == "old"
+
+    def test_raises_not_implemented_for_unknown_model(self):
+        wi = WorkstationImageFactory()
+
+        with pytest.raises(NotImplementedError):
+            update_container_image_shim(
+                pk=wi.pk,
+                app_label=wi._meta.app_label,
+                model_name=wi._meta.model_name,
+            )
+
+
+@pytest.mark.django_db
+class TestUpdateAllContainerImageShims:
+    def test_schedules_outdated_executable_images(
+        self, settings, django_capture_on_commit_callbacks
+    ):
+        settings.COMPONENTS_SAGEMAKER_SHIM_VERSION = "new"
+
+        AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            latest_shimmed_version="old",
+        )
+        MethodFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            latest_shimmed_version="old",
+        )
+
+        with django_capture_on_commit_callbacks() as callbacks:
+            n_tasks = update_all_container_image_shims()
+
+        assert n_tasks == 2
+        assert len(callbacks) == 2
+        assert all(
+            "grandchallenge.components.tasks.update_container_image_shim"
+            in repr(cb)
+            for cb in callbacks
+        )
+
+    def test_skips_images_already_at_current_version(self, settings):
+        settings.COMPONENTS_SAGEMAKER_SHIM_VERSION = "current"
+
+        AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            latest_shimmed_version="current",
+        )
+
+        n_tasks = update_all_container_image_shims()
+
+        assert n_tasks == 0
+
+    def test_skips_non_executable_images(self, settings):
+        settings.COMPONENTS_SAGEMAKER_SHIM_VERSION = "new"
+
+        AlgorithmImageFactory(
+            is_manifest_valid=False,
+            is_in_registry=True,
+            latest_shimmed_version="old",
+        )
+        AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=False,
+            latest_shimmed_version="old",
+        )
+
+        n_tasks = update_all_container_image_shims()
+
+        assert n_tasks == 0
+
+
 @lambda_task
 def some_async_task(*, foo: str):
     return foo
@@ -433,9 +568,6 @@ def test_add_image_to_object(
     object_factory,
     factory_kwargs,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     obj = object_factory(**factory_kwargs)
@@ -554,9 +686,6 @@ def test_add_dicom_image_set_to_object(
     object_factory,
     factory_kwargs,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     obj = object_factory(**factory_kwargs)
@@ -736,15 +865,11 @@ def test_add_dicom_image_set_to_object_sends_notification_on_validation_fail(
 )
 @pytest.mark.django_db
 def test_task_add_image_to_object_handles_deleted_object(
-    settings,
     django_capture_on_commit_callbacks,
     object_factory,
     factory_kwargs,
     context,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     obj = object_factory(**factory_kwargs)
 
     linked_task = some_async_task.serialize(foo="bar")
@@ -792,15 +917,11 @@ def test_task_add_image_to_object_handles_deleted_object(
 )
 @pytest.mark.django_db
 def test_task_add_file_to_object_handles_deleted_object(
-    settings,
     django_capture_on_commit_callbacks,
     object_factory,
     factory_kwargs,
     context,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     obj = object_factory(**factory_kwargs)
     user_upload = UserUploadFactory()
     linked_task = some_async_task.serialize(foo="bar")
@@ -843,9 +964,6 @@ def test_add_file_to_object(
     object_factory,
     factory_kwargs,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     creator = UserFactory()
@@ -892,13 +1010,9 @@ def test_add_file_to_object(
 )
 @pytest.mark.django_db
 def test_add_file_to_object_sends_notification_on_validation_fail(
-    settings,
     django_capture_on_commit_callbacks,
     object_factory,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     creator = UserFactory()
     obj = object_factory()
     linked_task = some_async_task.serialize(foo="bar")
@@ -1094,11 +1208,8 @@ def test_get_image_config_and_sha256(container_image_file):
 )
 @pytest.mark.django_db()
 def test_assign_tarball_from_upload(
-    settings, factory, related_factory, related_model_lookup, field_to_copy
+    factory, related_factory, related_model_lookup, field_to_copy
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     user = UserFactory()
     base_obj = related_factory()
     upload = create_upload_from_file(
@@ -1699,9 +1810,32 @@ def test_handle_endpoint_invocation_completed_event(settings):
         endpoint__signing_key=b"itsasecret",
     )
     orchestrator = invocation.orchestrator
+    runtime_setup_result = RuntimeSetupResult(
+        return_code=0,
+        user_safe_error_message="",
+        sagemaker_shim_version="0.8.0",
+    )
+    runtime_setup_result_content = (
+        runtime_setup_result.model_dump_json().encode("utf-8")
+    )
+    signature = hmac.new(
+        key=b"itsasecret",
+        msg=runtime_setup_result_content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    orchestrator._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(runtime_setup_result_content),
+        Bucket=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
+        Key=orchestrator.runtime_setup_result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
     inference_result = InferenceResult(
         pk=f"algorithms-invocation-{invocation.pk}",
         return_code=0,
+        user_safe_error_message="",
+        user_process_last_stderr_lines=[],
         exec_duration=None,
         invoke_duration=timedelta(seconds=12),
         outputs=[],
@@ -1814,7 +1948,7 @@ def test_parse_endpoint_invocation_outputs(settings):
 
     assert invocation.outputs.count() == 0
 
-    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
     invocation.refresh_from_db()
 
     assert invocation.error_message == ""
@@ -1837,7 +1971,7 @@ def test_parse_endpoint_invocation_outputs_failure(mocker):
         side_effect=Exception,
     )
 
-    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
 
     invocation.refresh_from_db()
 
@@ -1862,7 +1996,7 @@ def test_parse_endpoint_invocation_outputs_wrong_state_raises(mocker, status):
     with pytest.raises(
         RuntimeError, match="Invocation is not ready for output parsing"
     ):
-        parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+        parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
     invocation.refresh_from_db()
 
     mock_get_outputs.assert_not_called()
@@ -1878,9 +2012,273 @@ def test_parse_endpoint_invocation_outputs_cancelled_skipped(mocker):
         "get_outputs",
     )
 
-    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
     invocation.refresh_from_db()
 
     mock_get_outputs.assert_not_called()
     assert invocation.status == InvocationStatusChoices.CANCELLED
     assert invocation.outputs.count() == 0
+
+
+@pytest.mark.django_db
+class TestParseEndpointInvocationLogs:
+    def test_skips_cancelled_invocation(self, mocker):
+        invocation = InvocationFactory(
+            status=InvocationStatusChoices.CANCELLED
+        )
+
+        mock_set_task_logs = mocker.patch.object(
+            EndpointOrchestrator,
+            "set_task_logs",
+        )
+
+        parse_endpoint_invocation_logs(
+            pk=invocation.pk,
+            app_label=invocation._meta.app_label,
+            model_name=invocation._meta.model_name,
+            event={},
+        )
+
+        mock_set_task_logs.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "status",
+        set(InvocationStatusChoices).difference(
+            [
+                InvocationStatusChoices.FAILURE,
+                InvocationStatusChoices.SUCCESS,
+                InvocationStatusChoices.CANCELLED,
+            ]
+        ),
+    )
+    def test_raises_for_non_terminal_status(self, status):
+        invocation = InvocationFactory(status=status)
+
+        with pytest.raises(
+            RuntimeError,
+            match="Invocation is not ready for log parsing",
+        ):
+            parse_endpoint_invocation_logs(
+                pk=invocation.pk,
+                app_label=invocation._meta.app_label,
+                model_name=invocation._meta.model_name,
+                event={},
+            )
+
+    @pytest.mark.parametrize(
+        "status",
+        [InvocationStatusChoices.FAILURE, InvocationStatusChoices.SUCCESS],
+    )
+    def test_sets_logs_for_terminal_status(self, status, mocker):
+        invocation = InvocationFactory(status=status)
+
+        mocker.patch.object(
+            EndpointOrchestrator,
+            "stdout",
+            "stdout log",
+        )
+        mocker.patch.object(
+            EndpointOrchestrator,
+            "stderr",
+            "stderr log",
+        )
+        mock_set_task_logs = mocker.patch.object(
+            EndpointOrchestrator,
+            "set_task_logs",
+        )
+
+        parse_endpoint_invocation_logs(
+            pk=invocation.pk,
+            app_label=invocation._meta.app_label,
+            model_name=invocation._meta.model_name,
+            event={"foo": "bar"},
+        )
+        invocation.refresh_from_db()
+
+        assert invocation.stdout == "stdout log"
+        assert invocation.stderr == "stderr log"
+
+        mock_set_task_logs.assert_called_once_with(event={"foo": "bar"})
+
+    def test_set_logs(self, mocker):
+        logs_client = boto3.client("logs", region_name="us-east-1")
+
+        invocation = InvocationFactory(status=InvocationStatusChoices.SUCCESS)
+        endpoint = invocation.endpoint
+
+        with Stubber(logs_client) as logs:
+            logs.add_response(
+                method="describe_log_streams",
+                service_response={
+                    "logStreams": [
+                        {
+                            "logStreamName": f"localhost-AE-{endpoint.pk}/i-whatever"
+                        },
+                    ]
+                },
+                expected_params={
+                    "logGroupName": f"/aws/sagemaker/Endpoints/localhost-AE-{endpoint.pk}",
+                    "logStreamNamePrefix": f"localhost-AE-{endpoint.pk}",
+                },
+            )
+            logs.add_response(
+                method="get_log_events",
+                service_response={
+                    "events": [
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": f"Invocation self.pk='algorithms-invocation-{invocation.pk}' complete",
+                                    "source": "stdout",
+                                    "internal": True,
+                                    "task": "",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "hello from stdout",
+                                    "source": "stdout",
+                                    "internal": False,
+                                    "task": f"algorithms-invocation-{invocation.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "hello from stderr",
+                                    "source": "stderr",
+                                    "internal": False,
+                                    "task": f"algorithms-invocation-{invocation.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "endpoint stderr",
+                                    "source": "stderr",
+                                    "internal": False,
+                                    "task": f"algorithms-endpoint-{endpoint.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "endpoint stdout",
+                                    "source": "stdout",
+                                    "internal": False,
+                                    "task": f"algorithms-endpoint-{endpoint.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "internal stderr",
+                                    "source": "stderr",
+                                    "internal": True,
+                                    "task": f"algorithms-invocation-{invocation.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "internal stdout",
+                                    "source": "stdout",
+                                    "internal": True,
+                                    "task": f"algorithms-invocation-{invocation.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": "unstructured log",
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps({"err": "wrong"}),
+                            "timestamp": 1654683838000,
+                        },
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "wrong source",
+                                    "source": "fdgfgsdfdg",
+                                    "internal": False,
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                    ],
+                    "nextBackwardToken": "foo",
+                },
+                expected_params={
+                    "logGroupName": f"/aws/sagemaker/Endpoints/localhost-AE-{endpoint.pk}",
+                    "logStreamName": f"localhost-AE-{endpoint.pk}/i-whatever",
+                    "startFromHead": False,
+                    "startTime": 1654767467000,
+                    "endTime": 1654767481000,
+                },
+            )
+            logs.add_response(
+                method="get_log_events",
+                service_response={
+                    "events": [
+                        {
+                            "message": json.dumps(
+                                {
+                                    "log": "first message",
+                                    "source": "stdout",
+                                    "internal": False,
+                                    "task": f"algorithms-invocation-{invocation.pk}",
+                                }
+                            ),
+                            "timestamp": 1654683838000,
+                        },
+                    ],
+                    "nextBackwardToken": "foo",
+                },
+                expected_params={
+                    "logGroupName": f"/aws/sagemaker/Endpoints/localhost-AE-{endpoint.pk}",
+                    "logStreamName": f"localhost-AE-{endpoint.pk}/i-whatever",
+                    "startFromHead": False,
+                    "startTime": 1654767467000,
+                    "endTime": 1654767481000,
+                    "nextToken": "foo",
+                },
+            )
+
+            with mocker.patch(
+                "grandchallenge.components.backends.amazon_sagemaker_base.boto3.client",
+                return_value=logs_client,
+            ):
+                parse_endpoint_invocation_logs(
+                    pk=invocation.pk,
+                    app_label=invocation._meta.app_label,
+                    model_name=invocation._meta.model_name,
+                    event={
+                        "receivedTime": "2022-06-09T09:37:47.000Z",
+                        "eventTime": "2022-06-09T09:37:51.000Z",
+                    },
+                )
+
+        invocation.refresh_from_db()
+
+        assert (
+            invocation.stdout
+            == "2022-06-08T10:23:58+00:00 first message\n2022-06-08T10:23:58+00:00 hello from stdout"
+        )
+        assert (
+            invocation.stderr == "2022-06-08T10:23:58+00:00 hello from stderr"
+        )

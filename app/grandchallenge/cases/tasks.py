@@ -10,16 +10,11 @@ from uuid import UUID
 
 import boto3
 import botocore.exceptions
-from billiard.exceptions import (
-    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
-)
 from botocore.exceptions import ClientError
-from celery.utils.log import get_task_logger
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
-from django.db import transaction
 from django.utils._os import safe_join
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
@@ -31,6 +26,8 @@ from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from panimg_models import ImageBuilderOptions, PanImgResult
 
 from config.lambda_tasks import (
+    BATCH_LONG_TASK_HARD_TIMEOUT,
+    BATCH_LONG_TASK_SOFT_TIMEOUT,
     LONG_TASK_HARD_TIMEOUT,
     LONG_TASK_SOFT_TIMEOUT,
     LambdaTaskQueueChoices,
@@ -48,13 +45,10 @@ from grandchallenge.cases.panimg import convert, post_process
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.components.backends.utils import UUID4_REGEX, safe_extract
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.uploads.models import UserUpload
-
-logger = get_task_logger(__name__)
 
 
 class DuplicateFilesException(ValueError):
@@ -198,7 +192,11 @@ def build_images(  # noqa:C901
                 upload_session=upload_session,
             )
     except CalledProcessError as error:
-        if error.returncode == 137:
+        too_big_messages = {"std::bad_alloc", "No space left on device"}
+
+        if error.returncode == 137 or any(
+            message in error.stderr for message in too_big_messages
+        ):
             _handle_error(
                 error_message=(
                     "The uploaded images were too large to process, "
@@ -216,10 +214,7 @@ def build_images(  # noqa:C901
             ),
         )
         return
-    except (
-        CelerySoftTimeLimitExceeded,
-        SoftTimeLimitExceeded,
-    ):
+    except SoftTimeLimitExceeded:
         _handle_error(error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED)
         return
     except Exception as error:
@@ -464,19 +459,20 @@ def _handle_raw_files(
     }
 
 
-@acks_late_2xlarge_task(
-    # This task cannot be migrated as the maximum duration is beyond the lambda time limit
+@lambda_task(
+    queue=LambdaTaskQueueChoices.BATCH_MEM8G,
     retry_on=(LockNotAcquiredException,),
+    soft_timeout=BATCH_LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=BATCH_LONG_TASK_HARD_TIMEOUT,
 )
-@transaction.atomic
-def execute_post_process_image_task(*, post_process_image_task_pk):
+def execute_post_process_image_task(*, post_process_image_task_pk: str | UUID):
     with check_lock_acquired():
         task = PostProcessImageTask.objects.select_for_update(nowait=True).get(
             pk=post_process_image_task_pk
         )
 
     if task.status != PostProcessImageTaskStatusChoices.INITIALIZED:
-        logger.info(f"Task status is {task.status}, nothing to do")
+        task_logger.info(f"Task status is {task.status}, nothing to do")
         return
 
     try:
@@ -509,7 +505,7 @@ def execute_post_process_image_task(*, post_process_image_task_pk):
     except Exception as error:
         task.status = PostProcessImageTaskStatusChoices.FAILED
         task.save()
-        logger.error(error, exc_info=True)
+        task_logger.error(error, exc_info=True)
         return
 
 

@@ -175,7 +175,7 @@ def reevaluate_submissions(modeladmin, request, queryset):
                 pk=submission.phase.challenge.pk
             )
             try:
-                invoice = challenge.active_invoice
+                invoice = challenge.utilization_invoice
             except InsufficientBudgetError:
                 modeladmin.message_user(
                     request,
@@ -208,6 +208,8 @@ class SubmissionAdmin(admin.ModelAdmin):
         "phase",
         "predictions_file",
         "algorithm_image",
+        "user_upload",
+        "algorithm_model",
     )
     actions = (reevaluate_submissions,)
 

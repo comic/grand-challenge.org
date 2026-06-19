@@ -311,9 +311,6 @@ def test_challenge_invoice_issued_notification_emails_on_save(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     challenge = ChallengeFactory()
@@ -369,9 +366,6 @@ def test_challenge_invoice_issued_notification_emails_on_create(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     challenge = ChallengeFactory()
@@ -638,7 +632,7 @@ def test_invoice_budget_alert_email(
     ]
     assert (
         challenge_admin_email[0].subject
-        == "[testserver] [test] over 70% Budget Consumed Alert"
+        == "[testserver] [test] over 70% Compute Budget Consumed Alert"
     )
     assert (
         "We would like to inform you that more than 70% of the compute budget "
@@ -676,7 +670,7 @@ def test_invoice_budget_alert_email(
     assert len(mail.outbox) != 0
     assert (
         mail.outbox[0].subject
-        == "[testserver] [test] over 90% Budget Consumed Alert"
+        == "[testserver] [test] over 90% Compute Budget Consumed Alert"
     )
 
 
@@ -727,7 +721,7 @@ def test_invoice_budget_alert_two_thresholds_one_email(
     }
     assert (
         mail.outbox[0].subject
-        == "[testserver] [test] over 90% Budget Consumed Alert"
+        == "[testserver] [test] over 90% Compute Budget Consumed Alert"
     )
 
 

@@ -18,11 +18,14 @@ from django.template.defaultfilters import title
 from grandchallenge.components.backends.base import (
     ASYNC_BOTO_CONFIG,
     ASYNC_CONCURRENCY,
+    Executor,
     InferenceResult,
+    RuntimeSetupResult,
     s3_stream_response,
 )
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.backends.utils import (
+    NO_ERRORS_IN_LOG_MESSAGE,
     _filter_members,
     parse_structured_log,
     user_error,
@@ -55,13 +58,10 @@ def test_user_error(with_timestamp):
     assert user_error(obj=f"{timestamp}foo\n{timestamp}bar\n\n") == "bar"
     assert user_error(obj=f"{timestamp}foo\n{timestamp}    a b\n\n") == "a b"
     assert user_error(obj=f"{timestamp}foo\nbar\n\n") == "bar"
-    assert (
-        user_error(obj=f"{timestamp}\n")
-        == "No errors were reported in the logs."
-    )
+    assert user_error(obj=f"{timestamp}\n") == NO_ERRORS_IN_LOG_MESSAGE
     assert (
         user_error(obj=f"{timestamp}\n{timestamp}\n")
-        == "No errors were reported in the logs."
+        == NO_ERRORS_IN_LOG_MESSAGE
     )
 
 
@@ -778,6 +778,87 @@ def test_api_method_env_set():
     )
 
 
+def test_runtime_setup_result_signature_unverified(settings):
+    job_pk = uuid4()
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"correct-key",
+        api_method=APIMethodChoices.EXEC,
+    )
+
+    runtime_setup_result = RuntimeSetupResult(
+        return_code=0,
+        user_safe_error_message="",
+        sagemaker_shim_version="0.8.0",
+    )
+    runtime_setup_result_content = (
+        runtime_setup_result.model_dump_json().encode("utf-8")
+    )
+    signature = hmac.new(
+        key=b"wrong-key",
+        msg=runtime_setup_result_content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    executor._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(runtime_setup_result_content),
+        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        Key=executor.runtime_setup_result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
+
+    with pytest.raises(ComponentException) as error:
+        executor._get_runtime_setup_result()
+
+    assert str(error.value) == "A required output file has been tampered with"
+
+
+def test_runtime_setup_result_signature_verified(settings):
+    job_pk = uuid4()
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"correct-key",
+        api_method=APIMethodChoices.EXEC,
+    )
+
+    runtime_setup_result = RuntimeSetupResult(
+        return_code=0,
+        user_safe_error_message="",
+        sagemaker_shim_version="0.8.0",
+    )
+    runtime_setup_result_content = (
+        runtime_setup_result.model_dump_json().encode("utf-8")
+    )
+    signature = hmac.new(
+        key=b"correct-key",
+        msg=runtime_setup_result_content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    executor._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(runtime_setup_result_content),
+        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        Key=executor.runtime_setup_result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
+
+    assert executor._get_runtime_setup_result() == runtime_setup_result
+
+
 def test_invocation_results_signature_unverified(settings):
     job_pk = uuid4()
 
@@ -795,6 +876,8 @@ def test_invocation_results_signature_unverified(settings):
     inference_result = InferenceResult(
         pk=f"test-test-{job_pk}",
         return_code=0,
+        user_safe_error_message="",
+        user_process_last_stderr_lines=[],
         exec_duration=timedelta(seconds=1337),
         invoke_duration=None,
         outputs=[],
@@ -821,10 +904,7 @@ def test_invocation_results_signature_unverified(settings):
     with pytest.raises(ComponentException) as error:
         executor._get_inference_result()
 
-    assert (
-        str(error.value)
-        == "The invocation response object has been tampered with"
-    )
+    assert str(error.value) == "A required output file has been tampered with"
 
 
 def test_invocation_results_signature_verified(settings):
@@ -844,6 +924,8 @@ def test_invocation_results_signature_verified(settings):
     inference_result = InferenceResult(
         pk=f"test-test-{job_pk}",
         return_code=0,
+        user_safe_error_message="",
+        user_process_last_stderr_lines=[],
         exec_duration=timedelta(seconds=1337),
         invoke_duration=None,
         outputs=[],
@@ -904,3 +986,56 @@ def test_parse_structured_logs_filters_task():
     parsed_log = parse_structured_log(log=log_without_task, task=None)
 
     assert parsed_log.message == "message without task"
+
+
+@pytest.mark.parametrize(
+    (
+        "user_safe_error_message",
+        "user_process_last_stderr_lines",
+        "expected_error_message",
+    ),
+    (
+        ("user safe error", [], "user safe error"),
+        ("user safe error", [""], "user safe error"),
+        ("user safe error", ["foo"], "user safe error"),
+        ("user safe error", ["foo", "bar"], "user safe error"),
+        (
+            "",
+            [],
+            NO_ERRORS_IN_LOG_MESSAGE,
+        ),
+        (
+            "",
+            [""],
+            NO_ERRORS_IN_LOG_MESSAGE,
+        ),
+        ("", ["user process error"], "user process error"),
+        ("", ["pre error", "user process error"], "user process error"),
+        (
+            "",
+            ["pre error", "\nuser process error \n\r\n", " ", "\n\n \n \r\n "],
+            "user process error",
+        ),
+    ),
+)
+def test_get_error_message_from_inference_result(
+    user_safe_error_message,
+    user_process_last_stderr_lines,
+    expected_error_message,
+):
+    inference_result = InferenceResult(
+        pk="algorithms-job-1",
+        return_code=1,
+        user_safe_error_message=user_safe_error_message,
+        user_process_last_stderr_lines=user_process_last_stderr_lines,
+        exec_duration=timedelta(seconds=1),
+        invoke_duration=timedelta(seconds=1),
+        outputs=[],
+        sagemaker_shim_version="0.8.1",
+    )
+
+    error_message = Executor._get_error_message(
+        inference_result=inference_result
+    )
+
+    assert error_message == expected_error_message

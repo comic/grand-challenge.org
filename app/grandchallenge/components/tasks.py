@@ -13,23 +13,22 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from uuid import UUID
 
 import boto3
-from billiard.exceptions import (
-    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
-)
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.db.models import Count, DateTimeField, ExpressionWrapper, F, Q
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 from lambda_tasks.logging import task_logger
 from lambda_tasks.models import SQSLambdaTask
+from lambda_tasks.settings import MAX_DELAY
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
 from config.lambda_tasks import (
+    BATCH_LONG_TASK_HARD_TIMEOUT,
+    BATCH_LONG_TASK_SOFT_TIMEOUT,
     LONG_TASK_HARD_TIMEOUT,
     LONG_TASK_SOFT_TIMEOUT,
     LambdaTaskQueueChoices,
@@ -49,12 +48,11 @@ from grandchallenge.components.backends.exceptions import (
     TaskCancelled,
 )
 from grandchallenge.components.emails import (
-    send_docker_not_made_active,
+    send_container_image_not_made_active,
     send_invalid_dockerfile_email,
 )
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
-from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -68,6 +66,8 @@ from grandchallenge.uploads.models import UserUpload
 @lambda_task
 def update_all_container_image_shims():
     """Updates existing images to new versions of sagemaker shim"""
+    n_tasks = 0
+
     for app_label, model_name in (
         ("algorithms", "algorithmimage"),
         ("evaluation", "method"),
@@ -81,7 +81,11 @@ def update_all_container_image_shims():
                 pk=instance.pk,
                 app_label=instance._meta.app_label,
                 model_name=instance._meta.model_name,
+                _delay=n_tasks % MAX_DELAY,
             )
+            n_tasks += 1
+
+    return n_tasks
 
 
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
@@ -91,13 +95,17 @@ def assign_docker_image_from_upload(
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
 
-    with transaction.atomic():
-        instance.user_upload.copy_object(to_field=instance.image)
-        instance.user_upload.delete()
+    instance.user_upload.copy_object(to_field=instance.image)
+    instance.user_upload.delete()
 
 
-@acks_late_2xlarge_task  # This task cannot be migrated as the maximum duration is beyond the lambda time limit
-def validate_docker_image(  # noqa C901
+@lambda_task(
+    queue=LambdaTaskQueueChoices.BATCH_MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=BATCH_LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=BATCH_LONG_TASK_HARD_TIMEOUT,
+)
+def validate_container_image(
     *,
     pk: str | UUID,
     app_label: str,
@@ -105,9 +113,12 @@ def validate_docker_image(  # noqa C901
     mark_as_desired: bool,
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    instance = model.objects.get(pk=pk)
-    instance.import_status = instance.ImportStatusChoices.STARTED
-    instance.save()
+
+    with check_lock_acquired():
+        instance = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if instance.import_status != instance.ImportStatusChoices.STARTED:
+        raise RuntimeError("Container Image is not ready for validation")
 
     if instance.is_manifest_valid is None:
         try:
@@ -125,7 +136,7 @@ def validate_docker_image(  # noqa C901
         # Nothing to do
         return
 
-    upload_to_registry_and_sagemaker(
+    upload_to_registry_and_sagemaker.execute_on_commit(
         app_label=app_label,
         model_name=model_name,
         pk=pk,
@@ -133,15 +144,22 @@ def validate_docker_image(  # noqa C901
     )
 
 
-@acks_late_2xlarge_task  # This task needs to be re-written as it assumes that there is no transaction
+@lambda_task(
+    queue=LambdaTaskQueueChoices.BATCH_MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=BATCH_LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=BATCH_LONG_TASK_HARD_TIMEOUT,
+)
 def upload_to_registry_and_sagemaker(
     *, pk: str | UUID, app_label: str, model_name: str, mark_as_desired: bool
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    instance = model.objects.get(pk=pk)
 
-    instance.import_status = instance.ImportStatusChoices.STARTED
-    instance.save()
+    with check_lock_acquired():
+        instance = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if instance.import_status != instance.ImportStatusChoices.STARTED:
+        raise RuntimeError("Container Image is not ready for validation")
 
     if not instance.is_in_registry:
         try:
@@ -163,19 +181,48 @@ def upload_to_registry_and_sagemaker(
         shim_container_image(instance=instance)
         instance.save()
 
+    if mark_as_desired:
+        mark_desired_container_version.execute_on_commit(
+            app_label=app_label,
+            model_name=model_name,
+            pk=pk,
+        )
+    else:
+        instance.import_status = instance.ImportStatusChoices.COMPLETED
+        instance.save()
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def mark_desired_container_version(
+    *, pk: str | UUID, app_label: str, model_name: str
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
+    with check_lock_acquired():
+        instance = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+        # Acquire a lock on the peer images
+        _ = list(
+            instance.get_peer_images()
+            .select_for_update(nowait=True)
+            .values_list("pk", flat=True)
+        )
+
+    if instance.import_status != instance.ImportStatusChoices.STARTED:
+        raise RuntimeError("Container Image is not ready for validation")
+
     instance.import_status = instance.ImportStatusChoices.COMPLETED
     instance.save()
 
-    if mark_as_desired:
-        try:
-            instance.mark_desired_version()
-        except ValidationError as error:
-            send_docker_not_made_active(
-                container_image=instance, error_message=str(error)
-            )
+    try:
+        instance.mark_desired_version()
+    except ValidationError as error:
+        send_container_image_not_made_active(
+            container_image=instance, error_message=str(error)
+        )
 
 
-@lambda_task
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def update_container_image_shim(
     *,
     pk: str | UUID,
@@ -183,7 +230,25 @@ def update_container_image_shim(
     model_name: str,
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    instance = model.objects.get(pk=pk)
+
+    with check_lock_acquired():
+        instance = model.objects.select_for_update(
+            nowait=True, of=("self",)
+        ).get(pk=pk)
+
+    from grandchallenge.algorithms.models import AlgorithmImage, Job
+    from grandchallenge.evaluation.models import Evaluation, Method
+
+    if isinstance(instance, AlgorithmImage):
+        if Job.objects.active().filter(algorithm_image=instance).exists():
+            task_logger.info("Skipping - Algorithm image has an active job")
+            return instance.latest_shimmed_version
+    elif isinstance(instance, Method):
+        if Evaluation.objects.active().filter(method=instance).exists():
+            task_logger.info("Skipping - Method has an active evaluation")
+            return instance.latest_shimmed_version
+    else:
+        raise NotImplementedError
 
     if (
         instance.is_in_registry
@@ -201,6 +266,8 @@ def update_container_image_shim(
 
         shim_container_image(instance=instance)
         instance.save()
+
+    return instance.latest_shimmed_version
 
 
 @lambda_task
@@ -872,10 +939,7 @@ def execute_job(
             error_message=str(e),
             detailed_error_message=e.message_details,
         )
-    except (
-        CelerySoftTimeLimitExceeded,
-        SoftTimeLimitExceeded,
-    ):
+    except SoftTimeLimitExceeded:
         job.update_status(
             status=job.FAILURE,
             stdout=executor.stdout,
@@ -1863,23 +1927,26 @@ def handle_endpoint_invocation_event(*, event: dict):
             status=invocation.StatusChoices.FAILURE,
             error_message=str(error),
             detailed_error_message=error.message_details,
-            # TODO: set stdout, stderr and runtime metrics
+        )
+        parse_endpoint_invocation_logs.execute_on_commit(
+            **invocation.task_kwargs, event=event, _delay=120
         )
     except Exception as error:
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
-            # TODO: set stdout, stderr and runtime metrics
         )
         task_logger.error(str(error), exc_info=True)
+        parse_endpoint_invocation_logs.execute_on_commit(
+            **invocation.task_kwargs, event=event, _delay=120
+        )
     else:
         invocation.update_status(
             status=invocation.StatusChoices.EXECUTED,
             invoke_duration=orchestrator.invoke_duration,
-            # TODO: set stdout, stderr and runtime metrics
         )
         parse_endpoint_invocation_outputs.execute_on_commit(
-            **invocation.task_kwargs
+            **invocation.task_kwargs, event=event
         )
 
 
@@ -1887,7 +1954,7 @@ def handle_endpoint_invocation_event(*, event: dict):
     queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
 )
 def parse_endpoint_invocation_outputs(
-    *, pk: str | UUID, app_label: str, model_name: str
+    *, pk: str | UUID, app_label: str, model_name: str, event: dict
 ):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
@@ -1924,3 +1991,35 @@ def parse_endpoint_invocation_outputs(
     else:
         invocation.outputs.add(*outputs)
         invocation.update_status(status=invocation.StatusChoices.SUCCESS)
+    finally:
+        parse_endpoint_invocation_logs.execute_on_commit(
+            **invocation.task_kwargs, event=event, _delay=120
+        )
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def parse_endpoint_invocation_logs(
+    *, pk: str | UUID, app_label: str, model_name: str, event: dict
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
+    with check_lock_acquired():
+        invocation = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if invocation.status == invocation.StatusChoices.CANCELLED:
+        # Nothing to do
+        return
+    elif invocation.status not in (
+        invocation.StatusChoices.FAILURE,
+        invocation.StatusChoices.SUCCESS,
+    ):
+        raise RuntimeError("Invocation is not ready for log parsing")
+
+    orchestrator = invocation.orchestrator
+
+    orchestrator.set_task_logs(event=event)
+
+    invocation.set_logs(
+        stdout=orchestrator.stdout,
+        stderr=orchestrator.stderr,
+    )

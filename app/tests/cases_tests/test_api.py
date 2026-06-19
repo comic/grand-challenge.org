@@ -75,21 +75,11 @@ def test_image_api_fields(client):
         "height": image.height,
         "modality": {"modality": image.modality.modality},
         "name": image.name,
-        "patient_age": "",
-        "patient_birth_date": None,
-        "patient_id": "",
-        "patient_name": "",
-        "patient_sex": "",
         "pk": str(image.pk),
         "segments": image.segments,
-        "series_description": "",
-        "series_instance_uid": "",
         "shape": image.shape,
         "shape_without_color": image.shape_without_color,
         "stereoscopic_choice": image.stereoscopic_choice,
-        "study_date": None,
-        "study_description": "",
-        "study_instance_uid": "",
         "voxel_depth_mm": image.voxel_depth_mm,
         "voxel_height_mm": image.voxel_height_mm,
         "voxel_width_mm": image.voxel_width_mm,
@@ -375,9 +365,6 @@ def test_archive_upload_session_create(client, obj, factory):
 def test_session_with_user_upload_to_archive(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     user = UserFactory()
@@ -467,9 +454,6 @@ def test_session_with_user_duplicate_upload(client):
 def test_user_upload_to_archive_item_with_new_interface(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     user = UserFactory()
@@ -517,9 +501,6 @@ def test_user_upload_to_archive_item_with_new_interface(
 def test_user_upload_to_archive_item_with_existing_interface(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     user = UserFactory()
@@ -560,11 +541,8 @@ def test_user_upload_to_archive_item_with_existing_interface(
 
 @pytest.mark.django_db
 def test_user_upload_to_archive_item_without_interface(
-    client, settings, django_capture_on_commit_callbacks
+    client, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     user = UserFactory()
     archive = ArchiveFactory()
     archive.add_editor(user=user)
@@ -598,11 +576,8 @@ def test_user_upload_to_archive_item_without_interface(
 
 @pytest.mark.django_db
 def test_user_upload_to_display_set_without_interface(
-    client, settings, django_capture_on_commit_callbacks
+    client, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     user = UserFactory()
     rs = ReaderStudyFactory()
     rs.add_editor(user=user)

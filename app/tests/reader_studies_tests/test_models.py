@@ -97,10 +97,7 @@ def test_read_only_fields():
 
 
 @pytest.mark.django_db
-def test_progress_for_user(settings):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
+def test_progress_for_user():
     rs = ReaderStudyFactory()
     im1, im2 = ImageFactory(name="im1"), ImageFactory(name="im2")
     q1, q2, q3 = [
@@ -195,11 +192,8 @@ def test_progress_for_user(settings):
 
 @pytest.mark.django_db
 def test_leaderboard(  # noqa: C901
-    reader_study_with_gt, settings, django_capture_on_commit_callbacks
+    reader_study_with_gt, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     rs = reader_study_with_gt
     r1, r2 = rs.readers_group.user_set.all()
     e = rs.editors_group.user_set.first()
@@ -266,12 +260,7 @@ def test_leaderboard(  # noqa: C901
 
 
 @pytest.mark.django_db
-def test_statistics(
-    reader_study_with_gt, settings, django_capture_on_commit_callbacks
-):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
+def test_statistics(reader_study_with_gt, django_capture_on_commit_callbacks):
     rs = reader_study_with_gt
     r1, r2 = rs.readers_group.user_set.all()
 
@@ -345,11 +334,8 @@ def test_statistics(
 
 @pytest.mark.django_db
 def test_score_for_user(
-    reader_study_with_gt, settings, django_capture_on_commit_callbacks
+    reader_study_with_gt, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     rs = reader_study_with_gt
     r1 = rs.readers_group.user_set.first()
 

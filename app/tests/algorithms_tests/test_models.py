@@ -6,7 +6,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.db.models import ProtectedError
 from django.utils.timezone import now
 
@@ -83,9 +83,6 @@ def test_group_deletion_reverse(group):
 
 @pytest.mark.django_db
 def test_average_duration(settings, django_capture_on_commit_callbacks):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     alg = AlgorithmFactory()
@@ -1440,10 +1437,9 @@ def test_algorithmalgorithminterface_unique_constraints():
 
     # cannot add a second time the same interface for the same algorithm
     with pytest.raises(IntegrityError):
-        with transaction.atomic():
-            AlgorithmAlgorithmInterface.objects.create(
-                interface=interface1, algorithm=algorithm
-            )
+        AlgorithmAlgorithmInterface.objects.create(
+            interface=interface1, algorithm=algorithm
+        )
 
 
 @pytest.mark.parametrize(

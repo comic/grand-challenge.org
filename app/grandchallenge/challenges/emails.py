@@ -117,7 +117,7 @@ def send_challenge_request_processed_update_email(
 def send_email_percent_budget_consumed_alert(*, invoice, percent_threshold):
     challenge = invoice.challenge
     subject = format_html(
-        "[{challenge_name}] over {percent_threshold}% Budget Consumed Alert",
+        "[{challenge_name}] over {percent_threshold}% Compute Budget Consumed Alert",
         challenge_name=challenge.short_name,
         percent_threshold=percent_threshold,
     )

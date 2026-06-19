@@ -46,6 +46,7 @@ from grandchallenge.components.models import (
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
+    ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
     ViewObjectPermissionListMixin,
     filter_by_permission,
@@ -93,8 +94,8 @@ class CachedPhaseMixin:
             Phase, slug=self.kwargs["slug"], challenge=self.request.challenge
         )
 
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data()
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
         context.update({"phase": self.phase})
         return context
 
@@ -454,6 +455,7 @@ class SubmissionList(
 class SubmissionDetail(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
+    ObjectPermissionCheckerMixin,
     CachedPhaseMixin,
     DetailView,
 ):
@@ -468,6 +470,12 @@ class SubmissionDetail(
             .get_queryset()
             .prefetch_related("phase__optional_hanging_protocols")
         )
+
+    def get_context_data(self, *args, **kwargs):
+        self.permission_checker.prefetch_perms(
+            objects=self.object.evaluation_set.all()
+        )
+        return super().get_context_data(*args, **kwargs)
 
 
 class TeamContextMixin:

@@ -15,6 +15,10 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
     convert_deserialized_civ_data,
 )
+from grandchallenge.reader_studies.models import (
+    ANSWER_TYPE_TO_INTERFACE_KIND_MAP,
+    AnswerType,
+)
 from tests.cases_tests.factories import (
     DICOMImageSetFactory,
     RawImageUploadSessionFactory,
@@ -332,7 +336,7 @@ def test_civ_post_objects_do_not_exist():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.json)
+@pytest.mark.parametrize("kind", InterfaceKinds.json)
 def test_civ_post_value_validation(kind):
     interface = ComponentInterfaceFactory(kind=kind)
 
@@ -372,6 +376,56 @@ def test_civ_post_value_validation(kind):
             assert "JSON does not fulfill schema: " in str(
                 serializer.errors["__all__"][0]
             )
+
+
+ANNOTATION_INTERFACE_KIND_LIST = set(
+    sum(
+        map(
+            ANSWER_TYPE_TO_INTERFACE_KIND_MAP.get,
+            AnswerType.get_annotation_types(),
+        ),
+        start=[],
+    )
+) & set(InterfaceKinds.json)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind", ANNOTATION_INTERFACE_KIND_LIST)
+def test_civ_allows_view_plane_value(kind):
+    interface = ComponentInterfaceFactory(kind=kind)
+    view_plane = [[1.2, 3.4, 5.6], [10.1, 20.1, 30.1]]
+
+    multi_group_names = {
+        InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES: "boxes",
+        InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS: "lines",
+        InterfaceKindChoices.MULTIPLE_POINTS: "points",
+        InterfaceKindChoices.MULTIPLE_POLYGONS: "polygons",
+        InterfaceKindChoices.MULTIPLE_LINES: "lines",
+        InterfaceKindChoices.MULTIPLE_ANGLES: "angles",
+        InterfaceKindChoices.MULTIPLE_ELLIPSES: "ellipses",
+        InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES: "angles",
+    }
+
+    value_data = dict(TEST_DATA[kind])
+    if kind in multi_group_names:
+        for item in value_data[multi_group_names[kind]]:
+            item["view_plane"] = view_plane
+    else:
+        value_data["view_plane"] = view_plane
+
+    payload = {
+        "interface": interface.slug,
+        "file": None,
+        "image": None,
+        "image_name": None,
+        "upload_session": None,
+        "user_upload": None,
+        "user_uploads": None,
+        "value": value_data,
+    }
+
+    serializer = ComponentInterfaceValuePostSerializer(data=payload)
+    assert serializer.is_valid()
 
 
 @pytest.mark.django_db
@@ -478,7 +532,7 @@ def test_civ_post_user_upload_valid(kind, request):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
+@pytest.mark.parametrize("kind", InterfaceKinds.panimg)
 def test_civ_post_image_or_upload_required_validation(kind):
     interface = ComponentInterfaceFactory(kind=kind)
 
@@ -546,7 +600,7 @@ def test_civ_post_dicom_image_or_upload_required_validation(request):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.image)
+@pytest.mark.parametrize("kind", InterfaceKinds.image)
 def test_civ_post_image_permission_validation(kind, request):
     user = UserFactory()
     image = ImageFactory()
@@ -566,7 +620,7 @@ def test_civ_post_image_permission_validation(kind, request):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
+@pytest.mark.parametrize("kind", InterfaceKinds.panimg)
 def test_civ_post_upload_session_permission_validation(kind, request):
     user = UserFactory()
     upload = UploadSessionFactory()
@@ -586,7 +640,7 @@ def test_civ_post_upload_session_permission_validation(kind, request):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.image)
+@pytest.mark.parametrize("kind", InterfaceKinds.image)
 def test_civ_post_user_uploads_permission_validation(request, kind):
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2)
@@ -626,7 +680,7 @@ def test_civ_post_dicom_image_name_empty_value_invalid():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.image)
+@pytest.mark.parametrize("kind", InterfaceKinds.image)
 def test_civ_post_user_uploads_empty_value_invalid(kind):
     interface = ComponentInterfaceFactory(kind=kind)
 
@@ -659,7 +713,7 @@ def test_civ_post_user_uploads_empty_value_invalid(kind):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.image)
+@pytest.mark.parametrize("kind", InterfaceKinds.image)
 def test_civ_post_image_not_ready_validation(kind, request):
     user = UserFactory()
     upload = UploadSessionFactory(
@@ -737,7 +791,7 @@ def test_civ_post_panimg_image_valid(kind, request):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
+@pytest.mark.parametrize("kind", InterfaceKinds.panimg)
 def test_civ_post_image_upload_session_valid(kind, request):
     user = UserFactory()
     upload = UploadSessionFactory(
@@ -764,7 +818,7 @@ def test_civ_post_image_upload_session_valid(kind, request):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
+@pytest.mark.parametrize("kind", InterfaceKinds.panimg)
 def test_civ_post_panimg_image_upload_valid(request, kind):
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2, creator=user)

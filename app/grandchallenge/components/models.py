@@ -8,9 +8,6 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from urllib.parse import quote
 
-from billiard.exceptions import (
-    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
-)
 from django import forms
 from django.conf import settings
 from django.core.exceptions import (
@@ -25,9 +22,8 @@ from django.core.validators import (
     MinValueValidator,
     RegexValidator,
 )
-from django.db import models, transaction
+from django.db import models
 from django.db.models import IntegerChoices, QuerySet, TextChoices
-from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
 from django.template.defaultfilters import truncatewords
 from django.utils.functional import cached_property
@@ -60,7 +56,7 @@ from grandchallenge.components.tasks import (
     assign_docker_image_from_upload,
     deprovision_job,
     provision_job,
-    validate_docker_image,
+    validate_container_image,
 )
 from grandchallenge.components.validators import (
     validate_biom_format,
@@ -1562,7 +1558,6 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
             raise ValidationError("The file could not be decoded")
         except (
             MemoryError,
-            CelerySoftTimeLimitExceeded,
             SoftTimeLimitExceeded,
         ) as error:
             raise ValidationError(
@@ -2225,7 +2220,7 @@ class ComponentImage(FieldChangeMixin, models.Model):
         )
 
         if image_needs_validation:
-            self.import_status = ImportStatusChoices.QUEUED
+            self.import_status = ImportStatusChoices.STARTED
             validate_image_now = True
         else:
             validate_image_now = False
@@ -2236,16 +2231,11 @@ class ComponentImage(FieldChangeMixin, models.Model):
         super().save(*args, **kwargs)
 
         if validate_image_now:
-            on_commit(
-                validate_docker_image.signature(
-                    kwargs={
-                        "app_label": self._meta.app_label,
-                        "model_name": self._meta.model_name,
-                        "pk": self.pk,
-                        "mark_as_desired": True,
-                    },
-                    immutable=True,
-                ).apply_async
+            validate_container_image.execute_on_commit(
+                app_label=self._meta.app_label,
+                model_name=self._meta.model_name,
+                pk=self.pk,
+                mark_as_desired=True,
             )
 
     def assign_docker_image_from_upload(self):
@@ -2258,7 +2248,6 @@ class ComponentImage(FieldChangeMixin, models.Model):
     def get_peer_images(self):
         raise NotImplementedError
 
-    @transaction.atomic
     def mark_desired_version(self):
         self.clear_can_execute_cache()
         if self.is_manifest_valid and self.can_execute:
@@ -2923,7 +2912,6 @@ class Tarball(UUIDModel):
     def linked_file(self):
         raise NotImplementedError
 
-    @transaction.atomic
     def mark_desired_version(self, peer_tarballs=None):
         peer_tarballs = list(peer_tarballs or self.get_peer_tarballs())
         for tb in peer_tarballs:

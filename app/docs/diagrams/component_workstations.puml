@@ -9,12 +9,12 @@ Person(workstation_user, "Workstation User", "User who wants to view a workstati
 
 ContainerDb(postgres, "Database", "RDS/PostgreSQL", "Stores user information, medical imaging metadata, job results etc.")
 Container(private_s3, "Private Data Store", "S3", "Stores private objects, container images etc.")
-Container(message_queue, "Message Queue", "SQS/Redis", "Queue of units of work Celery messages.")
+Container(message_queue, "Message Queue", "SQS", "Queue of units of work Lambda Tasks messages.")
 Container(gc_web_app, "API", "Nginx, Django", "Provides the grand challenge functionality via HTML and a REST API.")
 
 Container_Boundary(api, "Workstation Worker") {
     Component(nginx, "Reverse Proxy", "Nginx", "SSL termination and routing")
-    Component(webapp, "Web Application", "Django, Celery", "Authorization for workstation connections, manages workstation container lifecycles.")
+    Component(webapp, "Web Application", "Django", "Authorization for workstation connections, manages workstation container lifecycles.")
     Component(docker, "Compute Pool", "Docker", "Provides compute resources for workstation services, 1 workstation container instance per user.")
 
     Rel(nginx, webapp, "Fetches routing information from", "HTTP")
@@ -24,7 +24,7 @@ Container_Boundary(api, "Workstation Worker") {
 
 Rel(workstation_user, nginx, "Uses", "HTTPS, WSS, JSON")
 
-Rel(webapp, message_queue, "Fetches messages from", "SSL, SQS/Redis, Celery")
+Rel(webapp, message_queue, "Fetches messages from", "SSL, SQS, Lambda Tasks")
 Rel(webapp, postgres, "Reads and writes to", "SSL, SQL")
 Rel(webapp, private_s3, "Fetches container images from", "HTTPS, S3")
 

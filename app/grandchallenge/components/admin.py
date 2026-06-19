@@ -8,7 +8,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     ComponentJob,
 )
-from grandchallenge.components.tasks import deprovision_job
+from grandchallenge.components.tasks import deprovision_job, stop_endpoint
 from grandchallenge.evaluation.models import Evaluation
 
 
@@ -17,16 +17,22 @@ from grandchallenge.evaluation.models import Evaluation
     permissions=("change",),
 )
 def cancel_image_imports(modeladmin, request, queryset):
-    queryset.filter(
-        import_status__in=[
-            ComponentImage.ImportStatusChoices.STARTED,
-            ComponentImage.ImportStatusChoices.QUEUED,
-            ComponentImage.ImportStatusChoices.INITIALIZED,
-            ComponentImage.ImportStatusChoices.RETRY,
-        ]
-    ).select_for_update(skip_locked=True).update(
-        import_status=ComponentImage.ImportStatusChoices.CANCELLED
+    locked_pks = list(
+        queryset.filter(
+            import_status__in=[
+                ComponentImage.ImportStatusChoices.STARTED,
+                ComponentImage.ImportStatusChoices.QUEUED,
+                ComponentImage.ImportStatusChoices.INITIALIZED,
+                ComponentImage.ImportStatusChoices.RETRY,
+            ]
+        )
+        .select_for_update(skip_locked=True)
+        .values_list("pk", flat=True)
     )
+    if locked_pks:
+        queryset.filter(pk__in=locked_pks).update(
+            import_status=ComponentImage.ImportStatusChoices.CANCELLED
+        )
 
 
 class ComponentImageAdmin(admin.ModelAdmin):
@@ -185,3 +191,12 @@ def cancel_jobs(modeladmin, request, queryset):
 def deprovision_jobs(modeladmin, request, queryset):
     for job in queryset:
         deprovision_job.execute_on_commit(**job.task_kwargs)
+
+
+@admin.action(
+    description="Stop endpoints",
+    permissions=("change",),
+)
+def stop_endpoints(modeladmin, request, queryset):
+    for endpoint in queryset:
+        stop_endpoint.execute_on_commit(**endpoint.task_kwargs)

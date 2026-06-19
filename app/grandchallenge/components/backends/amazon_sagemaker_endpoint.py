@@ -1,5 +1,6 @@
 import logging
 import re
+from datetime import datetime, timedelta
 from typing import NamedTuple
 from uuid import UUID
 
@@ -27,6 +28,45 @@ class ObjectParams(NamedTuple):
     pk: UUID
 
 
+# TODO: refactor EndpointOrchestrator, AmazonSageMakerEndpointExecutor,
+#  AmazonSageMakerTrainingExecutor and AmazonSageMakerBaseExecutor to simplify
+class AmazonSageMakerEndpointExecutor(AmazonSageMakerTrainingExecutor):
+    def __init__(
+        self, *args, endpoint_name, runtime_setup_result_key=None, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.__endpoint_name = endpoint_name
+        self.__runtime_setup_result_key = runtime_setup_result_key
+
+    @property
+    def _sagemaker_job_name(self):
+        return self.__endpoint_name
+
+    @property
+    def _log_group_name(self):
+        # Hardcoded by AWS
+        return f"/aws/sagemaker/Endpoints/{self.__endpoint_name}"
+
+    def _get_start_time(self, *, event):
+        return int(
+            datetime.fromisoformat(event.get("receivedTime")).timestamp()
+            * 1000
+        )
+
+    def _get_end_time(self, *, event):
+        event_time = datetime.fromisoformat(event.get("eventTime"))
+        # Add buffer time to allow logs to complete
+        log_end_time = event_time + timedelta(seconds=10)
+        return int(log_end_time.timestamp() * 1000)
+
+    @property
+    def runtime_setup_result_key(self):
+        if self.__runtime_setup_result_key:
+            return self.__runtime_setup_result_key
+        else:
+            return super().runtime_setup_result_key
+
+
 class EndpointOrchestrator:
     def __init__(
         self,
@@ -39,8 +79,9 @@ class EndpointOrchestrator:
         signing_key,
         time_limit=settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION,
         algorithm_model=None,
+        runtime_setup_result_key=None,
     ):
-        self._executor = AmazonSageMakerTrainingExecutor(
+        self._executor = AmazonSageMakerEndpointExecutor(
             job_id=job_id,
             exec_image_repo_tag=exec_image_repo_tag,
             memory_limit=memory_limit,
@@ -53,6 +94,8 @@ class EndpointOrchestrator:
             input_bucket_name=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
             output_bucket_name=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
             use_task_list=False,
+            endpoint_name=endpoint_name,
+            runtime_setup_result_key=runtime_setup_result_key,
         )
         self._endpoint_name = endpoint_name
         self._exec_image_repo_tag = exec_image_repo_tag
@@ -143,6 +186,18 @@ class EndpointOrchestrator:
     @property
     def _time_limit(self):
         return self._executor._time_limit
+
+    @property
+    def runtime_setup_result_key(self):
+        return self._executor.runtime_setup_result_key
+
+    @property
+    def stdout(self):
+        return self._executor.stdout
+
+    @property
+    def stderr(self):
+        return self._executor.stderr
 
     def provision_auxiliary_data(self):
         if self._algorithm_model:
@@ -295,7 +350,9 @@ class EndpointOrchestrator:
             ContentType="application/json",
             InputLocation=self._invocation_s3_uri,
             InferenceId=inference_id,
-            InvocationTimeoutSeconds=int(self._time_limit.total_seconds()),
+            InvocationTimeoutSeconds=int(
+                self._time_limit.total_seconds() + 10
+            ),  # Add buffer time to upload invocation result
         )
 
     @staticmethod
@@ -326,8 +383,6 @@ class EndpointOrchestrator:
     def handle_event(self, *, event):
         invocation_status = self._get_invocation_status(event=event)
 
-        # TODO: set task_logs and runtime metrics
-
         if invocation_status == "Completed":
             self._handle_completed_invocation()
         elif invocation_status == "Expired":
@@ -354,3 +409,6 @@ class EndpointOrchestrator:
 
     def get_outputs(self, *, output_interfaces):
         return self._executor.get_outputs(output_interfaces=output_interfaces)
+
+    def set_task_logs(self, *, event):
+        self._executor._set_task_logs(event=event, task=self._executor._job_id)

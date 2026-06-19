@@ -1846,6 +1846,9 @@ class Invocation(CIVForObjectMixin, UUIDModel):
     @property
     def orchestrator_kwargs(self):
         kwargs = self.endpoint.orchestrator_kwargs
+        kwargs["runtime_setup_result_key"] = (
+            self.endpoint.orchestrator.runtime_setup_result_key
+        )
         kwargs["job_id"] = (
             f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}"
         )
@@ -1924,3 +1927,8 @@ class Invocation(CIVForObjectMixin, UUIDModel):
             user=user,
             linked_task=linked_task,
         )
+
+    def set_logs(self, *, stdout, stderr):
+        self.stdout = stdout
+        self.stderr = stderr
+        self.save()

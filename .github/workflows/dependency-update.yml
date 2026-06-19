@@ -2,7 +2,7 @@ name: Dependency Update
 
 on:
     schedule:
-        - cron: "27 6 * * 2"
+        - cron: "27 1 * * 2"
     workflow_dispatch:
 
 env:
@@ -61,7 +61,7 @@ jobs:
                   mkdir -p /tmp/coverage
                   chmod a+w /tmp/coverage
                   make local_s3
-                  docker compose run --rm -v /tmp/coverage:/tmp/coverage celery_worker bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report term --cov=. --durations 10"
+                  docker compose run --rm -v /tmp/coverage:/tmp/coverage gc.localhost bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report term --cov=. --durations 10"
             - name: Create Pull Request
               uses: peter-evans/create-pull-request@v8
               with:

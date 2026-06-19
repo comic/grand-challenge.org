@@ -374,11 +374,17 @@ def handle_failed_jobs(*, evaluation_pk: str | uuid.UUID):
     # we could limit by archive here but if non-evaluation
     # jobs are cancelled then it is no big loss.
     with check_lock_acquired():
-        Job.objects.filter(
-            creator=None,
-            algorithm_image_id=evaluation.submission.algorithm_image_id,
-            status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY],
-        ).select_for_update(skip_locked=True).update(status=Job.CANCELLED)
+        locked_jobs = list(
+            Job.objects.filter(
+                creator=None,
+                algorithm_image_id=evaluation.submission.algorithm_image_id,
+                status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY],
+            )
+            .select_for_update(skip_locked=True)
+            .values_list("pk", flat=True)
+        )
+        if locked_jobs:
+            Job.objects.filter(pk__in=locked_jobs).update(status=Job.CANCELLED)
 
 
 @lambda_task(

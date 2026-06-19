@@ -73,7 +73,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "payment_type",
         "payment_status",
         "total_amount_euros",
-        "percent_budget_consumed_display",
+        "percent_compute_budget_consumed_display",
         "issued_on",
         "expires_on",
         "last_checked_on",
@@ -135,7 +135,7 @@ class InvoiceAdmin(admin.ModelAdmin):
             "Budget Usage",
             {
                 "fields": [
-                    "percent_budget_consumed_display",
+                    "percent_compute_budget_consumed_display",
                     "available_compute_cost",
                     "approved_compute_cost",
                     "consumed_compute_cost",
@@ -161,7 +161,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     readonly_fields = [
         "created",
         "invoice_request_text",
-        "percent_budget_consumed_display",
+        "percent_compute_budget_consumed_display",
         "available_compute_cost",
         "approved_compute_cost",
         "consumed_compute_cost",
@@ -280,9 +280,9 @@ class InvoiceAdmin(admin.ModelAdmin):
     def utilization_priority(self, obj):
         return obj.utilization_priority
 
-    @admin.display(description="Consumed budget")
-    def percent_budget_consumed_display(self, obj):
-        value = obj.percent_budget_consumed
+    @admin.display(description="Consumed compute budget")
+    def percent_compute_budget_consumed_display(self, obj):
+        value = obj.percent_compute_budget_consumed
         if value is None:
             return "-"
         return f"{value}%"

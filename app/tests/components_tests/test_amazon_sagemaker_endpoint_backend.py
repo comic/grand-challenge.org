@@ -14,6 +14,7 @@ from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
 )
 from grandchallenge.components.backends.base import (
     InferenceResult,
+    RuntimeSetupResult,
     s3_upload_content,
 )
 from grandchallenge.components.models import InterfaceKindChoices
@@ -82,6 +83,9 @@ class TestEndpointOrchestratorProperties:
         settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = (
             "algorithm-endpoints-input"
         )
+        settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME = (
+            "algorithm-endpoints-output"
+        )
         endpoint = EndpointFactory.build(
             signing_key=b"totallysecret",
         )
@@ -95,6 +99,8 @@ class TestEndpointOrchestratorProperties:
             "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX": "746f74616c6c79736563726574",
             "GRAND_CHALLENGE_COMPONENT_API_METHOD": endpoint.algorithm_image.api_method,
             "GRAND_CHALLENGE_COMPONENT_MODEL": f"s3://algorithm-endpoints-input//auxiliary-data/algorithms/endpoint/{endpoint.pk}/algorithm-model.tar.gz",
+            "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_BUCKET_NAME": "algorithm-endpoints-output",
+            "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_PREFIX": f"/io/algorithms/endpoint/{endpoint.pk}",
         }
 
         orchestrator = EndpointFactory.build(algorithm_model=None).orchestrator
@@ -139,6 +145,27 @@ class TestEndpointOrchestratorProperties:
         assert (
             orchestrator._executor._output_bucket_name
             == "algorithm-endpoints-output"
+        )
+
+    def test_runtime_setup_result_key(self):
+        endpoint = EndpointFactory.build()
+        orchestrator = endpoint.orchestrator
+
+        assert orchestrator.runtime_setup_result_key == (
+            f"/io/algorithms/endpoint/{endpoint.pk}/.sagemaker_shim/runtime_setup_result.json"
+        )
+
+    def test_runtime_setup_result_key_invocation(self):
+        invocation = InvocationFactory.build()
+        endpoint = invocation.endpoint
+        orchestrator = invocation.orchestrator
+
+        assert (
+            orchestrator.runtime_setup_result_key
+            == endpoint.orchestrator.runtime_setup_result_key
+            == (
+                f"/io/algorithms/endpoint/{endpoint.pk}/.sagemaker_shim/runtime_setup_result.json"
+            )
         )
 
 
@@ -595,7 +622,7 @@ def test_invocation_invoke_endpoint(settings):
                 "ContentType": "application/json",
                 "InputLocation": orchestrator._invocation_s3_uri,
                 "InferenceId": invocation.inference_id,
-                "InvocationTimeoutSeconds": 42,
+                "InvocationTimeoutSeconds": 52,  # 10 seconds added buffer time
             },
         )
 
@@ -620,9 +647,32 @@ def test_get_invocation_params_match(settings):
 def test_handle_completed_invocation(settings):
     invocation = InvocationFactory.build(endpoint__signing_key=b"itsasecret")
     orchestrator = invocation.orchestrator
+    runtime_setup_result = RuntimeSetupResult(
+        return_code=0,
+        user_safe_error_message="",
+        sagemaker_shim_version="0.8.0",
+    )
+    runtime_setup_result_content = (
+        runtime_setup_result.model_dump_json().encode("utf-8")
+    )
+    signature = hmac.new(
+        key=b"itsasecret",
+        msg=runtime_setup_result_content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    orchestrator._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(runtime_setup_result_content),
+        Bucket=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
+        Key=orchestrator.runtime_setup_result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
     inference_result = InferenceResult(
         pk=f"algorithms-invocation-{invocation.pk}",
         return_code=0,
+        user_safe_error_message="",
+        user_process_last_stderr_lines=[],
         exec_duration=None,
         invoke_duration=timedelta(seconds=12),
         outputs=[],
@@ -650,3 +700,169 @@ def test_handle_completed_invocation(settings):
     orchestrator._handle_completed_invocation()
 
     assert orchestrator.invoke_duration == timedelta(seconds=12)
+
+
+def test_set_invocation_logs(settings):
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+    settings.COMPONENTS_REGISTRY_PREFIX = "localhost"
+
+    invocation = InvocationFactory.build()
+    orchestrator = invocation.orchestrator
+    endpoint = invocation.endpoint
+
+    assert orchestrator.stdout == ""
+    assert orchestrator.stderr == ""
+
+    with Stubber(orchestrator._executor._logs_client) as logs:
+        logs.add_response(
+            method="describe_log_streams",
+            service_response={
+                "logStreams": [
+                    {
+                        "logStreamName": f"localhost-AE-{endpoint.pk}/i-whatever"
+                    },
+                ]
+            },
+            expected_params={
+                "logGroupName": f"/aws/sagemaker/Endpoints/localhost-AE-{endpoint.pk}",
+                "logStreamNamePrefix": f"localhost-AE-{endpoint.pk}",
+            },
+        )
+        logs.add_response(
+            method="get_log_events",
+            service_response={
+                "events": [
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "hello from stdout",
+                                "source": "stdout",
+                                "internal": False,
+                                "task": f"algorithms-invocation-{invocation.pk}",
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "hello from stderr",
+                                "source": "stderr",
+                                "internal": False,
+                                "task": f"algorithms-invocation-{invocation.pk}",
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "endpoint stderr",
+                                "source": "stderr",
+                                "internal": False,
+                                "task": f"algorithms-endpoint-{endpoint.pk}",
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "endpoint stdout",
+                                "source": "stdout",
+                                "internal": False,
+                                "task": f"algorithms-endpoint-{endpoint.pk}",
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "internal stderr",
+                                "source": "stderr",
+                                "internal": True,
+                                "task": f"algorithms-invocation-{invocation.pk}",
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "internal stdout",
+                                "source": "stdout",
+                                "internal": True,
+                                "task": f"algorithms-invocation-{invocation.pk}",
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": "unstructured log",
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": json.dumps({"err": "wrong"}),
+                        "timestamp": 1654683838000,
+                    },
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "wrong source",
+                                "source": "fdgfgsdfdg",
+                                "internal": False,
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                ],
+                "nextBackwardToken": "foo",
+            },
+            expected_params={
+                "logGroupName": f"/aws/sagemaker/Endpoints/localhost-AE-{endpoint.pk}",
+                "logStreamName": f"localhost-AE-{endpoint.pk}/i-whatever",
+                "startFromHead": False,
+                "startTime": 1654767467000,
+                "endTime": 1654767481000,
+            },
+        )
+        logs.add_response(
+            method="get_log_events",
+            service_response={
+                "events": [
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "first message",
+                                "source": "stdout",
+                                "internal": False,
+                                "task": f"algorithms-invocation-{invocation.pk}",
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                ],
+                "nextBackwardToken": "foo",
+            },
+            expected_params={
+                "logGroupName": f"/aws/sagemaker/Endpoints/localhost-AE-{endpoint.pk}",
+                "logStreamName": f"localhost-AE-{endpoint.pk}/i-whatever",
+                "startFromHead": False,
+                "startTime": 1654767467000,
+                "endTime": 1654767481000,
+                "nextToken": "foo",
+            },
+        )
+        orchestrator.set_task_logs(
+            event={
+                "receivedTime": "2022-06-09T09:37:47.000Z",
+                "eventTime": "2022-06-09T09:37:51.000Z",
+            },
+        )
+
+    assert (
+        orchestrator.stdout
+        == "2022-06-08T10:23:58+00:00 first message\n2022-06-08T10:23:58+00:00 hello from stdout"
+    )
+    assert orchestrator.stderr == "2022-06-08T10:23:58+00:00 hello from stderr"

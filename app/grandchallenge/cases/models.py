@@ -8,9 +8,6 @@ from urllib.parse import urlparse
 
 import boto3
 from actstream.actions import follow
-from billiard.exceptions import (
-    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
-)
 from botocore.awsrequest import AWSRequest
 from botocore.exceptions import ClientError
 from django.conf import settings
@@ -19,7 +16,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import SuspiciousFileOperation
 from django.db import models
 from django.db.models.signals import post_delete
-from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
@@ -228,7 +224,7 @@ class RawImageUploadSession(UUIDModel):
         upload_session_complete_task: UploadSessionCompleteTask | None = None,
     ):
         """
-        Starts the Celery task to import this RawImageUploadSession.
+        Starts the Lambda task to import this RawImageUploadSession.
 
         Parameters
         ----------
@@ -667,10 +663,7 @@ class Image(UUIDModel):
             try:
                 for job in job_queryset:
                     expected_groups.update(job.viewer_groups.all())
-            except (
-                CelerySoftTimeLimitExceeded,
-                SoftTimeLimitExceeded,
-            ) as error:
+            except SoftTimeLimitExceeded as error:
                 logger.error(error, exc_info=True)
                 raise
 
@@ -945,10 +938,8 @@ class PostProcessImageTask(UUIDModel):
                 execute_post_process_image_task,
             )
 
-            on_commit(
-                execute_post_process_image_task.signature(
-                    kwargs={"post_process_image_task_pk": self.pk}
-                ).apply_async
+            execute_post_process_image_task.execute_on_commit(
+                post_process_image_task_pk=self.pk
             )
 
 

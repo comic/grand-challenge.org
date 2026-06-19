@@ -470,6 +470,14 @@ class Invoice(models.Model, FieldChangeMixin):
         )
 
     @cached_property
+    def approved_storage_cost_euro_millicents(self):
+        return (
+            self.storage_costs_euros * 1000 * 100
+            if self.is_budget_authorized
+            else 0
+        )
+
+    @cached_property
     def consumed_compute_cost_euro_millicents(self):
         return min(
             self.compute_cost_euro_millicents,
@@ -485,7 +493,7 @@ class Invoice(models.Model, FieldChangeMixin):
         return abs(min(balance, 0))
 
     @cached_property
-    def percent_budget_consumed(self):
+    def percent_compute_budget_consumed(self):
         if self.approved_compute_cost_euro_millicents > 0:
             return int(
                 100

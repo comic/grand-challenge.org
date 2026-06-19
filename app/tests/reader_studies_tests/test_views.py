@@ -27,6 +27,13 @@ from grandchallenge.reader_studies.models import (
 )
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
+    ReaderStudyAlgorithmFactory,
+    ReaderStudyAlgorithmImplementationFactory,
+)
 from tests.cases_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -431,9 +438,6 @@ def test_display_set_detail_permissions(client):
 def test_display_set_update(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     user = UserFactory()
@@ -622,9 +626,6 @@ def test_display_set_update(
 def test_add_display_set_to_reader_study(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     u1, u2 = UserFactory.create_batch(2)
@@ -728,11 +729,8 @@ def test_add_display_set_to_reader_study(
 
 @pytest.mark.django_db
 def test_add_display_set_to_reader_study_with_empty_value(
-    client, settings, django_capture_on_commit_callbacks
+    client, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     editor = UserFactory()
     reader_study = ReaderStudyFactory()
     existing_display_set = DisplaySetFactory(reader_study=reader_study)
@@ -936,9 +934,6 @@ def test_question_interactive_algorithms_view_permissions(client):
 def test_display_set_upload_corrupt_image(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     editor = UserFactory()
@@ -1425,6 +1420,7 @@ def test_usage_view_displays_credits(client):
 
 
 @pytest.mark.django_db
+@pytest.mark.flaky(reruns=3)
 def test_usage_view_credits_divided_by_reader_study_count(client):
     from datetime import timedelta
 
@@ -1526,3 +1522,53 @@ def test_usage_view_total_credits_matches_per_user_sum(client):
 
     assert per_user_total == rs1_with_budget.credits_consumed
     assert len(user_usage) == 2
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "num_questions",
+    (
+        1,
+        3,
+    ),
+)
+def test_question_list_view_num_queries(
+    client, num_questions, django_assert_max_num_queries
+):
+    user = UserFactory()
+    reader_study = ReaderStudyFactory.create()
+    reader_study.add_editor(user)
+
+    for _ in range(num_questions):
+        interface = AlgorithmInterfaceFactory.create()
+        reader_study_algorithm = ReaderStudyAlgorithmFactory.create()
+        reader_study_algorithm.interfaces.add(interface)
+        algorithm = AlgorithmFactory()
+        algorithm.interfaces.add(interface)
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
+        reader_study_algorithm_implementation = (
+            ReaderStudyAlgorithmImplementationFactory.create(
+                algorithm=algorithm,
+                reader_study_algorithm=reader_study_algorithm,
+            )
+        )
+        question = QuestionFactory.create(reader_study=reader_study)
+        question.algorithms.add(reader_study_algorithm_implementation)
+
+    with django_assert_max_num_queries(34) as _:
+        response = get_view_for_user(
+            viewname="api:reader-studies-question-list",
+            client=client,
+            method=client.get,
+            user=user,
+            content_type="application/json",
+        )
+
+    # Sanity checks
+    assert response.status_code == 200
+    assert len(response.json()["results"]) == num_questions

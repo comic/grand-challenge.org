@@ -28,7 +28,6 @@ from botocore.auth import SigV4Auth
 from botocore.config import Config
 from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
-from django.db import transaction
 from django.utils._os import safe_join
 from django.utils.functional import cached_property
 from panimg_models import ImageBuilderOptions
@@ -40,7 +39,10 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     UncleanExit,
 )
-from grandchallenge.components.backends.utils import user_error
+from grandchallenge.components.backends.utils import (
+    NO_ERRORS_IN_LOG_MESSAGE,
+    user_error,
+)
 from grandchallenge.components.models import (
     APIMethodChoices,
     ComponentInterface,
@@ -284,6 +286,14 @@ async def s3_stream_response(
                 raise
 
 
+class RuntimeSetupResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    return_code: int
+    user_safe_error_message: str
+    sagemaker_shim_version: str
+
+
 class InferenceIO(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -308,6 +318,8 @@ class InferenceResult(BaseModel):
 
     pk: str
     return_code: int
+    user_safe_error_message: str
+    user_process_last_stderr_lines: list[str]
     exec_duration: timedelta | None
     invoke_duration: timedelta | None
     outputs: list[InferenceIO]
@@ -355,8 +367,6 @@ class Executor(ABC):
         self._stdout = []
         self._stderr = []
 
-        self._inference_result_skipped = False
-
         self.__s3_client = None
 
     def provision(self, *, input_civs, input_prefixes):
@@ -379,18 +389,15 @@ class Executor(ABC):
         """Create ComponentInterfaceValues from the output interfaces"""
         outputs = []
 
-        with transaction.atomic():
-            # Atomic block required as create_instance needs to
-            # create interfaces in order to store the files
-            for interface in output_interfaces:
-                if interface.is_image_kind:
-                    res = self._create_images_result(interface=interface)
-                elif interface.is_json_kind:
-                    res = self._create_json_result(interface=interface)
-                else:
-                    res = self._create_file_result(interface=interface)
+        for interface in output_interfaces:
+            if interface.is_image_kind:
+                res = self._create_images_result(interface=interface)
+            elif interface.is_json_kind:
+                res = self._create_json_result(interface=interface)
+            else:
+                res = self._create_file_result(interface=interface)
 
-                outputs.append(res)
+            outputs.append(res)
 
         return outputs
 
@@ -466,6 +473,8 @@ class Executor(ABC):
                 self._signing_key
             ).decode("ascii"),
             "GRAND_CHALLENGE_COMPONENT_API_METHOD": self._api_method,
+            "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_PREFIX": self._io_prefix,
+            "GRAND_CHALLENGE_COMPONENT_RUNTIME_OUTPUT_BUCKET_NAME": self._output_bucket_name,
         }
 
         if self._algorithm_model:
@@ -515,6 +524,12 @@ class Executor(ABC):
     @property
     def _invocation_key(self):
         return safe_join(self._invocation_prefix, "invocation.json")
+
+    @property
+    def runtime_setup_result_key(self):
+        return safe_join(
+            self._io_prefix, ".sagemaker_shim", "runtime_setup_result.json"
+        )
 
     @property
     def _inference_result_key(self):
@@ -819,16 +834,16 @@ class Executor(ABC):
             key=key,
         )
 
-    def _get_inference_result(self):
+    def _get_and_validate_object(self, *, bucket_name, object_key, model):
         try:
             response = self._s3_client.get_object(
-                Bucket=self._output_bucket_name,
-                Key=self._inference_result_key,
+                Bucket=bucket_name,
+                Key=object_key,
             )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] in {"404", "NoSuchKey"}:
                 raise UncleanExit(
-                    "The invocation request did not return a result"
+                    f"Required object {object_key} was not found"
                 ) from error
             else:
                 raise
@@ -843,33 +858,64 @@ class Executor(ABC):
         if not secrets.compare_digest(
             body_signature_hmac_sha256, signature_hmac_sha256
         ):
-            logger.error(
-                "The invocation response object has been tampered with"
-            )
+            logger.error(f"{object_key} has been tampered with")
             raise ComponentException(
-                "The invocation response object has been tampered with"
+                "A required output file has been tampered with"
             )
 
         try:
-            inference_result = InferenceResult.model_validate_json(
-                json_data=body
-            )
+            validated_result = model.model_validate_json(json_data=body)
         except pydantic.ValidationError as error:
             logger.error(error, exc_info=True)
-            raise ComponentException(
-                "The invocation request did not return valid json"
-            )
+            raise ComponentException("A required output file was not valid")
 
-        logger.info(f"{inference_result=}")
+        logger.info(f"{validated_result=}")
+
+        return validated_result
+
+    def _get_runtime_setup_result(self):
+        runtime_setup_result = self._get_and_validate_object(
+            bucket_name=self._output_bucket_name,
+            object_key=self.runtime_setup_result_key,
+            model=RuntimeSetupResult,
+        )
+
+        return runtime_setup_result
+
+    def _get_inference_result(self):
+        inference_result = self._get_and_validate_object(
+            bucket_name=self._output_bucket_name,
+            object_key=self._inference_result_key,
+            model=InferenceResult,
+        )
 
         if inference_result.pk != self._job_id:
             raise RuntimeError("Wrong result key for this job")
 
         return inference_result
 
+    @staticmethod
+    def _get_error_message(*, inference_result):
+        error_message = inference_result.user_safe_error_message
+        if not error_message:
+            if inference_result.user_process_last_stderr_lines:
+                for line in reversed(
+                    inference_result.user_process_last_stderr_lines
+                ):
+                    error_message = user_error(line)
+                    if error_message != NO_ERRORS_IN_LOG_MESSAGE:
+                        break
+            else:
+                error_message = NO_ERRORS_IN_LOG_MESSAGE
+        return error_message
+
     def _handle_completed_job(self):
-        if self._inference_result_skipped:
-            raise ComponentException(user_error(self.stderr))
+        runtime_setup_result = self._get_runtime_setup_result()
+
+        if runtime_setup_result.return_code != 0:
+            raise ComponentException(
+                runtime_setup_result.user_safe_error_message
+            )
 
         inference_result = self._get_inference_result()
 
@@ -884,7 +930,9 @@ class Executor(ABC):
         elif users_process_exit_code == 137:
             raise ComponentException(SystemErrorMessages.MEMORY_LIMIT_EXCEEDED)
         else:
-            raise ComponentException(user_error(self.stderr))
+            raise ComponentException(
+                self._get_error_message(inference_result=inference_result)
+            )
 
     def _create_images_result(self, *, interface):
         prefix = safe_join(self._io_prefix, interface.relative_path)

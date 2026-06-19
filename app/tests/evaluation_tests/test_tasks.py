@@ -19,7 +19,7 @@ from grandchallenge.algorithms.models import Job
 from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.components.tasks import (
     push_container_image,
-    validate_docker_image,
+    validate_container_image,
 )
 from grandchallenge.core.error_messages import EvaluationErrorMessages
 from grandchallenge.evaluation.models import Evaluation, Method, Submission
@@ -67,9 +67,6 @@ def test_submission_evaluation(
     django_capture_on_commit_callbacks,
 ):
     settings.LAMBDA_TASKS_EAGER = True
-
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     # Upload a submission and create an evaluation
     phase = PhaseFactory(
@@ -181,8 +178,12 @@ def test_submission_evaluation(
 
 
 @pytest.mark.django_db
-def test_method_validation(invoke_container_image):
+def test_method_validation(
+    invoke_container_image, django_capture_on_commit_callbacks, settings
+):
     """The validator should set the correct sha256 and set the ready bit."""
+    settings.LAMBDA_TASKS_EAGER = True
+
     method = MethodFactory(image__from_path=invoke_container_image)
 
     original_sha256 = method.image_sha256
@@ -190,12 +191,13 @@ def test_method_validation(invoke_container_image):
     assert method.is_in_registry is False
     assert method.can_execute is False
 
-    validate_docker_image(
-        pk=method.pk,
-        app_label=method._meta.app_label,
-        model_name=method._meta.model_name,
-        mark_as_desired=False,
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        validate_container_image(
+            pk=method.pk,
+            app_label=method._meta.app_label,
+            model_name=method._meta.model_name,
+            mark_as_desired=False,
+        )
 
     # The method factory fakes the sha256 on creation
     method = Method.objects.get(pk=method.pk)
@@ -298,7 +300,7 @@ def test_method_validation_two_images(two_invoke_container_image):
     method = MethodFactory(image__from_path=two_invoke_container_image)
     assert method.is_manifest_valid is None
 
-    validate_docker_image(
+    validate_container_image(
         pk=method.pk,
         app_label=method._meta.app_label,
         model_name=method._meta.model_name,
@@ -350,7 +352,7 @@ def test_method_validation_root_dockerfile(invoke_container_image_as_root):
     method = MethodFactory(image__from_path=invoke_container_image_as_root)
     assert method.is_manifest_valid is None
 
-    validate_docker_image(
+    validate_container_image(
         pk=method.pk,
         app_label=method._meta.app_label,
         model_name=method._meta.model_name,
@@ -368,7 +370,7 @@ def test_method_validation_not_a_docker_tar(submission_file):
     method = MethodFactory(image__from_path=submission_file)
     assert method.is_manifest_valid is None
 
-    validate_docker_image(
+    validate_container_image(
         pk=method.pk,
         app_label=method._meta.app_label,
         model_name=method._meta.model_name,
@@ -670,9 +672,6 @@ def test_non_zip_submission_failure(
     submission_file,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     phase = PhaseFactory(
@@ -741,9 +740,6 @@ def test_evaluation_notifications(
     django_capture_on_commit_callbacks,
 ):
     settings.LAMBDA_TASKS_EAGER = True
-
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     # Try to upload a submission
     phase = PhaseFactory(
@@ -869,10 +865,7 @@ def test_cache_lock():
 
 
 @pytest.mark.django_db
-def test_cancel_external_evaluations_past_timeout(settings):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
+def test_cancel_external_evaluations_past_timeout():
     challenge = ChallengeFactory()
     participant = UserFactory()
     admin = challenge.admins_group.user_set.get()

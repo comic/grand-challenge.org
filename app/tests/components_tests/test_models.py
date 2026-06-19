@@ -5,9 +5,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, call
 
 import pytest
-from billiard.exceptions import (
-    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
-)
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.files.base import ContentFile
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
@@ -1402,10 +1399,10 @@ def test_one_job_with_image(django_capture_on_commit_callbacks):
         ai = AlgorithmImageFactory()
 
     assert len(callbacks) == 1
-    assert "grandchallenge.components.tasks.validate_docker_image" in str(
+    assert "grandchallenge.components.tasks.validate_container_image" in str(
         callbacks[0]
     )
-    assert ai.import_status == ImportStatusChoices.QUEUED
+    assert ai.import_status == ImportStatusChoices.STARTED
 
 
 @pytest.mark.django_db
@@ -1417,10 +1414,10 @@ def test_can_change_from_empty(django_capture_on_commit_callbacks):
         ai.save()
 
     assert len(callbacks) == 1
-    assert "grandchallenge.components.tasks.validate_docker_image" in str(
+    assert "grandchallenge.components.tasks.validate_container_image" in str(
         callbacks[0]
     )
-    assert ai.import_status == ImportStatusChoices.QUEUED
+    assert ai.import_status == ImportStatusChoices.STARTED
 
 
 @pytest.mark.django_db
@@ -1454,8 +1451,7 @@ def test_remove_container_image_from_registry(
     django_capture_on_commit_callbacks,
     mocker,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     mock_remove_tag_from_registry = mocker.patch(
         # remove_tag_from_registry is only implemented for ECR
@@ -1520,8 +1516,7 @@ def test_delete_container_image(
     django_capture_on_commit_callbacks,
     mocker,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     mock_remove_tag_from_registry = mocker.patch(
         # remove_tag_from_registry is only implemented for ECR
@@ -1667,9 +1662,6 @@ def test_correct_storage_set(factory, expected_storage, download_context):
 def test_displacement_field_validation(
     image, succeeds, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     settings.LAMBDA_TASKS_EAGER = True
 
     image_paths = [Path(__file__).parent.absolute() / "resources" / image]
@@ -1823,11 +1815,6 @@ def test_component_interface_value_manager():
         # Ensure all resource errors are covered
         (
             MemoryError,
-            ValidationError,
-            "The file was too large",
-        ),
-        (
-            CelerySoftTimeLimitExceeded,
             ValidationError,
             "The file was too large",
         ),

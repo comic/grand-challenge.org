@@ -101,10 +101,10 @@ def create_algorithm_jobs(
     max_jobs
         The maximum number of jobs to schedule
     task_on_success
-        Celery task that is run on job success. This must be able
+        Lambda task that is run on job success. This must be able
         to handle being called more than once, and in parallel.
     task_on_failure
-        Celery task that is run on job failure
+        Lambda task that is run on job failure
     job_utilization_phase
         The phase that should be assigned for utilization tracking
     job_utilization_challenge

@@ -476,7 +476,7 @@ class Session(FieldChangeMixin, UUIDModel):
         """
         Returns
         -------
-            The kwargs that need to be passed to celery to get this object
+            The kwargs that need to be passed to the Lambda task to get this object
         """
         return {
             "app_label": self._meta.app_label,

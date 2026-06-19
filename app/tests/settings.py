@@ -27,9 +27,6 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 ROOT_URLCONF = "tests.urls.root"
 
-CELERY_BROKER = "memory"
-CELERY_BROKER_URL = "memory://"
-
 # Never use local workers in tests, use eager mode per-test if necessary
 LAMBDA_TASKS_LOCAL_WORKERS = 0
 
