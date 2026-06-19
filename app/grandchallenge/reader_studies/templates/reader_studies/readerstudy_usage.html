@@ -30,11 +30,11 @@
             </tr>
             <tr>
                 <th>Remaining</th>
-                <td>{{ credits_remaining|default:"Unlimited" }}</td>
+                <td>{{ credits_remaining|default_if_none:"Unlimited" }}</td>
             </tr>
             <tr>
                 <th>Total</th>
-                <td>{{ object.max_credits|default:"Unlimited" }}</td>
+                <td>{{ object.max_credits|default_if_none:"Unlimited" }}</td>
             </tr>
         </tbody>
     </table>
