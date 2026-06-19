@@ -502,6 +502,14 @@ class Invoice(models.Model, FieldChangeMixin):
         else:
             return None
 
+    @cached_property
+    def percent_compute_budget_remaining(self):
+        consumed = self.percent_compute_budget_consumed
+        if consumed is not None:
+            return 100 - consumed
+        else:
+            return None
+
     def clean(self):
         if (
             not self._state.adding

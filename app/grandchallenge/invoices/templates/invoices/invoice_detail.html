@@ -92,7 +92,7 @@
     {% if not object.is_expired %}
         <hr>
 
-        <h3 class="mt-3">Compute Costs</h3>
+        <h3 class="mt-3">Remaining Compute Budget</h3>
 
         {% if not object.approved_compute_cost_euro_millicents %}
             <span class="text-muted">
@@ -100,26 +100,23 @@
             </span>
         {% else %}
 
-        <dl class="mt-1">
-            <dt>Compute budget spent</dt>
-            <dd>
-                <div class="progress my-1">
-                    <div
-                    class="progress-bar {% if object.percent_compute_budget_consumed >= 100 %}bg-danger{% elif object.percent_compute_budget_consumed >= 70 %}bg-warning{% else %}bg-success{% endif %}"
-                    style="width: {{ object.percent_compute_budget_consumed }}%"
-                    >
-                        {{ object.percent_compute_budget_consumed }}%
-                    </div>
-                </div>
-            </dd>
+        <div class="d-flex align-items-center gap-3">
+            <div class="progress flex-grow-1" style="height: 4px">
+                <div
+                    class="progress-bar {% if object.percent_compute_budget_remaining <= 10 %}bg-danger{% elif object.percent_compute_budget_remaining <= 30 %}bg-warning{% else %}bg-success{% endif %}"
+                    style="width: {{ object.percent_compute_budget_remaining }}%"
+                ></div>
 
-            <dt>Compute budget used</dt>
-            <dd>{{ object.consumed_compute_cost_euro_millicents|millicents_to_euro }}</dd>
+            </div>
 
-            <dt>Compute budget remaining</dt>
-            <dd>{{ object.available_compute_cost_euro_millicents|millicents_to_euro }}</dd>
+            <span class="{% if object.percent_compute_budget_remaining <= 10 %}text-danger{% elif object.percent_compute_budget_remaining <= 30 %}text-warning{% else %}text-success{% endif %} pl-1">
+                {{ object.percent_compute_budget_remaining }}%
+            </span>
+        </div>
 
-        </dl>
+        <strong class="{% if object.available_compute_cost_euro_millicents == 0 %}text-danger{% endif %}">{{ object.available_compute_cost_euro_millicents|millicents_to_euro }}</strong>
+        <span class="text-muted">/ {{ object.approved_compute_cost_euro_millicents|millicents_to_euro }} total</span>
+
         {% endif %}
     {% endif %}
 {% endblock %}

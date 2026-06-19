@@ -828,6 +828,14 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         else:
             return None
 
+    @cached_property
+    def percent_active_compute_budget_remaining(self):
+        consumed = self.percent_active_compute_budget_consumed
+        if consumed is not None:
+            return 100 - consumed
+        else:
+            return None
+
     @property
     def utilization_invoice(self):
         prioritized_invoices = (
