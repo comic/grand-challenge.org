@@ -108,21 +108,21 @@
         {% else %}
 
         <dl>
-            <dt>Remaining proportion</dt>
+            <dt>Available proportion</dt>
             <dd>
                 <span class="pr-4 {% if object.percent_compute_budget_remaining <= 10 %}text-danger{% elif object.percent_compute_budget_remaining <= 30 %}text-warning{% else %}text-success{% endif %} pl-1">
                     {{ object.percent_compute_budget_remaining }}%
                 </span>
             </dd>
 
-            <dt>Remaining amount</dt>
+            <dt>Available amount</dt>
             <dd>
                 <span class="{% if object.percent_compute_budget_remaining == 0 %}text-danger{% endif %}">
                     {{ object.available_compute_cost_euro_millicents|millicents_to_euro }}
                 </span>
             </dd>
 
-            <dt>Total amount</dt>
+            <dt>Total reserved amount</dt>
             <dd>
                 {{ object.approved_compute_cost_euro_millicents|millicents_to_euro }}
             </dd>

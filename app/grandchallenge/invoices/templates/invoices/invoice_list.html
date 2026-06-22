@@ -60,7 +60,7 @@
                     <th>Due on</th>
                     <th>Status</th>
                     <th>Total<br>amount</th>
-                    <th>Remaining</th>
+                    <th>Available</th>
                 </tr>
             </thead>
             <tbody>
@@ -109,21 +109,21 @@
 
 
     <dl>
-        <dt>Remaining proportion</dt>
+        <dt>Available proportion</dt>
         <dd>
             <span class="{% if challenge.percent_active_compute_budget_remaining <= 10 %}text-danger{% elif challenge.percent_active_compute_budget_remaining <= 30 %}text-warning{% else %}text-success{% endif %} pl-1">
                 {{ challenge.percent_active_compute_budget_remaining }}%
             </span>
         </dd>
 
-        <dt>Remaining amount</dt>
+        <dt>Available amount</dt>
         <dd>
             <span class="{% if challenge.percent_active_compute_budget_remaining == 0 %}text-danger{% endif %}">
                 {{ challenge.active_available_compute_cost_euro_millicents|millicents_to_euro }}
             </span>
         </dd>
 
-        <dt>Total amount</dt>
+        <dt>Total reserved amount</dt>
         <dd>
             {{ challenge.active_approved_compute_cost_euro_millicents|millicents_to_euro }}
         </dd>
