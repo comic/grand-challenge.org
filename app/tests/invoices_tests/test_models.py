@@ -545,14 +545,14 @@ def test_postpaid_properties_empty_if_no_costs_incurred():
 @pytest.mark.django_db
 def test_postpaid_suggested_total_above_minimum_increment():
     challenge = ChallengeFactory(
-        size_in_storage=300 * 1024**3,
-        size_in_registry=700 * 1024**3,
+        size_in_storage=200 * 1024**3,
+        size_in_registry=300 * 1024**3,
     )
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=10,
         storage_costs_euros=10,
-        compute_cost_euro_millicents=0,
+        compute_cost_euro_millicents=800 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=PaymentStatusChoices.PAID,
     )
@@ -578,7 +578,7 @@ def test_postpaid_suggested_total_above_minimum_increment():
 
     assert (
         round(postpaid_invoice.total_unpaid_costs_euro_millicents / 1000 / 100)
-        == 662
+        == 326
     )
     assert (
         round(
@@ -586,16 +586,16 @@ def test_postpaid_suggested_total_above_minimum_increment():
             / 1000
             / 100
         )
-        == 750
+        == 500
     )
-    assert round(postpaid_invoice.surplus_euro_millicents / 1000 / 100) == 88
+    assert round(postpaid_invoice.surplus_euro_millicents / 1000 / 100) == 174
     assert (
         round(
             postpaid_invoice.suggested_compute_cost_euro_millicents
             / 1000
             / 100
         )
-        == 12
+        == 123
     )
     assert (
         round(
@@ -603,7 +603,7 @@ def test_postpaid_suggested_total_above_minimum_increment():
             / 1000
             / 100
         )
-        == 738
+        == 377
     )
 
 
