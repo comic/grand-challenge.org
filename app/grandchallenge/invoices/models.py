@@ -509,7 +509,7 @@ class Invoice(models.Model, FieldChangeMixin):
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
         ):
-            return None
+            return NotImplementedError
         else:
             return (
                 self.challenge.unpaid_storage_costs_euro_millicents
@@ -522,7 +522,7 @@ class Invoice(models.Model, FieldChangeMixin):
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
         ):
-            return None
+            return NotImplementedError
         elif self.total_unpaid_costs_euro_millicents > 0:
             return (
                 math.ceil(
@@ -540,7 +540,7 @@ class Invoice(models.Model, FieldChangeMixin):
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
         ):
-            return None
+            return NotImplementedError
         elif self.total_unpaid_costs_euro_millicents > 0:
             return (
                 settings.CHALLENGE_POSTPAID_INVOICE_ROUNDING_INCREMENT
@@ -555,7 +555,7 @@ class Invoice(models.Model, FieldChangeMixin):
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
         ):
-            return None
+            return NotImplementedError
         else:
             return round(
                 (
@@ -572,7 +572,7 @@ class Invoice(models.Model, FieldChangeMixin):
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
         ):
-            return None
+            return NotImplementedError
         else:
             return (
                 self.suggested_total_postpaid_amount_euro_millicents
