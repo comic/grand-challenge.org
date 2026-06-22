@@ -866,7 +866,11 @@ def provision_job(
     executor = job.get_executor(backend=backend)
 
     if not job.inputs_complete or job.status not in [job.PENDING, job.RETRY]:
-        raise RuntimeError("Job is not ready for provisioning")
+        if job.status == job.CANCELLED:
+            # Nothing to do
+            return
+        else:
+            raise RuntimeError("Job is not ready for provisioning")
 
     try:
         executor.provision(
