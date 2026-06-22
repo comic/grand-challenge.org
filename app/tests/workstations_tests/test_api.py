@@ -179,7 +179,7 @@ def test_session_keep_alive_limit(client, settings):
 
     assert s.maximum_duration == timedelta(minutes=10)
 
-    s.created = now() - timedelta(days=1)
+    s.claimed_at = now() - timedelta(days=1)
     s.save()
 
     response = get_view_for_user(

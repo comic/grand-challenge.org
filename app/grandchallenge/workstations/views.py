@@ -72,7 +72,7 @@ class SessionViewSet(ReadOnlyModelViewSet):
         """Increase the maximum duration of the session, up to the limit."""
         session = self.get_object()
 
-        new_duration = now() + timedelta(minutes=5) - session.created
+        new_duration = now() + timedelta(minutes=5) - session.claimed_at
         duration_limit = timedelta(
             seconds=settings.WORKSTATIONS_SESSION_DURATION_LIMIT
         )
