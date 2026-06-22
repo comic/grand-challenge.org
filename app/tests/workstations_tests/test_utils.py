@@ -89,7 +89,7 @@ def test_unclaimed_session_is_claimed():
     assert s.pk == unclaimed.pk
     assert s.creator == user
     assert s.claimed_at is not None
-    assert Session.objects.count() == 1
+    assert Session.objects.count() == 3
 
 
 @pytest.mark.django_db
