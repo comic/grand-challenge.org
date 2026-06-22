@@ -784,20 +784,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
 
     @cached_property
-    def approved_storage_cost_euro_millicents(self):
-        return sum(
-            invoice.approved_storage_cost_euro_millicents
-            for invoice in self.invoices.all()
-        )
-
-    @cached_property
-    def active_approved_storage_cost_euro_millicents(self):
-        return sum(
-            invoice.approved_storage_cost_euro_millicents
-            for invoice in self.active_invoices
-        )
-
-    @cached_property
     def available_compute_cost_euro_millicents(self):
         return sum(
             invoice.available_compute_cost_euro_millicents
@@ -839,6 +825,14 @@ class Challenge(ChallengeBase, FieldChangeMixin):
 
         if approved > 0:
             return int(100 * consumed / approved)
+        else:
+            return None
+
+    @cached_property
+    def percent_active_compute_budget_remaining(self):
+        consumed = self.percent_active_compute_budget_consumed
+        if consumed is not None:
+            return 100 - consumed
         else:
             return None
 

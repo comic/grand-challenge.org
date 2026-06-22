@@ -479,7 +479,7 @@ def test_create_page_with_same_title(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_challenge_statistics_page_permissions(client):
+def test_challenge_statistics_page_site_admin_sections(client):
     challenge = ChallengeFactory()
     user = UserFactory()
 
@@ -490,7 +490,13 @@ def test_challenge_statistics_page_permissions(client):
         challenge=challenge,
     )
     assert response.status_code == 200
-    assert "Challenge Costs" not in response.rendered_content
+    assert (
+        "Restricted: Site Administrators Only" not in response.rendered_content
+    )
+    assert (
+        "Restricted: Challenge Administrators Only"
+        not in response.rendered_content
+    )
 
     user.is_staff = True
     user.save()
@@ -503,7 +509,44 @@ def test_challenge_statistics_page_permissions(client):
         challenge=challenge,
     )
     assert response.status_code == 200
-    assert "Challenge Costs" in response.rendered_content
+    assert "Restricted: Site Administrators Only" in response.rendered_content
+    assert (
+        "Restricted: Challenge Administrators Only"
+        in response.rendered_content
+    )
+
+
+@pytest.mark.django_db
+def test_challenge_statistics_page_organizer_section(client):
+    challenge = ChallengeFactory()
+    user = UserFactory()
+
+    response = get_view_for_user(
+        viewname="pages:statistics",
+        client=client,
+        user=user,
+        challenge=challenge,
+    )
+    assert response.status_code == 200
+    assert (
+        "Restricted: Challenge Administrators Only"
+        not in response.rendered_content
+    )
+
+    challenge.add_admin(user)
+
+    activate_2fa(user=user)
+    response = get_view_for_user(
+        viewname="pages:statistics",
+        client=client,
+        user=user,
+        challenge=challenge,
+    )
+    assert response.status_code == 200
+    assert (
+        "Restricted: Challenge Administrators Only"
+        in response.rendered_content
+    )
 
 
 @pytest.mark.django_db
