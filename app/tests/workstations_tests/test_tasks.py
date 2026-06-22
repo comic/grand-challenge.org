@@ -3,6 +3,7 @@ from datetime import timedelta
 
 import pytest
 from botocore.stub import Stubber
+from django.utils.timezone import now
 
 from grandchallenge.components.backends.amazon_ecs import ECSTaskOrchestrator
 from grandchallenge.components.backends.exceptions import RetryStep
@@ -12,8 +13,9 @@ from grandchallenge.components.tasks import (
     stop_service,
     update_service,
 )
-from grandchallenge.workstations.models import Session
-from tests.factories import SessionFactory
+from grandchallenge.workstations.models import Session, Workstation
+from grandchallenge.workstations.tasks import consolidate_unclaimed_sessions
+from tests.factories import SessionFactory, WorkstationImageFactory
 
 
 @pytest.mark.django_db
@@ -373,3 +375,288 @@ def test_session_cleanup(django_capture_on_commit_callbacks):
     assert repr(callbacks[0]) == (
         f"<bound method SQSLambdaTask._execute of SQSLambdaTask(message=SQSLambdaTaskMessage(task_name='grandchallenge.components.tasks.stop_service', kwargs={{'app_label': 'workstations', 'model_name': 'session', 'pk': UUID('{session_to_stop.pk}')}}, n_retries=0), delay=0, queue='default')>"
     )
+
+
+@pytest.fixture
+def default_workstation_image(settings):
+    settings.WORKSTATIONS_ACTIVE_REGIONS = ["eu-central-1"]
+    settings.WORKSTATIONS_NUMBER_UNCLAIMED_SESSIONS = 3
+    settings.WORKSTATIONS_MAXIMUM_SESSIONS = 10
+    settings.COMPONENTS_SERVICE_MAXIMUM_UNCLAIMED_HOURS = 8
+
+    workstation = Workstation.objects.get(
+        slug=settings.DEFAULT_WORKSTATION_SLUG
+    )
+    image = WorkstationImageFactory(
+        workstation=workstation,
+        image=None,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    return image
+
+
+def _stop_task_repr(*, pk):
+    return (
+        f"<bound method SQSLambdaTask._execute of SQSLambdaTask("
+        f"message=SQSLambdaTaskMessage("
+        f"task_name='grandchallenge.components.tasks.stop_service', "
+        f"kwargs={{'app_label': 'workstations', 'model_name': 'session', 'pk': UUID('{pk}')}}, "
+        f"n_retries=0), delay=0, queue='default')>"
+    )
+
+
+def _start_task_repr(*, pk):
+    return (
+        f"<bound method SQSLambdaTask._execute of SQSLambdaTask("
+        f"message=SQSLambdaTaskMessage("
+        f"task_name='grandchallenge.components.tasks.start_service', "
+        f"kwargs={{'app_label': 'workstations', 'model_name': 'session', 'pk': UUID('{pk}')}}, "
+        f"n_retries=0), delay=0, queue='default')>"
+    )
+
+
+@pytest.mark.django_db
+class TestConsolidateUnclaimedSessions:
+    def test_no_active_image(self, settings):
+        settings.WORKSTATIONS_ACTIVE_REGIONS = ["eu-central-1"]
+
+        result = consolidate_unclaimed_sessions()
+
+        assert result == {"n_sessions_stopped": 0, "n_sessions_started": 0}
+        assert Session.objects.count() == 0
+
+    def test_starts_sessions_to_fill_unclaimed_target(
+        self,
+        default_workstation_image,
+        django_capture_on_commit_callbacks,
+    ):
+        with django_capture_on_commit_callbacks() as callbacks:
+            result = consolidate_unclaimed_sessions()
+
+        assert result == {"n_sessions_stopped": 0, "n_sessions_started": 3}
+
+        sessions = Session.objects.active().filter(
+            claimed_at=None,
+            region="eu-central-1",
+            workstation_image=default_workstation_image,
+        )
+        assert sessions.count() == 3
+
+        # Each new session triggers a start_service task
+        assert len(callbacks) == 3
+        for session, callback in zip(sessions, callbacks, strict=True):
+            assert repr(callback) == _start_task_repr(pk=session.pk)
+
+    def test_does_not_start_sessions_when_target_met(
+        self,
+        default_workstation_image,
+        django_capture_on_commit_callbacks,
+    ):
+        with django_capture_on_commit_callbacks():
+            for _ in range(3):
+                Session.objects.create(
+                    workstation_image=default_workstation_image,
+                    region="eu-central-1",
+                )
+
+        with django_capture_on_commit_callbacks() as callbacks:
+            result = consolidate_unclaimed_sessions()
+
+        assert result == {"n_sessions_stopped": 0, "n_sessions_started": 0}
+        assert len(callbacks) == 0
+        assert Session.objects.active().filter(claimed_at=None).count() == 3
+
+    def test_respects_maximum_sessions_cap(
+        self,
+        settings,
+        default_workstation_image,
+        django_capture_on_commit_callbacks,
+    ):
+        settings.WORKSTATIONS_MAXIMUM_SESSIONS = 2
+
+        with django_capture_on_commit_callbacks() as callbacks:
+            result = consolidate_unclaimed_sessions()
+
+        assert result == {"n_sessions_stopped": 0, "n_sessions_started": 2}
+        assert Session.objects.active().filter(claimed_at=None).count() == 2
+        assert len(callbacks) == 2
+
+    def test_stops_expired_unclaimed_sessions(
+        self,
+        default_workstation_image,
+        django_capture_on_commit_callbacks,
+    ):
+        with django_capture_on_commit_callbacks():
+            old_session = Session.objects.create(
+                workstation_image=default_workstation_image,
+                region="eu-central-1",
+            )
+
+        Session.objects.filter(pk=old_session.pk).update(
+            created=now() - timedelta(hours=9)
+        )
+
+        with django_capture_on_commit_callbacks() as callbacks:
+            result = consolidate_unclaimed_sessions()
+
+        assert result == {"n_sessions_stopped": 1, "n_sessions_started": 3}
+
+        # 1 stop + 3 starts
+        callback_reprs = [repr(c) for c in callbacks]
+        assert _stop_task_repr(pk=old_session.pk) in callback_reprs
+
+        new_sessions = (
+            Session.objects.active()
+            .filter(
+                claimed_at=None, workstation_image=default_workstation_image
+            )
+            .exclude(pk=old_session.pk)
+        )
+        assert new_sessions.count() == 3
+        for session in new_sessions:
+            assert _start_task_repr(pk=session.pk) in callback_reprs
+
+    def test_stops_unclaimed_sessions_with_wrong_image(
+        self,
+        default_workstation_image,
+        django_capture_on_commit_callbacks,
+    ):
+        other_image = WorkstationImageFactory(
+            image=None,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=False,
+        )
+
+        with django_capture_on_commit_callbacks():
+            wrong_session = Session.objects.create(
+                workstation_image=other_image,
+                region="eu-central-1",
+            )
+
+        with django_capture_on_commit_callbacks() as callbacks:
+            result = consolidate_unclaimed_sessions()
+
+        assert result == {"n_sessions_stopped": 1, "n_sessions_started": 3}
+
+        callback_reprs = [repr(c) for c in callbacks]
+        assert _stop_task_repr(pk=wrong_session.pk) in callback_reprs
+
+        new_sessions = Session.objects.active().filter(
+            claimed_at=None, workstation_image=default_workstation_image
+        )
+        assert new_sessions.count() == 3
+
+    def test_does_not_stop_claimed_sessions(
+        self,
+        default_workstation_image,
+        django_capture_on_commit_callbacks,
+    ):
+        with django_capture_on_commit_callbacks():
+            claimed_session = SessionFactory(
+                workstation_image=default_workstation_image,
+                status=Session.RUNNING,
+            )
+
+        with django_capture_on_commit_callbacks() as callbacks:
+            result = consolidate_unclaimed_sessions()
+
+        assert result["n_sessions_stopped"] == 0
+
+        callback_reprs = [repr(c) for c in callbacks]
+        assert _stop_task_repr(pk=claimed_session.pk) not in callback_reprs
+
+        # Claimed session still active
+        claimed_session.refresh_from_db()
+        assert claimed_session.status == Session.RUNNING
+
+    def test_multiple_regions(
+        self,
+        settings,
+        default_workstation_image,
+        django_capture_on_commit_callbacks,
+    ):
+        settings.WORKSTATIONS_ACTIVE_REGIONS = ["eu-central-1", "us-east-1"]
+
+        with django_capture_on_commit_callbacks() as callbacks:
+            result = consolidate_unclaimed_sessions()
+
+        assert result == {"n_sessions_stopped": 0, "n_sessions_started": 6}
+        assert len(callbacks) == 6
+        assert (
+            Session.objects.active()
+            .filter(claimed_at=None, region="eu-central-1")
+            .count()
+            == 3
+        )
+        assert (
+            Session.objects.active()
+            .filter(claimed_at=None, region="us-east-1")
+            .count()
+            == 3
+        )
+
+    def test_maximum_sessions_is_per_region(
+        self,
+        settings,
+        default_workstation_image,
+        django_capture_on_commit_callbacks,
+    ):
+        settings.WORKSTATIONS_ACTIVE_REGIONS = ["eu-central-1", "us-east-1"]
+        settings.WORKSTATIONS_MAXIMUM_SESSIONS = 2
+
+        with django_capture_on_commit_callbacks() as callbacks:
+            result = consolidate_unclaimed_sessions()
+
+        assert result == {"n_sessions_stopped": 0, "n_sessions_started": 4}
+        assert len(callbacks) == 4
+        assert (
+            Session.objects.active()
+            .filter(claimed_at=None, region="eu-central-1")
+            .count()
+            == 2
+        )
+        assert (
+            Session.objects.active()
+            .filter(claimed_at=None, region="us-east-1")
+            .count()
+            == 2
+        )
+
+    def test_claimed_sessions_count_toward_maximum(
+        self,
+        settings,
+        default_workstation_image,
+        django_capture_on_commit_callbacks,
+    ):
+        settings.WORKSTATIONS_MAXIMUM_SESSIONS = 4
+
+        with django_capture_on_commit_callbacks():
+            SessionFactory(
+                workstation_image=default_workstation_image,
+                status=Session.RUNNING,
+                region="eu-central-1",
+            )
+            SessionFactory(
+                workstation_image=default_workstation_image,
+                status=Session.RUNNING,
+                region="eu-central-1",
+            )
+
+        with django_capture_on_commit_callbacks() as callbacks:
+            result = consolidate_unclaimed_sessions()
+
+        assert result == {"n_sessions_stopped": 0, "n_sessions_started": 2}
+        assert len(callbacks) == 2
+        # 2 claimed + 2 new unclaimed = 4 total active
+        assert (
+            Session.objects.active().filter(region="eu-central-1").count() == 4
+        )
+        assert (
+            Session.objects.active()
+            .filter(claimed_at=None, region="eu-central-1")
+            .count()
+            == 2
+        )
