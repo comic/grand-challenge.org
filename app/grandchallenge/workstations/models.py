@@ -441,7 +441,10 @@ class Session(FieldChangeMixin, UUIDModel):
         editable=False,
     )
     creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.SET_NULL,
+        blank=True,
     )
     claimed_at = models.DateTimeField(null=True, editable=False)
     workstation_image = models.ForeignKey(
