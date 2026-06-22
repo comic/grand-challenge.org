@@ -415,9 +415,7 @@ class Invoice(models.Model, FieldChangeMixin):
         payment_type = self.payment_type
         payment_status = self.payment_status
 
-        if self.is_expired:
-            return "Expired"
-        elif payment_type == PaymentTypeChoices.PREPAID and payment_status in (
+        if payment_type == PaymentTypeChoices.PREPAID and payment_status in (
             PaymentStatusChoices.INITIALIZED,
             PaymentStatusChoices.REQUESTED,
         ):
@@ -439,7 +437,7 @@ class Invoice(models.Model, FieldChangeMixin):
         payment_type = self.payment_type
         payment_status = self.payment_status
 
-        if payment_status == PaymentStatusChoices.CANCELLED or self.is_expired:
+        if payment_status == PaymentStatusChoices.CANCELLED:
             return "danger"
         elif payment_type == PaymentTypeChoices.COMPLIMENTARY:
             return "success"

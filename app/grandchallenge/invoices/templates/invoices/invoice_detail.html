@@ -25,6 +25,13 @@
 
 {% block content %}
     <h2>Invoice for {{ challenge.short_name }}</h2>
+
+    {% if object.is_expired %}
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i> The budget of this invoice has expired and is no longer available.
+        </div>
+    {% endif %}
+
     <div class="row">
         <div class="col-md-6">
             <dl>

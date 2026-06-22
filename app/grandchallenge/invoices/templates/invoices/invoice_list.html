@@ -53,7 +53,7 @@
         >
             <thead class="thead-light">
                 <tr>
-                <th></th>
+                    <th class="nonSortable"></th>
                     <th class="nonSortable">Number</th>
                     <th>Type</th>
                     <th>Issued on</th>
@@ -87,7 +87,9 @@
                                 {% if invoice.percent_compute_budget_remaining is not None %} {{ invoice.percent_compute_budget_remaining }}% {% else %} - {% endif %}
                             </td>
                         {% else %}
-                            <td data-order="-1">-</td>
+                            <td data-order="-1">
+                                <span class="badge badge-danger">Expired</span>
+                            </td>
                         {% endif %}
                     </tr>
                 {% endfor %}
