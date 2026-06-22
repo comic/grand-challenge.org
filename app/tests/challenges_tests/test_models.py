@@ -31,7 +31,14 @@ from tests.factories import (
     UserFactory,
 )
 from tests.invoices_tests.factories import InvoiceFactory
+from tests.invoices_tests.test_models import euro_millicents_to_euros
 from tests.organizations_tests.factories import OrganizationFactory
+
+
+def refresh_challenge(*, challenge: Challenge) -> Challenge:
+    return Challenge.objects.with_invoices_with_budget_authorization().get(
+        pk=challenge.pk
+    )
 
 
 @pytest.mark.django_db
@@ -943,8 +950,8 @@ def test_budget_properties():
 @pytest.mark.django_db
 def test_total_costs_properties():
     challenge = ChallengeFactory(
-        size_in_storage=30 * 1024**3,
-        size_in_registry=70 * 1024**3,
+        size_in_storage=30 * 1024**3,  # 30 GB
+        size_in_registry=70 * 1024**3,  # 70 GB
     )
     InvoiceFactory(
         challenge=challenge,
@@ -970,36 +977,37 @@ def test_total_costs_properties():
         payment_status=PaymentStatusChoices.CANCELLED,
     )
 
-    challenge = (
-        Challenge.objects.with_invoices_with_budget_authorization().get(
-            pk=challenge.pk
-        )
-    )
+    challenge = refresh_challenge(challenge=challenge)
 
     assert (
-        round(
-            challenge.total_projected_storage_cost_euro_millicents / 1000 / 100
+        euro_millicents_to_euros(
+            euro_millicents=challenge.total_projected_storage_cost_euro_millicents
         )
         == 67
     )
     assert (
-        round(
-            challenge.total_consumed_compute_costs_with_write_off_euro_millicents
-            / 1000
-            / 100
+        euro_millicents_to_euros(
+            euro_millicents=challenge.total_consumed_compute_costs_with_write_off_euro_millicents
         )
         == 10
     )
     assert (
-        round(challenge.total_paid_compute_costs_euro_millicents / 1000 / 100)
+        euro_millicents_to_euros(
+            euro_millicents=challenge.total_paid_compute_costs_euro_millicents
+        )
         == 300
     )
     assert (
-        round(challenge.total_paid_storage_costs_euro_millicents / 1000 / 100)
+        euro_millicents_to_euros(
+            euro_millicents=challenge.total_paid_storage_costs_euro_millicents
+        )
         == 150
     )
     assert (
-        round(challenge.unpaid_storage_costs_euro_millicents / 1000 / 100) == 0
+        euro_millicents_to_euros(
+            euro_millicents=challenge.unpaid_storage_costs_euro_millicents
+        )
+        == 0
     )
     assert round(challenge.compute_cost_share, 2) == 0.13
 
@@ -1007,8 +1015,8 @@ def test_total_costs_properties():
 @pytest.mark.django_db
 def test_total_projected_storage_costs_beyond_prepaid_amount():
     challenge = ChallengeFactory(
-        size_in_storage=30 * 1024**3,
-        size_in_registry=70 * 1024**3,
+        size_in_storage=30 * 1024**3,  # 30 GB
+        size_in_registry=70 * 1024**3,  # 70 GB
     )
     InvoiceFactory(
         challenge=challenge,
@@ -1019,24 +1027,24 @@ def test_total_projected_storage_costs_beyond_prepaid_amount():
         payment_status=PaymentStatusChoices.PAID,
     )
 
-    challenge = (
-        Challenge.objects.with_invoices_with_budget_authorization().get(
-            pk=challenge.pk
-        )
-    )
+    challenge = refresh_challenge(challenge=challenge)
 
     assert (
-        round(
-            challenge.total_projected_storage_cost_euro_millicents / 1000 / 100
+        euro_millicents_to_euros(
+            euro_millicents=challenge.total_projected_storage_cost_euro_millicents
         )
         == 67
     )
     assert (
-        round(challenge.total_paid_storage_costs_euro_millicents / 1000 / 100)
+        euro_millicents_to_euros(
+            euro_millicents=challenge.total_paid_storage_costs_euro_millicents
+        )
         == 1
     )
     assert (
-        round(challenge.unpaid_storage_costs_euro_millicents / 1000 / 100)
+        euro_millicents_to_euros(
+            euro_millicents=challenge.unpaid_storage_costs_euro_millicents
+        )
         == 66
     )
 
@@ -1084,18 +1092,18 @@ def test_postpaid_calculation_ignores_other_nonpaid_invoices(
         payment_type=payment_type,
         payment_status=payment_status,
     )
-    challenge = (
-        Challenge.objects.with_invoices_with_budget_authorization().get(
-            pk=challenge.pk
-        )
-    )
+    challenge = refresh_challenge(challenge=challenge)
 
     assert (
-        round(challenge.total_paid_storage_costs_euro_millicents / 1000 / 100)
+        euro_millicents_to_euros(
+            euro_millicents=challenge.total_paid_storage_costs_euro_millicents
+        )
         == 100
     )
     assert (
-        round(challenge.total_paid_compute_costs_euro_millicents / 1000 / 100)
+        euro_millicents_to_euros(
+            euro_millicents=challenge.total_paid_compute_costs_euro_millicents
+        )
         == 100
     )
 
@@ -1112,9 +1120,9 @@ def test_unpaid_storage_costs_euro_millicents_capped_at_0(
     already_paid_amount, to_be_paid_amount
 ):
     challenge = ChallengeFactory(
-        size_in_storage=30 * 1024**3,
-        size_in_registry=70 * 1024**3,
-    )  # 67 Euro utilized storage
+        size_in_storage=30 * 1024**3,  # 30 GB
+        size_in_registry=70 * 1024**3,  # 70 GB, ~67 EUR total storage
+    )
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=100,
@@ -1130,16 +1138,57 @@ def test_unpaid_storage_costs_euro_millicents_capped_at_0(
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=PaymentStatusChoices.INITIALIZED,
     )
-    challenge = (
-        Challenge.objects.with_invoices_with_budget_authorization().get(
-            pk=challenge.pk
-        )
-    )
+    challenge = refresh_challenge(challenge=challenge)
 
     assert (
-        round(challenge.unpaid_storage_costs_euro_millicents / 1000 / 100)
+        euro_millicents_to_euros(
+            euro_millicents=challenge.unpaid_storage_costs_euro_millicents
+        )
         == to_be_paid_amount
     )
+
+
+@pytest.mark.django_db
+def test_compute_cost_share_none_when_no_utilization():
+    challenge = ChallengeFactory(
+        size_in_storage=0,  # 0 GB
+        size_in_registry=0,  # 0 GB
+    )
+
+    challenge = refresh_challenge(challenge=challenge)
+
+    # No storage and no compute means total utilization is 0
+    assert challenge.compute_cost_share is None
+
+
+@pytest.mark.django_db
+def test_compute_cost_share_ratio():
+    challenge = ChallengeFactory(
+        size_in_storage=50 * 1024**3,  # 50 GB
+        size_in_registry=50 * 1024**3,  # 50 GB
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=100,
+        storage_costs_euros=50,
+        compute_cost_euro_millicents=40 * 1000 * 100,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+
+    challenge = refresh_challenge(challenge=challenge)
+
+    # compute_cost_share = compute / (compute + storage)
+    expected_share = (
+        challenge.total_consumed_compute_costs_with_write_off_euro_millicents
+        / (
+            challenge.total_consumed_compute_costs_with_write_off_euro_millicents
+            + challenge.total_projected_storage_cost_euro_millicents
+        )
+    )
+    assert challenge.compute_cost_share == expected_share
+    # Share should be between 0 and 1
+    assert 0 < challenge.compute_cost_share < 1
 
 
 @pytest.mark.django_db

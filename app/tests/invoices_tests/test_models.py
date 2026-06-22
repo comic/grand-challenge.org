@@ -18,6 +18,23 @@ from tests.factories import ChallengeFactory
 from tests.invoices_tests.factories import InvoiceFactory
 
 
+def euro_millicents_to_euros(*, euro_millicents: int | float) -> int:
+    return round(euro_millicents / 1000 / 100)
+
+
+def refresh_invoice(*, invoice: Invoice) -> Invoice:
+    return (
+        Invoice.objects.prefetch_related(
+            models.Prefetch(
+                "challenge",
+                queryset=Challenge.objects.with_invoices_with_budget_authorization(),
+            )
+        )
+        .with_budget_authorization()
+        .get(pk=invoice.pk)
+    )
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "payment_status, required_field_name, field_value, expected_error_message",
@@ -478,16 +495,7 @@ def test_postpaid_properties_unavailable_for_nonpostpaid_initialized_invoices(
         payment_type=payment_type,
         payment_status=payment_status,
     )
-    invoice_updated = (
-        Invoice.objects.prefetch_related(
-            models.Prefetch(
-                "challenge",
-                queryset=Challenge.objects.with_invoices_with_budget_authorization(),
-            )
-        )
-        .with_budget_authorization()
-        .get(pk=invoice.pk)
-    )
+    invoice_updated = refresh_invoice(invoice=invoice)
 
     for prop in [
         "total_unpaid_costs_euro_millicents",
@@ -503,9 +511,9 @@ def test_postpaid_properties_unavailable_for_nonpostpaid_initialized_invoices(
 @pytest.mark.django_db
 def test_postpaid_properties_empty_if_no_costs_incurred():
     challenge = ChallengeFactory(
-        size_in_storage=0 * 1024**3,
-        size_in_registry=0 * 1024**3,
-    )  # no storage costs incurred
+        size_in_storage=0,  # 0 GB, no storage costs incurred
+        size_in_registry=0,  # 0 GB
+    )
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=10,
@@ -523,16 +531,7 @@ def test_postpaid_properties_empty_if_no_costs_incurred():
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=PaymentStatusChoices.INITIALIZED,
     )
-    postpaid_invoice = (
-        Invoice.objects.prefetch_related(
-            models.Prefetch(
-                "challenge",
-                queryset=Challenge.objects.with_invoices_with_budget_authorization(),
-            )
-        )
-        .with_budget_authorization()
-        .get(pk=postpaid_invoice.pk)
-    )
+    postpaid_invoice = refresh_invoice(invoice=postpaid_invoice)
 
     assert postpaid_invoice.total_unpaid_costs_euro_millicents == 0
     assert not postpaid_invoice.suggested_total_postpaid_amount_euro_millicents
@@ -545,8 +544,8 @@ def test_postpaid_properties_empty_if_no_costs_incurred():
 @pytest.mark.django_db
 def test_postpaid_suggested_total_above_minimum_increment():
     challenge = ChallengeFactory(
-        size_in_storage=200 * 1024**3,
-        size_in_registry=300 * 1024**3,
+        size_in_storage=200 * 1024**3,  # 200 GB
+        size_in_registry=300 * 1024**3,  # 300 GB
     )
     InvoiceFactory(
         challenge=challenge,
@@ -565,43 +564,35 @@ def test_postpaid_suggested_total_above_minimum_increment():
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=PaymentStatusChoices.INITIALIZED,
     )
-    postpaid_invoice = (
-        Invoice.objects.prefetch_related(
-            models.Prefetch(
-                "challenge",
-                queryset=Challenge.objects.with_invoices_with_budget_authorization(),
-            )
-        )
-        .with_budget_authorization()
-        .get(pk=postpaid_invoice.pk)
-    )
+    postpaid_invoice = refresh_invoice(invoice=postpaid_invoice)
 
     assert (
-        round(postpaid_invoice.total_unpaid_costs_euro_millicents / 1000 / 100)
+        euro_millicents_to_euros(
+            euro_millicents=postpaid_invoice.total_unpaid_costs_euro_millicents
+        )
         == 326
     )
     assert (
-        round(
-            postpaid_invoice.suggested_total_postpaid_amount_euro_millicents
-            / 1000
-            / 100
+        euro_millicents_to_euros(
+            euro_millicents=postpaid_invoice.suggested_total_postpaid_amount_euro_millicents
         )
         == 500
     )
-    assert round(postpaid_invoice.surplus_euro_millicents / 1000 / 100) == 174
     assert (
-        round(
-            postpaid_invoice.suggested_compute_cost_euro_millicents
-            / 1000
-            / 100
+        euro_millicents_to_euros(
+            euro_millicents=postpaid_invoice.surplus_euro_millicents
+        )
+        == 174
+    )
+    assert (
+        euro_millicents_to_euros(
+            euro_millicents=postpaid_invoice.suggested_compute_cost_euro_millicents
         )
         == 123
     )
     assert (
-        round(
-            postpaid_invoice.suggested_storage_cost_euro_millicents
-            / 1000
-            / 100
+        euro_millicents_to_euros(
+            euro_millicents=postpaid_invoice.suggested_storage_cost_euro_millicents
         )
         == 377
     )
@@ -610,9 +601,9 @@ def test_postpaid_suggested_total_above_minimum_increment():
 @pytest.mark.django_db
 def test_postpaid_surplus_compute_on_prepaid_ignored():
     challenge = ChallengeFactory(
-        size_in_storage=0 * 1024**3,
-        size_in_registry=0 * 1024**3,
-    )  # no storage incurred
+        size_in_storage=0,  # 0 GB, no storage incurred
+        size_in_registry=0,  # 0 GB
+    )
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=10,
@@ -632,19 +623,12 @@ def test_postpaid_surplus_compute_on_prepaid_ignored():
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=PaymentStatusChoices.INITIALIZED,
     )
-    postpaid_invoice = (
-        Invoice.objects.prefetch_related(
-            models.Prefetch(
-                "challenge",
-                queryset=Challenge.objects.with_invoices_with_budget_authorization(),
-            )
-        )
-        .with_budget_authorization()
-        .get(pk=postpaid_invoice.pk)
-    )
+    postpaid_invoice = refresh_invoice(invoice=postpaid_invoice)
 
     assert (
-        round(postpaid_invoice.total_unpaid_costs_euro_millicents / 1000 / 100)
+        euro_millicents_to_euros(
+            euro_millicents=postpaid_invoice.total_unpaid_costs_euro_millicents
+        )
         == 0
     )
     assert not postpaid_invoice.suggested_total_postpaid_amount_euro_millicents
@@ -656,8 +640,8 @@ def test_postpaid_surplus_compute_on_prepaid_ignored():
 @pytest.mark.django_db
 def test_postpaid_suggested_costs_extra_storage_and_compute_incurred():
     challenge = ChallengeFactory(
-        size_in_storage=30 * 1024**3,
-        size_in_registry=70 * 1024**3,
+        size_in_storage=30 * 1024**3,  # 30 GB
+        size_in_registry=70 * 1024**3,  # 70 GB
     )
     InvoiceFactory(
         challenge=challenge,
@@ -676,43 +660,35 @@ def test_postpaid_suggested_costs_extra_storage_and_compute_incurred():
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=PaymentStatusChoices.INITIALIZED,
     )
-    postpaid_invoice = (
-        Invoice.objects.prefetch_related(
-            models.Prefetch(
-                "challenge",
-                queryset=Challenge.objects.with_invoices_with_budget_authorization(),
-            )
-        )
-        .with_budget_authorization()
-        .get(pk=postpaid_invoice.pk)
-    )
+    postpaid_invoice = refresh_invoice(invoice=postpaid_invoice)
 
     assert (
-        round(postpaid_invoice.total_unpaid_costs_euro_millicents / 1000 / 100)
+        euro_millicents_to_euros(
+            euro_millicents=postpaid_invoice.total_unpaid_costs_euro_millicents
+        )
         == 87
     )
     assert (
-        round(
-            postpaid_invoice.suggested_total_postpaid_amount_euro_millicents
-            / 1000
-            / 100
+        euro_millicents_to_euros(
+            euro_millicents=postpaid_invoice.suggested_total_postpaid_amount_euro_millicents
         )
         == 250
     )
-    assert round(postpaid_invoice.surplus_euro_millicents / 1000 / 100) == 163
     assert (
-        round(
-            postpaid_invoice.suggested_compute_cost_euro_millicents
-            / 1000
-            / 100
+        euro_millicents_to_euros(
+            euro_millicents=postpaid_invoice.surplus_euro_millicents
+        )
+        == 163
+    )
+    assert (
+        euro_millicents_to_euros(
+            euro_millicents=postpaid_invoice.suggested_compute_cost_euro_millicents
         )
         == 91
     )
     assert (
-        round(
-            postpaid_invoice.suggested_storage_cost_euro_millicents
-            / 1000
-            / 100
+        euro_millicents_to_euros(
+            euro_millicents=postpaid_invoice.suggested_storage_cost_euro_millicents
         )
         == 159
     )
