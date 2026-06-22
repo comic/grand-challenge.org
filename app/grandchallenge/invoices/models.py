@@ -504,7 +504,7 @@ class Invoice(models.Model, FieldChangeMixin):
             return None
 
     @cached_property
-    def total_unpaid_costs_euros(self):
+    def total_unpaid_costs_euro_millicents(self):
         if (
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
@@ -512,21 +512,21 @@ class Invoice(models.Model, FieldChangeMixin):
             return None
         else:
             return (
-                self.challenge.unpaid_storage_costs_euros
-                + self.consumed_compute_cost_euro_millicents / 1000 / 100
+                self.challenge.unpaid_storage_costs_euro_millicents
+                + self.consumed_compute_cost_euro_millicents
             )
 
     @cached_property
-    def suggested_total_postpaid_amount(self):
+    def suggested_total_postpaid_amount_euro_millicents(self):
         if (
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
         ):
             return None
-        elif self.total_unpaid_costs_euros > 0:
+        elif self.total_unpaid_costs_euro_millicents > 0:
             return (
                 math.ceil(
-                    self.total_unpaid_costs_euros
+                    self.total_unpaid_costs_euro_millicents
                     / settings.CHALLENGE_POSTPAID_INVOICE_ROUNDING_INCREMENT
                 )
                 * settings.CHALLENGE_POSTPAID_INVOICE_ROUNDING_INCREMENT
@@ -535,22 +535,22 @@ class Invoice(models.Model, FieldChangeMixin):
             return 0
 
     @cached_property
-    def surplus(self):
+    def surplus_euro_millicents(self):
         if (
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
         ):
             return None
-        elif self.total_unpaid_costs_euros > 0:
+        elif self.total_unpaid_costs_euro_millicents > 0:
             return (
                 settings.CHALLENGE_POSTPAID_INVOICE_ROUNDING_INCREMENT
-                - self.total_unpaid_costs_euros
+                - self.total_unpaid_costs_euro_millicents
             )
         else:
             return 0
 
     @cached_property
-    def suggested_compute_cost_euros(self):
+    def suggested_compute_cost_euro_millicents(self):
         if (
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
@@ -559,14 +559,15 @@ class Invoice(models.Model, FieldChangeMixin):
         else:
             return round(
                 (
-                    self.consumed_compute_cost_euro_millicents / 1000 / 100
-                    + self.challenge.compute_cost_share * self.surplus
+                    self.consumed_compute_cost_euro_millicents
+                    + self.challenge.compute_cost_share
+                    * self.surplus_euro_millicents
                 ),
                 0,
             )
 
     @cached_property
-    def suggested_storage_cost_euros(self):
+    def suggested_storage_cost_euro_millicents(self):
         if (
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
@@ -574,8 +575,8 @@ class Invoice(models.Model, FieldChangeMixin):
             return None
         else:
             return (
-                self.suggested_total_postpaid_amount
-                - self.suggested_compute_cost_euros
+                self.suggested_total_postpaid_amount_euro_millicents
+                - self.suggested_compute_cost_euro_millicents
             )
 
     def clean(self):

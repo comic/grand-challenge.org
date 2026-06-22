@@ -845,64 +845,71 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             return None
 
     @cached_property
-    def total_projected_storage_cost_euros(self):
+    def total_projected_storage_cost_euro_millicents(self):
         return (
             self.size_in_storage / settings.GIGABYTE
             + self.size_in_registry / settings.GIGABYTE
-        ) * ChallengeRequest.storage_costs_euros_per_gb()
+        ) * storage_cost_euro_millicents_per_gb()
 
     @cached_property
-    def total_consumed_compute_costs_with_write_off_euros(self):
+    def total_consumed_compute_costs_with_write_off_euro_millicents(self):
+        return sum(
+            invoice.compute_cost_euro_millicents
+            for invoice in self.invoices.all()
+        )
+
+    @cached_property
+    def total_consumed_costs_euro_millicents(self):
         return (
-            sum(
-                invoice.compute_cost_euro_millicents
-                for invoice in self.invoices.all()
-            )
+            self.total_consumed_compute_costs_with_write_off_euro_millicents
+            + self.total_projected_storage_cost_euro_millicents
+        )
+
+    @cached_property
+    def total_paid_storage_costs_euro_millicents(self):
+        return (
+            self.invoices.filter(
+                payment_status=Invoice.PaymentStatusChoices.PAID
+            ).aggregate(
+                paid_storage=Coalesce(Sum("storage_costs_euros"), 0),
+            )[
+                "paid_storage"
+            ]
             / 1000
             / 100
         )
 
     @cached_property
-    def total_consumed_costs_euros(self):
+    def total_paid_compute_costs_euro_millicents(self):
         return (
-            self.total_consumed_compute_costs_with_write_off_euros
-            + self.total_projected_storage_cost_euros
+            self.invoices.filter(
+                payment_status=Invoice.PaymentStatusChoices.PAID
+            ).aggregate(
+                paid_compute=Coalesce(Sum("compute_costs_euros"), 0),
+            )[
+                "paid_compute"
+            ]
+            / 1000
+            / 100
         )
 
     @cached_property
-    def total_paid_storage_costs_euros(self):
-        return self.invoices.filter(
-            payment_status=Invoice.PaymentStatusChoices.PAID
-        ).aggregate(
-            paid_storage=Coalesce(Sum("storage_costs_euros"), 0),
-        )[
-            "paid_storage"
-        ]
-
-    @cached_property
-    def total_paid_compute_costs_euros(self):
-        return self.invoices.filter(
-            payment_status=Invoice.PaymentStatusChoices.PAID
-        ).aggregate(
-            paid_compute=Coalesce(Sum("compute_costs_euros"), 0),
-        )[
-            "paid_compute"
-        ]
-
-    @cached_property
-    def unpaid_storage_costs_euros(self):
+    def unpaid_storage_costs_euro_millicents(self):
         return max(
-            self.total_projected_storage_cost_euros
-            - self.total_paid_storage_costs_euros,
+            self.total_projected_storage_cost_euro_millicents
+            - self.total_paid_storage_costs_euro_millicents,
             0,
         )
 
     @cached_property
     def compute_cost_share(self):
-        return (
-            self.total_consumed_compute_costs_with_write_off_euros
-            / self.total_consumed_costs_euros
-        )
+        if self.total_consumed_costs_euro_millicents > 0:
+            return (
+                self.total_consumed_compute_costs_with_write_off_euro_millicents
+                / self.total_consumed_costs_euro_millicents
+            )
+        else:
+            return None
 
     @property
     def utilization_invoice(self):
@@ -1034,6 +1041,17 @@ def submission_pdf_path(instance, filename):
         f"{instance._meta.model_name.lower()}/"
         f"{instance.pk}/"
         f"{get_valid_filename(filename)}"
+    )
+
+
+def storage_cost_euro_millicents_per_gb():
+    return (
+        settings.CHALLENGE_NUM_SUPPORT_YEARS
+        * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB_EXCLUDING_TAX
+        * (1 + settings.COMPONENTS_TAX_RATE)
+        * settings.COMPONENTS_USD_TO_EUR
+        / settings.TERABYTE
+        * settings.GIGABYTE
     )
 
 
@@ -1775,14 +1793,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @staticmethod
     def storage_costs_euros_per_gb():
         return round(
-            settings.CHALLENGE_NUM_SUPPORT_YEARS
-            * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB_EXCLUDING_TAX
-            * (1 + settings.COMPONENTS_TAX_RATE)
-            * settings.COMPONENTS_USD_TO_EUR
-            / 1000
-            / 100
-            / settings.TERABYTE
-            * settings.GIGABYTE,
+            storage_cost_euro_millicents_per_gb() / 1000 / 100,
             2,
         )
 

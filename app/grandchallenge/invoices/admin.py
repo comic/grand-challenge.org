@@ -218,63 +218,76 @@ class InvoiceAdmin(admin.ModelAdmin):
         return self.consumed_compute_cost(obj)
 
     def challenge_total_consumed_compute_including_write_off(self, obj):
-        return euro(
-            obj.challenge.total_consumed_compute_costs_with_write_off_euros
+        return millicents_to_euro(
+            obj.challenge.total_consumed_compute_costs_with_write_off_euro_millicents
         )
 
     @admin.display(
         description="Challenge projected total storage costs (for 5 years)"
     )
     def challenge_total_projected_storage(self, obj):
-        return euro(obj.challenge.total_projected_storage_cost_euros)
+        return millicents_to_euro(
+            obj.challenge.total_projected_storage_cost_euro_millicents
+        )
 
     def challenge_total_consumed_costs(self, obj):
-        return euro(obj.challenge.total_consumed_costs_euros)
+        return millicents_to_euro(
+            obj.challenge.total_consumed_costs_euro_millicents
+        )
 
     def challenge_total_paid_storage_costs(self, obj):
-        return euro(obj.challenge.total_paid_storage_costs_euros)
+        return millicents_to_euro(
+            obj.challenge.total_paid_storage_costs_euro_millicents
+        )
 
     def challenge_total_paid_compute_costs(self, obj):
-        return euro(obj.challenge.total_paid_compute_costs_euros)
+        return millicents_to_euro(
+            obj.challenge.total_paid_compute_costs_euro_millicents
+        )
 
     def challenge_unpaid_storage_costs(self, obj):
-        return euro(obj.challenge.unpaid_storage_costs_euros)
+        return millicents_to_euro(
+            obj.challenge.unpaid_storage_costs_euro_millicents
+        )
 
     def total_unpaid_costs(self, obj):
-        if obj.total_unpaid_costs_euros:
-            return euro(obj.total_unpaid_costs_euros)
+        if obj.total_unpaid_costs_euro_millicents:
+            return euro(obj.total_unpaid_costs_euro_millicents)
         else:
             return None
 
     def suggested_total_postpaid_amount(self, obj):
-        if obj.suggested_total_postpaid_amount >= 0:
-            return euro(obj.suggested_total_postpaid_amount)
-        else:
-            return None
+        return millicents_to_euro(
+            obj.suggested_total_postpaid_amount_euro_millicents
+        )
 
     def surplus(self, obj):
-        if obj.surplus >= 0:
-            return euro(obj.surplus)
-        else:
-            return None
+        return millicents_to_euro(obj.surplus_euro_millicents)
 
     @admin.display(
-        description="Compute ratio based on all costs incurred for the challenge"
+        description="Compute share based on all costs incurred for the challenge"
     )
     def compute_cost_share(self, obj):
-        return f"{round(obj.challenge.compute_cost_share * 100, 2)} %"
+        if obj.total_unpaid_costs_euro_millicents:
+            return f"{round(obj.challenge.compute_cost_share * 100, 2)} %"
+        else:
+            return "-"
 
     def suggested_compute_cost_for_postpaid(self, obj):
-        if obj.suggested_compute_cost_euros >= 0:
-            return euro(obj.suggested_compute_cost_euros)
+        if obj.total_unpaid_costs_euro_millicents:
+            return millicents_to_euro(
+                obj.suggested_compute_cost_euro_millicents
+            )
         else:
-            return None
+            return "-"
 
     def suggested_storage_cost_for_postpaid(self, obj):
-        if obj.suggested_storage_cost_euros >= 0:
-            return euro(obj.suggested_storage_cost_euros)
+        if obj.total_unpaid_costs_euro_millicents:
+            return millicents_to_euro(
+                obj.suggested_storage_cost_euro_millicents
+            )
         else:
-            return None
+            return "-"
 
     @admin.display(ordering="utilization_priority")
     def utilization_priority(self, obj):
