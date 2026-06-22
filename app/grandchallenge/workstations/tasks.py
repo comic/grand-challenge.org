@@ -22,6 +22,7 @@ def consolidate_unclaimed_sessions():
 
     sessions_to_stop = list(
         Session.objects.active()
+        .select_for_update(skip_locked=True)
         .filter(claimed_at=None)
         .filter(
             Q(
