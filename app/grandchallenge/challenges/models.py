@@ -844,73 +844,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         else:
             return None
 
-    @cached_property
-    def total_projected_storage_cost_euro_millicents(self):
-        return (
-            self.size_in_storage / settings.GIGABYTE
-            + self.size_in_registry / settings.GIGABYTE
-        ) * storage_cost_euro_millicents_per_gb()
-
-    @cached_property
-    def total_consumed_compute_costs_with_write_off_euro_millicents(self):
-        return sum(
-            invoice.compute_cost_euro_millicents
-            for invoice in self.invoices.all()
-        )
-
-    @cached_property
-    def total_consumed_costs_euro_millicents(self):
-        return (
-            self.total_consumed_compute_costs_with_write_off_euro_millicents
-            + self.total_projected_storage_cost_euro_millicents
-        )
-
-    @cached_property
-    def total_paid_storage_costs_euro_millicents(self):
-        return (
-            self.invoices.filter(
-                payment_status=Invoice.PaymentStatusChoices.PAID
-            ).aggregate(
-                paid_storage=Coalesce(Sum("storage_costs_euros"), 0),
-            )[
-                "paid_storage"
-            ]
-            * 1000
-            * 100
-        )
-
-    @cached_property
-    def total_paid_compute_costs_euro_millicents(self):
-        return (
-            self.invoices.filter(
-                payment_status=Invoice.PaymentStatusChoices.PAID
-            ).aggregate(
-                paid_compute=Coalesce(Sum("compute_costs_euros"), 0),
-            )[
-                "paid_compute"
-            ]
-            * 1000
-            * 100
-        )
-
-    @cached_property
-    def unpaid_storage_costs_euro_millicents(self):
-        return max(
-            self.total_projected_storage_cost_euro_millicents
-            - self.total_paid_storage_costs_euro_millicents,
-            0,
-        )
-
-    @cached_property
-    def compute_cost_share(self):
-        if self.total_consumed_costs_euro_millicents > 0:
-            return (
-                self.total_consumed_compute_costs_with_write_off_euro_millicents
-                / self.total_consumed_costs_euro_millicents
-            )
-        else:
-            return None
-
     @property
     def utilization_invoice(self):
         prioritized_invoices = (
@@ -995,6 +928,76 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             slug=self.slug,
             url=self.get_absolute_url(),
         )
+
+    # ---------------- Postpaid admin calculation properties ------------------
+    # The following properties are used for postpaid admin calculations.
+
+    @cached_property
+    def total_projected_storage_cost_euro_millicents(self):
+        return (
+            self.size_in_storage / settings.GIGABYTE
+            + self.size_in_registry / settings.GIGABYTE
+        ) * storage_cost_euro_millicents_per_gb()
+
+    @cached_property
+    def total_consumed_compute_costs_with_write_off_euro_millicents(self):
+        return sum(
+            invoice.compute_cost_euro_millicents
+            for invoice in self.invoices.all()
+        )
+
+    @cached_property
+    def total_paid_storage_costs_euro_millicents(self):
+        return (
+            self.invoices.filter(
+                payment_status=Invoice.PaymentStatusChoices.PAID
+            ).aggregate(
+                paid_storage=Coalesce(Sum("storage_costs_euros"), 0),
+            )[
+                "paid_storage"
+            ]
+            * 1000
+            * 100
+        )
+
+    @cached_property
+    def total_paid_compute_costs_euro_millicents(self):
+        return (
+            self.invoices.filter(
+                payment_status=Invoice.PaymentStatusChoices.PAID
+            ).aggregate(
+                paid_compute=Coalesce(Sum("compute_costs_euros"), 0),
+            )[
+                "paid_compute"
+            ]
+            * 1000
+            * 100
+        )
+
+    @cached_property
+    def unpaid_storage_costs_euro_millicents(self):
+        return max(
+            self.total_projected_storage_cost_euro_millicents
+            - self.total_paid_storage_costs_euro_millicents,
+            0,
+        )
+
+    @cached_property
+    def compute_cost_share(self):
+        total_utilized = (
+            self.total_consumed_compute_costs_with_write_off_euro_millicents
+            + self.total_projected_storage_cost_euro_millicents
+        )
+
+        if total_utilized > 0:
+            return (
+                self.total_consumed_compute_costs_with_write_off_euro_millicents
+                / total_utilized
+            )
+        else:
+            return None
+
+    # -------------- End postpaid admin calculation properties ----------------
 
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):

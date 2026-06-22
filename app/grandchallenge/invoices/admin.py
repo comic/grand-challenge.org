@@ -230,11 +230,6 @@ class InvoiceAdmin(admin.ModelAdmin):
             obj.challenge.total_projected_storage_cost_euro_millicents
         )
 
-    def challenge_total_consumed_costs(self, obj):
-        return millicents_to_euro(
-            obj.challenge.total_consumed_costs_euro_millicents
-        )
-
     def challenge_total_paid_storage_costs(self, obj):
         return millicents_to_euro(
             obj.challenge.total_paid_storage_costs_euro_millicents
@@ -265,7 +260,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         return millicents_to_euro(obj.surplus_euro_millicents)
 
     @admin.display(
-        description="Compute share based on all costs incurred for the challenge"
+        description="Compute share based on all costs (projected storage + utilized compute) for the challenge"
     )
     def compute_cost_share(self, obj):
         if obj.total_unpaid_costs_euro_millicents:

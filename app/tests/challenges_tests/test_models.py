@@ -991,10 +991,6 @@ def test_total_costs_properties():
         == 10
     )
     assert (
-        round(challenge.total_consumed_costs_euro_millicents / 1000 / 100)
-        == 77
-    )
-    assert (
         round(challenge.total_paid_compute_costs_euro_millicents / 1000 / 100)
         == 300
     )
@@ -1006,6 +1002,144 @@ def test_total_costs_properties():
         round(challenge.unpaid_storage_costs_euro_millicents / 1000 / 100) == 0
     )
     assert round(challenge.compute_cost_share, 2) == 0.13
+
+
+@pytest.mark.django_db
+def test_total_projected_storage_costs_beyond_prepaid_amount():
+    challenge = ChallengeFactory(
+        size_in_storage=30 * 1024**3,
+        size_in_registry=70 * 1024**3,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=200,
+        storage_costs_euros=1,  # does not cover storage costs
+        compute_cost_euro_millicents=10 * 1000 * 100,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
+
+    assert (
+        round(
+            challenge.total_projected_storage_cost_euro_millicents / 1000 / 100
+        )
+        == 67
+    )
+    assert (
+        round(challenge.total_paid_storage_costs_euro_millicents / 1000 / 100)
+        == 1
+    )
+    assert (
+        round(challenge.unpaid_storage_costs_euro_millicents / 1000 / 100)
+        == 66
+    )
+
+
+@pytest.mark.parametrize(
+    "payment_type, payment_status",
+    (
+        (PaymentTypeChoices.PREPAID, PaymentStatusChoices.INITIALIZED),
+        (PaymentTypeChoices.PREPAID, PaymentStatusChoices.REQUESTED),
+        (PaymentTypeChoices.PREPAID, PaymentStatusChoices.ISSUED),
+        (PaymentTypeChoices.PREPAID, PaymentStatusChoices.CANCELLED),
+        (PaymentTypeChoices.COMPLIMENTARY, PaymentStatusChoices.CANCELLED),
+        (PaymentTypeChoices.POSTPAID, PaymentStatusChoices.INITIALIZED),
+        (PaymentTypeChoices.POSTPAID, PaymentStatusChoices.REQUESTED),
+        (PaymentTypeChoices.POSTPAID, PaymentStatusChoices.ISSUED),
+        (PaymentTypeChoices.POSTPAID, PaymentStatusChoices.CANCELLED),
+    ),
+)
+@pytest.mark.django_db
+def test_postpaid_calculation_ignores_other_nonpaid_invoices(
+    payment_type, payment_status
+):
+    challenge = ChallengeFactory()
+    # prepaid paid invoice
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=100,
+        storage_costs_euros=100,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    # Postpaid invoice (initialized)
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=10,
+        storage_costs_euros=10,
+        payment_type=PaymentTypeChoices.POSTPAID,
+        payment_status=PaymentStatusChoices.INITIALIZED,
+    )
+    # other invoice which should be ignored
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=100,
+        storage_costs_euros=100,
+        payment_type=payment_type,
+        payment_status=payment_status,
+    )
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
+
+    assert (
+        round(challenge.total_paid_storage_costs_euro_millicents / 1000 / 100)
+        == 100
+    )
+    assert (
+        round(challenge.total_paid_compute_costs_euro_millicents / 1000 / 100)
+        == 100
+    )
+
+
+@pytest.mark.parametrize(
+    "already_paid_amount, to_be_paid_amount",
+    (
+        (10, 57),
+        (100, 0),
+    ),
+)
+@pytest.mark.django_db
+def test_unpaid_storage_costs_euro_millicents_capped_at_0(
+    already_paid_amount, to_be_paid_amount
+):
+    challenge = ChallengeFactory(
+        size_in_storage=30 * 1024**3,
+        size_in_registry=70 * 1024**3,
+    )  # 67 Euro utilized storage
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=100,
+        storage_costs_euros=already_paid_amount,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    # Postpaid invoice (initialized)
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=10,
+        storage_costs_euros=10,
+        payment_type=PaymentTypeChoices.POSTPAID,
+        payment_status=PaymentStatusChoices.INITIALIZED,
+    )
+    challenge = (
+        Challenge.objects.with_invoices_with_budget_authorization().get(
+            pk=challenge.pk
+        )
+    )
+
+    assert (
+        round(challenge.unpaid_storage_costs_euro_millicents / 1000 / 100)
+        == to_be_paid_amount
+    )
 
 
 @pytest.mark.django_db

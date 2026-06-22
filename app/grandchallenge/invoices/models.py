@@ -503,13 +503,18 @@ class Invoice(models.Model, FieldChangeMixin):
         else:
             return None
 
+    # ---------------------- Postpaid-only properties -------------------------
+    # These are used for postpaid admin calculations. They raise
+    # NotImplementedError unless payment_type is POSTPAID
+    # and payment_status is INITIALIZED.
+
     @cached_property
     def total_unpaid_costs_euro_millicents(self):
         if (
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
         ):
-            return NotImplementedError
+            raise NotImplementedError
         else:
             return (
                 self.challenge.unpaid_storage_costs_euro_millicents
@@ -522,7 +527,7 @@ class Invoice(models.Model, FieldChangeMixin):
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
         ):
-            return NotImplementedError
+            raise NotImplementedError
         elif self.total_unpaid_costs_euro_millicents > 0:
             return (
                 math.ceil(
@@ -546,7 +551,7 @@ class Invoice(models.Model, FieldChangeMixin):
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
         ):
-            return NotImplementedError
+            raise NotImplementedError
         elif self.total_unpaid_costs_euro_millicents > 0:
             return (
                 self.suggested_total_postpaid_amount_euro_millicents
@@ -561,8 +566,8 @@ class Invoice(models.Model, FieldChangeMixin):
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
         ):
-            return NotImplementedError
-        else:
+            raise NotImplementedError
+        elif self.total_unpaid_costs_euro_millicents > 0:
             return round(
                 (
                     self.consumed_compute_cost_euro_millicents
@@ -571,6 +576,8 @@ class Invoice(models.Model, FieldChangeMixin):
                 ),
                 0,
             )
+        else:
+            return 0
 
     @cached_property
     def suggested_storage_cost_euro_millicents(self):
@@ -578,12 +585,14 @@ class Invoice(models.Model, FieldChangeMixin):
             not self.payment_type == PaymentTypeChoices.POSTPAID
             or not self.payment_status == PaymentStatusChoices.INITIALIZED
         ):
-            return NotImplementedError
+            raise NotImplementedError
         else:
             return (
                 self.suggested_total_postpaid_amount_euro_millicents
                 - self.suggested_compute_cost_euro_millicents
             )
+
+    # ---------------------- End postpaid-only properties -------------------------
 
     def clean(self):
         if (
