@@ -52,7 +52,7 @@ def get_or_create_active_session(
             creator=None, workstation_image=workstation_image, region=region
         )
         .select_for_update(skip_locked=True)
-        .order_by("-created")
+        .order_by("created")
         .first()
     )
 
