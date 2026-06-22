@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import Permission
 
 from grandchallenge.workstations.models import (
@@ -55,7 +56,11 @@ def get_or_create_active_session(
         .first()
     )
 
-    if unclaimed_session and not extra_env_vars:
+    if (
+        settings.WORKSTATIONS_USE_UNCLAIMED_SESSIONS
+        and unclaimed_session
+        and not extra_env_vars
+    ):
         unclaimed_session.creator = user
         unclaimed_session.ping_times = ping_times or None
         unclaimed_session.save()
