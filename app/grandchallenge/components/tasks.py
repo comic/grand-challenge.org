@@ -1270,7 +1270,7 @@ def stop_expired_services(*, app_label: str, model_name: str):
         model.objects.active()
         .annotate(
             expires=ExpressionWrapper(
-                F("created") + F("maximum_duration"),
+                F("claimed_at") + F("maximum_duration"),
                 output_field=DateTimeField(),
             )
         )
