@@ -51,21 +51,30 @@
         {% endfor %}
     </dl>
 
-    <h4>Storage Usage</h4>
+     {% if "change_challenge" in challenge_perms or request.user.is_staff %}
+        <div class="card card-danger border-danger">
+            <div class="card-header bg-danger text-white">Restricted: Challenge Administrators Only</div>
+            <div class="card-body">
 
-    <dl class="inline">
-        <dt>Total object data storage</dt>
-        <dd>{{ challenge.size_in_storage|filesizeformat }}</dd>
+                <h4>Storage Usage</h4>
 
-        <dt>Total container registry storage</dt>
-        <dd>{{ challenge.size_in_registry|filesizeformat }}</dd>
-    </dl>
+                <dl class="inline">
+                    <dt>Total object data storage</dt>
+                    <dd>{{ challenge.size_in_storage|filesizeformat }}</dd>
+
+                    <dt>Total container registry storage</dt>
+                    <dd>{{ challenge.size_in_registry|filesizeformat }}</dd>
+                </dl>
+            </div>
+
+    </div>
+    {% endif %}
 
 
     {% if request.user.is_staff %}
 
     <div class="card card-danger border-danger">
-        <div class="card-header bg-danger text-white">Site Admin</div>
+        <div class="card-header bg-danger text-white">Restricted: Site Administrators Only</div>
         <div class="card-body">
 
         <h4>Challenge Costs</h4>
