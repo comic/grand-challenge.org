@@ -47,9 +47,11 @@ def get_or_create_active_session(
         return session
 
     unclaimed_session = (
-        Session.objects.active()
-        .filter(
-            creator=None, workstation_image=workstation_image, region=region
+        Session.objects.filter(
+            status=Session.RUNNING,
+            creator=None,
+            workstation_image=workstation_image,
+            region=region,
         )
         .select_for_update(skip_locked=True)
         .order_by("created")

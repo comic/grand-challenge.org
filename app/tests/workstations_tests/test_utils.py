@@ -62,8 +62,24 @@ def test_get_or_create_active_session():
 def test_unclaimed_session_is_claimed():
     user = UserFactory()
     wsi = WorkstationImageFactory()
+    Session.objects.create(
+        creator=None,
+        status=Session.QUEUED,
+        workstation_image=wsi,
+        region="eu-central-1",
+    )
+    Session.objects.create(
+        creator=None,
+        status=Session.STOPPED,
+        workstation_image=wsi,
+        region="eu-central-1",
+    )
+    # Only running sessions should be selected
     unclaimed = Session.objects.create(
-        creator=None, workstation_image=wsi, region="eu-central-1"
+        creator=None,
+        status=Session.RUNNING,
+        workstation_image=wsi,
+        region="eu-central-1",
     )
 
     s = get_or_create_active_session(
@@ -135,7 +151,10 @@ def test_unclaimed_session_ping_times_set_on_claim():
     user = UserFactory()
     wsi = WorkstationImageFactory()
     unclaimed = Session.objects.create(
-        creator=None, workstation_image=wsi, region="eu-central-1"
+        creator=None,
+        status=Session.RUNNING,
+        workstation_image=wsi,
+        region="eu-central-1",
     )
 
     ping_times = {"eu-central-1": 10, "us-east-1": 100}
