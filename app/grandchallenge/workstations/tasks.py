@@ -27,7 +27,7 @@ def consolidate_unclaimed_sessions():
             Q(
                 created__lt=now()
                 - timedelta(
-                    hours=settings.WORKSTATIONS_MAXIMUM_UNCLAIMED_HOURS
+                    hours=settings.WORKSTATIONS_MAXIMUM_UNCLAIMED_SESSION_HOURS
                 )
             )
             | ~Q(workstation_image=workstation_image)
