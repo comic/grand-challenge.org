@@ -37,6 +37,8 @@ def consolidate_unclaimed_sessions():
 
     expiring_pks = {session.pk for session in sessions_to_stop}
 
+    Session.objects.filter(pk__in=expiring_pks).update(status=Session.STOPPED)
+
     for session in sessions_to_stop:
         stop_service.execute_on_commit(**session.task_kwargs)
 

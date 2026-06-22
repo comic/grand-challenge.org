@@ -503,6 +503,11 @@ class TestConsolidateUnclaimedSessions:
 
         assert result == {"n_sessions_stopped": 1, "n_sessions_started": 3}
 
+        old_session.refresh_from_db()
+        # The service should immediately be set to stopped so that
+        # it is not claimed later
+        assert old_session.status == Session.STOPPED
+
         # 1 stop + 3 starts
         callback_reprs = [repr(c) for c in callbacks]
         assert _stop_task_repr(pk=old_session.pk) in callback_reprs

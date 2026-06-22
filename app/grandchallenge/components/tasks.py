@@ -1256,6 +1256,9 @@ def stop_service(*, pk: str | UUID, app_label: str, model_name: str):
             model.objects.active().select_for_update(nowait=True).get(pk=pk)
         )
 
+    # We allow all states here (started, stopped, failed, etc.) as the
+    # responsibility of this task is to remove the service from ECS
+
     orchestrator = ECSTaskOrchestrator(**service.orchestrator_kwargs)
 
     if service.task_arn:
