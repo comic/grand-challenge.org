@@ -527,9 +527,15 @@ class Invoice(models.Model, FieldChangeMixin):
             return (
                 math.ceil(
                     self.total_unpaid_costs_euro_millicents
-                    / settings.CHALLENGE_POSTPAID_INVOICE_ROUNDING_INCREMENT
+                    / (
+                        settings.CHALLENGE_POSTPAID_INVOICE_ROUNDING_INCREMENT
+                        * 1000
+                        * 100
+                    )
                 )
                 * settings.CHALLENGE_POSTPAID_INVOICE_ROUNDING_INCREMENT
+                * 1000
+                * 100
             )
         else:
             return 0
@@ -543,7 +549,7 @@ class Invoice(models.Model, FieldChangeMixin):
             return NotImplementedError
         elif self.total_unpaid_costs_euro_millicents > 0:
             return (
-                settings.CHALLENGE_POSTPAID_INVOICE_ROUNDING_INCREMENT
+                self.suggested_total_postpaid_amount_euro_millicents
                 - self.total_unpaid_costs_euro_millicents
             )
         else:

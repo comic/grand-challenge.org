@@ -875,8 +875,8 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             )[
                 "paid_storage"
             ]
-            / 1000
-            / 100
+            * 1000
+            * 100
         )
 
     @cached_property
@@ -889,8 +889,8 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             )[
                 "paid_compute"
             ]
-            / 1000
-            / 100
+            * 1000
+            * 100
         )
 
     @cached_property

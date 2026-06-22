@@ -485,11 +485,35 @@ def test_postpaid_suggested_costs_properties():
         .get(pk=postpaid_invoice.pk)
     )
 
-    assert postpaid_invoice.total_unpaid_costs_euros == 30
-    assert postpaid_invoice.suggested_total_postpaid_amount == 250
-    assert postpaid_invoice.surplus == 220
-    assert postpaid_invoice.suggested_compute_cost_euros == 179
-    assert postpaid_invoice.suggested_storage_cost_euros == 71
+    assert (
+        round(postpaid_invoice.total_unpaid_costs_euro_millicents / 1000 / 100)
+        == 30
+    )
+    assert (
+        round(
+            postpaid_invoice.suggested_total_postpaid_amount_euro_millicents
+            / 1000
+            / 100
+        )
+        == 250
+    )
+    assert round(postpaid_invoice.surplus_euro_millicents / 1000 / 100) == 220
+    assert (
+        round(
+            postpaid_invoice.suggested_compute_cost_euro_millicents
+            / 1000
+            / 100
+        )
+        == 179
+    )
+    assert (
+        round(
+            postpaid_invoice.suggested_storage_cost_euro_millicents
+            / 1000
+            / 100
+        )
+        == 71
+    )
 
 
 @pytest.mark.django_db

@@ -976,12 +976,35 @@ def test_total_costs_properties():
         )
     )
 
-    assert challenge.total_projected_storage_cost_euros == 67
-    assert challenge.total_consumed_compute_costs_with_write_off_euros == 10
-    assert challenge.total_consumed_costs_euros == 77
-    assert challenge.total_paid_compute_costs_euros == 300
-    assert challenge.total_paid_storage_costs_euros == 150
-    assert challenge.unpaid_storage_costs_euros == 0
+    assert (
+        round(
+            challenge.total_projected_storage_cost_euro_millicents / 1000 / 100
+        )
+        == 67
+    )
+    assert (
+        round(
+            challenge.total_consumed_compute_costs_with_write_off_euro_millicents
+            / 1000
+            / 100
+        )
+        == 10
+    )
+    assert (
+        round(challenge.total_consumed_costs_euro_millicents / 1000 / 100)
+        == 77
+    )
+    assert (
+        round(challenge.total_paid_compute_costs_euro_millicents / 1000 / 100)
+        == 300
+    )
+    assert (
+        round(challenge.total_paid_storage_costs_euro_millicents / 1000 / 100)
+        == 150
+    )
+    assert (
+        round(challenge.unpaid_storage_costs_euro_millicents / 1000 / 100) == 0
+    )
     assert round(challenge.compute_cost_share, 2) == 0.13
 
 
