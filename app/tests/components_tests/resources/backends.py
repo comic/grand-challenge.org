@@ -149,7 +149,7 @@ class IOCopyExecutor(Executor):
                 "_stderr": self._stderr,
                 "_exec_duration_seconds": self._exec_duration.total_seconds(),
                 "_invoke_duration_seconds": self._invoke_duration.total_seconds(),
-                "__start_time": self.__start_time,
+                "__start_time": self.__start_time.isoformat(),
             },
             backend=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
         )

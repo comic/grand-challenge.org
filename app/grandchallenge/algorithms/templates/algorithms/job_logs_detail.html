@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load url %}
+{% load static %}
 
 {% block title %}
     {{ object.pk }} Logs - Results - {{ block.super }}
@@ -22,23 +23,35 @@
 
 {% block content %}
 
-    <h2>Algorithm Result Logs</h2>
+    <h2>Algorithm Result {{ object.pk }}</h2>
 
-    {% if object.runtime_metrics %}
-        <h3>Runtime Metrics</h3>
+    <h3>Runtime Metrics</h3>
+    {% if runtime_metrics_chart.data.values %}
         <div class="w-100 vega-lite-chart">
-            {{ object.runtime_metrics_chart|json_script:"runtimeMetricsData" }}
+            {{ runtime_metrics_chart|json_script:"runtimeMetricsData" }}
         </div>
+    {% else %}
+        <p>No runtime metrics are available.</p>
     {% endif %}
 
-    <h3>Stdout</h3>
-    {# @formatter:off #}
-    <pre class="console">{% if object.stdout %}{{ object.stdout }}{% else %}No logs found on stdout{% endif %}</pre>
-    {# @formatter:on #}
+    <h3>Logs</h3>
+    {% if logs %}
+        {# @formatter:off #}
+        <pre class="console">{% for timestamp, structured_log in logs %}<span class="d-flex"><span class="user-select-none flex-shrink-0">{{ timestamp.isoformat }} </span><span class="text-break{% if structured_log.source == "stderr" %} text-danger{% endif %}" style="white-space: pre-wrap;">{{ structured_log.message }}
+</span></span>{% empty %}No logs found{% endfor %}</pre>
+        {# @formatter:on #}
+    {% else %}
+        <p>No logs are available.</p>
+    {% endif %}
 
-    <h3>Stderr</h3>
-    {# @formatter:off #}
-    <pre class="console">{% if object.stderr %}{{ object.stderr }}{% else %}No logs found on stderr{% endif %}</pre>
-    {# @formatter:on #}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
+    <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
+    <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
+    <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
 
 {% endblock %}
