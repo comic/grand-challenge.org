@@ -1282,7 +1282,8 @@ def stop_expired_services(*, app_label: str, model_name: str):
     )
 
     for service in services_to_stop:
-        stop_service.execute_on_commit(**service.task_kwargs)
+        service.status = model.EXPIRED
+        service.save()
 
 
 class InteractiveAlgorithmLambda:
