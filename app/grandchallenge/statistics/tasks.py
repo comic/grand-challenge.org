@@ -25,9 +25,8 @@ from grandchallenge.utilization.models import (
     EvaluationUtilization,
     JobUtilization,
     JobWarmPoolUtilization,
-    SessionUtilization,
 )
-from grandchallenge.workstations.models import WorkstationImage
+from grandchallenge.workstations.models import Session, WorkstationImage
 
 
 @lambda_task
@@ -107,11 +106,10 @@ def update_site_statistics_cache():
             .order_by("created__year", "created__month")
         ),
         "sessions": (
-            SessionUtilization.objects.values(
-                "created__year", "created__month"
-            )
+            Session.objects.exclude(creator=None)
+            .values("created__year", "created__month")
             .annotate(
-                duration_sum=Sum("duration"),
+                duration_sum=Sum("maximum_duration"),
                 object_count=Count("created__month"),
             )
             .order_by("created__year", "created__month")
