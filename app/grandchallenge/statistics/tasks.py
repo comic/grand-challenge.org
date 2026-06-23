@@ -109,7 +109,7 @@ def update_site_statistics_cache():
             Session.objects.exclude(creator=None)
             .values("created__year", "created__month")
             .annotate(
-                duration_sum=Sum("max_duration"),
+                duration_sum=Sum("maximum_duration"),
                 object_count=Count("created__month"),
             )
             .order_by("created__year", "created__month")
