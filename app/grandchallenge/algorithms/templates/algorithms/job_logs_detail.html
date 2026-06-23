@@ -23,7 +23,61 @@
 
 {% block content %}
 
-    <h2>Algorithm Result {{ object.pk }}</h2>
+    <h2>Algorithm Result Logs</h2>
+
+    <dl class="row">
+        <dt class="col-sm-3">Result ID</dt>
+        <dd class="col-sm-9">{{ object.pk }}</dd>
+
+        <dt class="col-sm-3">Created</dt>
+        <dd class="col-sm-9">{{ object.created }}</dd>
+
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">
+            {% include "algorithms/job_status_detail.html" %}
+        </dd>
+
+        {% if object.error_message %}
+            <dt class="col-sm-3">Error Message</dt>
+            <dd class="col-sm-9">{{ object.error_message }}</dd>
+        {% endif %}
+
+        {% if object.job_utilization.duration %}
+            <dt class="col-sm-3">Duration</dt>
+            <dd class="col-sm-9">{{ object.job_utilization.duration.total_seconds|floatformat:0 }}s</dd>
+        {% endif %}
+    </dl>
+
+    <h3>Execution History</h3>
+
+    {% if execution_history %}
+        <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm">
+            <thead class="thead-light">
+                <tr>
+                    <th>Status</th>
+                    <th>Message</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in execution_history %}
+                    <tr>
+                        <td>{{ entry.Status }}</td>
+                        <td>{{ entry.StatusMessage }}</td>
+                        <td>{{ entry.StartTime }}</td>
+                        <td>{{ entry.EndTime }}</td>
+                        <td>{{ entry.duration }}s</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    {% else %}
+        <p>No executing history available.</p>
+    {% endif %}
 
     <h3>Runtime Metrics</h3>
     {% if runtime_metrics_chart.data.values %}

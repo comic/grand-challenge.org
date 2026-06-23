@@ -842,6 +842,7 @@ class JobLogsDetail(ObjectPermissionRequiredMixin, DetailView):
         )
 
         try:
+            context["execution_history"] = logs_service.execution_history
             context["runtime_metrics_chart"] = (
                 logs_service.runtime_metrics_chart
             )

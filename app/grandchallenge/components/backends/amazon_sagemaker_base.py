@@ -356,11 +356,11 @@ class AmazonSageMakerTrainingLogsService:
 
     @property
     def _start_time(self):
-        return self._describe_job.get("TrainingStartTime")
+        return self._describe_job["TrainingStartTime"]
 
     @property
     def _end_time(self):
-        return self._describe_job.get("TrainingEndTime")
+        return self._describe_job["TrainingEndTime"]
 
     @property
     def _instance_name(self):
@@ -401,6 +401,15 @@ class AmazonSageMakerTrainingLogsService:
                 region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
             )
         return self.__cloudwatch_client
+
+    @property
+    def execution_history(self):
+        transitions = self._describe_job["SecondaryStatusTransitions"]
+        for entry in transitions:
+            entry["duration"] = int(
+                (entry["EndTime"] - entry["StartTime"]).total_seconds()
+            )
+        return transitions
 
     @cached_property
     def _log_stream_name(self):
