@@ -18,6 +18,7 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from pictures.models import PictureField
@@ -364,8 +365,6 @@ class Session(FieldChangeMixin, UUIDModel):
         The container image that will be launched by this ``Session``.
     maximum_duration
         The maximum time that the service can be active before it is terminated
-    user_finished
-        Indicates if the user has chosen to end the session early
     """
 
     QUEUED = 0
@@ -373,6 +372,7 @@ class Session(FieldChangeMixin, UUIDModel):
     RUNNING = 2
     FAILED = 3
     STOPPED = 4
+    EXPIRED = 5
 
     # These should match the values in workstations/js/session.js
     STATUS_CHOICES = (
@@ -381,6 +381,7 @@ class Session(FieldChangeMixin, UUIDModel):
         (RUNNING, "Running"),
         (FAILED, "Failed"),
         (STOPPED, "Stopped"),
+        (EXPIRED, "Expired"),
     )
 
     class Region(models.TextChoices):
@@ -451,7 +452,9 @@ class Session(FieldChangeMixin, UUIDModel):
         WorkstationImage, on_delete=models.PROTECT
     )
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
-    user_finished = models.BooleanField(default=False)
+    user_finished = deprecate_field(
+        models.BooleanField(default=False), raise_on_access=True
+    )
     ping_times = models.JSONField(null=True, blank=True, default=None)
     extra_env_vars = models.JSONField(
         default=list,
@@ -618,11 +621,11 @@ class Session(FieldChangeMixin, UUIDModel):
 
         if adding:
             start_service.execute_on_commit(**self.task_kwargs)
-        elif self.user_finished and self.status != self.STOPPED:
-            stop_service.execute_on_commit(**self.task_kwargs)
-
-        if self.has_changed("status") and self.status == self.STOPPED:
-            self.handle_session_stopped()
+        elif self.has_changed("status"):
+            if self.status == self.EXPIRED:
+                stop_service.execute_on_commit(**self.task_kwargs)
+            elif self.status == self.STOPPED:
+                self.handle_session_stopped()
 
         if self.has_changed("maximum_duration"):
             self.handle_maximum_duration_changed()
@@ -691,9 +694,14 @@ class Session(FieldChangeMixin, UUIDModel):
             endpoint.save()
 
     def handle_session_stopped(self):
+        if self.claimed_at:
+            utilization_duration = now() - self.claimed_at
+        else:
+            utilization_duration = timedelta(seconds=0)
+
         SessionUtilization.objects.create(
             session=self,
-            duration=now() - self.claimed_at,
+            duration=utilization_duration,
         )
 
         for endpoint in self.associated_endpoints:

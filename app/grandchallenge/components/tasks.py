@@ -1252,12 +1252,9 @@ def stop_service(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     with check_lock_acquired():
-        service = (
-            model.objects.active().select_for_update(nowait=True).get(pk=pk)
-        )
-
-    # We allow all states here (started, stopped, failed, etc.) as the
-    # responsibility of this task is to remove the service from ECS
+        # We allow all states here (started, stopped, failed, etc.) as the
+        # responsibility of this task is to remove the service from ECS
+        service = model.objects.select_for_update(nowait=True).get(pk=pk)
 
     orchestrator = ECSTaskOrchestrator(**service.orchestrator_kwargs)
 

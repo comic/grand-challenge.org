@@ -529,13 +529,13 @@ def test_session_create_reader_study_with_algorithm_implementation_skip_active_e
             reverse_kwargs={"slug": ws.slug, "workstation_path": path},
             user=user,
             data={"region": "eu-central-1"},
+            logout_user=False,
         )
 
     assert response.status_code == 302
     assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.start_service",
         "grandchallenge.components.tasks.start_endpoint",
-        "grandchallenge.components.tasks.stop_service",
     ]
     assert reader_study.workstation_sessions.count() == 1
     assert Endpoint.objects.count() == 1
@@ -553,12 +553,11 @@ def test_session_create_reader_study_with_algorithm_implementation_skip_active_e
             reverse_kwargs={"slug": ws.slug, "workstation_path": path},
             user=user,
             data={"region": "eu-central-1"},
+            logout_user=False,
         )
 
     assert response.status_code == 302
-    assert [c.__self__.message.task_name for c in callbacks] == [
-        "grandchallenge.components.tasks.stop_service",
-    ]
+    assert [c.__self__.message.task_name for c in callbacks] == []
     assert reader_study.workstation_sessions.count() == 1
     assert Endpoint.objects.count() == 1
 
@@ -578,12 +577,12 @@ def test_session_create_reader_study_with_algorithm_implementation_skip_active_e
             reverse_kwargs={"slug": ws.slug, "workstation_path": path},
             user=user,
             data={"region": "eu-central-1"},
+            logout_user=False,
         )
 
     assert response.status_code == 302
     assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.start_endpoint",
-        "grandchallenge.components.tasks.stop_service",
     ]
     assert reader_study.workstation_sessions.count() == 1
     assert Endpoint.objects.count() == 2
@@ -605,12 +604,12 @@ def test_session_create_reader_study_with_algorithm_implementation_skip_active_e
             reverse_kwargs={"slug": ws.slug, "workstation_path": path},
             user=user,
             data={"region": "eu-central-1"},
+            logout_user=False,
         )
 
     assert response.status_code == 302
     assert [c.__self__.message.task_name for c in callbacks] == [
         "grandchallenge.components.tasks.start_endpoint",
-        "grandchallenge.components.tasks.stop_service",
     ]
     assert reader_study.workstation_sessions.count() == 1
     assert Endpoint.objects.count() == 3
@@ -809,6 +808,7 @@ def test_session_create_redirect_url(client):
         ),
         user=user,
         data={"region": "eu-central-1"},
+        logout_user=False,
     )
 
     assert response.status_code == 302
@@ -824,6 +824,7 @@ def test_session_create_redirect_url(client):
         ),
         user=user,
         data={"region": "eu-central-1"},
+        logout_user=False,
     )
 
     assert response.status_code == 302
@@ -843,6 +844,7 @@ def test_session_create_redirect_url(client):
         + test_qs,
         user=user,
         data={"region": "eu-central-1"},
+        logout_user=False,
     )
 
     assert response.status_code == 302
@@ -1226,6 +1228,7 @@ def test_session_switch_reader_study_updates_endpoint_utilizations(
             reverse_kwargs={"slug": ws.slug, "workstation_path": path},
             user=user,
             data={"region": "eu-central-1"},
+            logout_user=False,
         )
 
     assert response.status_code == 302
@@ -1233,7 +1236,6 @@ def test_session_switch_reader_study_updates_endpoint_utilizations(
         "grandchallenge.components.tasks.start_service",
         "grandchallenge.components.tasks.start_endpoint",
         "grandchallenge.components.tasks.start_endpoint",
-        "grandchallenge.components.tasks.stop_service",
     ]
     assert reader_study_with_endpoints.workstation_sessions.count() == 1
     assert Endpoint.objects.count() == 2
@@ -1259,12 +1261,11 @@ def test_session_switch_reader_study_updates_endpoint_utilizations(
             reverse_kwargs={"slug": ws.slug, "workstation_path": path},
             user=user,
             data={"region": "eu-central-1"},
+            logout_user=False,
         )
 
     assert response.status_code == 302
-    assert [c.__self__.message.task_name for c in callbacks] == [
-        "grandchallenge.components.tasks.stop_service",
-    ]
+    assert [c.__self__.message.task_name for c in callbacks] == []
     assert reader_study_without_endpoint.workstation_sessions.count() == 1
     assert Endpoint.objects.count() == 2
 

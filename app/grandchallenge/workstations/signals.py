@@ -9,5 +9,5 @@ def stop_users_sessions(*, user, **_):
     users_sessions = Session.objects.active().filter(creator=user)
 
     for session in users_sessions:
-        session.user_finished = True
+        session.status = Session.EXPIRED
         session.save()

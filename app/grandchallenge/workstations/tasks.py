@@ -5,8 +5,6 @@ from django.db.models import Q
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 
-from grandchallenge.components.tasks import stop_service
-
 
 @lambda_task
 def consolidate_unclaimed_sessions():
@@ -37,10 +35,9 @@ def consolidate_unclaimed_sessions():
 
     expiring_pks = {session.pk for session in sessions_to_stop}
 
-    Session.objects.filter(pk__in=expiring_pks).update(status=Session.STOPPED)
-
     for session in sessions_to_stop:
-        stop_service.execute_on_commit(**session.task_kwargs)
+        session.status = Session.EXPIRED
+        session.save()
 
     n_sessions_started = 0
 
