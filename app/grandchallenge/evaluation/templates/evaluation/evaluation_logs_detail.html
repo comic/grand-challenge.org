@@ -3,19 +3,20 @@
 {% load static %}
 
 {% block title %}
-    {{ object.pk }} Logs - Results - {{ block.super }}
+    {{ object.pk }} Logs - {{ object.submission.phase.title }} Leaderboard - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
-                href="{% url 'algorithms:list' %}">Algorithms</a>
+                href="{% url 'challenges:list' %}">Challenges</a>
         </li>
         <li class="breadcrumb-item"><a
-                href="{{ object.algorithm_image.algorithm.get_absolute_url }}">{{ object.algorithm_image.algorithm.title }}
-        </a></li>
-        <li class="breadcrumb-item"><a
-                href="{% url 'algorithms:job-list' slug=object.algorithm_image.algorithm.slug %}">Results</a></li>
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=object.submission.phase.slug %}">{{ object.submission.phase.title }}
+                Leaderboard</a>
+        </li>
         <li class="breadcrumb-item" ><a href="{{ object.get_absolute_url }}">{{ object.pk }}</a></li>
         <li class="breadcrumb-item active" aria-current="page">Logs</li>
     </ol>
@@ -23,18 +24,18 @@
 
 {% block content %}
 
-    <h2>Algorithm Result Logs</h2>
+    <h2>Evaluation Logs</h2>
 
     <dl class="row">
-        <dt class="col-sm-3">Result ID</dt>
+        <dt class="col-sm-3">Evaluation ID</dt>
         <dd class="col-sm-9">{{ object.pk }}</dd>
 
-        <dt class="col-sm-3">Created</dt>
+        <dt class="col-sm-3">Evaluation Created</dt>
         <dd class="col-sm-9">{{ object.created }}</dd>
 
         <dt class="col-sm-3">Status</dt>
         <dd class="col-sm-9">
-            {% include "algorithms/job_status_detail.html" %}
+            {% include 'evaluation/evaluation_status_detail.html' %}
         </dd>
 
         {% if object.error_message %}

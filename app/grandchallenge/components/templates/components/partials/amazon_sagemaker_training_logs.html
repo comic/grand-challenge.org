@@ -1,0 +1,47 @@
+<h3>Execution History</h3>
+
+{% if execution_history %}
+    <div class="table-responsive">
+    <table class="table table-hover table-borderless table-sm">
+        <thead class="thead-light">
+            <tr>
+                <th>Status</th>
+                <th>Message</th>
+                <th>Start</th>
+                <th>End</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in execution_history %}
+                <tr>
+                    <td>{{ entry.Status }}</td>
+                    <td>{{ entry.StatusMessage }}</td>
+                    <td>{{ entry.StartTime }}</td>
+                    <td>{{ entry.EndTime }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+{% else %}
+    <p>No executing history available.</p>
+{% endif %}
+
+<h3>Runtime Metrics</h3>
+{% if runtime_metrics_chart.data.values %}
+    <div class="w-100 vega-lite-chart">
+        {{ runtime_metrics_chart|json_script:"runtimeMetricsData" }}
+    </div>
+{% else %}
+    <p>No runtime metrics are available.</p>
+{% endif %}
+
+<h3>Logs</h3>
+{% if logs %}
+    {# @formatter:off #}
+    <pre class="console">{% for timestamp, structured_log in logs %}<span class="d-flex"><span class="user-select-none flex-shrink-0">{{ timestamp.isoformat }} </span><span class="text-break{% if structured_log.source == "stderr" %} text-danger{% endif %}" style="white-space: pre-wrap;">{{ structured_log.message }}
+</span></span>{% empty %}No logs found{% endfor %}</pre>
+    {# @formatter:on #}
+{% else %}
+    <p>No logs are available.</p>
+{% endif %}

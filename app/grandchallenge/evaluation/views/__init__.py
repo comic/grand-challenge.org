@@ -39,6 +39,10 @@ from grandchallenge.algorithms.views import AlgorithmInterfaceCreateBase
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
+from grandchallenge.components.backends.amazon_sagemaker_base import (
+    AmazonSageMakerTrainingLogsService,
+    LogStreamNotFound,
+)
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     ImportStatusChoices,
@@ -740,6 +744,31 @@ class EvaluationIncompleteJobsDetail(
     template_name_suffix = "_incomplete_jobs_detail"
     model = Evaluation
     raise_exception = True
+
+
+class EvaluationLogsDetail(ObjectPermissionRequiredMixin, DetailView):
+    permission_required = "change_evaluation"
+    template_name_suffix = "_logs_detail"
+    model = Evaluation
+    raise_exception = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        logs_service = AmazonSageMakerTrainingLogsService(
+            job_id=self.object.executor_kwargs["job_id"]
+        )
+
+        try:
+            context["execution_history"] = logs_service.execution_history
+            context["runtime_metrics_chart"] = (
+                logs_service.runtime_metrics_chart
+            )
+            context["logs"] = logs_service._get_task_logs(task=None)
+        except LogStreamNotFound as error:
+            logger.warning(error)
+
+        return context
 
 
 class LeaderboardRedirect(RedirectView):

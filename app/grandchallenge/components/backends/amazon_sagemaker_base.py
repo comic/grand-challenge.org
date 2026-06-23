@@ -412,7 +412,16 @@ class AmazonSageMakerTrainingLogsService:
 
     @property
     def execution_history(self):
-        return self._describe_job["SecondaryStatusTransitions"]
+        transistions = self._describe_job["SecondaryStatusTransitions"]
+        for transition in transistions:
+            if (
+                settings.COMPONENTS_REGISTRY_PREFIX
+                in transition["StatusMessage"]
+            ):
+                # Strip out "Resource reused by training job: " messages
+                # and anything else that may contain an arn
+                transition["StatusMessage"] = ""
+        return transistions
 
     @cached_property
     def _log_stream_name(self):
