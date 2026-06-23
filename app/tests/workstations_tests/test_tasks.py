@@ -483,6 +483,34 @@ class TestConsolidateUnclaimedSessions:
         assert Session.objects.active().filter(claimed_at=None).count() == 2
         assert len(callbacks) == 2
 
+    def test_session_stopping(
+        self,
+        settings,
+        default_workstation_image,
+        django_capture_on_commit_callbacks,
+    ):
+        settings.LAMBDA_TASKS_EAGER = True
+        settings.WORKSTATIONS_NUMBER_UNCLAIMED_SESSIONS = 0
+
+        with django_capture_on_commit_callbacks():
+            old_session = Session.objects.create(
+                workstation_image=default_workstation_image,
+                region="eu-central-1",
+            )
+
+        Session.objects.filter(pk=old_session.pk).update(
+            created=now() - timedelta(hours=9),
+        )
+
+        with django_capture_on_commit_callbacks(execute=True):
+            result = consolidate_unclaimed_sessions()
+
+        assert result == {"n_sessions_stopped": 1, "n_sessions_started": 0}
+
+        old_session.refresh_from_db()
+        assert old_session.status == Session.STOPPED
+        assert old_session.session_utilization.duration.total_seconds() == 0
+
     def test_stops_expired_unclaimed_sessions(
         self,
         default_workstation_image,
@@ -504,9 +532,9 @@ class TestConsolidateUnclaimedSessions:
         assert result == {"n_sessions_stopped": 1, "n_sessions_started": 3}
 
         old_session.refresh_from_db()
-        # The service should immediately be set to stopped so that
+        # The service should immediately be set to expired so that
         # it is not claimed later
-        assert old_session.status == Session.STOPPED
+        assert old_session.status == Session.EXPIRED
 
         # 1 stop + 3 starts
         callback_reprs = [repr(c) for c in callbacks]

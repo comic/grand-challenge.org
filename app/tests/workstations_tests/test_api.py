@@ -80,6 +80,7 @@ def test_session_update_read_only_fails(client):
         user=user,
         data={"status": "Stopped"},
         content_type="application/json",
+        logout_user=False,
     )
 
     assert response.status_code == 200

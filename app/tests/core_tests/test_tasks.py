@@ -241,6 +241,12 @@ def test_get_metrics():
             "Unit": "Count",
         },
         {
+            "MetricName": "SessionsExpired",
+            "Dimensions": [{"Name": "Model", "Value": "Session"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
             "MetricName": "RawImageUploadSessionsQueued",
             "Dimensions": [
                 {"Name": "Model", "Value": "RawImageUploadSession"}

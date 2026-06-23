@@ -23,6 +23,7 @@ def get_view_for_user(
     user: settings.AUTH_USER_MODEL = None,
     url: str = None,
     reverse_kwargs: dict = None,
+    logout_user: bool = True,
     **kwargs,
 ):
     """Return the view for a particular user."""
@@ -60,7 +61,8 @@ def get_view_for_user(
     try:
         response = method(url, **kwargs)
     finally:
-        client.logout()
+        if logout_user:
+            client.logout()
 
     return response
 
