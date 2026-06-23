@@ -11,6 +11,7 @@ from botocore.exceptions import ClientError
 from django.conf import settings
 from django.db.models import TextChoices
 from django.utils.functional import cached_property
+from django.utils.timezone import now
 
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.base import Executor, JobParams
@@ -355,12 +356,19 @@ class AmazonSageMakerTrainingLogsService:
                 raise
 
     @property
-    def _start_time(self):
-        return self._describe_job["TrainingStartTime"]
+    def _logging_start_time(self):
+        # If a job has not been started then neither the start time
+        # nor stop time will exist. Subtract a second so that the times
+        # are not equal.
+        return self._describe_job.get(
+            "TrainingStartTime"
+        ) or now() - timedelta(seconds=1)
 
     @property
-    def _end_time(self):
-        return self._describe_job["TrainingEndTime"]
+    def _logging_end_time(self):
+        # If the job has not started or has not stopped then look
+        # at the logs until now.
+        return self._describe_job.get("TrainingEndTime") or now()
 
     @property
     def _instance_name(self):
@@ -404,12 +412,7 @@ class AmazonSageMakerTrainingLogsService:
 
     @property
     def execution_history(self):
-        transitions = self._describe_job["SecondaryStatusTransitions"]
-        for entry in transitions:
-            entry["duration"] = int(
-                (entry["EndTime"] - entry["StartTime"]).total_seconds()
-            )
-        return transitions
+        return self._describe_job["SecondaryStatusTransitions"]
 
     @cached_property
     def _log_stream_name(self):
@@ -469,8 +472,8 @@ class AmazonSageMakerTrainingLogsService:
             "logGroupName": self._log_group_name,
             "logStreamName": log_stream_name,
             "startFromHead": False,
-            "startTime": int(self._start_time.timestamp() * 1000),
-            "endTime": int(self._end_time.timestamp() * 1000),
+            "startTime": int(self._logging_start_time.timestamp() * 1000),
+            "endTime": int(self._logging_end_time.timestamp() * 1000),
         }
 
         while n_calls < 2:
@@ -494,8 +497,8 @@ class AmazonSageMakerTrainingLogsService:
 
     @cached_property
     def runtime_metrics(self):
-        started = self._start_time
-        stopped = self._end_time
+        started = self._logging_start_time
+        stopped = self._logging_end_time
 
         query_id = "q"
         query = f"SEARCH('{{{self._log_group_name},Host}} Host={self._sagemaker_job_name}/{self._metric_instance_prefix}', 'Average', 60)"
