@@ -470,6 +470,13 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
+                "job-logs-detail",
+                {"slug": ai.algorithm.slug, "pk": j.pk},
+                "view_logs",
+                j,
+                None,
+            ),
+            (
                 "display-set-from-job-create",
                 {"slug": ai.algorithm.slug, "pk": j.pk},
                 "view_job",

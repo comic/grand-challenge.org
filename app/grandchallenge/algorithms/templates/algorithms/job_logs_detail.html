@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load url %}
+
+{% block title %}
+    {{ object.pk }} Logs - Results - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:list' %}">Algorithms</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.algorithm_image.algorithm.get_absolute_url }}">{{ object.algorithm_image.algorithm.title }}
+        </a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'algorithms:job-list' slug=object.algorithm_image.algorithm.slug %}">Results</a></li>
+        <li class="breadcrumb-item" ><a href="{{ object.get_absolute_url }}">{{ object.pk }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Logs</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Algorithm Result Logs</h2>
+
+    {% if object.runtime_metrics %}
+        <h3>Runtime Metrics</h3>
+        <div class="w-100 vega-lite-chart">
+            {{ object.runtime_metrics_chart|json_script:"runtimeMetricsData" }}
+        </div>
+    {% endif %}
+
+    <h3>Stdout</h3>
+    {# @formatter:off #}
+    <pre class="console">{% if object.stdout %}{{ object.stdout }}{% else %}No logs found on stdout{% endif %}</pre>
+    {# @formatter:on #}
+
+    <h3>Stderr</h3>
+    {# @formatter:off #}
+    <pre class="console">{% if object.stderr %}{{ object.stderr }}{% else %}No logs found on stderr{% endif %}</pre>
+    {# @formatter:on #}
+
+{% endblock %}

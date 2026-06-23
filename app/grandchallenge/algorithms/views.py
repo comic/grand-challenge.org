@@ -824,6 +824,13 @@ class JobStatusDetail(ObjectPermissionRequiredMixin, DetailView):
     raise_exception = True
 
 
+class JobLogsDetail(ObjectPermissionRequiredMixin, DetailView):
+    permission_required = "view_logs"
+    template_name_suffix = "_logs_detail"
+    model = Job
+    raise_exception = True
+
+
 class DisplaySetFromJobCreate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,

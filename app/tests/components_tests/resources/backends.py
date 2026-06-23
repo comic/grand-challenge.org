@@ -6,6 +6,7 @@ import logging
 import re
 from datetime import timedelta
 
+from dateutil.parser import parse
 from django.conf import settings
 from django.utils.timezone import now
 
@@ -162,7 +163,7 @@ class IOCopyExecutor(Executor):
         self._invoke_duration = timedelta(
             seconds=event["_invoke_duration_seconds"]
         )
-        self.__start_time = event["__start_time"]
+        self.__start_time = parse(event["__start_time"])
 
     @staticmethod
     def get_job_name(*, event):
