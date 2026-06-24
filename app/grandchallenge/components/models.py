@@ -31,7 +31,6 @@ from django.utils.html import format_html
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
-from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from lambda_tasks.models import SQSLambdaTask
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
@@ -1693,12 +1692,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         choices=STATUS_CHOICES, default=PENDING, db_index=True
     )
     attempt = models.PositiveSmallIntegerField(editable=False, default=0)
-    stdout = deprecate_field(
-        models.TextField(default=""), raise_on_access=True
-    )
-    stderr = deprecate_field(
-        models.TextField(default=""), raise_on_access=True
-    )
     exec_duration = models.DurationField(
         null=True,
         default=None,
@@ -1726,9 +1719,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "processing time, output data writing time and "
             "any delays from shared hardware issues."
         ),
-    )
-    runtime_metrics = deprecate_field(
-        models.JSONField(default=dict, editable=False), raise_on_access=True
     )
     error_message = models.CharField(max_length=1024, default="")
     detailed_error_message = models.JSONField(blank=True, default=dict)
