@@ -47,11 +47,11 @@
             {% endif %}
 
             {% if "view_logs" in job_perms %}
-                <a class="nav-link" id="v-pills-logs-tab" data-toggle="pill"
-                   href="#v-pills-logs" role="tab" aria-controls="v-pills-logs"
-                   aria-selected="false"><i class="fas fa-terminal fa-fw"></i>&nbsp;Logs
+                <a class="nav-link" href="{% url "algorithms:job-logs-detail" slug=object.algorithm_image.algorithm.slug pk=object.pk %}">
+                    <i class="fas fa-terminal fa-fw"></i>&nbsp;Logs
                 </a>
             {% endif %}
+
             {% if object.status == object.SUCCESS and perms.reader_studies.add_readerstudy %}
                 <a class="nav-link"
                    href="{% url "algorithms:display-set-from-job-create" slug=object.algorithm_image.algorithm.slug pk=object.pk %}">
@@ -257,30 +257,6 @@
             </div>
         {% endif %}
 
-        {% if "view_logs" in job_perms %}
-            <div class="tab-pane fade" id="v-pills-logs" role="tabpanel"
-                 aria-labelledby="v-pills-logs-tab">
-                <h2>Logs</h2>
-
-                {% if object.runtime_metrics %}
-                    <h3>Runtime Metrics</h3>
-                    <div class="w-100 vega-lite-chart">
-                        {{ object.runtime_metrics_chart|json_script:"runtimeMetricsData" }}
-                    </div>
-                {% endif %}
-
-                <h3>Stdout</h3>
-                {# @formatter:off #}
-                <pre class="console">{% if object.stdout %}{{ object.stdout }}{% else %}No logs found on stdout{% endif %}</pre>
-                {# @formatter:on #}
-
-                <h3>Stderr</h3>
-                {# @formatter:off #}
-                <pre class="console">{% if object.stderr %}{{ object.stderr }}{% else %}No logs found on stderr{% endif %}</pre>
-                {# @formatter:on #}
-
-            </div>
-        {% endif %}
     </div>
 {% endblock %}
 

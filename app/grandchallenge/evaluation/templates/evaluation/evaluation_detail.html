@@ -145,38 +145,45 @@
 
     {% if object.status == object.SUCCESS %}
         <h3>Metrics</h3>
-        {% if object.submission.phase.display_all_metrics %}
-            <pre>{{ metrics|json_dumps }}</pre>
-        {% else %}
-            <dl>
+
+        <dl>
+            <dt>
+                {{ object.submission.phase.score_title }}
+            </dt>
+            <dd>
+                {{ metrics|get_jsonpath:object.submission.phase.score_jsonpath|floatformat:object.submission.phase.score_decimal_places }}
+                {% if object.submission.phase.score_error_jsonpath %}
+                    &nbsp;±&nbsp;
+                    {{ metrics|get_jsonpath:object.submission.phase.score_error_jsonpath|floatformat:object.submission.phase.score_decimal_places }}
+                {% endif %}
+            </dd>
+
+            {% for col in object.submission.phase.extra_results_columns %}
                 <dt>
-                    {{ object.submission.phase.score_title }}
+                    {{ col.title }}
                 </dt>
                 <dd>
-                    {{ metrics|get_jsonpath:object.submission.phase.score_jsonpath|floatformat:object.submission.phase.score_decimal_places }}
-                    {% if object.submission.phase.score_error_jsonpath %}
+                    {{ metrics|get_jsonpath:col.path|floatformat:object.submission.phase.score_decimal_places }}
+                    {% if col.error_path %}
                         &nbsp;±&nbsp;
-                        {{ metrics|get_jsonpath:object.submission.phase.score_error_jsonpath|floatformat:object.submission.phase.score_decimal_places }}
+                        {{ metrics|get_jsonpath:col.error_path|floatformat:object.submission.phase.score_decimal_places }}
                     {% endif %}
                 </dd>
+            {% endfor %}
+        </dl>
 
-                {% for col in object.submission.phase.extra_results_columns %}
-                    <dt>
-                        {{ col.title }}
-                    </dt>
-                    <dd>
-                        {{ metrics|get_jsonpath:col.path|floatformat:object.submission.phase.score_decimal_places }}
-                        {% if col.error_path %}
-                            &nbsp;±&nbsp;
-                            {{ metrics|get_jsonpath:col.error_path|floatformat:object.submission.phase.score_decimal_places }}
-                        {% endif %}
-                    </dd>
-                {% endfor %}
-            </dl>
+        {% if object.submission.phase.display_all_metrics %}
+            <p>
+                <a href="data:text/plain;charset=utf-8,{{ metrics|json_dumps|urlencode }}"
+                    download="metrics.json"
+                    class="btn btn-primary">
+                    <i class="fa fa-download mr-1"></i>
+                    Download the metrics.json file for this evaluation
+                </a>
+            </p>
         {% endif %}
-        <br>
+
         {% if object.additional_outputs.all %}
-            <br>
             <h3>Additional Outputs</h3>
 
             {% for output in object.additional_outputs.all|sort_civs %}
@@ -232,6 +239,17 @@
 
             {% if object.status == object.SUCCESS %}
                 <div class="card-body">
+                    <h3 class="card-title">Metrics</h3>
+
+                    <a href="data:text/plain;charset=utf-8,{{ metrics|json_dumps|urlencode }}"
+                        download="metrics.json"
+                        class="btn btn-primary">
+                        <i class="fa fa-download mr-1"></i>
+                        Download the metrics.json file for this evaluation
+                    </a>
+                </div>
+
+                <div class="card-body">
                     <h3 class="card-title">Visibility</h3>
 
                     {% if object.published %}
@@ -276,23 +294,11 @@
 
             <div class="card-body">
                 <h3 class="card-title" id="logs">Logs</h3>
-
-                {% if object.runtime_metrics %}
-                    <h4>Runtime Metrics</h4>
-                    <div class="w-100 vega-lite-chart">
-                        {{ object.runtime_metrics_chart|json_script:"runtimeMetricsData" }}
-                    </div>
-                {% endif %}
-
-                <h4>Stdout</h4>
-                {# @formatter:off #}
-                <pre class="console">{% if object.stdout %}{{ object.stdout }}{% else %}No logs found on stdout{% endif %}</pre>
-                {# @formatter:on #}
-
-                <h4>Stderr</h4>
-                {# @formatter:off #}
-                <pre class="console">{% if object.stderr %}{{ object.stderr }}{% else %}No logs found on stderr{% endif %}</pre>
-                {# @formatter:on #}
+                    <a class="btn btn-primary"
+                       href="{% url 'evaluation:evaluation-logs-detail' challenge_short_name=challenge.short_name pk=object.pk %}">
+                        <i class="fas fa-terminal mr-1"></i>
+                        View the logs for this evaluation
+                    </a>
             </div>
         </div>
     {% endif %}
