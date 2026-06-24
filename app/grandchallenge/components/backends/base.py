@@ -364,8 +364,6 @@ class Executor(ABC):
 
         self._exec_duration = None
         self._invoke_duration = None
-        self._stdout = []
-        self._stderr = []
 
         self.__s3_client = None
 
@@ -425,14 +423,6 @@ class Executor(ABC):
     def get_job_params(*, job_name): ...
 
     @property
-    def stdout(self):
-        return "\n".join(self._stdout)
-
-    @property
-    def stderr(self):
-        return "\n".join(self._stderr)
-
-    @property
     @abstractmethod
     def utilization_duration(self): ...
 
@@ -447,10 +437,6 @@ class Executor(ABC):
     @property
     @abstractmethod
     def usd_cents_per_hour(self): ...
-
-    @property
-    @abstractmethod
-    def runtime_metrics(self): ...
 
     @property
     @abstractmethod

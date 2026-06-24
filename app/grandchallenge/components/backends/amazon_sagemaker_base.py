@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from abc import ABC, abstractmethod
@@ -22,11 +23,8 @@ from grandchallenge.components.backends.exceptions import (
     UncleanExit,
 )
 from grandchallenge.components.backends.utils import (
-    LOGLINES,
     UUID4_REGEX,
-    SourceChoices,
     ms_timestamp_to_datetime,
-    parse_structured_log,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.error_messages import SystemErrorMessages
@@ -323,6 +321,16 @@ class ModelChoices(TextChoices):
     EVALUATION_EVALUATION = "E", "evaluation-evaluation"
 
 
+class SourceChoices(TextChoices):
+    STDOUT = "stdout"
+    STDERR = "stderr"
+
+
+class ParsedLog(NamedTuple):
+    message: str
+    source: SourceChoices
+
+
 class AmazonSageMakerTrainingLogsService:
     def __init__(self, *args, job_id, **kwargs):
         super().__init__(*args, **kwargs)
@@ -358,17 +366,16 @@ class AmazonSageMakerTrainingLogsService:
     @property
     def _logging_start_time(self):
         # If a job has not been started then neither the start time
-        # nor stop time will exist. Subtract a second so that the times
-        # are not equal.
-        return self._describe_job.get(
-            "TrainingStartTime"
-        ) or now() - timedelta(seconds=1)
+        # nor stop time will exist.
+        start_time = self._describe_job.get("TrainingStartTime") or now()
+        return start_time - timedelta(minutes=1)
 
     @property
     def _logging_end_time(self):
         # If the job has not started or has not stopped then look
         # at the logs until now.
-        return self._describe_job.get("TrainingEndTime") or now()
+        end_time = self._describe_job.get("TrainingEndTime") or now()
+        return end_time + timedelta(minutes=1)
 
     @property
     def _instance_name(self):
@@ -440,14 +447,14 @@ class AmazonSageMakerTrainingLogsService:
         else:
             raise LogStreamNotFound("Log stream not found")
 
-    def _get_task_logs(self, *, task):
+    @property
+    def task_logs(self):
         output = []
 
         for log_event in self._log_events:
             try:
-                parsed_log = parse_structured_log(
-                    log=log_event["message"].replace("\x00", ""),
-                    task=task,
+                parsed_log = self._parse_structured_log(
+                    log=log_event["message"].replace("\x00", "")
                 )
                 timestamp = ms_timestamp_to_datetime(log_event["timestamp"])
             except (JSONDecodeError, KeyError, ValueError):
@@ -504,8 +511,25 @@ class AmazonSageMakerTrainingLogsService:
 
         return log_events
 
+    @staticmethod
+    def _parse_structured_log(*, log: str) -> ParsedLog | None:
+        """Parse the structured logs from SageMaker Shim"""
+        structured_log = json.loads(log.strip())
+
+        message = structured_log["log"]
+        source = SourceChoices(structured_log["source"])
+
+        # Defensive, in case the type of structured_log["internal"] is str
+        if structured_log["internal"] is False:
+            return ParsedLog(
+                message=message,
+                source=source,
+            )
+        else:
+            return None
+
     @cached_property
-    def runtime_metrics(self):
+    def _runtime_metrics(self):
         started = self._logging_start_time
         stopped = self._logging_end_time
 
@@ -557,7 +581,7 @@ class AmazonSageMakerTrainingLogsService:
 
     @property
     def runtime_metrics_chart(self):
-        instance_metrics = self.runtime_metrics["instance"]
+        instance_metrics = self._runtime_metrics["instance"]
         n_cpu = instance_metrics["cpu"]
 
         if instance_metrics["gpus"]:
@@ -580,7 +604,7 @@ class AmazonSageMakerTrainingLogsService:
                         else value / 100.0
                     ),
                 }
-                for metric in self.runtime_metrics["metrics"]
+                for metric in self._runtime_metrics["metrics"]
                 for timestamp, value in zip(
                     metric["timestamps"], metric["values"], strict=True
                 )
@@ -593,22 +617,12 @@ class AmazonSageMakerTrainingLogsService:
                     "type": "quantitative",
                     "format": ".2%",
                 }
-                for metric in self.runtime_metrics["metrics"]
+                for metric in self._runtime_metrics["metrics"]
             ],
         )
 
 
 class AmazonSageMakerBaseExecutor(Executor, ABC):
-    @property
-    @abstractmethod
-    def _log_group_name(self):
-        pass
-
-    @property
-    @abstractmethod
-    def _metric_instance_prefix(self):
-        pass
-
     @abstractmethod
     def _get_job_status(self, *, event):
         pass
@@ -637,7 +651,6 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         super().__init__(*args, **kwargs)
 
         self.__utilization_duration = None
-        self.__runtime_metrics = {}
 
         self.__sagemaker_client = None
         self.__logs_client = None
@@ -694,10 +707,6 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     @property
     def utilization_duration(self):
         return self.__utilization_duration
-
-    @property
-    def runtime_metrics(self):
-        return self.__runtime_metrics
 
     @property
     def _sagemaker_job_name(self):
@@ -773,8 +782,6 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         job_status = self._get_job_status(event=event)
 
         self._set_duration(event=event)
-        self._set_task_logs(event=event)
-        self._set_runtime_metrics(event=event)
 
         if job_status == "Completed":
             self._handle_completed_job()
@@ -818,149 +825,6 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         except TypeError:
             logger.warning("Invalid start or end time, duration undetermined")
             self.__utilization_duration = None
-
-    def _get_log_stream_name(self, *, data_log=False):
-        response = self._logs_client.describe_log_streams(
-            logGroupName=self._log_group_name,
-            logStreamNamePrefix=f"{self._sagemaker_job_name}",
-        )
-
-        if "nextToken" in response:
-            raise LogStreamNotFound("Too many log streams found")
-
-        log_streams = {
-            s["logStreamName"]
-            for s in response["logStreams"]
-            if s["logStreamName"].endswith("/data-log") is data_log
-        }
-
-        if len(log_streams) == 1:
-            return log_streams.pop()
-        else:
-            raise LogStreamNotFound("Log stream not found")
-
-    def _set_task_logs(self, *, event, task=None):
-        stdout = []
-        stderr = []
-
-        for log_event in self._get_log_events(event=event):
-            try:
-                parsed_log = parse_structured_log(
-                    log=log_event["message"].replace("\x00", ""),
-                    task=task,
-                )
-                timestamp = ms_timestamp_to_datetime(log_event["timestamp"])
-            except (JSONDecodeError, KeyError, ValueError):
-                logger.warning("Could not parse log")
-                continue
-
-            if parsed_log is not None:
-                output = f"{timestamp.isoformat()} {parsed_log.message}"
-                if parsed_log.source == SourceChoices.STDOUT:
-                    stdout.append(output)
-                elif parsed_log.source == SourceChoices.STDERR:
-                    stderr.append(output)
-                else:
-                    logger.error("Invalid source")
-
-        self._stdout = stdout[-LOGLINES:] if len(stdout) > LOGLINES else stdout
-        self._stderr = stderr[-LOGLINES:] if len(stderr) > LOGLINES else stderr
-
-    def _get_log_events(self, *, event):
-        log_events = []
-
-        try:
-            log_stream_name = self._get_log_stream_name(data_log=False)
-        except LogStreamNotFound as error:
-            logger.warning(str(error))
-            return log_events
-
-        n_calls = 0
-        next_token = None
-
-        call_args = {
-            "logGroupName": self._log_group_name,
-            "logStreamName": log_stream_name,
-            "startFromHead": False,
-            "startTime": self._get_start_time(event=event),
-            "endTime": self._get_end_time(event=event),
-        }
-
-        while n_calls < 10:
-            if next_token:
-                call_args["nextToken"] = next_token
-
-            response = self._logs_client.get_log_events(**call_args)
-            n_calls += 1
-
-            # Prepend the new events as we are working backwards with
-            # nextBackwardToken and startFromHead = False
-            log_events = response["events"] + log_events
-            new_token = response["nextBackwardToken"]
-
-            if new_token == next_token:
-                break
-            else:
-                next_token = new_token
-
-        return log_events
-
-    def _set_runtime_metrics(self, *, event):
-        try:
-            started = ms_timestamp_to_datetime(
-                self._get_start_time(event=event)
-            )
-            stopped = ms_timestamp_to_datetime(self._get_end_time(event=event))
-        except TypeError:
-            logger.warning("Invalid start or end time, metrics undetermined")
-            return
-
-        query_id = "q"
-        query = f"SEARCH('{{{self._log_group_name},Host}} Host={self._sagemaker_job_name}/{self._metric_instance_prefix}', 'Average', 60)"
-
-        instance_type = get(
-            [
-                instance
-                for instance in INSTANCE_OPTIONS
-                if instance.name == self._get_instance_name(event=event)
-            ]
-        )
-
-        response = self._cloudwatch_client.get_metric_data(
-            MetricDataQueries=[{"Id": query_id, "Expression": query}],
-            # Add buffer time to allow metrics to be delivered
-            StartTime=started - timedelta(minutes=1),
-            EndTime=stopped + timedelta(minutes=5),
-        )
-
-        if "NextToken" in response:
-            logger.error("Too many metrics found")
-
-        runtime_metrics = [
-            {
-                "label": metric["Label"],
-                "status": metric["StatusCode"],
-                "timestamps": [t.isoformat() for t in metric["Timestamps"]],
-                "values": metric["Values"],
-            }
-            for metric in response["MetricDataResults"]
-            if metric["Id"] == query_id
-        ]
-
-        self.__runtime_metrics = {
-            "instance": {
-                "name": instance_type.name,
-                "cpu": instance_type.cpu,
-                "memory": instance_type.memory,
-                "gpus": instance_type.gpus,
-                "gpu_type": (
-                    None
-                    if instance_type.gpu_type is None
-                    else instance_type.gpu_type.value
-                ),
-            },
-            "metrics": runtime_metrics,
-        }
 
     @abstractmethod
     def _handle_stopped_job(self, *, event):

@@ -9,8 +9,14 @@ import botocore
 import pytest
 from botocore.stub import Stubber
 from dateutil.tz import tzlocal
+from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
+from grandchallenge.components.backends.amazon_sagemaker_base import (
+    AmazonSageMakerTrainingLogsService,
+    ParsedLog,
+    SourceChoices,
+)
 from grandchallenge.components.backends.amazon_sagemaker_training import (
     AmazonSageMakerTrainingExecutor,
 )
@@ -294,18 +300,11 @@ def test_get_log_stream_name(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
 
     pk = uuid4()
-    executor = AmazonSageMakerTrainingExecutor(
+    logs_service = AmazonSageMakerTrainingLogsService(
         job_id=f"algorithms-job-{pk}",
-        exec_image_repo_tag="",
-        memory_limit=4,
-        time_limit=60,
-        requires_gpu_type=GPUTypeChoices.NO_GPU,
-        use_warm_pool=False,
-        signing_key=b"",
-        api_method=APIMethodChoices.EXEC,
     )
 
-    with Stubber(executor._logs_client) as s:
+    with Stubber(logs_service._logs_client) as s:
         s.add_response(
             method="describe_log_streams",
             service_response={
@@ -318,7 +317,7 @@ def test_get_log_stream_name(settings):
                 "logStreamNamePrefix": f"localhost-A-{pk}",
             },
         )
-        log_stream_name = executor._get_log_stream_name()
+        log_stream_name = logs_service._log_stream_name
 
     assert log_stream_name == f"localhost-A-{pk}/i-whatever"
 
@@ -327,21 +326,37 @@ def test_set_task_logs(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
 
     pk = uuid4()
-    executor = AmazonSageMakerTrainingExecutor(
+    logs_service = AmazonSageMakerTrainingLogsService(
         job_id=f"algorithms-job-{pk}",
-        exec_image_repo_tag="",
-        memory_limit=4,
-        time_limit=60,
-        requires_gpu_type=GPUTypeChoices.NO_GPU,
-        use_warm_pool=False,
-        signing_key=b"",
-        api_method=APIMethodChoices.EXEC,
     )
 
-    assert executor.stdout == ""
-    assert executor.stderr == ""
-
-    with Stubber(executor._logs_client) as logs:
+    with (
+        Stubber(logs_service._sagemaker_client) as sagemaker,
+        Stubber(logs_service._logs_client) as logs,
+    ):
+        sagemaker.add_response(
+            method="describe_training_job",
+            service_response={
+                "TrainingJobName": f"localhost-A-{pk}",
+                "TrainingJobArn": "",
+                "ModelArtifacts": {"S3ModelArtifacts": ""},
+                "TrainingJobStatus": "",
+                "SecondaryStatus": "",
+                "AlgorithmSpecification": {"TrainingInputMode": ""},
+                "ResourceConfig": {"VolumeSizeInGB": 20},
+                "StoppingCondition": {},
+                "CreationTime": now().isoformat(),
+                "TrainingStartTime": datetime(
+                    2022, 6, 9, 9, 38, 47, tzinfo=timezone.utc
+                ),
+                "TrainingEndTime": datetime(
+                    2022, 6, 9, 9, 37, 1, tzinfo=timezone.utc
+                ),
+            },
+            expected_params={
+                "TrainingJobName": f"localhost-A-{pk}",
+            },
+        )
         logs.add_response(
             method="describe_log_streams",
             service_response={
@@ -453,42 +468,67 @@ def test_set_task_logs(settings):
                 "nextToken": "foo",
             },
         )
-        executor._set_task_logs(
-            event={
-                "TrainingStartTime": 1654767467000,
-                "TrainingEndTime": 1654767481000,
-                "ResourceConfig": {
-                    "InstanceType": "ml.m7i.large",
-                    "InstanceCount": 1,
-                },
-            }
-        )
 
-    assert (
-        executor.stdout
-        == "2022-06-08T10:23:58+00:00 first message\n2022-06-08T10:23:58+00:00 hello from stdout"
-    )
-    assert executor.stderr == "2022-06-08T10:23:58+00:00 hello from stderr"
+        assert logs_service.task_logs == [
+            (
+                datetime(2022, 6, 8, 10, 23, 58, tzinfo=timezone.utc),
+                ParsedLog(
+                    message="first message", source=SourceChoices.STDOUT
+                ),
+            ),
+            (
+                datetime(2022, 6, 8, 10, 23, 58, tzinfo=timezone.utc),
+                ParsedLog(
+                    message="hello from stdout", source=SourceChoices.STDOUT
+                ),
+            ),
+            (
+                datetime(2022, 6, 8, 10, 23, 58, tzinfo=timezone.utc),
+                ParsedLog(
+                    message="hello from stderr", source=SourceChoices.STDERR
+                ),
+            ),
+        ]
 
 
 def test_set_runtime_metrics(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
 
     pk = uuid4()
-    executor = AmazonSageMakerTrainingExecutor(
+    logs_service = AmazonSageMakerTrainingLogsService(
         job_id=f"algorithms-job-{pk}",
-        exec_image_repo_tag="",
-        memory_limit=4,
-        time_limit=60,
-        requires_gpu_type=GPUTypeChoices.NO_GPU,
-        use_warm_pool=False,
-        signing_key=b"",
-        api_method=APIMethodChoices.EXEC,
     )
 
-    assert executor.runtime_metrics == {}
-
-    with Stubber(executor._cloudwatch_client) as cloudwatch:
+    with (
+        Stubber(logs_service._cloudwatch_client) as cloudwatch,
+        Stubber(logs_service._sagemaker_client) as sagemaker,
+    ):
+        sagemaker.add_response(
+            method="describe_training_job",
+            service_response={
+                "TrainingJobName": f"localhost-A-{pk}",
+                "TrainingJobArn": "",
+                "ModelArtifacts": {"S3ModelArtifacts": ""},
+                "TrainingJobStatus": "",
+                "SecondaryStatus": "",
+                "AlgorithmSpecification": {"TrainingInputMode": ""},
+                "ResourceConfig": {
+                    "VolumeSizeInGB": 20,
+                    "InstanceType": "ml.m7i.large",
+                },
+                "StoppingCondition": {},
+                "CreationTime": now().isoformat(),
+                "TrainingStartTime": datetime(
+                    2022, 6, 9, 9, 37, 47, tzinfo=timezone.utc
+                ),
+                "TrainingEndTime": datetime(
+                    2022, 6, 9, 9, 42, 1, tzinfo=timezone.utc
+                ),
+            },
+            expected_params={
+                "TrainingJobName": f"localhost-A-{pk}",
+            },
+        )
         cloudwatch.add_response(
             method="get_metric_data",
             service_response={
@@ -528,46 +568,36 @@ def test_set_runtime_metrics(settings):
                 ),
             },
         )
-        executor._set_runtime_metrics(
-            event={
-                "TrainingStartTime": 1654767467000,
-                "TrainingEndTime": 1654767481000,
-                "ResourceConfig": {
-                    "InstanceType": "ml.m7i.large",
-                    "InstanceCount": 1,
-                },
-            }
-        )
 
-    assert executor.runtime_metrics == {
-        "instance": {
-            "cpu": 2,
-            "gpu_type": "",
-            "gpus": 0,
-            "memory": 8,
-            "name": "ml.m7i.large",
-        },
-        "metrics": [
-            {
-                "label": "CPUUtilization",
-                "status": "Complete",
-                "timestamps": [
-                    "2022-06-09T09:38:00+00:00",
-                    "2022-06-09T09:37:00+00:00",
-                ],
-                "values": [0.677884, 0.130367],
+        assert logs_service._runtime_metrics == {
+            "instance": {
+                "cpu": 2,
+                "gpu_type": "",
+                "gpus": 0,
+                "memory": 8,
+                "name": "ml.m7i.large",
             },
-            {
-                "label": "MemoryUtilization",
-                "status": "Complete",
-                "timestamps": [
-                    "2022-06-09T09:38:00+00:00",
-                    "2022-06-09T09:37:00+00:00",
-                ],
-                "values": [1.14447, 0.875619],
-            },
-        ],
-    }
+            "metrics": [
+                {
+                    "label": "CPUUtilization",
+                    "status": "Complete",
+                    "timestamps": [
+                        "2022-06-09T09:38:00+00:00",
+                        "2022-06-09T09:37:00+00:00",
+                    ],
+                    "values": [0.677884, 0.130367],
+                },
+                {
+                    "label": "MemoryUtilization",
+                    "status": "Complete",
+                    "timestamps": [
+                        "2022-06-09T09:38:00+00:00",
+                        "2022-06-09T09:37:00+00:00",
+                    ],
+                    "values": [1.14447, 0.875619],
+                },
+            ],
+        }
 
 
 def test_handle_completed_job(settings):

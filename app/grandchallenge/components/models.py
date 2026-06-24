@@ -31,6 +31,7 @@ from django.utils.html import format_html
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from lambda_tasks.models import SQSLambdaTask
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
@@ -43,7 +44,6 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
     UploadSessionCompleteTask,
 )
-from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
@@ -1693,8 +1693,12 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         choices=STATUS_CHOICES, default=PENDING, db_index=True
     )
     attempt = models.PositiveSmallIntegerField(editable=False, default=0)
-    stdout = models.TextField(default="")
-    stderr = models.TextField(default="")
+    stdout = deprecate_field(
+        models.TextField(default=""), raise_on_access=True
+    )
+    stderr = deprecate_field(
+        models.TextField(default=""), raise_on_access=True
+    )
     exec_duration = models.DurationField(
         null=True,
         default=None,
@@ -1723,7 +1727,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "any delays from shared hardware issues."
         ),
     )
-    runtime_metrics = models.JSONField(default=dict, editable=False)
+    runtime_metrics = deprecate_field(
+        models.JSONField(default=dict, editable=False), raise_on_access=True
+    )
     error_message = models.CharField(max_length=1024, default="")
     detailed_error_message = models.JSONField(blank=True, default=dict)
     input_prefixes = models.JSONField(
@@ -1794,6 +1800,10 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     def status_url(self) -> str:
         raise NotImplementedError
 
+    @property
+    def status_template(self):
+        raise NotImplementedError
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -1816,23 +1826,14 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         self,
         *,
         status: STATUS_CHOICES,
-        stdout: str = "",
-        stderr: str = "",
         error_message="",
         detailed_error_message=None,
         utilization_duration=None,
         exec_duration=None,
         invoke_duration=None,
         compute_cost_euro_millicents=None,
-        runtime_metrics=None,
     ):
         self.status = status
-
-        if stdout:
-            self.stdout = stdout
-
-        if stderr:
-            self.stderr = stderr
 
         if error_message:
             self.error_message = error_message[:1024]
@@ -1860,9 +1861,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             self.utilization.save(
                 update_fields=["compute_cost_euro_millicents"]
             )
-
-        if runtime_metrics is not None:
-            self.runtime_metrics = runtime_metrics
 
         self.save()
 
@@ -1956,10 +1954,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     @property
     def status_context(self):
         if self.status == self.SUCCESS:
-            if self.stderr:
-                return "warning"
-            else:
-                return "success"
+            return "success"
         elif self.status in {self.FAILURE, self.CANCELLED}:
             return "danger"
         elif self.status in {
@@ -1978,47 +1973,26 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         else:
             return "secondary"
 
-    @property
-    def runtime_metrics_chart(self):
-        instance_metrics = self.runtime_metrics["instance"]
-        n_cpu = instance_metrics["cpu"]
-
-        if instance_metrics["gpus"]:
-            gpu_str = (
-                f"{instance_metrics['gpus']}x {instance_metrics['gpu_type']}"
-            )
-        else:
-            gpu_str = "No"
-
-        title = f"{instance_metrics['name']} / {instance_metrics['cpu']} CPU / {instance_metrics['memory']} GB Memory / {gpu_str} GPU"
-
-        return components_line(
-            values=[
-                {
-                    "Metric": metric["label"],
-                    "Timestamp": timestamp,
-                    "Percent": (
-                        value / (n_cpu * 100.0)
-                        if metric["label"] == "CPUUtilization"
-                        else value / 100.0
-                    ),
-                }
-                for metric in self.runtime_metrics["metrics"]
-                for timestamp, value in zip(
-                    metric["timestamps"], metric["values"], strict=True
-                )
-            ],
-            title=title,
-            single_thread_limit=100.0 / n_cpu,
-            tooltip=[
-                {
-                    "field": metric["label"],
-                    "type": "quantitative",
-                    "format": ".2%",
-                }
-                for metric in self.runtime_metrics["metrics"]
-            ],
+    @cached_property
+    def amazon_sagemaker_training_logs(self):
+        from grandchallenge.components.backends.amazon_sagemaker_base import (
+            AmazonSageMakerTrainingLogsService,
+            LogStreamNotFound,
         )
+
+        logs_service = AmazonSageMakerTrainingLogsService(
+            job_id=self.executor_kwargs["job_id"]
+        )
+
+        try:
+            return {
+                "execution_history": logs_service.execution_history,
+                "runtime_metrics_chart": logs_service.runtime_metrics_chart,
+                "logs": logs_service.task_logs,
+            }
+        except LogStreamNotFound as error:
+            logger.warning(error)
+            return {}
 
     def create_utilization(self):
         raise NotImplementedError

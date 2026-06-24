@@ -32,121 +32,114 @@ class IOCopyExecutor(Executor):
         self.__start_time = now()
 
     def execute(self):
-        try:
-            runtime_setup_result = RuntimeSetupResult(
-                return_code=0,
-                user_safe_error_message="",
-                sagemaker_shim_version="0.8.0",
-            )
-            runtime_setup_result_content = (
-                runtime_setup_result.model_dump_json().encode("utf-8")
-            )
-            signature = hmac.new(
-                key=self._signing_key,
-                msg=runtime_setup_result_content,
-                digestmod=hashlib.sha256,
-            ).hexdigest()
-            self._s3_client.upload_fileobj(
-                Fileobj=io.BytesIO(runtime_setup_result_content),
-                Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                Key=self.runtime_setup_result_key,
-                ExtraArgs={
-                    "Metadata": {"signature_hmac_sha256": signature},
-                },
-            )
+        runtime_setup_result = RuntimeSetupResult(
+            return_code=0,
+            user_safe_error_message="",
+            sagemaker_shim_version="0.8.0",
+        )
+        runtime_setup_result_content = (
+            runtime_setup_result.model_dump_json().encode("utf-8")
+        )
+        signature = hmac.new(
+            key=self._signing_key,
+            msg=runtime_setup_result_content,
+            digestmod=hashlib.sha256,
+        ).hexdigest()
+        self._s3_client.upload_fileobj(
+            Fileobj=io.BytesIO(runtime_setup_result_content),
+            Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            Key=self.runtime_setup_result_key,
+            ExtraArgs={
+                "Metadata": {"signature_hmac_sha256": signature},
+            },
+        )
 
-            with io.BytesIO() as f:
-                self._s3_client.download_fileobj(
-                    Fileobj=f,
-                    Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
-                    Key=self._invocation_key,
-                )
-                f.seek(0)
-                invocation_json = json.loads(f.read().decode("utf-8"))
+        with io.BytesIO() as f:
+            self._s3_client.download_fileobj(
+                Fileobj=f,
+                Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                Key=self._invocation_key,
+            )
+            f.seek(0)
+            invocation_json = json.loads(f.read().decode("utf-8"))
 
-            for task in invocation_json:
-                # Copy inputs to outputs
-                for inpt in task["inputs"]:
-                    copy_source = {
+        for task in invocation_json:
+            # Copy inputs to outputs
+            for inpt in task["inputs"]:
+                copy_source = {
+                    "Bucket": inpt["bucket_name"],
+                    "Key": inpt["bucket_key"],
+                }
+                output_key = f'{task["output_prefix"]}/{inpt["relative_path"]}'
+
+                logger.info(f"Copying {copy_source} to {output_key}")
+
+                self._s3_client.copy(
+                    CopySource={
                         "Bucket": inpt["bucket_name"],
                         "Key": inpt["bucket_key"],
-                    }
-                    output_key = (
-                        f'{task["output_prefix"]}/{inpt["relative_path"]}'
-                    )
-
-                    logger.info(f"Copying {copy_source} to {output_key}")
-
-                    self._s3_client.copy(
-                        CopySource={
-                            "Bucket": inpt["bucket_name"],
-                            "Key": inpt["bucket_key"],
-                        },
-                        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                        Key=output_key,
-                    )
-
-                # Create results and metrics json files
-                for output_filename in ["results", "metrics"]:
-                    content = json.dumps(
-                        {
-                            "score": 1,
-                            "acc": 0.5,
-                            "invocation_json": invocation_json,
-                        }
-                    ).encode("utf-8")
-                    self._s3_client.upload_fileobj(
-                        Fileobj=io.BytesIO(content),
-                        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                        Key=f'{task["output_prefix"]}/{output_filename}.json',
-                    )
-
-                # write arbitrary text file; should not be processed
-                self._s3_client.upload_fileobj(
-                    Fileobj=io.BytesIO(b"Some arbitrary text"),
+                    },
                     Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                    Key=f'{task["output_prefix"]}/some_text.txt',
+                    Key=output_key,
                 )
 
-            # Create a task return code
-            inference_result = InferenceResult(
-                pk=self._job_id,
-                return_code=0,
-                user_safe_error_message="",
-                user_process_last_stderr_lines=[],
-                exec_duration=timedelta(seconds=1337),
-                invoke_duration=timedelta(seconds=1874),
-                outputs=[],
-                sagemaker_shim_version="0.5.0",
-            )
-            inference_result_content = (
-                inference_result.model_dump_json().encode("utf-8")
-            )
+            # Create results and metrics json files
+            for output_filename in ["results", "metrics"]:
+                content = json.dumps(
+                    {
+                        "score": 1,
+                        "acc": 0.5,
+                        "invocation_json": invocation_json,
+                    }
+                ).encode("utf-8")
+                self._s3_client.upload_fileobj(
+                    Fileobj=io.BytesIO(content),
+                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                    Key=f'{task["output_prefix"]}/{output_filename}.json',
+                )
 
-            signature = hmac.new(
-                key=self._signing_key,
-                msg=inference_result_content,
-                digestmod=hashlib.sha256,
-            ).hexdigest()
-
+            # write arbitrary text file; should not be processed
             self._s3_client.upload_fileobj(
-                Fileobj=io.BytesIO(inference_result_content),
+                Fileobj=io.BytesIO(b"Some arbitrary text"),
                 Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                Key=self._inference_result_key,
-                ExtraArgs={
-                    "Metadata": {"signature_hmac_sha256": signature},
-                },
+                Key=f'{task["output_prefix"]}/some_text.txt',
             )
-        finally:
-            self._set_task_logs()
+
+        # Create a task return code
+        inference_result = InferenceResult(
+            pk=self._job_id,
+            return_code=0,
+            user_safe_error_message="",
+            user_process_last_stderr_lines=[],
+            exec_duration=timedelta(seconds=1337),
+            invoke_duration=timedelta(seconds=1874),
+            outputs=[],
+            sagemaker_shim_version="0.5.0",
+        )
+        inference_result_content = inference_result.model_dump_json().encode(
+            "utf-8"
+        )
+
+        signature = hmac.new(
+            key=self._signing_key,
+            msg=inference_result_content,
+            digestmod=hashlib.sha256,
+        ).hexdigest()
+
+        self._s3_client.upload_fileobj(
+            Fileobj=io.BytesIO(inference_result_content),
+            Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            Key=self._inference_result_key,
+            ExtraArgs={
+                "Metadata": {"signature_hmac_sha256": signature},
+            },
+        )
 
         self._handle_completed_job()
 
         handle_event.execute_on_commit(
             event={
                 "_job_id": self._job_id,
-                "_stdout": self._stdout,
-                "_stderr": self._stderr,
                 "_exec_duration_seconds": self._exec_duration.total_seconds(),
                 "_invoke_duration_seconds": self._invoke_duration.total_seconds(),
                 "__start_time": self.__start_time.isoformat(),
@@ -155,8 +148,6 @@ class IOCopyExecutor(Executor):
         )
 
     def handle_event(self, *, event):
-        self._stdout = event["_stdout"]
-        self._stderr = event["_stderr"]
         self._exec_duration = timedelta(
             seconds=event["_exec_duration_seconds"]
         )
@@ -200,24 +191,9 @@ class IOCopyExecutor(Executor):
         return 121
 
     @property
-    def runtime_metrics(self):
-        logger.warning("Runtime metrics are not implemented for this backend")
-        return
-
-    @property
     def external_admin_url(self):
         return ""
 
     @property
     def warm_pool_retained_billable_time_in_seconds(self):
         raise NotImplementedError
-
-    def _set_task_logs(self):
-        stdout = ["Greetings from stdout"]
-        stderr = [
-            "UserWarning: Could not google: [Errno ",
-            'warn("Hello from stderr")',
-        ]
-
-        self._stdout = stdout
-        self._stderr = stderr

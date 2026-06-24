@@ -125,9 +125,6 @@ def test_submission_evaluation(
     assert len(submission.evaluation_set.all()) == 1
 
     evaluation = submission.evaluation_set.first()
-    assert evaluation.stdout.endswith("Greetings from stdout")
-    assert evaluation.stderr.endswith('warn("Hello from stderr")')
-    assert "UserWarning: Could not google: [Errno " in evaluation.stderr
     assert evaluation.error_message == ""
     assert evaluation.status == evaluation.SUCCESS
     assert (

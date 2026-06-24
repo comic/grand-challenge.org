@@ -938,23 +938,17 @@ def execute_job(
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
-            stdout=executor.stdout,
-            stderr=executor.stderr,
             error_message=str(e),
             detailed_error_message=e.message_details,
         )
     except SoftTimeLimitExceeded:
         job.update_status(
             status=job.FAILURE,
-            stdout=executor.stdout,
-            stderr=executor.stderr,
             error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED,
         )
     except Exception:
         job.update_status(
             status=job.FAILURE,
-            stdout=executor.stdout,
-            stderr=executor.stderr,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
         raise
@@ -963,13 +957,10 @@ def execute_job(
 def get_update_status_kwargs(*, executor=None):
     if executor is not None:
         return {
-            "stdout": executor.stdout,
-            "stderr": executor.stderr,
             "utilization_duration": executor.utilization_duration,
             "exec_duration": executor.exec_duration,
             "invoke_duration": executor.invoke_duration,
             "compute_cost_euro_millicents": executor.compute_cost_euro_millicents,
-            "runtime_metrics": executor.runtime_metrics,
         }
     else:
         return {}
@@ -1933,18 +1924,12 @@ def handle_endpoint_invocation_event(*, event: dict):
             error_message=str(error),
             detailed_error_message=error.message_details,
         )
-        parse_endpoint_invocation_logs.execute_on_commit(
-            **invocation.task_kwargs, event=event, _delay=120
-        )
     except Exception as error:
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
         task_logger.error(str(error), exc_info=True)
-        parse_endpoint_invocation_logs.execute_on_commit(
-            **invocation.task_kwargs, event=event, _delay=120
-        )
     else:
         invocation.update_status(
             status=invocation.StatusChoices.EXECUTED,
@@ -1996,35 +1981,3 @@ def parse_endpoint_invocation_outputs(
     else:
         invocation.outputs.add(*outputs)
         invocation.update_status(status=invocation.StatusChoices.SUCCESS)
-    finally:
-        parse_endpoint_invocation_logs.execute_on_commit(
-            **invocation.task_kwargs, event=event, _delay=120
-        )
-
-
-@lambda_task(retry_on=(LockNotAcquiredException,))
-def parse_endpoint_invocation_logs(
-    *, pk: str | UUID, app_label: str, model_name: str, event: dict
-):
-    model = apps.get_model(app_label=app_label, model_name=model_name)
-
-    with check_lock_acquired():
-        invocation = model.objects.select_for_update(nowait=True).get(pk=pk)
-
-    if invocation.status == invocation.StatusChoices.CANCELLED:
-        # Nothing to do
-        return
-    elif invocation.status not in (
-        invocation.StatusChoices.FAILURE,
-        invocation.StatusChoices.SUCCESS,
-    ):
-        raise RuntimeError("Invocation is not ready for log parsing")
-
-    orchestrator = invocation.orchestrator
-
-    orchestrator.set_task_logs(event=event)
-
-    invocation.set_logs(
-        stdout=orchestrator.stdout,
-        stderr=orchestrator.stderr,
-    )

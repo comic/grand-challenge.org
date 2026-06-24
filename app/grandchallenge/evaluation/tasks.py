@@ -171,7 +171,6 @@ def prepare_and_execute_evaluation(*, evaluation_pk: str | uuid.UUID):
         else:
             evaluation.update_status(
                 status=Evaluation.FAILURE,
-                stderr=EvaluationErrorMessages.UNSUPPORTED_INPUT,
                 error_message=EvaluationErrorMessages.UNSUPPORTED_INPUT,
             )
             return

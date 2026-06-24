@@ -37,9 +37,6 @@ class UtilizationExecutor(Executor):
     def handle_event(self, *, event):
         raise NotImplementedError
 
-    def runtime_metrics(self):
-        raise NotImplementedError
-
     @staticmethod
     def get_job_params(*, job_name):
         raise NotImplementedError

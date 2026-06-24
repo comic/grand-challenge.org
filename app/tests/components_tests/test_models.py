@@ -12,6 +12,9 @@ from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import DICOMUploadWithName
+from grandchallenge.components.backends.amazon_sagemaker_base import (
+    AmazonSageMakerTrainingLogsService,
+)
 from grandchallenge.components.models import (
     INTERFACE_KIND_JSON_EXAMPLES,
     RESERVED_SOCKET_SLUGS,
@@ -890,40 +893,56 @@ def test_extra_schema_validation(kind, value, invalidation_schema, use_file):
         v.full_clean()
 
 
-def test_runtime_metrics_chart():
-    job = Job(
-        runtime_metrics={
-            "instance": {
-                "cpu": 2,
-                "gpu_type": None,
-                "gpus": 0,
-                "memory": 8,
-                "name": "ml.m7i.large",
+@pytest.mark.django_db
+def test_runtime_metrics_chart(mocker):
+    runtime_metrics = {
+        "instance": {
+            "cpu": 2,
+            "gpu_type": None,
+            "gpus": 0,
+            "memory": 8,
+            "name": "ml.m7i.large",
+        },
+        "metrics": [
+            {
+                "label": "CPUUtilization",
+                "status": "Complete",
+                "timestamps": [
+                    "2022-06-09T09:38:00+00:00",
+                    "2022-06-09T09:37:00+00:00",
+                ],
+                "values": [0.677884, 0.130367],
             },
-            "metrics": [
-                {
-                    "label": "CPUUtilization",
-                    "status": "Complete",
-                    "timestamps": [
-                        "2022-06-09T09:38:00+00:00",
-                        "2022-06-09T09:37:00+00:00",
-                    ],
-                    "values": [0.677884, 0.130367],
-                },
-                {
-                    "label": "MemoryUtilization",
-                    "status": "Complete",
-                    "timestamps": [
-                        "2022-06-09T09:38:00+00:00",
-                        "2022-06-09T09:37:00+00:00",
-                    ],
-                    "values": [1.14447, 0.875619],
-                },
-            ],
-        }
+            {
+                "label": "MemoryUtilization",
+                "status": "Complete",
+                "timestamps": [
+                    "2022-06-09T09:38:00+00:00",
+                    "2022-06-09T09:37:00+00:00",
+                ],
+                "values": [1.14447, 0.875619],
+            },
+        ],
+    }
+
+    mock_service = MagicMock()
+    mock_service._runtime_metrics = runtime_metrics
+    mock_service.runtime_metrics_chart = (
+        AmazonSageMakerTrainingLogsService.runtime_metrics_chart.fget(
+            mock_service
+        )
+    )
+    mock_service.execution_history = []
+    mock_service.get_task_logs.return_value = []
+
+    mocker.patch(
+        "grandchallenge.components.backends.amazon_sagemaker_base.AmazonSageMakerTrainingLogsService",
+        return_value=mock_service,
     )
 
-    assert job.runtime_metrics_chart == {
+    job = AlgorithmJobFactory()
+
+    assert job.amazon_sagemaker_training_logs["runtime_metrics_chart"] == {
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
         "width": "container",
         "padding": 0,

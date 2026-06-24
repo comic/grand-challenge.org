@@ -4,7 +4,7 @@ import json
 import tempfile
 import zipfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.contrib.auth.models import Group
@@ -349,12 +349,15 @@ def test_algorithm_jobs_list_view(client):
 
 @pytest.mark.django_db
 class TestObjectPermissionRequiredViews:
-    @patch(
-        "grandchallenge.algorithms.views.AmazonSageMakerTrainingLogsService"
-    )
-    def test_group_permission_required_views(self, mock_logs_service, client):
-        mock_logs_service.return_value.runtime_metrics_chart = {}
-        mock_logs_service.return_value._get_task_logs.return_value = []
+    def test_group_permission_required_views(self, mocker, client):
+        mock_service = MagicMock()
+        mock_service.runtime_metrics_chart = {}
+        mock_service.execution_history = []
+        mock_service.get_task_logs.return_value = []
+        mocker.patch(
+            "grandchallenge.components.backends.amazon_sagemaker_base.AmazonSageMakerTrainingLogsService",
+            return_value=mock_service,
+        )
         ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
         am = AlgorithmModelFactory()
         interface = AlgorithmInterfaceFactory(
@@ -668,7 +671,11 @@ class TestJobDetailView:
         assign_perm("view_job", group, j)
 
         for content, permission, permission_object in [
-            ("<h2>Logs</h2>", "view_logs", j),
+            (
+                '<i class="fas fa-terminal fa-fw"></i>&nbsp;Logs',
+                "view_logs",
+                j,
+            ),
         ]:
             view_kwargs = {
                 "client": client,
