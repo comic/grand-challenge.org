@@ -349,7 +349,12 @@ def test_algorithm_jobs_list_view(client):
 
 @pytest.mark.django_db
 class TestObjectPermissionRequiredViews:
-    def test_group_permission_required_views(self, client):
+    @patch(
+        "grandchallenge.algorithms.views.AmazonSageMakerTrainingLogsService"
+    )
+    def test_group_permission_required_views(self, mock_logs_service, client):
+        mock_logs_service.return_value.runtime_metrics_chart = {}
+        mock_logs_service.return_value._get_task_logs.return_value = []
         ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
         am = AlgorithmModelFactory()
         interface = AlgorithmInterfaceFactory(
@@ -466,6 +471,13 @@ class TestObjectPermissionRequiredViews:
                 "job-status-detail",
                 {"slug": ai.algorithm.slug, "pk": j.pk},
                 "view_job",
+                j,
+                None,
+            ),
+            (
+                "job-logs-detail",
+                {"slug": ai.algorithm.slug, "pk": j.pk},
+                "view_logs",
                 j,
                 None,
             ),

@@ -407,7 +407,13 @@ class TestObjectPermissionRequiredViews:
 
             remove_perm(permission, group, obj)
 
-    def test_group_permission_required_views(self, client):
+    @patch(
+        "grandchallenge.evaluation.views.AmazonSageMakerTrainingLogsService"
+    )
+    def test_group_permission_required_views(self, mock_logs_service, client):
+        mock_logs_service.return_value.runtime_metrics_chart = {}
+        mock_logs_service.return_value._get_task_logs.return_value = []
+
         e = EvaluationFactory(time_limit=60)
         u = UserFactory()
         g = GroupFactory()
@@ -421,6 +427,12 @@ class TestObjectPermissionRequiredViews:
                 "status-detail",
                 {"pk": e.pk},
                 "view_evaluation",
+                e,
+            ),
+            (
+                "evaluation-logs-detail",
+                {"pk": e.pk},
+                "change_evaluation",
                 e,
             ),
             (

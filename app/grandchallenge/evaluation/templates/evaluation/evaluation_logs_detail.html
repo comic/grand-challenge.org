@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load url %}
+{% load static %}
+
+{% block title %}
+    {{ object.pk }} Logs - {{ object.submission.phase.title }} Leaderboard - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=object.submission.phase.slug %}">{{ object.submission.phase.title }}
+                Leaderboard</a>
+        </li>
+        <li class="breadcrumb-item" ><a href="{{ object.get_absolute_url }}">{{ object.pk }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Logs</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Evaluation Logs</h2>
+
+    <dl class="row">
+        <dt class="col-sm-3">Evaluation ID</dt>
+        <dd class="col-sm-9">{{ object.pk }}</dd>
+
+        <dt class="col-sm-3">Evaluation Created</dt>
+        <dd class="col-sm-9">{{ object.created }}</dd>
+
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">
+            {% include 'evaluation/evaluation_status_detail.html' %}
+        </dd>
+
+        {% if object.error_message %}
+            <dt class="col-sm-3">Error Message</dt>
+            <dd class="col-sm-9">{{ object.error_message }}</dd>
+        {% endif %}
+
+        {% if object.utilization.duration %}
+            <dt class="col-sm-3">Duration</dt>
+            <dd class="col-sm-9">{{ object.utilization.duration.total_seconds|floatformat:0 }}s</dd>
+        {% endif %}
+    </dl>
+
+    {% include "components/partials/amazon_sagemaker_training_logs.html" %}
+
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
+    <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
+    <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
+    <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
+{% endblock %}

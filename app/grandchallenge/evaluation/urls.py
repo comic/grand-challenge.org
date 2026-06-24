@@ -20,6 +20,7 @@ from grandchallenge.evaluation.views import (
     EvaluationGroundTruthUpdate,
     EvaluationGroundTruthVersionManagement,
     EvaluationIncompleteJobsDetail,
+    EvaluationLogsDetail,
     EvaluationStatusDetail,
     EvaluationUpdate,
     LeaderboardDetail,
@@ -53,6 +54,11 @@ urlpatterns = [
         "<uuid:pk>/incomplete-jobs/",
         EvaluationIncompleteJobsDetail.as_view(),
         name="evaluation-incomplete-jobs-detail",
+    ),
+    path(
+        "<uuid:pk>/logs/",
+        EvaluationLogsDetail.as_view(),
+        name="evaluation-logs-detail",
     ),
     # UUID should be matched before slugs
     path("<uuid:pk>/update/", EvaluationUpdate.as_view(), name="update"),
