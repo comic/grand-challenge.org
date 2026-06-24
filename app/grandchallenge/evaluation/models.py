@@ -2442,6 +2442,10 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
             },
         )
 
+    @property
+    def status_template(self):
+        return "evaluation/evaluation_status_detail.html"
+
     def create_utilization(self):
         EvaluationUtilization.objects.create(evaluation=self)
 

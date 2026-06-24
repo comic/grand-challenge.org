@@ -1794,6 +1794,10 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     def status_url(self) -> str:
         raise NotImplementedError
 
+    @property
+    def status_template(self):
+        raise NotImplementedError
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -1977,6 +1981,27 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             return "info"
         else:
             return "secondary"
+
+    @cached_property
+    def amazon_sagemaker_training_logs(self):
+        from grandchallenge.components.backends.amazon_sagemaker_base import (
+            AmazonSageMakerTrainingLogsService,
+            LogStreamNotFound,
+        )
+
+        logs_service = AmazonSageMakerTrainingLogsService(
+            job_id=self.executor_kwargs["job_id"]
+        )
+
+        try:
+            return {
+                "execution_history": logs_service.execution_history,
+                "runtime_metrics_chart": logs_service.runtime_metrics_chart,
+                "logs": logs_service.get_task_logs(task=None),
+            }
+        except LogStreamNotFound as error:
+            logger.warning(error)
+            return {}
 
     @property
     def runtime_metrics_chart(self):

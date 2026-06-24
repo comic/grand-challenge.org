@@ -43,7 +43,7 @@
                             </div>
                         </li>
                         <li class="nav-item dropdown">
-                            <a href="#" type="button" data-toggle="dropdown" class="nav-link dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}">
+                            <a href="#" type="button" data-toggle="dropdown" class="nav-link dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:evaluation-logs-detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}">
                                 <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
                             </a>
                             <div class="dropdown-menu phase-nav-dropdown">
@@ -52,7 +52,7 @@
                         </li>
                     {% elif challenge.first_visible_phase and not challenge.hidden %}
                         <li class="nav-item dropdown">
-                            <a href="#" type="button" data-toggle="dropdown" class="nav-link dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}">
+                            <a href="#" type="button" data-toggle="dropdown" class="nav-link dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:evaluation-logs-detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}">
                                 <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
                             </a>
                             <div class="dropdown-menu phase-nav-dropdown">

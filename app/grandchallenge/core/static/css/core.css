@@ -111,6 +111,10 @@ dl.inline dt:after {
     color: var(--light);
 }
 
+.text-prewrap {
+    white-space: pre-wrap;
+}
+
 ul.socialaccount_providers {
     list-style-type: none;
     padding: 0;

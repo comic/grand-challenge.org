@@ -25,29 +25,6 @@
 
     <h2>Algorithm Result Logs</h2>
 
-    <dl class="row">
-        <dt class="col-sm-3">Result ID</dt>
-        <dd class="col-sm-9">{{ object.pk }}</dd>
-
-        <dt class="col-sm-3">Created</dt>
-        <dd class="col-sm-9">{{ object.created }}</dd>
-
-        <dt class="col-sm-3">Status</dt>
-        <dd class="col-sm-9">
-            {% include "algorithms/job_status_detail.html" %}
-        </dd>
-
-        {% if object.error_message %}
-            <dt class="col-sm-3">Error Message</dt>
-            <dd class="col-sm-9">{{ object.error_message }}</dd>
-        {% endif %}
-
-        {% if object.utilization.duration %}
-            <dt class="col-sm-3">Duration</dt>
-            <dd class="col-sm-9">{{ object.utilization.duration.total_seconds|floatformat:0 }}s</dd>
-        {% endif %}
-    </dl>
-
     {% include "components/partials/amazon_sagemaker_training_logs.html" %}
 
 {% endblock %}

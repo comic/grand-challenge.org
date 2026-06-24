@@ -1,6 +1,39 @@
+<dl class="row">
+    <dt class="col-sm-3">Result ID</dt>
+    <dd class="col-sm-9">{{ object.pk }}</dd>
+
+    <dt class="col-sm-3">Created</dt>
+    <dd class="col-sm-9">{{ object.created }}</dd>
+
+    <dt class="col-sm-3">Status</dt>
+    <dd class="col-sm-9">
+        {% include object.status_template %}
+    </dd>
+
+    <dt class="col-sm-3">Requested GPU</dt>
+    <dd class="col-sm-9">
+        {{ object.get_requires_gpu_type_display }}
+    </dd>
+
+    <dt class="col-sm-3">Requested Memory</dt>
+    <dd class="col-sm-9">
+        {{ object.requires_memory_gb }} GB
+    </dd>
+
+    {% if object.error_message %}
+        <dt class="col-sm-3">Error Message</dt>
+        <dd class="col-sm-9">{{ object.error_message }}</dd>
+    {% endif %}
+
+    {% if object.utilization.duration %}
+        <dt class="col-sm-3">Duration</dt>
+        <dd class="col-sm-9">{{ object.utilization.duration.total_seconds|floatformat:0 }} s</dd>
+    {% endif %}
+</dl>
+
 <h3>Execution History</h3>
 
-{% if execution_history %}
+{% if object.amazon_sagemaker_training_logs.execution_history %}
     <div class="table-responsive">
     <table class="table table-hover table-borderless table-sm">
         <thead class="thead-light">
@@ -12,7 +45,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for entry in execution_history %}
+            {% for entry in object.amazon_sagemaker_training_logs.execution_history %}
                 <tr>
                     <td>{{ entry.Status }}</td>
                     <td>{{ entry.StatusMessage }}</td>
@@ -28,18 +61,18 @@
 {% endif %}
 
 <h3>Runtime Metrics</h3>
-{% if runtime_metrics_chart.data.values %}
+{% if object.amazon_sagemaker_training_logs.runtime_metrics_chart.data.values %}
     <div class="w-100 vega-lite-chart">
-        {{ runtime_metrics_chart|json_script:"runtimeMetricsData" }}
+        {{ object.amazon_sagemaker_training_logs.runtime_metrics_chart|json_script:"runtimeMetricsData" }}
     </div>
 {% else %}
     <p>No runtime metrics are available.</p>
 {% endif %}
 
 <h3>Logs</h3>
-{% if logs %}
+{% if object.amazon_sagemaker_training_logs.logs %}
     {# @formatter:off #}
-    <pre class="console">{% for timestamp, structured_log in logs %}<span class="d-flex"><span class="user-select-none flex-shrink-0">{{ timestamp.isoformat }} </span><span class="text-break{% if structured_log.source == "stderr" %} text-danger{% endif %}" style="white-space: pre-wrap;">{{ structured_log.message }}
+    <pre class="console">{% for timestamp, structured_log in object.amazon_sagemaker_training_logs.logs %}<span class="d-flex"><span class="user-select-none flex-shrink-0">{{ timestamp.isoformat }} </span><span class="text-break text-prewrap{% if structured_log.source == "stderr" %} text-danger{% endif %}">{{ structured_log.message }}
 </span></span>{% empty %}No logs found{% endfor %}</pre>
     {# @formatter:on #}
 {% else %}

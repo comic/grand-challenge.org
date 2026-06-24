@@ -358,17 +358,16 @@ class AmazonSageMakerTrainingLogsService:
     @property
     def _logging_start_time(self):
         # If a job has not been started then neither the start time
-        # nor stop time will exist. Subtract a second so that the times
-        # are not equal.
-        return self._describe_job.get(
-            "TrainingStartTime"
-        ) or now() - timedelta(seconds=1)
+        # nor stop time will exist.
+        start_time = self._describe_job.get("TrainingStartTime") or now()
+        return start_time - timedelta(minutes=1)
 
     @property
     def _logging_end_time(self):
         # If the job has not started or has not stopped then look
         # at the logs until now.
-        return self._describe_job.get("TrainingEndTime") or now()
+        end_time = self._describe_job.get("TrainingEndTime") or now()
+        return end_time + timedelta(minutes=1)
 
     @property
     def _instance_name(self):
@@ -440,7 +439,7 @@ class AmazonSageMakerTrainingLogsService:
         else:
             raise LogStreamNotFound("Log stream not found")
 
-    def _get_task_logs(self, *, task):
+    def get_task_logs(self, *, task):
         output = []
 
         for log_event in self._log_events:
@@ -505,7 +504,7 @@ class AmazonSageMakerTrainingLogsService:
         return log_events
 
     @cached_property
-    def runtime_metrics(self):
+    def _runtime_metrics(self):
         started = self._logging_start_time
         stopped = self._logging_end_time
 
@@ -557,7 +556,7 @@ class AmazonSageMakerTrainingLogsService:
 
     @property
     def runtime_metrics_chart(self):
-        instance_metrics = self.runtime_metrics["instance"]
+        instance_metrics = self._runtime_metrics["instance"]
         n_cpu = instance_metrics["cpu"]
 
         if instance_metrics["gpus"]:
@@ -580,7 +579,7 @@ class AmazonSageMakerTrainingLogsService:
                         else value / 100.0
                     ),
                 }
-                for metric in self.runtime_metrics["metrics"]
+                for metric in self._runtime_metrics["metrics"]
                 for timestamp, value in zip(
                     metric["timestamps"], metric["values"], strict=True
                 )
@@ -593,7 +592,7 @@ class AmazonSageMakerTrainingLogsService:
                     "type": "quantitative",
                     "format": ".2%",
                 }
-                for metric in self.runtime_metrics["metrics"]
+                for metric in self._runtime_metrics["metrics"]
             ],
         )
 

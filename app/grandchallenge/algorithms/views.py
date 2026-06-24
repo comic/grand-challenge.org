@@ -84,10 +84,6 @@ from grandchallenge.algorithms.serializers import (
     InvocationPostSerializer,
     JobPostSerializer,
 )
-from grandchallenge.components.backends.amazon_sagemaker_base import (
-    AmazonSageMakerTrainingLogsService,
-    LogStreamNotFound,
-)
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
@@ -833,24 +829,6 @@ class JobLogsDetail(ObjectPermissionRequiredMixin, DetailView):
     template_name_suffix = "_logs_detail"
     model = Job
     raise_exception = True
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        logs_service = AmazonSageMakerTrainingLogsService(
-            job_id=self.object.executor_kwargs["job_id"]
-        )
-
-        try:
-            context["execution_history"] = logs_service.execution_history
-            context["runtime_metrics_chart"] = (
-                logs_service.runtime_metrics_chart
-            )
-            context["logs"] = logs_service._get_task_logs(task=None)
-        except LogStreamNotFound as error:
-            logger.warning(error)
-
-        return context
 
 
 class DisplaySetFromJobCreate(
