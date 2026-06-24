@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.db import models
 
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
     UserObjectPermissionAdmin,
@@ -11,6 +12,8 @@ from grandchallenge.invoices.models import (
     Invoice,
     InvoiceGroupObjectPermission,
     InvoiceUserObjectPermission,
+    PaymentStatusChoices,
+    PaymentTypeChoices,
 )
 
 
@@ -86,7 +89,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "payment_type",
         "challenge__short_name",
     )
-    fieldsets = [
+    BASE_FIELDSETS = [
         (
             None,
             {
@@ -163,8 +166,19 @@ class InvoiceAdmin(admin.ModelAdmin):
         "approved_compute_cost",
         "consumed_compute_cost",
         "write_off_compute_cost",
+        "invoice_consumed_compute_cost",
         "total_amount_euros",
         "is_not_expired",
+        "challenge_compute_cost_euro_millicents",
+        "challenge_total_projected_storage",
+        "challenge_total_paid_compute_costs",
+        "challenge_total_paid_storage_costs",
+        "challenge_unpaid_storage_costs",
+        "suggested_total_postpaid_amount",
+        "compute_cost_share",
+        "surplus",
+        "suggested_compute_cost_for_postpaid",
+        "suggested_storage_cost_for_postpaid",
         "utilization_priority",
     ]
 
@@ -198,6 +212,75 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     def write_off_compute_cost(self, obj):
         return millicents_to_euro(obj.write_off_compute_cost_euro_millicents)
+
+    @admin.display(description="Consumed compute cost charged to this invoice")
+    def invoice_consumed_compute_cost(self, obj):
+        return self.consumed_compute_cost(obj)
+
+    def challenge_compute_cost_euro_millicents(self, obj):
+        return millicents_to_euro(obj.challenge.compute_cost_euro_millicents)
+
+    @admin.display(
+        description="Challenge projected total storage costs (for 5 years)"
+    )
+    def challenge_total_projected_storage(self, obj):
+        return millicents_to_euro(
+            obj.challenge.total_projected_storage_cost_euro_millicents
+        )
+
+    def challenge_total_paid_storage_costs(self, obj):
+        return millicents_to_euro(
+            obj.challenge.total_paid_storage_costs_euro_millicents
+        )
+
+    def challenge_total_paid_compute_costs(self, obj):
+        return millicents_to_euro(
+            obj.challenge.total_paid_compute_costs_euro_millicents
+        )
+
+    def challenge_unpaid_storage_costs(self, obj):
+        return millicents_to_euro(
+            obj.challenge.unpaid_storage_costs_euro_millicents
+        )
+
+    def total_unpaid_costs(self, obj):
+        if obj.total_unpaid_costs_euro_millicents:
+            return euro(obj.total_unpaid_costs_euro_millicents)
+        else:
+            return None
+
+    def suggested_total_postpaid_amount(self, obj):
+        return millicents_to_euro(
+            obj.suggested_total_postpaid_amount_euro_millicents
+        )
+
+    def surplus(self, obj):
+        return millicents_to_euro(obj.surplus_euro_millicents)
+
+    @admin.display(
+        description="Compute share based on all costs (projected storage + utilized compute) for the challenge"
+    )
+    def compute_cost_share(self, obj):
+        if obj.total_unpaid_costs_euro_millicents:
+            return f"{round(obj.challenge.compute_cost_share * 100, 2)} %"
+        else:
+            return "-"
+
+    def suggested_compute_cost_for_postpaid(self, obj):
+        if obj.total_unpaid_costs_euro_millicents:
+            return millicents_to_euro(
+                obj.suggested_compute_cost_euro_millicents
+            )
+        else:
+            return "-"
+
+    def suggested_storage_cost_for_postpaid(self, obj):
+        if obj.total_unpaid_costs_euro_millicents:
+            return millicents_to_euro(
+                obj.suggested_storage_cost_euro_millicents
+            )
+        else:
+            return "-"
 
     @admin.display(ordering="utilization_priority")
     def utilization_priority(self, obj):
@@ -253,10 +336,45 @@ class InvoiceAdmin(admin.ModelAdmin):
         return (
             super()
             .get_queryset(request)
+            .prefetch_related(
+                models.Prefetch(
+                    "challenge",
+                    queryset=Challenge.objects.with_invoices_with_budget_authorization(),
+                )
+            )
             .with_overdue_status()
             .with_budget_authorization()
             .with_utilization_priority_per_challenge()
         )
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = list(self.BASE_FIELDSETS)
+        if (
+            obj
+            and obj.payment_type == PaymentTypeChoices.POSTPAID
+            and obj.payment_status == PaymentStatusChoices.INITIALIZED
+        ):
+            fieldsets.append(
+                (
+                    "Postpaid invoice calculations",
+                    {
+                        "fields": [
+                            "challenge_compute_cost_euro_millicents",
+                            "challenge_total_projected_storage",
+                            "challenge_total_paid_compute_costs",
+                            "challenge_total_paid_storage_costs",
+                            "challenge_unpaid_storage_costs",
+                            "invoice_consumed_compute_cost",
+                            "suggested_total_postpaid_amount",
+                            "compute_cost_share",
+                            "surplus",
+                            "suggested_compute_cost_for_postpaid",
+                            "suggested_storage_cost_for_postpaid",
+                        ],
+                    },
+                ),
+            )
+        return fieldsets
 
 
 admin.site.register(InvoiceUserObjectPermission, UserObjectPermissionAdmin)

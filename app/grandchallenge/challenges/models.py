@@ -16,9 +16,11 @@ from django.db.models import (
     Count,
     Prefetch,
     Q,
+    Sum,
     Value,
     When,
 )
+from django.db.models.functions import Coalesce
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.template.loader import render_to_string
@@ -912,6 +914,73 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             url=self.get_absolute_url(),
         )
 
+    # ---------------- Postpaid admin calculation properties ------------------
+    # The following properties are used for postpaid admin calculations.
+
+    @cached_property
+    def total_projected_storage_cost_euro_millicents(self):
+        return (
+            self.size_in_storage / settings.GIGABYTE
+            + self.size_in_registry / settings.GIGABYTE
+        ) * storage_cost_euro_millicents_per_gb()
+
+    @cached_property
+    def compute_cost_euro_millicents(self):
+        return sum(
+            invoice.compute_cost_euro_millicents
+            for invoice in self.invoices.all()
+        )
+
+    @cached_property
+    def total_paid_storage_costs_euro_millicents(self):
+        return (
+            self.invoices.filter(
+                payment_status=Invoice.PaymentStatusChoices.PAID
+            ).aggregate(
+                paid_storage=Coalesce(Sum("storage_costs_euros"), 0),
+            )[
+                "paid_storage"
+            ]
+            * 1000
+            * 100
+        )
+
+    @cached_property
+    def total_paid_compute_costs_euro_millicents(self):
+        return (
+            self.invoices.filter(
+                payment_status=Invoice.PaymentStatusChoices.PAID
+            ).aggregate(
+                paid_compute=Coalesce(Sum("compute_costs_euros"), 0),
+            )[
+                "paid_compute"
+            ]
+            * 1000
+            * 100
+        )
+
+    @cached_property
+    def unpaid_storage_costs_euro_millicents(self):
+        return max(
+            self.total_projected_storage_cost_euro_millicents
+            - self.total_paid_storage_costs_euro_millicents,
+            0,
+        )
+
+    @cached_property
+    def compute_cost_share(self):
+        total_utilized = (
+            self.compute_cost_euro_millicents
+            + self.total_projected_storage_cost_euro_millicents
+        )
+
+        if total_utilized > 0:
+            return self.compute_cost_euro_millicents / total_utilized
+        else:
+            return None
+
+    # -------------- End postpaid admin calculation properties ----------------
+
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset()
@@ -957,6 +1026,17 @@ def submission_pdf_path(instance, filename):
         f"{instance._meta.model_name.lower()}/"
         f"{instance.pk}/"
         f"{get_valid_filename(filename)}"
+    )
+
+
+def storage_cost_euro_millicents_per_gb():
+    return (
+        settings.CHALLENGE_NUM_SUPPORT_YEARS
+        * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB_EXCLUDING_TAX
+        * (1 + settings.COMPONENTS_TAX_RATE)
+        * settings.COMPONENTS_USD_TO_EUR
+        / settings.TERABYTE
+        * settings.GIGABYTE
     )
 
 
@@ -1695,17 +1775,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             for task_index in self.task_index_for_phases
         ]
 
-    @property
-    def storage_costs_euros_per_gb(self):
+    @staticmethod
+    def storage_costs_euros_per_gb():
         return round(
-            settings.CHALLENGE_NUM_SUPPORT_YEARS
-            * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB_EXCLUDING_TAX
-            * (1 + settings.COMPONENTS_TAX_RATE)
-            * settings.COMPONENTS_USD_TO_EUR
-            / 1000
-            / 100
-            / settings.TERABYTE
-            * settings.GIGABYTE,
+            storage_cost_euro_millicents_per_gb() / 1000 / 100,
             2,
         )
 
@@ -1723,7 +1796,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @cached_property
     def data_storage_costs_euros_for_phases(self):
         return [
-            self.storage_costs_euros_per_gb * size_gb
+            self.storage_costs_euros_per_gb() * size_gb
             for size_gb in self.data_storage_size_gb_for_phases
         ]
 
@@ -1771,7 +1844,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @property
     def docker_storage_costs_euros_for_tasks(self):
         return [
-            self.storage_costs_euros_per_gb * size_gb
+            self.storage_costs_euros_per_gb() * size_gb
             for size_gb in self.docker_storage_size_gb_for_tasks
         ]
 
