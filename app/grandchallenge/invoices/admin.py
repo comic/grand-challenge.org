@@ -169,7 +169,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "invoice_consumed_compute_cost",
         "total_amount_euros",
         "is_not_expired",
-        "challenge_total_consumed_compute_including_write_off",
+        "challenge_compute_cost_euro_millicents",
         "challenge_total_projected_storage",
         "challenge_total_paid_compute_costs",
         "challenge_total_paid_storage_costs",
@@ -217,10 +217,8 @@ class InvoiceAdmin(admin.ModelAdmin):
     def invoice_consumed_compute_cost(self, obj):
         return self.consumed_compute_cost(obj)
 
-    def challenge_total_consumed_compute_including_write_off(self, obj):
-        return millicents_to_euro(
-            obj.challenge.total_consumed_compute_costs_with_write_off_euro_millicents
-        )
+    def challenge_compute_cost_euro_millicents(self, obj):
+        return millicents_to_euro(obj.challenge.compute_cost_euro_millicents)
 
     @admin.display(
         description="Challenge projected total storage costs (for 5 years)"
@@ -361,7 +359,7 @@ class InvoiceAdmin(admin.ModelAdmin):
                     "Postpaid invoice calculations",
                     {
                         "fields": [
-                            "challenge_total_consumed_compute_including_write_off",
+                            "challenge_compute_cost_euro_millicents",
                             "challenge_total_projected_storage",
                             "challenge_total_paid_compute_costs",
                             "challenge_total_paid_storage_costs",

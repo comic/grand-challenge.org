@@ -925,7 +925,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         ) * storage_cost_euro_millicents_per_gb()
 
     @cached_property
-    def total_consumed_compute_costs_with_write_off_euro_millicents(self):
+    def compute_cost_euro_millicents(self):
         return sum(
             invoice.compute_cost_euro_millicents
             for invoice in self.invoices.all()
@@ -970,15 +970,12 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     @cached_property
     def compute_cost_share(self):
         total_utilized = (
-            self.total_consumed_compute_costs_with_write_off_euro_millicents
+            self.compute_cost_euro_millicents
             + self.total_projected_storage_cost_euro_millicents
         )
 
         if total_utilized > 0:
-            return (
-                self.total_consumed_compute_costs_with_write_off_euro_millicents
-                / total_utilized
-            )
+            return self.compute_cost_euro_millicents / total_utilized
         else:
             return None
 

@@ -987,7 +987,7 @@ def test_total_costs_properties():
     )
     assert (
         euro_millicents_to_euros(
-            euro_millicents=challenge.total_consumed_compute_costs_with_write_off_euro_millicents
+            euro_millicents=challenge.compute_cost_euro_millicents
         )
         == 10
     )
@@ -1179,12 +1179,9 @@ def test_compute_cost_share_ratio():
     challenge = refresh_challenge(challenge=challenge)
 
     # compute_cost_share = compute / (compute + storage)
-    expected_share = (
-        challenge.total_consumed_compute_costs_with_write_off_euro_millicents
-        / (
-            challenge.total_consumed_compute_costs_with_write_off_euro_millicents
-            + challenge.total_projected_storage_cost_euro_millicents
-        )
+    expected_share = challenge.compute_cost_euro_millicents / (
+        challenge.compute_cost_euro_millicents
+        + challenge.total_projected_storage_cost_euro_millicents
     )
     assert challenge.compute_cost_share == expected_share
     # Share should be between 0 and 1
