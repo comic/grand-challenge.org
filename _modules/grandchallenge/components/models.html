@@ -69,6 +69,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.module_loading</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_string</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.translation</span><span class="w"> </span><span class="kn">import</span> <span class="n">gettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django_deprecate_fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecate_field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoSlugField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">lambda_tasks.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">SQSLambdaTask</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">lambda_tasks.timeouts</span><span class="w"> </span><span class="kn">import</span> <span class="n">SoftTimeLimitExceeded</span>
@@ -81,7 +82,6 @@
     <span class="n">RawImageUploadSession</span><span class="p">,</span>
     <span class="n">UploadSessionCompleteTask</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.charts.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">components_line</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.backends.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CIVNotEditableException</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1781,8 +1781,12 @@
         <span class="n">choices</span><span class="o">=</span><span class="n">STATUS_CHOICES</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">PENDING</span><span class="p">,</span> <span class="n">db_index</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
     <span class="n">attempt</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">stdout</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-    <span class="n">stderr</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">stdout</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">),</span> <span class="n">raise_on_access</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">stderr</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">),</span> <span class="n">raise_on_access</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
     <span class="n">exec_duration</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DurationField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -1811,7 +1815,9 @@
             <span class="s2">&quot;any delays from shared hardware issues.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">runtime_metrics</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">runtime_metrics</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">raise_on_access</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
     <span class="n">error_message</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">detailed_error_message</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">input_prefixes</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
@@ -1882,6 +1888,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">status_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">status_template</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
 <div class="viewcode-block" id="ComponentJob.save">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJob.save">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -1907,23 +1917,14 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">status</span><span class="p">:</span> <span class="n">STATUS_CHOICES</span><span class="p">,</span>
-        <span class="n">stdout</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="n">stderr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">error_message</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">detailed_error_message</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">utilization_duration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">exec_duration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">invoke_duration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">compute_cost_euro_millicents</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">runtime_metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
-
-        <span class="k">if</span> <span class="n">stdout</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">stdout</span>
-
-        <span class="k">if</span> <span class="n">stderr</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span> <span class="o">=</span> <span class="n">stderr</span>
 
         <span class="k">if</span> <span class="n">error_message</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">error_message</span> <span class="o">=</span> <span class="n">error_message</span><span class="p">[:</span><span class="mi">1024</span><span class="p">]</span>
@@ -1951,9 +1952,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
                 <span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;compute_cost_euro_millicents&quot;</span><span class="p">]</span>
             <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">runtime_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">runtime_metrics</span> <span class="o">=</span> <span class="n">runtime_metrics</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
@@ -2047,10 +2045,7 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">status_context</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stderr</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">&quot;warning&quot;</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">&quot;success&quot;</span>
+            <span class="k">return</span> <span class="s2">&quot;success&quot;</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">}:</span>
             <span class="k">return</span> <span class="s2">&quot;danger&quot;</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">{</span>
@@ -2069,47 +2064,26 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;secondary&quot;</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">runtime_metrics_chart</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">instance_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime_metrics</span><span class="p">[</span><span class="s2">&quot;instance&quot;</span><span class="p">]</span>
-        <span class="n">n_cpu</span> <span class="o">=</span> <span class="n">instance_metrics</span><span class="p">[</span><span class="s2">&quot;cpu&quot;</span><span class="p">]</span>
-
-        <span class="k">if</span> <span class="n">instance_metrics</span><span class="p">[</span><span class="s2">&quot;gpus&quot;</span><span class="p">]:</span>
-            <span class="n">gpu_str</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance_metrics</span><span class="p">[</span><span class="s1">&#39;gpus&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">x </span><span class="si">{</span><span class="n">instance_metrics</span><span class="p">[</span><span class="s1">&#39;gpu_type&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">gpu_str</span> <span class="o">=</span> <span class="s2">&quot;No&quot;</span>
-
-        <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance_metrics</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">instance_metrics</span><span class="p">[</span><span class="s1">&#39;cpu&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> CPU / </span><span class="si">{</span><span class="n">instance_metrics</span><span class="p">[</span><span class="s1">&#39;memory&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> GB Memory / </span><span class="si">{</span><span class="n">gpu_str</span><span class="si">}</span><span class="s2"> GPU&quot;</span>
-
-        <span class="k">return</span> <span class="n">components_line</span><span class="p">(</span>
-            <span class="n">values</span><span class="o">=</span><span class="p">[</span>
-                <span class="p">{</span>
-                    <span class="s2">&quot;Metric&quot;</span><span class="p">:</span> <span class="n">metric</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">],</span>
-                    <span class="s2">&quot;Timestamp&quot;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">,</span>
-                    <span class="s2">&quot;Percent&quot;</span><span class="p">:</span> <span class="p">(</span>
-                        <span class="n">value</span> <span class="o">/</span> <span class="p">(</span><span class="n">n_cpu</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">)</span>
-                        <span class="k">if</span> <span class="n">metric</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;CPUUtilization&quot;</span>
-                        <span class="k">else</span> <span class="n">value</span> <span class="o">/</span> <span class="mf">100.0</span>
-                    <span class="p">),</span>
-                <span class="p">}</span>
-                <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime_metrics</span><span class="p">[</span><span class="s2">&quot;metrics&quot;</span><span class="p">]</span>
-                <span class="k">for</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
-                    <span class="n">metric</span><span class="p">[</span><span class="s2">&quot;timestamps&quot;</span><span class="p">],</span> <span class="n">metric</span><span class="p">[</span><span class="s2">&quot;values&quot;</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span>
-                <span class="p">)</span>
-            <span class="p">],</span>
-            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
-            <span class="n">single_thread_limit</span><span class="o">=</span><span class="mf">100.0</span> <span class="o">/</span> <span class="n">n_cpu</span><span class="p">,</span>
-            <span class="n">tooltip</span><span class="o">=</span><span class="p">[</span>
-                <span class="p">{</span>
-                    <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="n">metric</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">],</span>
-                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;quantitative&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;.2%&quot;</span><span class="p">,</span>
-                <span class="p">}</span>
-                <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime_metrics</span><span class="p">[</span><span class="s2">&quot;metrics&quot;</span><span class="p">]</span>
-            <span class="p">],</span>
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">amazon_sagemaker_training_logs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.backends.amazon_sagemaker_base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">AmazonSageMakerTrainingLogsService</span><span class="p">,</span>
+            <span class="n">LogStreamNotFound</span><span class="p">,</span>
         <span class="p">)</span>
+
+        <span class="n">logs_service</span> <span class="o">=</span> <span class="n">AmazonSageMakerTrainingLogsService</span><span class="p">(</span>
+            <span class="n">job_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">executor_kwargs</span><span class="p">[</span><span class="s2">&quot;job_id&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;execution_history&quot;</span><span class="p">:</span> <span class="n">logs_service</span><span class="o">.</span><span class="n">execution_history</span><span class="p">,</span>
+                <span class="s2">&quot;runtime_metrics_chart&quot;</span><span class="p">:</span> <span class="n">logs_service</span><span class="o">.</span><span class="n">runtime_metrics_chart</span><span class="p">,</span>
+                <span class="s2">&quot;logs&quot;</span><span class="p">:</span> <span class="n">logs_service</span><span class="o">.</span><span class="n">task_logs</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">except</span> <span class="n">LogStreamNotFound</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">{}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_utilization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
