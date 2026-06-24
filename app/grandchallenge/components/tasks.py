@@ -866,7 +866,11 @@ def provision_job(
     executor = job.get_executor(backend=backend)
 
     if not job.inputs_complete or job.status not in [job.PENDING, job.RETRY]:
-        raise RuntimeError("Job is not ready for provisioning")
+        if job.status == job.CANCELLED:
+            # Nothing to do
+            return
+        else:
+            raise RuntimeError("Job is not ready for provisioning")
 
     try:
         executor.provision(
@@ -1248,9 +1252,9 @@ def stop_service(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     with check_lock_acquired():
-        service = (
-            model.objects.active().select_for_update(nowait=True).get(pk=pk)
-        )
+        # We allow all states here (started, stopped, failed, etc.) as the
+        # responsibility of this task is to remove the service from ECS
+        service = model.objects.select_for_update(nowait=True).get(pk=pk)
 
     orchestrator = ECSTaskOrchestrator(**service.orchestrator_kwargs)
 
@@ -1270,7 +1274,7 @@ def stop_expired_services(*, app_label: str, model_name: str):
         model.objects.active()
         .annotate(
             expires=ExpressionWrapper(
-                F("created") + F("maximum_duration"),
+                F("claimed_at") + F("maximum_duration"),
                 output_field=DateTimeField(),
             )
         )
@@ -1278,7 +1282,8 @@ def stop_expired_services(*, app_label: str, model_name: str):
     )
 
     for service in services_to_stop:
-        stop_service.execute_on_commit(**service.task_kwargs)
+        service.status = model.EXPIRED
+        service.save()
 
 
 class InteractiveAlgorithmLambda:

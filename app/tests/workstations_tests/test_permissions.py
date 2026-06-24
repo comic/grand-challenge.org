@@ -314,6 +314,7 @@ def test_session_api_patch_permissions(client, two_workstation_sets):
             user=test[0],
             reverse_kwargs={"pk": s.pk},
             content_type="application/json",
+            logout_user=False,
         )
         assert response.status_code == test[1]
 
@@ -321,6 +322,8 @@ def test_session_api_patch_permissions(client, two_workstation_sets):
         s.refresh_from_db()
         assert s.status == s.QUEUED  # Read only, always unchanged
         assert (s.maximum_duration == timedelta(minutes=10)) is not test[2]
+
+        client.logout()
 
 
 @pytest.mark.django_db

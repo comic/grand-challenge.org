@@ -25,10 +25,17 @@
 
 {% block content %}
     <h2>Invoice for {{ challenge.short_name }}</h2>
+
+    {% if object.is_expired %}
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i> The budget of this invoice has expired and is no longer available.
+        </div>
+    {% endif %}
+
     <div class="row">
         <div class="col-md-6">
             <dl>
-                <dt>Invoice Number</dt>
+                <dt>Invoice number</dt>
                 <dd>{% firstof object.internal_invoice_number '-' %}</dd>
 
                 <dt>Type</dt>
@@ -89,37 +96,38 @@
         </div>
     </div>
 
-    {% if not object.is_expired %}
+    {% if not object.is_expired and object.payment_status != object.PaymentStatusChoices.CANCELLED %}
         <hr>
 
-        <h3 class="mt-3">Compute Costs</h3>
+        <h3>Invoice Compute Budget</h3>
 
         {% if not object.approved_compute_cost_euro_millicents %}
             <span class="text-muted">
-                Any compute budget consumption will be shown here.
+                Any invoice compute-budget consumption will be shown here.
             </span>
         {% else %}
 
-        <dl class="mt-1">
-            <dt>Compute budget spent</dt>
+        <dl>
+            <dt>Available proportion</dt>
             <dd>
-                <div class="progress my-1">
-                    <div
-                    class="progress-bar {% if object.percent_compute_budget_consumed >= 100 %}bg-danger{% elif object.percent_compute_budget_consumed >= 70 %}bg-warning{% else %}bg-success{% endif %}"
-                    style="width: {{ object.percent_compute_budget_consumed }}%"
-                    >
-                        {{ object.percent_compute_budget_consumed }}%
-                    </div>
-                </div>
+                <span class="pr-4 {% if object.percent_compute_budget_remaining <= 10 %}text-danger{% elif object.percent_compute_budget_remaining <= 30 %}text-warning{% else %}text-success{% endif %} pl-1">
+                    {{ object.percent_compute_budget_remaining }}%
+                </span>
             </dd>
 
-            <dt>Compute budget used</dt>
-            <dd>{{ object.consumed_compute_cost_euro_millicents|millicents_to_euro }}</dd>
+            <dt>Available amount</dt>
+            <dd>
+                <span class="{% if object.percent_compute_budget_remaining == 0 %}text-danger{% endif %}">
+                    {{ object.available_compute_cost_euro_millicents|millicents_to_euro }}
+                </span>
+            </dd>
 
-            <dt>Compute budget remaining</dt>
-            <dd>{{ object.available_compute_cost_euro_millicents|millicents_to_euro }}</dd>
-
+            <dt>Total reserved amount</dt>
+            <dd>
+                {{ object.approved_compute_cost_euro_millicents|millicents_to_euro }}
+            </dd>
         </dl>
+
         {% endif %}
     {% endif %}
 {% endblock %}

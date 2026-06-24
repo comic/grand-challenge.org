@@ -325,7 +325,6 @@ def test_follow_up_on_required_for_initialized_postpaid():
     invoice2.full_clean()
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "invoice_kwargs, badge",
     (
@@ -360,26 +359,16 @@ def test_follow_up_on_required_for_initialized_postpaid():
             ),
             '<span class="badge badge-success">Paid</span>',
         ),
-        (
-            dict(
-                payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
-                expires_on=now().date() - timedelta(days=7),
-                follow_up_on=now().date() - timedelta(days=30),
-            ),
-            '<span class="badge badge-danger">Expired</span>',
-        ),
     ),
 )
 def test_prepaid_invoice_status_badge(invoice_kwargs, badge):
-    invoice = InvoiceFactory(
+    invoice = InvoiceFactory.build(
         payment_type=Invoice.PaymentTypeChoices.PREPAID,
         **invoice_kwargs,
     )
-    invoice = Invoice.objects.with_is_expired().get(pk=invoice.pk)
     assert invoice.get_status_badge() == badge
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "invoice_kwargs, badge",
     (
@@ -414,26 +403,16 @@ def test_prepaid_invoice_status_badge(invoice_kwargs, badge):
             ),
             '<span class="badge badge-success">Paid</span>',
         ),
-        (
-            dict(
-                payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
-                expires_on=now().date() - timedelta(days=7),
-                follow_up_on=now().date() - timedelta(days=30),
-            ),
-            '<span class="badge badge-danger">Expired</span>',
-        ),
     ),
 )
 def test_postpaid_invoice_status_badge(invoice_kwargs, badge):
-    invoice = InvoiceFactory(
+    invoice = InvoiceFactory.build(
         payment_type=Invoice.PaymentTypeChoices.POSTPAID,
         **invoice_kwargs,
     )
-    invoice = Invoice.objects.with_is_expired().get(pk=invoice.pk)
     assert invoice.get_status_badge() == badge
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "invoice_kwargs, badge",
     (
@@ -449,22 +428,13 @@ def test_postpaid_invoice_status_badge(invoice_kwargs, badge):
             ),
             '<span class="badge badge-success">Paid</span>',
         ),
-        (
-            dict(
-                payment_status=Invoice.PaymentStatusChoices.PAID,
-                expires_on=now().date() - timedelta(days=7),
-                follow_up_on=now().date() - timedelta(days=30),
-            ),
-            '<span class="badge badge-danger">Expired</span>',
-        ),
     ),
 )
 def test_complimentary_invoice_status_badge(invoice_kwargs, badge):
-    invoice = InvoiceFactory(
+    invoice = InvoiceFactory.build(
         payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
         **invoice_kwargs,
     )
-    invoice = Invoice.objects.with_is_expired().get(pk=invoice.pk)
     assert invoice.get_status_badge() == badge
 
 

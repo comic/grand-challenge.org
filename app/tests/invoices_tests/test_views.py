@@ -109,7 +109,7 @@ def test_invoice_detail_hide_compute_when_expired(client):
     )
     assert response.status_code == 200
 
-    assert "Compute Costs" in response.rendered_content
+    assert "Invoice Compute Budget" in response.rendered_content
 
     invoice.expires_on = now().date() - timedelta(days=1)
     invoice.save()
@@ -123,4 +123,4 @@ def test_invoice_detail_hide_compute_when_expired(client):
     )
     assert response.status_code == 200
 
-    assert "Compute Costs" not in response.rendered_content
+    assert "Invoice Compute Budget" not in response.rendered_content

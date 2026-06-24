@@ -416,9 +416,7 @@ class Invoice(models.Model, FieldChangeMixin):
         payment_type = self.payment_type
         payment_status = self.payment_status
 
-        if self.is_expired:
-            return "Expired"
-        elif payment_type == PaymentTypeChoices.PREPAID and payment_status in (
+        if payment_type == PaymentTypeChoices.PREPAID and payment_status in (
             PaymentStatusChoices.INITIALIZED,
             PaymentStatusChoices.REQUESTED,
         ):
@@ -440,7 +438,7 @@ class Invoice(models.Model, FieldChangeMixin):
         payment_type = self.payment_type
         payment_status = self.payment_status
 
-        if payment_status == PaymentStatusChoices.CANCELLED or self.is_expired:
+        if payment_status == PaymentStatusChoices.CANCELLED:
             return "danger"
         elif payment_type == PaymentTypeChoices.COMPLIMENTARY:
             return "success"
@@ -503,6 +501,14 @@ class Invoice(models.Model, FieldChangeMixin):
         else:
             return None
 
+    @cached_property
+    def percent_compute_budget_remaining(self):
+        consumed = self.percent_compute_budget_consumed
+        if consumed is not None:
+            return 100 - consumed
+        else:
+            return None
+        
     # ---------------------- Postpaid-only properties -------------------------
     # These are used for postpaid admin calculations. They raise
     # NotImplementedError unless payment_type is POSTPAID

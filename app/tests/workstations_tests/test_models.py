@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from django.core import mail
@@ -9,12 +9,14 @@ from grandchallenge.algorithms.models import EndpointStatusChoices
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
     EndpointOrchestrator,
 )
+from grandchallenge.components.tasks import stop_service
 from grandchallenge.workstations.models import Session, Workstation
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     EndpointFactory,
     ReaderStudyAlgorithmImplementationFactory,
 )
+from tests.evaluation_tests.test_permissions import get_users_with_set_perms
 from tests.factories import SessionFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import (
     QuestionFactory,
@@ -344,3 +346,63 @@ def test_session_stopped_schedules_stop_for_correct_endpoints(
     )
     assert users_other_endpoint.status != EndpointStatusChoices.STOPPED
     assert other_endpoint.status != EndpointStatusChoices.STOPPED
+
+
+@pytest.mark.django_db
+def test_session_claimed_at():
+    session = SessionFactory(creator=None)
+
+    assert session.claimed_at is None
+
+    session.creator = UserFactory()
+    session.save()
+
+    session.refresh_from_db()
+    assert session.claimed_at is not None
+
+
+@pytest.mark.django_db
+def test_session_perms_assigned():
+    session = SessionFactory(creator=None)
+
+    assert get_users_with_set_perms(session) == {}
+
+    session.creator = UserFactory()
+    session.save()
+
+    assert get_users_with_set_perms(session) == {
+        session.creator: {"view_session", "change_session"}
+    }
+
+
+@pytest.mark.django_db
+def test_user_cannot_change():
+    session = SessionFactory(creator=UserFactory())
+
+    assert get_users_with_set_perms(session) == {
+        session.creator: {"view_session", "change_session"}
+    }
+
+    session.creator = UserFactory()
+
+    with pytest.raises(ValidationError, match="You cannot change the creator"):
+        session.save()
+
+
+@pytest.mark.django_db
+def test_expires_at_takes_into_account_claimed_at(mocker):
+    fixed_now = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    mocker.patch(
+        "grandchallenge.workstations.models.now",
+        return_value=fixed_now,
+    )
+
+    yesterday = fixed_now - timedelta(days=1)
+
+    session = SessionFactory(claimed_at=yesterday)
+
+    assert session.expires_at == yesterday + timedelta(minutes=10)
+
+    stop_service(**session.task_kwargs)
+
+    assert session.session_utilization.duration == timedelta(days=1)

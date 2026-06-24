@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import Permission
 
 from grandchallenge.workstations.models import (
@@ -42,8 +43,33 @@ def get_or_create_active_session(
         .first()
     )
 
-    if session is None:
-        session = Session.objects.create(
+    if session:
+        return session
+
+    unclaimed_session = (
+        Session.objects.filter(
+            status=Session.RUNNING,
+            creator=None,
+            workstation_image=workstation_image,
+            region=region,
+        )
+        .select_for_update(skip_locked=True)
+        .order_by("created")
+        .first()
+    )
+
+    if (
+        settings.WORKSTATIONS_USE_UNCLAIMED_SESSIONS
+        and unclaimed_session
+        and not extra_env_vars
+    ):
+        unclaimed_session.creator = user
+        unclaimed_session.ping_times = ping_times or None
+        unclaimed_session.save()
+
+        return unclaimed_session
+    else:
+        return Session.objects.create(
             creator=user,
             workstation_image=workstation_image,
             region=region,
@@ -51,8 +77,6 @@ def get_or_create_active_session(
             ping_times=ping_times or None,
             extra_env_vars=extra_env_vars or [],
         )
-
-    return session
 
 
 def reassign_workstation_permissions(*, groups, workstation):

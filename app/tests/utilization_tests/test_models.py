@@ -92,7 +92,8 @@ def test_session_utilization_retained_when_creator_deleted():
 def test_session_utilization_duration(mocker):
     fixed_now = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
     session = SessionFactory()
-    session.created = fixed_now - timedelta(minutes=5)
+    session.created = fixed_now - timedelta(minutes=10)
+    session.claimed_at = fixed_now - timedelta(minutes=5)
     session.save()
 
     mocker.patch(
@@ -102,6 +103,7 @@ def test_session_utilization_duration(mocker):
 
     stop_service(**session.task_kwargs)
 
+    # The claimed at time should be used
     assert session.session_utilization.duration == timedelta(minutes=5)
 
 

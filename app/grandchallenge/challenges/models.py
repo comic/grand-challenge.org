@@ -30,7 +30,6 @@ from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now, timedelta
 from django.utils.translation import gettext_lazy as _
-from django_deprecate_fields import deprecate_field
 from guardian.compat import get_user_model
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
@@ -412,14 +411,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         ],
     )
 
-    compute_cost_euro_millicents = deprecate_field(
-        models.PositiveBigIntegerField(
-            editable=False,
-            default=0,
-            help_text="The total compute cost for this challenge in Euro Cents, including Tax",
-        ),
-        raise_on_access=True,
-    )
     size_in_storage = models.PositiveBigIntegerField(
         editable=False,
         default=0,
@@ -786,20 +777,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
 
     @cached_property
-    def approved_storage_cost_euro_millicents(self):
-        return sum(
-            invoice.approved_storage_cost_euro_millicents
-            for invoice in self.invoices.all()
-        )
-
-    @cached_property
-    def active_approved_storage_cost_euro_millicents(self):
-        return sum(
-            invoice.approved_storage_cost_euro_millicents
-            for invoice in self.active_invoices
-        )
-
-    @cached_property
     def available_compute_cost_euro_millicents(self):
         return sum(
             invoice.available_compute_cost_euro_millicents
@@ -841,6 +818,14 @@ class Challenge(ChallengeBase, FieldChangeMixin):
 
         if approved > 0:
             return int(100 * consumed / approved)
+        else:
+            return None
+
+    @cached_property
+    def percent_active_compute_budget_remaining(self):
+        consumed = self.percent_active_compute_budget_consumed
+        if consumed is not None:
+            return 100 - consumed
         else:
             return None
 
