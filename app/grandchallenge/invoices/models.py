@@ -508,7 +508,7 @@ class Invoice(models.Model, FieldChangeMixin):
             return 100 - consumed
         else:
             return None
-        
+
     # ---------------------- Postpaid-only properties -------------------------
     # These are used for postpaid admin calculations. They raise
     # NotImplementedError unless payment_type is POSTPAID
