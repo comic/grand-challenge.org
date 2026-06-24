@@ -1,20 +1,14 @@
-import json
 import logging
 import re
 import zipfile
 from datetime import datetime, timezone
 from os.path import commonpath
 from pathlib import Path
-from typing import NamedTuple
 
 from django.core.files import File
-from django.db.models import TextChoices
 from django.utils._os import safe_join
 
 logger = logging.getLogger(__name__)
-
-
-LOGLINES = 500  # The number of loglines to keep
 
 # Docker logline error message with optional RFC3339 timestamp
 LOGLINE_REGEX = r"^(?P<timestamp>([\d]+)-(0[1-9]|1[012])-(0[1-9]|[12][\d]|3[01])[Tt]([01][\d]|2[0-3]):([0-5][\d]):([0-5][\d]|60)(\.[\d]+)?(([Zz])|([\+|\-]([01][\d]|2[0-3]):[0-5][\d])))?(?P<error_message>.*)$"
@@ -44,35 +38,6 @@ def user_error(obj: str):
             error_message = e
 
     return error_message
-
-
-class SourceChoices(TextChoices):
-    STDOUT = "stdout"
-    STDERR = "stderr"
-
-
-class ParsedLog(NamedTuple):
-    message: str
-    source: SourceChoices
-
-
-def parse_structured_log(*, log: str, task=None) -> ParsedLog | None:
-    """Parse the structured logs from SageMaker Shim"""
-    structured_log = json.loads(log.strip())
-
-    message = structured_log["log"]
-    source = SourceChoices(structured_log["source"])
-
-    # Defensive, in case the type of structured_log["internal"] is str
-    if structured_log["internal"] is False and (
-        task is None or structured_log["task"] == task
-    ):
-        return ParsedLog(
-            message=message,
-            source=source,
-        )
-    else:
-        return None
 
 
 def safe_extract(*, src: File, dest: Path):

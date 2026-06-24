@@ -6,7 +6,6 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.components.backends.utils import LOGLINES
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import copy_s3_object
 from grandchallenge.github.models import GitHubWebhookMessage
@@ -82,7 +81,7 @@ class Build(UUIDModel):
         response = self._logs_client.get_log_events(
             logGroupName=settings.CODEBUILD_BUILD_LOGS_GROUP_NAME,
             logStreamName=self.build_number,
-            limit=LOGLINES,
+            limit=500,
             startFromHead=False,
         )
 

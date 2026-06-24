@@ -19,6 +19,7 @@ from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from pictures.models import PictureField
@@ -1584,9 +1585,15 @@ class Endpoint(FieldChangeMixin, UUIDModel):
         choices=EndpointStatusChoices,
         default=EndpointStatusChoices.QUEUED,
     )
-    stdout = models.TextField(default="", editable=False)
-    stderr = models.TextField(default="", editable=False)
-    runtime_metrics = models.JSONField(default=dict, editable=False)
+    stdout = deprecate_field(
+        models.TextField(default="", editable=False), raise_on_access=True
+    )
+    stderr = deprecate_field(
+        models.TextField(default="", editable=False), raise_on_access=True
+    )
+    runtime_metrics = deprecate_field(
+        models.JSONField(default=dict, editable=False), raise_on_access=True
+    )
     error_message = models.CharField(
         max_length=1024, default="", editable=False
     )
@@ -1793,9 +1800,15 @@ class Invocation(CIVForObjectMixin, UUIDModel):
             "any delays from shared hardware issues."
         ),
     )
-    stdout = models.TextField(default="", editable=False)
-    stderr = models.TextField(default="", editable=False)
-    runtime_metrics = models.JSONField(default=dict, editable=False)
+    stdout = deprecate_field(
+        models.TextField(default="", editable=False), raise_on_access=True
+    )
+    stderr = deprecate_field(
+        models.TextField(default="", editable=False), raise_on_access=True
+    )
+    runtime_metrics = deprecate_field(
+        models.JSONField(default=dict, editable=False), raise_on_access=True
+    )
     error_message = models.CharField(
         max_length=1024, default="", editable=False
     )
@@ -1931,8 +1944,3 @@ class Invocation(CIVForObjectMixin, UUIDModel):
             user=user,
             linked_task=linked_task,
         )
-
-    def set_logs(self, *, stdout, stderr):
-        self.stdout = stdout
-        self.stderr = stderr
-        self.save()

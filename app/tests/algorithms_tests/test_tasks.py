@@ -348,9 +348,6 @@ def test_algorithm(client, settings, django_capture_on_commit_callbacks):
     # There should be a single, successful job
     job = Job.objects.filter(algorithm_image=ai).get()
 
-    assert job.stdout.endswith("Greetings from stdout")
-    assert job.stderr.endswith('("Hello from stderr")')
-    assert "UserWarning: Could not google: [Errno " in job.stderr
     assert job.error_message == ""
     assert job.status == job.SUCCESS
     assert job.exec_duration == timedelta(seconds=1337)

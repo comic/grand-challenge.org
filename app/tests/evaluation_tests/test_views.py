@@ -4,7 +4,7 @@ import zipfile
 from datetime import timedelta
 from pathlib import Path
 from typing import NamedTuple
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.contrib.auth.models import Group
@@ -407,12 +407,15 @@ class TestObjectPermissionRequiredViews:
 
             remove_perm(permission, group, obj)
 
-    @patch(
-        "grandchallenge.evaluation.views.AmazonSageMakerTrainingLogsService"
-    )
-    def test_group_permission_required_views(self, mock_logs_service, client):
-        mock_logs_service.return_value.runtime_metrics_chart = {}
-        mock_logs_service.return_value._get_task_logs.return_value = []
+    def test_group_permission_required_views(self, mocker, client):
+        mock_service = MagicMock()
+        mock_service.runtime_metrics_chart = {}
+        mock_service.execution_history = []
+        mock_service.get_task_logs.return_value = []
+        mocker.patch(
+            "grandchallenge.components.backends.amazon_sagemaker_base.AmazonSageMakerTrainingLogsService",
+            return_value=mock_service,
+        )
 
         e = EvaluationFactory(time_limit=60)
         u = UserFactory()

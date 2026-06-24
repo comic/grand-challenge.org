@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import NamedTuple
 from uuid import UUID
 
@@ -42,11 +42,6 @@ class AmazonSageMakerEndpointExecutor(AmazonSageMakerTrainingExecutor):
     def _sagemaker_job_name(self):
         return self.__endpoint_name
 
-    @property
-    def _log_group_name(self):
-        # Hardcoded by AWS
-        return f"/aws/sagemaker/Endpoints/{self.__endpoint_name}"
-
     def _get_start_time(self, *, event):
         return int(
             datetime.fromisoformat(event.get("receivedTime")).timestamp()
@@ -54,10 +49,9 @@ class AmazonSageMakerEndpointExecutor(AmazonSageMakerTrainingExecutor):
         )
 
     def _get_end_time(self, *, event):
-        event_time = datetime.fromisoformat(event.get("eventTime"))
-        # Add buffer time to allow logs to complete
-        log_end_time = event_time + timedelta(seconds=10)
-        return int(log_end_time.timestamp() * 1000)
+        return int(
+            datetime.fromisoformat(event.get("eventTime")).timestamp() * 1000
+        )
 
     @property
     def runtime_setup_result_key(self):
@@ -190,14 +184,6 @@ class EndpointOrchestrator:
     @property
     def runtime_setup_result_key(self):
         return self._executor.runtime_setup_result_key
-
-    @property
-    def stdout(self):
-        return self._executor.stdout
-
-    @property
-    def stderr(self):
-        return self._executor.stderr
 
     def provision_auxiliary_data(self):
         if self._algorithm_model:
@@ -409,6 +395,3 @@ class EndpointOrchestrator:
 
     def get_outputs(self, *, output_interfaces):
         return self._executor.get_outputs(output_interfaces=output_interfaces)
-
-    def set_task_logs(self, *, event):
-        self._executor._set_task_logs(event=event, task=self._executor._job_id)
