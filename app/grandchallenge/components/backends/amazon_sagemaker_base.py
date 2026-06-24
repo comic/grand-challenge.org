@@ -420,6 +420,7 @@ class AmazonSageMakerTrainingLogsService:
     @property
     def execution_history(self):
         transistions = self._describe_job["SecondaryStatusTransitions"]
+
         for transition in transistions:
             if (
                 settings.COMPONENTS_REGISTRY_PREFIX
@@ -428,6 +429,18 @@ class AmazonSageMakerTrainingLogsService:
                 # Strip out "Resource reused by training job: " messages
                 # and anything else that may contain an arn
                 transition["StatusMessage"] = ""
+            else:
+                # Avoid confusion around training vs inference
+                transition["StatusMessage"] = (
+                    transition["StatusMessage"]
+                    .replace("Training", "Execution")
+                    .replace("training", "execution")
+                )
+
+            transition["Status"] = transition["Status"].replace(
+                "Training", "Executing"
+            )
+
         return transistions
 
     @cached_property
