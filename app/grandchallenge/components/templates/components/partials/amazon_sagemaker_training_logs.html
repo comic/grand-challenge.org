@@ -25,8 +25,18 @@
         <dd class="col-sm-9">{{ object.error_message }}</dd>
     {% endif %}
 
+    {% if object.exec_duration %}
+        <dt class="col-sm-3">Exec Duration</dt>
+        <dd class="col-sm-9">{{ object.exec_duration.total_seconds|floatformat:0 }} s</dd>
+    {% endif %}
+
+    {% if object.invoke_duration %}
+        <dt class="col-sm-3">Invoke Duration</dt>
+        <dd class="col-sm-9">{{ object.invoke_duration.total_seconds|floatformat:0 }} s</dd>
+    {% endif %}
+
     {% if object.utilization.duration %}
-        <dt class="col-sm-3">Duration</dt>
+        <dt class="col-sm-3">Total Duration</dt>
         <dd class="col-sm-9">{{ object.utilization.duration.total_seconds|floatformat:0 }} s</dd>
     {% endif %}
 </dl>

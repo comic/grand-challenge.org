@@ -18,7 +18,6 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
-from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from pictures.models import PictureField
@@ -452,9 +451,6 @@ class Session(FieldChangeMixin, UUIDModel):
         WorkstationImage, on_delete=models.PROTECT
     )
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
-    user_finished = deprecate_field(
-        models.BooleanField(default=False), raise_on_access=True
-    )
     ping_times = models.JSONField(null=True, blank=True, default=None)
     extra_env_vars = models.JSONField(
         default=list,
