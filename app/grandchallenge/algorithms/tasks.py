@@ -10,7 +10,6 @@ from lambda_tasks.decorators import lambda_task
 from lambda_tasks.logging import task_logger
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
-from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import (
     provision_invocation_input_data,
     remove_container_image_from_registry,
@@ -136,14 +135,11 @@ def create_algorithm_jobs(
             if len(jobs) >= max_jobs:
                 raise TooManyJobsScheduled
 
-            use_warm_pool = (requires_gpu_type == GPUTypeChoices.A10G) and (
-                (
-                    items_remaining
-                    - settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM
-                    - len(jobs)
-                )
-                > 0
-            )
+            use_warm_pool = (
+                items_remaining
+                - settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM
+                - len(jobs)
+            ) > 0
 
             job = Job.objects.create(
                 creator=None,  # System jobs, so no creator
