@@ -29,6 +29,9 @@ def migrate_challenge_request_fields(apps, schema_editor):
         elif "T4" in cr.algorithm_selectable_gpu_type_choices:
             cr.algorithm_selectable_gpu_type_choices = ["", "T4"]
 
+        if "" not in cr.algorithm_selectable_gpu_type_choices:
+            cr.algorithm_selectable_gpu_type_choices.insert(0, "")
+
         if cr.algorithm_maximum_settable_memory_gb_for_tasks:
             cr.algorithm_maximum_settable_memory_gb = (
                 cr.algorithm_maximum_settable_memory_gb_for_tasks[0]
