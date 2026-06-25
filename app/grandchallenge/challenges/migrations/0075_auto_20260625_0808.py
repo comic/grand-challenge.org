@@ -15,7 +15,7 @@ def migrate_challenge_request_fields(apps, schema_editor):
                 cr.algorithm_selectable_gpu_type_choices[0]
             )
         else:
-            cr.algorithm_selectable_gpu_type_choices = [""]
+            cr.algorithm_selectable_gpu_type_choices = ["", "T4"]
 
         if "A100" in cr.algorithm_selectable_gpu_type_choices:
             cr.algorithm_selectable_gpu_type_choices = [
