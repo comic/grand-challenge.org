@@ -246,8 +246,8 @@ def test_challenge_request_reviewer_can_access_all(client, challenge_reviewer):
         user=challenge_reviewer,
         data={
             "task_ids": "[1, 2]",
-            "algorithm_maximum_settable_memory_gb_for_tasks": "[32, 32]",
-            "algorithm_selectable_gpu_type_choices_for_tasks": '[["", "T4"],["", "A10G", "T4"]]',
+            "algorithm_maximum_settable_memory_gb": 32,
+            "algorithm_selectable_gpu_type_choices": '["", "T4"]',
             "average_size_test_case_mb_for_tasks": "[10, 100]",
             "inference_time_average_minutes_for_tasks": "[5, 10]",
             "task_id_for_phases": "[1, 1, 2, 2]",

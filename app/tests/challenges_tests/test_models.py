@@ -148,8 +148,8 @@ def test_is_active_until_set():
         (
             dict(
                 task_ids=[1],
-                algorithm_maximum_settable_memory_gb_for_tasks=[32],
-                algorithm_selectable_gpu_type_choices_for_tasks=[["", "T4"]],
+                algorithm_maximum_settable_memory_gb=32,
+                algorithm_selectable_gpu_type_choices=["", "T4"],
                 average_size_test_case_mb_for_tasks=[10],
                 inference_time_average_minutes_for_tasks=[10],
                 task_id_for_phases=[1],
@@ -163,8 +163,8 @@ def test_is_active_until_set():
         (
             dict(
                 task_ids=[1],
-                algorithm_maximum_settable_memory_gb_for_tasks=[32],
-                algorithm_selectable_gpu_type_choices_for_tasks=[["", "T4"]],
+                algorithm_maximum_settable_memory_gb=32,
+                algorithm_selectable_gpu_type_choices=["", "T4"],
                 average_size_test_case_mb_for_tasks=[10],
                 inference_time_average_minutes_for_tasks=[10],
                 task_id_for_phases=[1],
@@ -178,10 +178,8 @@ def test_is_active_until_set():
         (
             dict(
                 task_ids=[1],
-                algorithm_maximum_settable_memory_gb_for_tasks=[32],
-                algorithm_selectable_gpu_type_choices_for_tasks=[
-                    ["", "A10G", "T4"]
-                ],
+                algorithm_maximum_settable_memory_gb=32,
+                algorithm_selectable_gpu_type_choices=["", "A10G", "T4"],
                 average_size_test_case_mb_for_tasks=[10],
                 inference_time_average_minutes_for_tasks=[10],
                 task_id_for_phases=[1],
@@ -195,11 +193,8 @@ def test_is_active_until_set():
         (
             dict(
                 task_ids=[1, 2],
-                algorithm_maximum_settable_memory_gb_for_tasks=[32, 32],
-                algorithm_selectable_gpu_type_choices_for_tasks=[
-                    ["", "T4"],
-                    ["", "T4"],
-                ],
+                algorithm_maximum_settable_memory_gb=32,
+                algorithm_selectable_gpu_type_choices=["", "T4"],
                 average_size_test_case_mb_for_tasks=[10, 100],
                 inference_time_average_minutes_for_tasks=[5, 10],
                 task_id_for_phases=[1, 1, 2, 2],
@@ -259,8 +254,8 @@ def test_challenge_request_budget_calculation(settings):
     settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
     challenge_request = ChallengeRequest(
         task_ids=[1],
-        algorithm_maximum_settable_memory_gb_for_tasks=[32],
-        algorithm_selectable_gpu_type_choices_for_tasks=[["", "T4"]],
+        algorithm_maximum_settable_memory_gb=32,
+        algorithm_selectable_gpu_type_choices=["", "T4"],
         average_size_test_case_mb_for_tasks=[100],
         inference_time_average_minutes_for_tasks=[10],
         task_id_for_phases=[1, 1],
@@ -665,11 +660,8 @@ def test_challenge_request_submission_cleaning(data, expected_error):
         (
             {
                 "task_ids": [1, 2],
-                "algorithm_maximum_settable_memory_gb_for_tasks": [32, 32],
-                "algorithm_selectable_gpu_type_choices_for_tasks": [
-                    ["", "T4"],
-                    ["", "A10G", "T4"],
-                ],
+                "algorithm_maximum_settable_memory_gb": 32,
+                "algorithm_selectable_gpu_type_choices": ["", "T4"],
                 "average_size_test_case_mb_for_tasks": [10, 100],
                 "inference_time_average_minutes_for_tasks": [5, 10],
                 "task_id_for_phases": [1, 1, 2, 2],
@@ -681,11 +673,8 @@ def test_challenge_request_submission_cleaning(data, expected_error):
         ),
         (
             {  # Note, missing task_ids
-                "algorithm_maximum_settable_memory_gb_for_tasks": [32, 32],
-                "algorithm_selectable_gpu_type_choices_for_tasks": [
-                    ["", "T4"],
-                    ["", "A10G", "T4"],
-                ],
+                "algorithm_maximum_settable_memory_gb": 32,
+                "algorithm_selectable_gpu_type_choices": ["", "T4"],
                 "average_size_test_case_mb_for_tasks": [10, 100],
                 "inference_time_average_minutes_for_tasks": [5, 10],
                 "task_id_for_phases": [1, 1, 2, 2],

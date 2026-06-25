@@ -28,28 +28,25 @@ class Migration(migrations.Migration):
             name="algorithm_selectable_gpu_type_choices_for_tasks",
             field=models.JSONField(
                 default=list,
-                help_text='The GPU type choices that participants will be able to select for their algorithm inference jobs, for each task. Options are ["", "A100", "A10G", "V100", "K80", "T4"].',
+                help_text='The GPU type choices that participants will be able to select for their algorithm inference jobs. Options are ["", "A100", "A10G", "V100", "K80", "T4"].',
                 validators=[
                     grandchallenge.core.validators.JSONValidator(
                         schema={
                             "$schema": "http://json-schema.org/draft-07/schema",
                             "items": {
-                                "items": {
-                                    "enum": [
-                                        "",
-                                        "A100",
-                                        "A10G",
-                                        "V100",
-                                        "K80",
-                                        "T4",
-                                    ],
-                                    "type": "string",
-                                },
-                                "type": "array",
-                                "uniqueItems": True,
+                                "enum": [
+                                    "",
+                                    "A100",
+                                    "A10G",
+                                    "V100",
+                                    "K80",
+                                    "T4",
+                                ],
+                                "type": "string",
                             },
                             "title": "The Selectable GPU Types Schema",
                             "type": "array",
+                            "uniqueItems": True,
                         }
                     )
                 ],

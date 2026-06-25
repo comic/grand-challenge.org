@@ -349,11 +349,8 @@ class ChallengeRequestBudgetCalculator(
 
     def get_initial(self):
         return {
-            "algorithm_selectable_gpu_type_choices_for_tasks": [
-                ["", "T4"],
-                ["", "T4", "A10G"],
-            ],
-            "algorithm_maximum_settable_memory_gb_for_tasks": [32, 32],
+            "algorithm_selectable_gpu_type_choices": ["", "T4"],
+            "algorithm_maximum_settable_memory_gb": 32,
             "average_size_test_case_mb_for_tasks": [10, 40],
             "inference_time_average_minutes_for_tasks": [5, 10],
             "task_ids": [1, 2],
