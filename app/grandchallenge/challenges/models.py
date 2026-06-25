@@ -1064,6 +1064,10 @@ budget_field_names = (
 )
 
 
+def default_selectable_gpu_types():
+    return [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
+
+
 class ChallengeRequest(UUIDModel, ChallengeBase):
 
     ChallengeRequestStatusChoices = ChallengeRequestStatusChoices
@@ -1184,7 +1188,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         validators=[MinValueValidator(limit_value=1)],
     )
     algorithm_selectable_gpu_type_choices = models.JSONField(
-        default=list,
+        default=default_selectable_gpu_types,
         help_text=(
             "The GPU type choices that participants will be able to select for their "
             "algorithm inference jobs. Options are "
