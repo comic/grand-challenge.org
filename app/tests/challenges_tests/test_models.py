@@ -1245,3 +1245,31 @@ def test_active_budget_properties():
         challenge.active_consumed_compute_cost_euro_millicents
         == 6 * 2 * 1000 * 100
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "choices,should_raise",
+    [
+        (["", "T4"], False),
+        (["", "A10G", "T4"], False),
+        (["", "A100", "A10G", "T4"], False),
+        (["T4"], True),  # missing NO_GPU
+        (["A10G", "T4"], True),  # missing NO_GPU
+        (["", "A10G"], True),  # A10G without T4
+        (["", "A100", "T4"], True),  # A100 without A10G
+        (["", "A100"], True),  # A100 without A10G and T4
+    ],
+)
+def test_challenge_request_algorithm_selectable_gpu_type_choices_validation(
+    choices, should_raise
+):
+    challenge_request = ChallengeRequest(
+        algorithm_selectable_gpu_type_choices=choices,
+    )
+
+    if should_raise:
+        with pytest.raises(ValidationError):
+            challenge_request.clean()
+    else:
+        challenge_request.clean()

@@ -1376,6 +1376,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     def clean(self):
         super().clean()
 
+        self.clean_algorithm_selectable_gpu_type_choices()
+
         if self.status == self.ChallengeRequestStatusChoices.PENDING:
             self.clean_for_submission()
         elif self.status == self.ChallengeRequestStatusChoices.ACCEPTED:
@@ -1486,6 +1488,29 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                         field.verbose_name.title() for field in missing_fields
                     ),
                 )
+
+    def clean_algorithm_selectable_gpu_type_choices(self):
+        choices = set(self.algorithm_selectable_gpu_type_choices)
+
+        if not choices:
+            return
+
+        errors = []
+
+        if GPUTypeChoices.NO_GPU not in choices:
+            errors.append('Selectable gpu type must contain CPU only ("").')
+
+        if GPUTypeChoices.A10G in choices and GPUTypeChoices.T4 not in choices:
+            errors.append("A10G requires T4 to also be present.")
+
+        if GPUTypeChoices.A100 in choices:
+            if GPUTypeChoices.A10G not in choices:
+                errors.append("A100 requires A10G to also be present.")
+            if GPUTypeChoices.T4 not in choices:
+                errors.append("A100 requires T4 to also be present.")
+
+        if errors:
+            raise ValidationError(errors)
 
     def clean_for_acceptance(self):
         missing_fields = []
