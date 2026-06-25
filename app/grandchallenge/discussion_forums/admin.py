@@ -47,6 +47,7 @@ class TopicAdmin(admin.ModelAdmin):
         "last_post",
         "last_post_on",
     )
+    ordering = ("-created",)
 
     def linked_forum(self, obj):
         return f"Forum for {obj.forum.parent_object}"
@@ -62,6 +63,7 @@ class PostAdmin(admin.ModelAdmin):
         "topic",
         "creator",
     )
+    ordering = ("-created",)
 
 
 @admin.register(TopicReadRecord)
