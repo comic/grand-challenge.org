@@ -402,8 +402,8 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         model = ChallengeRequest
         fields = (
             "task_ids",
-            "algorithm_selectable_gpu_type_choices_for_tasks",
-            "algorithm_maximum_settable_memory_gb_for_tasks",
+            "algorithm_selectable_gpu_type_choices",
+            "algorithm_maximum_settable_memory_gb",
             "average_size_test_case_mb_for_tasks",
             "inference_time_average_minutes_for_tasks",
             "task_id_for_phases",
@@ -433,8 +433,8 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
             Fieldset(
                 "Tasks",
                 "task_ids",
-                "algorithm_selectable_gpu_type_choices_for_tasks",
-                "algorithm_maximum_settable_memory_gb_for_tasks",
+                "algorithm_selectable_gpu_type_choices",
+                "algorithm_maximum_settable_memory_gb",
                 "average_size_test_case_mb_for_tasks",
                 "inference_time_average_minutes_for_tasks",
                 css_class="border rounded px-2 my-4",
@@ -474,8 +474,6 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         task_ids = cleaned_data.get("task_ids")
 
         for field_name in (
-            "algorithm_selectable_gpu_type_choices_for_tasks",
-            "algorithm_maximum_settable_memory_gb_for_tasks",
             "average_size_test_case_mb_for_tasks",
             "inference_time_average_minutes_for_tasks",
         ):

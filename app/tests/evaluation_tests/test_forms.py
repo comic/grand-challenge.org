@@ -1248,11 +1248,8 @@ def test_configure_algorithm_phases_form_challenge_request_multiple_tasks():
     challenge_request = ChallengeRequestFactory(
         short_name=ch.short_name,
         task_ids=[1, 2],
-        algorithm_maximum_settable_memory_gb_for_tasks=[32, 32],
-        algorithm_selectable_gpu_type_choices_for_tasks=[
-            ["", "T4"],
-            ["", "T4", "A10G"],
-        ],
+        algorithm_maximum_settable_memory_gb=32,
+        algorithm_selectable_gpu_type_choices=["", "T4"],
         average_size_test_case_mb_for_tasks=[592, 323],
         inference_time_average_minutes_for_tasks=[33, 12],
         task_id_for_phases=[1, 1, 2, 2],

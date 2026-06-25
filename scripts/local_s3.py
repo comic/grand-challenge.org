@@ -46,7 +46,10 @@ def _create_buckets(*, client):
             client.create_bucket(Bucket=bucket_name)
             logger.info(f"Created {bucket_name}")
         except botocore.exceptions.ClientError as error:
-            if error.response["Error"]["Code"] == "BucketAlreadyExists":
+            if error.response["Error"]["Code"] in {
+                "BucketAlreadyExists",
+                "BucketAlreadyOwnedByYou",
+            }:
                 logger.info(f"{bucket_name} already exists, skipping creation")
             else:
                 raise

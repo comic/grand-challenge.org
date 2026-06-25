@@ -1247,6 +1247,13 @@ class ConfigureAlgorithmPhasesView(
             archive.add_editor(user)
 
         if self.challenge_request:
+            phase.algorithm_selectable_gpu_type_choices = (
+                self.challenge_request.algorithm_selectable_gpu_type_choices
+            )
+            phase.algorithm_maximum_settable_memory_gb = (
+                self.challenge_request.algorithm_maximum_settable_memory_gb
+            )
+
             if len(self.challenge_request.task_ids) == 1:
                 task_idx = 0
             elif phase_with_task.task_id is not None:
@@ -1257,12 +1264,6 @@ class ConfigureAlgorithmPhasesView(
                 task_idx = None
 
             if task_idx is not None:
-                phase.algorithm_selectable_gpu_type_choices = self.challenge_request.algorithm_selectable_gpu_type_choices_for_tasks[
-                    task_idx
-                ]
-                phase.algorithm_maximum_settable_memory_gb = self.challenge_request.algorithm_maximum_settable_memory_gb_for_tasks[
-                    task_idx
-                ]
                 phase.algorithm_time_limit = (
                     self.challenge_request.inference_time_average_minutes_for_tasks[
                         task_idx

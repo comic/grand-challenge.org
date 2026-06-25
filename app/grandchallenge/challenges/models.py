@@ -44,7 +44,10 @@ from grandchallenge.challenges.emails import (
 from grandchallenge.challenges.exceptions import InsufficientBudgetError
 from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.components.models import APIMethodChoices
-from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.components.schemas import (
+    SELECTABLE_GPU_TYPES_SCHEMA,
+    GPUTypeChoices,
+)
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
@@ -1050,8 +1053,8 @@ class ChallengeRequestStatusChoices(models.TextChoices):
 
 budget_field_names = (
     "task_ids",
-    "algorithm_selectable_gpu_type_choices_for_tasks",
-    "algorithm_maximum_settable_memory_gb_for_tasks",
+    "algorithm_selectable_gpu_type_choices",
+    "algorithm_maximum_settable_memory_gb",
     "average_size_test_case_mb_for_tasks",
     "inference_time_average_minutes_for_tasks",
     "task_id_for_phases",
@@ -1059,6 +1062,10 @@ budget_field_names = (
     "number_of_submissions_per_team_for_phases",
     "number_of_test_cases_for_phases",
 )
+
+
+def default_selectable_gpu_types():
+    return [GPUTypeChoices.NO_GPU, GPUTypeChoices.T4]
 
 
 class ChallengeRequest(UUIDModel, ChallengeBase):
@@ -1180,6 +1187,26 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         help_text="Average algorithm container size in GB.",
         validators=[MinValueValidator(limit_value=1)],
     )
+    algorithm_selectable_gpu_type_choices = models.JSONField(
+        default=default_selectable_gpu_types,
+        help_text=(
+            "The GPU type choices that participants will be able to select for their "
+            "algorithm inference jobs. Options are "
+            f"{GPUTypeChoices.values}.".replace("'", '"')
+        ),
+        validators=[
+            JSONValidator(
+                schema=SELECTABLE_GPU_TYPES_SCHEMA,
+            )
+        ],
+    )
+    algorithm_maximum_settable_memory_gb = models.PositiveIntegerField(
+        default=32,
+        help_text=(
+            "Maximum amount of main memory (DRAM) that participants will be allowed to "
+            "assign to algorithm inference jobs for submission."
+        ),
+    )
     inference_time_average_minutes_for_tasks = models.JSONField(
         help_text="Average run time per algorithm job in minutes, for each task.",
         default=list,
@@ -1196,38 +1223,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 }
             )
         ],
-    )
-    algorithm_selectable_gpu_type_choices_for_tasks = models.JSONField(
-        default=list,
-        help_text=(
-            "The GPU type choices that participants will be able to select for their "
-            "algorithm inference jobs, for each task. Options are "
-            f"{GPUTypeChoices.values}.".replace("'", '"')
-        ),
-        validators=[
-            JSONValidator(
-                schema={
-                    "$schema": "http://json-schema.org/draft-07/schema",
-                    "type": "array",
-                    "title": "The Selectable GPU Types Schema",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "enum": GPUTypeChoices.values,
-                            "type": "string",
-                        },
-                        "uniqueItems": True,
-                    },
-                }
-            )
-        ],
-    )
-    algorithm_maximum_settable_memory_gb_for_tasks = models.JSONField(
-        default=list,
-        help_text=(
-            "Maximum amount of main memory (DRAM) that participants will be allowed to "
-            "assign to algorithm inference jobs for submission."
-        ),
     )
     average_size_test_case_mb_for_tasks = models.JSONField(
         help_text="Average size of a test image in MB, for each task.",
@@ -1385,6 +1380,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     def clean(self):
         super().clean()
 
+        self.clean_algorithm_selectable_gpu_type_choices()
+
         if self.status == self.ChallengeRequestStatusChoices.PENDING:
             self.clean_for_submission()
         elif self.status == self.ChallengeRequestStatusChoices.ACCEPTED:
@@ -1495,6 +1492,31 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                         field.verbose_name.title() for field in missing_fields
                     ),
                 )
+
+    def clean_algorithm_selectable_gpu_type_choices(self):
+        choices = set(self.algorithm_selectable_gpu_type_choices)
+
+        if not choices:
+            return
+
+        errors = []
+
+        if GPUTypeChoices.NO_GPU not in choices:
+            errors.append('Selectable gpu type must contain CPU only ("").')
+
+        if GPUTypeChoices.A10G in choices and GPUTypeChoices.T4 not in choices:
+            errors.append("A10G requires T4 to also be present.")
+
+        if GPUTypeChoices.A100 in choices:
+            if GPUTypeChoices.A10G not in choices:
+                errors.append("A100 requires A10G to also be present.")
+            if GPUTypeChoices.T4 not in choices:
+                errors.append("A100 requires T4 to also be present.")
+
+        if errors:
+            raise ValidationError(
+                {"algorithm_selectable_gpu_type_choices": errors}
+            )
 
     def clean_for_acceptance(self):
         missing_fields = []
@@ -1740,24 +1762,19 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             settings.COMPONENTS_DEFAULT_BACKEND
         )
         costs_for_tasks = []
-        for gpu_choices, max_memory_gb, average_time in zip(
-            self.algorithm_selectable_gpu_type_choices_for_tasks,
-            self.algorithm_maximum_settable_memory_gb_for_tasks,
-            self.inference_time_average_minutes_for_tasks,
-            strict=True,
-        ):
+        for average_time in self.inference_time_average_minutes_for_tasks:
             executors = [
                 Executor(
                     job_id="",
                     exec_image_repo_tag="",
-                    memory_limit=max_memory_gb,
+                    memory_limit=self.algorithm_maximum_settable_memory_gb,
                     time_limit=average_time,
                     requires_gpu_type=gpu_type,
                     use_warm_pool=False,
                     signing_key=b"",
                     api_method=APIMethodChoices.EXEC,
                 )
-                for gpu_type in gpu_choices
+                for gpu_type in self.algorithm_selectable_gpu_type_choices
             ]
             usd_cents_per_hour = max(
                 executor.usd_cents_per_hour for executor in executors
