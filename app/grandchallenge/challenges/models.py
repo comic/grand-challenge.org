@@ -1514,7 +1514,9 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 errors.append("A100 requires T4 to also be present.")
 
         if errors:
-            raise ValidationError(errors)
+            raise ValidationError(
+                {"algorithm_selectable_gpu_type_choices": errors}
+            )
 
     def clean_for_acceptance(self):
         missing_fields = []
