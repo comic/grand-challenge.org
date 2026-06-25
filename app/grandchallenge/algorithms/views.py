@@ -825,7 +825,7 @@ class JobStatusDetail(ObjectPermissionRequiredMixin, DetailView):
 
 
 class JobLogsDetail(ObjectPermissionRequiredMixin, DetailView):
-    permission_required = "view_logs"
+    permission_required = ("view_job", "view_logs")
     template_name_suffix = "_logs_detail"
     model = Job
     raise_exception = True

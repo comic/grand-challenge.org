@@ -1190,7 +1190,12 @@ class Job(CIVForObjectMixin, ComponentJob):
 
     class Meta(UUIDModel.Meta, ComponentJob.Meta):
         ordering = ("created",)
-        permissions = [("view_logs", "Can view the jobs logs")]
+        permissions = [
+            (
+                "view_logs",
+                "Can view the jobs logs if they also have view_job permission",
+            )
+        ]
 
     def __str__(self):
         return f"Job {self.pk}"
@@ -1612,7 +1617,13 @@ class Endpoint(FieldChangeMixin, UUIDModel):
     objects = EndpointManager.as_manager()
 
     class Meta:
-        permissions = [("invoke_endpoint", "Can invoke the endpoint")]
+        permissions = [
+            ("invoke_endpoint", "Can invoke the endpoint"),
+            (
+                "view_logs",
+                "Can view the endpoints logs if they also have view_endpoint permission",
+            ),
+        ]
         ordering = ("-created",)
         indexes = (
             models.Index(fields=["status", "created"]),
@@ -1665,8 +1676,14 @@ class Endpoint(FieldChangeMixin, UUIDModel):
 
     def assign_permissions(self):
         assign_perm("view_endpoint", self.viewers_group, self)
+
+        assign_perm(
+            "view_logs", self.algorithm_image.algorithm.editors_group, self
+        )
+
         if self.creator:
             assign_perm("invoke_endpoint", self.creator, self)
+            assign_perm("change_endpoint", self.creator, self)
 
     @property
     def endpoint_name(self):
@@ -1736,13 +1753,13 @@ class Endpoint(FieldChangeMixin, UUIDModel):
 
 
 class EndpointUserObjectPermission(UserObjectPermissionBase):
-    allowed_permissions = frozenset({"invoke_endpoint"})
+    allowed_permissions = frozenset({"invoke_endpoint", "change_endpoint"})
 
     content_object = models.ForeignKey(Endpoint, on_delete=models.CASCADE)
 
 
 class EndpointGroupObjectPermission(GroupObjectPermissionBase):
-    allowed_permissions = frozenset({"view_endpoint"})
+    allowed_permissions = frozenset({"view_endpoint", "view_logs"})
 
     content_object = models.ForeignKey(Endpoint, on_delete=models.CASCADE)
 

@@ -526,10 +526,26 @@ def test_endpoint_permissions():
     viewers_group = endpoint.viewers_group
 
     assert get_groups_with_set_perms(endpoint) == {
+        # Job viewers group (contains the job creator) should be able to view this Endpoint
         viewers_group: {"view_endpoint"},
+        # Algorithm Editors Group should be able to view this Endpoint's logs
+        # The logs are then only viewable if they have both view_logs and view_endpoint permissions
+        endpoint.algorithm_image.algorithm.editors_group: {"view_logs"},
     }
+
     assert get_users_with_set_perms(endpoint, with_group_users=False) == {
-        endpoint.creator: {"invoke_endpoint"},
+        # Job Creator should be able to change this endpoint and invoke this endpoint
+        endpoint.creator: {"invoke_endpoint", "change_endpoint"},
+    }
+
+    assert get_users_with_set_perms(endpoint, with_group_users=True) == {
+        # Job Creator should be able to change this endpoint and invoke this endpoint
+        # and view as they are a member of the viewers_group
+        endpoint.creator: {
+            "view_endpoint",
+            "invoke_endpoint",
+            "change_endpoint",
+        },
     }
 
     endpoint.delete()

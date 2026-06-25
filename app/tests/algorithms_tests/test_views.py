@@ -349,15 +349,7 @@ def test_algorithm_jobs_list_view(client):
 
 @pytest.mark.django_db
 class TestObjectPermissionRequiredViews:
-    def test_group_permission_required_views(self, mocker, client):
-        mock_service = MagicMock()
-        mock_service.runtime_metrics_chart = {}
-        mock_service.execution_history = []
-        mock_service.get_task_logs.return_value = []
-        mocker.patch(
-            "grandchallenge.components.backends.amazon_sagemaker_base.AmazonSageMakerTrainingLogsService",
-            return_value=mock_service,
-        )
+    def test_group_permission_required_views(self, client):
         ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
         am = AlgorithmModelFactory()
         interface = AlgorithmInterfaceFactory(
@@ -474,13 +466,6 @@ class TestObjectPermissionRequiredViews:
                 "job-status-detail",
                 {"slug": ai.algorithm.slug, "pk": j.pk},
                 "view_job",
-                j,
-                None,
-            ),
-            (
-                "job-logs-detail",
-                {"slug": ai.algorithm.slug, "pk": j.pk},
-                "view_logs",
                 j,
                 None,
             ),
@@ -728,6 +713,56 @@ class TestJobDetailView:
             assert content in response.rendered_content
 
             remove_perm(permission, u, permission_object)
+
+
+@pytest.mark.django_db
+class TestJobLogsDetailPermissions:
+    def test_requires_both_view_job_and_view_logs(self, client, mocker):
+        mock_service = MagicMock()
+        mock_service.runtime_metrics_chart = {}
+        mock_service.execution_history = []
+        mock_service.get_task_logs.return_value = []
+        mocker.patch(
+            "grandchallenge.components.backends.amazon_sagemaker_base.AmazonSageMakerTrainingLogsService",
+            return_value=mock_service,
+        )
+
+        j = AlgorithmJobFactory(time_limit=60)
+        u = UserFactory()
+        g = GroupFactory()
+        g.user_set.add(u)
+
+        view_kwargs = {
+            "client": client,
+            "viewname": "algorithms:job-logs-detail",
+            "reverse_kwargs": {
+                "slug": j.algorithm_image.algorithm.slug,
+                "pk": j.pk,
+            },
+            "user": u,
+        }
+
+        # No permissions - denied
+        response = get_view_for_user(**view_kwargs)
+        assert response.status_code == 403
+
+        # Only view_job - denied
+        assign_perm("view_job", g, j)
+        response = get_view_for_user(**view_kwargs)
+        assert response.status_code == 403
+        remove_perm("view_job", g, j)
+
+        # Only view_logs - denied
+        assign_perm("view_logs", g, j)
+        response = get_view_for_user(**view_kwargs)
+        assert response.status_code == 403
+        remove_perm("view_logs", g, j)
+
+        # Both permissions - granted
+        assign_perm("view_job", g, j)
+        assign_perm("view_logs", g, j)
+        response = get_view_for_user(**view_kwargs)
+        assert response.status_code == 200
 
 
 @pytest.mark.django_db
