@@ -168,7 +168,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "utilization_priority",
     ]
 
-    ordering = ["created"]
+    ordering = ["-created"]
 
     @admin.display(description="Total")
     def total_amount_euros(self, obj):
