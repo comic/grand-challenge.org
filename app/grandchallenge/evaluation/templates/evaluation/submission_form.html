@@ -59,13 +59,16 @@
                 <a href="{% url 'evaluation:phase-update' challenge_short_name=challenge.short_name slug=phase.slug %}">
                     Phase Settings</a>.
             </p>
-            {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not phase.external_evaluation %}
+            {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
                 <p>
                     For each submission, {{ phase.jobs_to_schedule_per_submission }}
                     algorithm job{{ phase.jobs_to_schedule_per_submission|pluralize }} will be created
                     from the {{ phase.jobs_to_schedule_per_submission }} valid item{{ phase.jobs_to_schedule_per_submission|pluralize }}
                     in <a href="{{ phase.archive.get_absolute_url }}">{{ phase.archive }}</a>.
                     Each individual algorithm job will have a time limit of {{ phase.algorithm_time_limit|naturaldelta }}.
+                    Participants will only be able to select algorithms that are configured to use
+                    maximum main memory (DRAM) of {{ phase.algorithm_maximum_settable_memory_gb }} GB or less
+                    and one of the following instance types: {{ phase.get_algorithm_selectable_gpu_type_choices_display }}.
                 </p>
             {% endif %}
             <p>
@@ -121,9 +124,12 @@
                 {% endif %}
                 to this phase.
 
-                {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not phase.external_evaluation %}
+                {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
                     Algorithm jobs created for this phase will have a time limit of
                     {{ phase.algorithm_time_limit|naturaldelta }} per case.
+                    You will only be able to select algorithms that are configured to use
+                    maximum main memory (DRAM) of {{ phase.algorithm_maximum_settable_memory_gb }} GB or less
+                    and one of the following instance types: {{ phase.get_algorithm_selectable_gpu_type_choices_display }}.
                 {% endif %}
             </div>
 
