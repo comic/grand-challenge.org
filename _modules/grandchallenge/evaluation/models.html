@@ -2065,8 +2065,14 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">evaluation_logs_message</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">format_html</span><span class="p">(</span>
-            <span class="s2">&quot;&lt;a href=</span><span class="si">{url}</span><span class="s2">#logs&gt;inspect the evaluation logs&lt;/a&gt;&quot;</span><span class="p">,</span>
-            <span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">get_absolute_url</span><span class="p">(),</span>
+            <span class="s2">&quot;&lt;a href=</span><span class="si">{url}</span><span class="s2">&gt;inspect the evaluation logs&lt;/a&gt;&quot;</span><span class="p">,</span>
+            <span class="n">url</span><span class="o">=</span><span class="n">reverse</span><span class="p">(</span>
+                <span class="n">viewname</span><span class="o">=</span><span class="s2">&quot;evaluation:evaluation-logs-detail&quot;</span><span class="p">,</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                    <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">),</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
