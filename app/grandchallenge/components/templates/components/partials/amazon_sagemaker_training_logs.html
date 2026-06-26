@@ -1,3 +1,4 @@
+{% load tz %}
 <dl class="row">
     <dt class="col-sm-3">Result ID</dt>
     <dd class="col-sm-9">{{ object.pk }}</dd>
@@ -82,7 +83,7 @@
 <h3>Logs</h3>
 {% if object.amazon_sagemaker_training_logs.logs %}
     {# @formatter:off #}
-    <pre class="console">{% for timestamp, structured_log in object.amazon_sagemaker_training_logs.logs %}<span class="d-flex"><span class="user-select-none flex-shrink-0">{{ timestamp.isoformat }} </span><span class="text-break text-prewrap{% if structured_log.source == "stderr" %} text-danger{% endif %}">{{ structured_log.message }}
+    <pre class="console">{% for timestamp, structured_log in object.amazon_sagemaker_training_logs.logs %}<span class="d-flex"><span class="user-select-none flex-shrink-0">{{ timestamp|localtime|date:"c" }} </span><span class="text-break text-prewrap{% if structured_log.source == "stderr" %} text-danger{% endif %}">{{ structured_log.message }}
 </span></span>{% empty %}No logs found{% endfor %}</pre>
     {# @formatter:on #}
 {% else %}

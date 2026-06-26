@@ -115,6 +115,12 @@ dl.inline dt:after {
     white-space: pre-wrap;
 }
 
+.user-select-none {
+    /* Fix for non-selectable text on Safari */
+    -webkit-user-select: none;
+    user-select: none;
+}
+
 ul.socialaccount_providers {
     list-style-type: none;
     padding: 0;
