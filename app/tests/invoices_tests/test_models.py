@@ -806,3 +806,49 @@ def test_utilization_priority_paid_status():
         invoice_1.pk,
         invoice_0.pk,
     ]
+
+
+@pytest.mark.django_db
+def test_status_aggregates(settings):
+    challenge = ChallengeFactory()
+    today = now().date()
+    cutoff = settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF  # 4 weeks (28 days)
+
+    common_settings = {
+        "challenge": challenge,
+        "payment_status": PaymentStatusChoices.ISSUED,
+        "billing_address": "foo",
+        "contact_name": "bar",
+        "contact_email": "fake@email.com",
+        "vat_number": "123",
+        "internal_client_number": "456",
+        "internal_invoice_number": "789",
+        "support_costs_euros": 10,
+        "compute_costs_euros": 10,
+        "storage_costs_euros": 10,
+    }
+    # 2 OVERDUE
+    overdue_issued_on = today - cutoff - timedelta(days=7)
+    InvoiceFactory(
+        payment_type=Invoice.PaymentTypeChoices.PREPAID,
+        issued_on=overdue_issued_on,
+        **common_settings,
+    )
+    InvoiceFactory(
+        payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+        issued_on=overdue_issued_on,
+        **common_settings,
+    )
+
+    # 1 DUE
+    due_issued_on = today - cutoff + timedelta(days=10)
+    InvoiceFactory(
+        payment_type=Invoice.PaymentTypeChoices.PREPAID,
+        issued_on=due_issued_on,
+        **common_settings,
+    )
+
+    aggregates = Invoice.objects.with_overdue_status().status_aggregates
+
+    assert aggregates["num_is_overdue"] == 2
+    assert aggregates["num_is_due"] == 1
