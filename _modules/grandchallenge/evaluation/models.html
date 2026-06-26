@@ -1043,6 +1043,12 @@
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">},</span>
         <span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_algorithm_selectable_gpu_type_choices_display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">oxford_comma</span><span class="p">(</span>
+            <span class="n">GPUTypeChoices</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">label</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_selectable_gpu_type_choices</span>
+        <span class="p">)</span>
+
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">submission_limit_period_timedelta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission_limit_period</span><span class="p">)</span>
