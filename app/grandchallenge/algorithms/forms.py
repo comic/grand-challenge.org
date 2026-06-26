@@ -572,6 +572,17 @@ class AlgorithmForPhaseForm(
             for choice in GPUTypeChoices
             if choice in phase.algorithm_selectable_gpu_type_choices
         ]
+
+        if GPUTypeChoices.T4 in phase.algorithm_selectable_gpu_type_choices:
+            self.fields["job_requires_gpu_type"].initial = GPUTypeChoices.T4
+        elif (
+            GPUTypeChoices.NO_GPU
+            in phase.algorithm_selectable_gpu_type_choices
+        ):
+            self.fields["job_requires_gpu_type"].initial = (
+                GPUTypeChoices.NO_GPU
+            )
+
         self.fields["job_requires_memory_gb"].validators = [
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
             MaxValueValidator(phase.algorithm_maximum_settable_memory_gb),
