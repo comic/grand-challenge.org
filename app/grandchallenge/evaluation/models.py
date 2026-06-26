@@ -997,6 +997,12 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             kwargs={"challenge_short_name": self.challenge.short_name},
         )
 
+    def get_algorithm_selectable_gpu_type_choices_display(self):
+        return oxford_comma(
+            GPUTypeChoices(c).label
+            for c in self.algorithm_selectable_gpu_type_choices
+        )
+
     @property
     def submission_limit_period_timedelta(self):
         return timedelta(days=self.submission_limit_period)
