@@ -6,7 +6,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("challenges", "0072_alter_challenge_compute_cost_euro_millicents"),
+        (
+            "challenges",
+            "0076_remove_challengerequest_algorithm_maximum_settable_memory_gb_for_tasks_and_more",
+        ),
     ]
 
     operations = [
