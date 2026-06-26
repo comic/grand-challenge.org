@@ -2015,8 +2015,14 @@ class EvaluationActionMessageBuilder:
     @property
     def evaluation_logs_message(self):
         return format_html(
-            "<a href={url}#logs>inspect the evaluation logs</a>",
-            url=self.evaluation.get_absolute_url(),
+            "<a href={url}>inspect the evaluation logs</a>",
+            url=reverse(
+                viewname="evaluation:evaluation-logs-detail",
+                kwargs={
+                    "pk": self.evaluation.pk,
+                    "challenge_short_name": self.phase.challenge.short_name,
+                },
+            ),
         )
 
     @property
