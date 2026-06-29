@@ -50,8 +50,17 @@ cleanup() {
     docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
     echo "=+= Container stopped"
 
-    # Remove staging directories and noop volume
-    rm -rf "$STAGING_INPUT_DIR" "$STAGING_OUTPUT_DIR"
+    rm -rf "$STAGING_INPUT_DIR"
+    # Use a container to remove the staging output dir since it may contain
+    # files owned by the container's UID on Linux
+    docker run --rm \
+      --platform=linux/amd64 \
+      --quiet \
+      --volume "$STAGING_OUTPUT_DIR":/output \
+      --entrypoint /bin/sh \
+      $DOCKER_IMAGE_TAG \
+      -c "rm -rf /output/* || true" 2>/dev/null || true
+    rm -rf "$STAGING_OUTPUT_DIR"
     docker volume rm "$DOCKER_NOOP_VOLUME" > /dev/null 2>&1 || true
 }
 
@@ -103,8 +112,7 @@ echo "=+= Starting container"
 # possible with --network none. In production, the sagemaker-shim calls
 # the invoke endpoint from inside the container so network isolation works.
 DOCKER_RUN_ARGS=(
-    -d
-    {% if not no_gpus %}--gpus all{% endif %}
+    -d {% if not no_gpus %}--gpus all{% endif %}
     --name "$CONTAINER_NAME"
     --platform=linux/amd64
     -p ${PORT}:4743
@@ -154,9 +162,12 @@ provision_input() {
 
     echo "=+= Provisioning input for ${interface_dir}"
 
-    # Clear the staging directories, then hard-link the interface's input
-    # files into the input staging dir.
-    rm -rf "$STAGING_INPUT_DIR"/* "$STAGING_OUTPUT_DIR"/*
+    # Clear /output inside the container (host can't due to UID mismatch on Linux)
+    docker exec --user root "$CONTAINER_NAME" \
+        /bin/sh -c "rm -rf /output/*"
+
+    # Clear the input staging dir, then hard-link the interface's input files in
+    rm -rf "$STAGING_INPUT_DIR"/*
     cp -rl "${INPUT_DIR}/${interface_dir}/." "$STAGING_INPUT_DIR/"
 }
 
@@ -164,6 +175,11 @@ collect_output() {
     local interface_dir="$1"
 
     echo "=+= Collecting output for ${interface_dir}"
+
+    # Fix permissions so the host user can read the output files.
+    # The container may have written them as a different UID on Linux.
+    docker exec --user root "$CONTAINER_NAME" \
+        /bin/sh -c "chmod -R -f o+rX /output/*"
 
     # Copy the output from the staging directory to the host output directory
     cp -r "$STAGING_OUTPUT_DIR/." "${OUTPUT_DIR}/${interface_dir}/"
