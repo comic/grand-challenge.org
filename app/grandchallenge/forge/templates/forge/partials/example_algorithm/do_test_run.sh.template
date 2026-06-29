@@ -12,27 +12,47 @@ DOCKER_NOOP_VOLUME="${DOCKER_IMAGE_TAG}-volume"
 
 INPUT_DIR="${SCRIPT_DIR}/test/input"
 OUTPUT_DIR="${SCRIPT_DIR}/test/output"
+# Staging directories are bind-mounted into the container as /input and /output.
+# They start empty and are provisioned with hard-linked input files right before each
+# invocation.
+STAGING_INPUT_DIR="${SCRIPT_DIR}/test/.staging_input"
+STAGING_OUTPUT_DIR="${SCRIPT_DIR}/test/.staging_output"
 
 echo "=+= (Re)build the container"
 source "${SCRIPT_DIR}/do_build.sh"
+
+echo "=+= Verifying container labels"
+API_METHOD=$(docker inspect --format='{% verbatim %}{{index .Config.Labels "org.grand-challenge.api-method"}}{% endverbatim %}' "$DOCKER_IMAGE_TAG" 2>/dev/null || echo "")
+if [ "$API_METHOD" != "invoke" ]; then
+    echo "ERROR: The container image is missing the required label:"
+    echo "  LABEL org.grand-challenge.api-method=\"invoke\""
+    echo ""
+    echo "Without this label, Grand Challenge will not recognize that your"
+    echo "container implements the invoke API and will default to exec mode."
+    echo "Please add this label to your Dockerfile."
+    exit 1
+fi
 
 cleanup() {
     echo "=+= Cleaning permissions ..."
     # Ensure permissions are set correctly on the output
     # This allows the host user (e.g. you) to access and handle these files
+{% for interface_name in object.algorithm_interface_names %}
     docker run --rm \
       --platform=linux/amd64 \
       --quiet \
-      --volume "$OUTPUT_DIR":/output \
+      --volume "${OUTPUT_DIR}/{{ interface_name }}":/output \
       --entrypoint /bin/sh \
       $DOCKER_IMAGE_TAG \
       -c "chmod -R -f o+rwX /output/* || true"
+{% endfor %}
 
     docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
     echo "=+= Container stopped"
 
-    # Ensure volume is removed
-    docker volume rm "$DOCKER_NOOP_VOLUME" > /dev/null
+    # Remove staging directories and noop volume
+    rm -rf "$STAGING_INPUT_DIR" "$STAGING_OUTPUT_DIR"
+    docker volume rm "$DOCKER_NOOP_VOLUME" > /dev/null 2>&1 || true
 }
 
 # This allows for the Docker user to read
@@ -44,7 +64,6 @@ if [ -d "${OUTPUT_DIR}/{{ interface_name }}" ]; then
   chmod -f o+rwX "${OUTPUT_DIR}/{{ interface_name }}"
 
   echo "=+= Cleaning up any earlier output"
-  # Use the container itself to circumvent ownership problems
   docker run --rm \
       --platform=linux/amd64 \
       --quiet \
@@ -57,39 +76,47 @@ else
 fi
 {% endfor %}
 
+# Create empty staging directories for /input and /output bind mounts
+rm -rf "$STAGING_INPUT_DIR" "$STAGING_OUTPUT_DIR"
+mkdir -m o+rwX "$STAGING_INPUT_DIR"
+mkdir -m o+rwX "$STAGING_OUTPUT_DIR"
+
 docker volume create "$DOCKER_NOOP_VOLUME" > /dev/null
 
 trap cleanup EXIT
 
-start_docker_container() {
-    local interface_dir="$1"
+echo "=+= Starting container"
 
-    echo "=+= Starting container"
+## Note the extra arguments that are passed here:
+# '-p ${PORT}:4743'
+#    maps local port to container port 4743
+# '--gpus all'
+#    enables access to any GPUs present
+# '--volume <NAME>:/tmp'
+#   is added because on Grand Challenge this directory cannot be used to store permanent files
+# '--volume ../model:/opt/ml/model:ro'
+#   is added to provide access to the (optional) tarball-upload locally
+#
+# NOTE: --network none is NOT used here even though Grand Challenge runs
+# containers without network access. The invoke API requires the host to
+# reach the container's HTTP server via the mapped port, which is not
+# possible with --network none. In production, the sagemaker-shim calls
+# the invoke endpoint from inside the container so network isolation works.
+DOCKER_RUN_ARGS=(
+    -d
+    {% if not no_gpus %}--gpus all{% endif %}
+    --name "$CONTAINER_NAME"
+    --platform=linux/amd64
+    -p ${PORT}:4743
+    --volume "$STAGING_INPUT_DIR":/input:ro
+    --volume "$STAGING_OUTPUT_DIR":/output
+    --volume "$DOCKER_NOOP_VOLUME":/tmp
+    --volume "${SCRIPT_DIR}/model":/opt/ml/model:ro
+)
 
-    ## Note the extra arguments that are passed here:
-    # '-p ${PORT}:4743'
-    #    maps local port to container port 4743
-    # '--network none'
-    #    entails there is no internet connection
-    # '--gpus all'
-    #    enables access to any GPUs present
-    # '--volume <NAME>:/tmp'
-    #   is added because on Grand Challenge this directory cannot be used to store permanent files
-    # '--volume ../model:/opt/ml/model/":ro'
-    #   is added to provide access to the (optional) tarball-upload locally
-    docker run -d {% if not no_gpus %}--gpus all {% endif %}\
-        --name "$CONTAINER_NAME" \
-        --platform=linux/amd64 \
-        -p ${PORT}:4743 \
-        --volume "${INPUT_DIR}/${interface_dir}":/input:ro \
-        --volume "${OUTPUT_DIR}/${interface_dir}":/output \
-        --volume "$DOCKER_NOOP_VOLUME":/tmp \
-        --volume "${SCRIPT_DIR}/model":/opt/ml/model:ro \
-        "$DOCKER_IMAGE_TAG" \
-        >/dev/null
+docker run "${DOCKER_RUN_ARGS[@]}" "$DOCKER_IMAGE_TAG" >/dev/null
 
-    echo "=+= Container started"
-}
+echo "=+= Container started"
 
 check_health() {
     echo "=+= Waiting for health endpoint..."
@@ -122,11 +149,30 @@ check_health() {
     return 1
 }
 
+provision_input() {
+    local interface_dir="$1"
+
+    echo "=+= Provisioning input for ${interface_dir}"
+
+    # Clear the staging directories, then hard-link the interface's input
+    # files into the input staging dir.
+    rm -rf "$STAGING_INPUT_DIR"/* "$STAGING_OUTPUT_DIR"/*
+    cp -rl "${INPUT_DIR}/${interface_dir}/." "$STAGING_INPUT_DIR/"
+}
+
+collect_output() {
+    local interface_dir="$1"
+
+    echo "=+= Collecting output for ${interface_dir}"
+
+    # Copy the output from the staging directory to the host output directory
+    cp -r "$STAGING_OUTPUT_DIR/." "${OUTPUT_DIR}/${interface_dir}/"
+}
+
 run_docker_forward_pass() {
     local interface_dir="$1"
 
     echo "=+= Doing a forward pass on ${interface_dir}"
-
     echo "=+= Calling invoke endpoint"
 
     STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
@@ -139,22 +185,15 @@ run_docker_forward_pass() {
     fi
 
     echo "=+= Invoke completed"
-
-    echo "=+= Wrote results to ${OUTPUT_DIR}/${interface_dir}"
 }
 
-stop_docker_container() {
-    echo "=+= Stopping container"
-    docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
-    echo "=+= Container stopped"
-}
+check_health
 
 {% for interface_name in object.algorithm_interface_names %}
-start_docker_container "{{ interface_name }}"
-check_health
+provision_input "{{ interface_name }}"
 run_docker_forward_pass "{{ interface_name }}"
-stop_docker_container
+collect_output "{{ interface_name }}"
+echo "=+= Wrote results to ${OUTPUT_DIR}/{{ interface_name }}"
 {% endfor %}
-
 
 echo "=+= Save this image for uploading via ./do_save.sh"
