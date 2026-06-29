@@ -140,6 +140,7 @@ def test_start_service(mocker, settings, django_capture_on_commit_callbacks):
             method="run_task",
             service_response={"tasks": [{"taskArn": "test-task-arn"}]},
             expected_params={
+                "clientToken": f"workstations-session-{session.pk}",
                 "cluster": "test-cluster-name",
                 "count": 1,
                 "enableECSManagedTags": True,

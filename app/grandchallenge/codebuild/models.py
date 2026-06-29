@@ -130,6 +130,7 @@ class Build(UUIDModel):
     def _create_build(self):
         self.build_config = {
             "projectName": settings.CODEBUILD_PROJECT_NAME,
+            "idempotencyToken": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             "sourceLocationOverride": f"{settings.PRIVATE_S3_STORAGE_KWARGS['bucket_name']}/{self.webhook_message.zipfile.name}",
             "sourceTypeOverride": "S3",
             "environmentVariablesOverride": [

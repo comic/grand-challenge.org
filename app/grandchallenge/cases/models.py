@@ -1187,6 +1187,7 @@ class DICOMImageSetUpload(UUIDModel):
 
     def start_dicom_import_job(self):
         return self._health_imaging_client.start_dicom_import_job(
+            clientToken=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             jobName=self._import_job_name,
             datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
             dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,

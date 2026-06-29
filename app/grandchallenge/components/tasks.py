@@ -1177,8 +1177,13 @@ def start_service(*, pk: str | UUID, app_label: str, model_name: str):
 
     orchestrator = ECSTaskOrchestrator(**service.orchestrator_kwargs)
 
+    client_token = f"{app_label}-{model_name}-{pk}"
+
     try:
-        service.task_arn = orchestrator.start(environment=service.environment)
+        service.task_arn = orchestrator.start(
+            environment=service.environment,
+            client_token=client_token,
+        )
     except Exception as error:
         task_logger.error(error, exc_info=True)
 

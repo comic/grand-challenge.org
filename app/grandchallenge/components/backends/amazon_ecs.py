@@ -46,11 +46,13 @@ class ECSTaskOrchestrator:
     def start(
         self,
         environment: dict,
+        client_token: str,
     ):
         task_definition_arn = self._register_task_definition()
 
         try:
             response = self._ecs_client.run_task(
+                clientToken=client_token,
                 cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
                 count=1,
                 enableExecuteCommand=False,
