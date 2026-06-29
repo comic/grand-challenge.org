@@ -41,6 +41,7 @@ cleanup() {
     docker run --rm \
       --platform=linux/amd64 \
       --quiet \
+      --user root \
       --volume "${OUTPUT_DIR}/{{ interface_name }}":/output \
       --entrypoint /bin/sh \
       $DOCKER_IMAGE_TAG \
@@ -51,11 +52,11 @@ cleanup() {
     echo "=+= Container stopped"
 
     rm -rf "$STAGING_INPUT_DIR"
-    # Use a container to remove the staging output dir since it may contain
-    # files owned by the container's UID on Linux
+    # Staging output may contain files owned by the container's UID on Linux
     docker run --rm \
       --platform=linux/amd64 \
       --quiet \
+      --user root \
       --volume "$STAGING_OUTPUT_DIR":/output \
       --entrypoint /bin/sh \
       $DOCKER_IMAGE_TAG \
@@ -76,6 +77,7 @@ if [ -d "${OUTPUT_DIR}/{{ interface_name }}" ]; then
   docker run --rm \
       --platform=linux/amd64 \
       --quiet \
+      --user root \
       --volume "${OUTPUT_DIR}/{{ interface_name }}":/output \
       --entrypoint /bin/sh \
       $DOCKER_IMAGE_TAG \
