@@ -114,6 +114,7 @@ def test_start_dicom_import_job(settings):
                 "submittedAt": "2025-08-27T12:00:00Z",
             },
             expected_params={
+                "clientToken": f"cases-dicomimagesetupload-{di_upload.pk}",
                 "datastoreId": settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
                 "inputS3Uri": di_upload._import_input_s3_uri,
                 "outputS3Uri": di_upload._import_output_s3_uri,
