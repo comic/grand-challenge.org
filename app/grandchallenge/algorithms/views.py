@@ -81,6 +81,7 @@ from grandchallenge.algorithms.models import (
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
+    EndpointPostSerializer,
     EndpointSerializer,
     HyperlinkedInvocationSerializer,
     HyperlinkedJobSerializer,
@@ -916,12 +917,19 @@ class JobViewSet(
             return HyperlinkedJobSerializer
 
 
-class EndpointViewSet(ReadOnlyModelViewSet):
+class EndpointViewSet(
+    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
+):
     queryset = Endpoint.objects.all()
-    serializer_class = EndpointSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_class = EndpointFilter
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return EndpointPostSerializer
+        else:
+            return EndpointSerializer
 
     @action(detail=True, methods=["patch"])
     def keep_alive(self, request, *args, **kwargs):
