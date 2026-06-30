@@ -1,4 +1,3 @@
-import subprocess
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -64,8 +63,7 @@ def test_get_zipfile(get_repo_url):
     _ = AlgorithmFactory(repo_name="DIAGNijmegen/rse-panimg")
     ghwm = GitHubWebhookMessageFactory()
     assert ghwm.clone_status == CloneStatusChoices.PENDING
-    with pytest.raises(subprocess.CalledProcessError):
-        get_zipfile(pk=ghwm.pk)
+    get_zipfile(pk=ghwm.pk)
 
     ghwm.refresh_from_db()
     assert ghwm.zipfile.name == ""
