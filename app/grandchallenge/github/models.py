@@ -152,7 +152,7 @@ class GitHubWebhookMessage(models.Model):
             return lfs_error_message
         elif "This repository exceeded its LFS budget" in self.stdout:
             return lfs_error_message
-        elif "warning: Clone succeeded, but checkout failed" in self.stdout:
+        elif "warning: Clone succeeded, but checkout failed" in self.stderr:
             return repo_too_big_error_message
         elif "No space left on device" in self.stderr:
             return repo_too_big_error_message
