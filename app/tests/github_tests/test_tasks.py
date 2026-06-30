@@ -19,6 +19,36 @@ from tests.github_tests.factories import (
 
 
 @pytest.mark.django_db
+def test_get_zipfile_oserror_no_space_left(mocker):
+    mocker.patch(
+        "grandchallenge.github.tasks.get_repo_url",
+        return_value="https://x-access-token:token@github.com/DIAGNijmegen/rse-panimg",
+    )
+    mocker.patch("grandchallenge.github.tasks.install_lfs")
+    mocker.patch("grandchallenge.github.tasks.fetch_repo")
+    mocker.patch("grandchallenge.github.tasks.check_license")
+    mocker.patch(
+        "grandchallenge.github.tasks.save_zipfile",
+        side_effect=OSError(28, "No space left on device"),
+    )
+
+    AlgorithmFactory(repo_name="DIAGNijmegen/rse-panimg")
+    ghwm = GitHubWebhookMessageFactory()
+
+    get_zipfile(pk=ghwm.pk)
+
+    ghwm.refresh_from_db()
+    assert ghwm.clone_status == CloneStatusChoices.FAILURE
+    assert ghwm.stdout == ""
+    assert "No space left on device" in ghwm.stderr
+    assert ghwm.user_error == (
+        "Repository diagnijmegen-rse-panimg is too large to checkout, "
+        "please remove any large files from your git history, "
+        "and upload the model separately."
+    )
+
+
+@pytest.mark.django_db
 @patch("grandchallenge.github.tasks.get_repo_url")
 def test_get_zipfile(get_repo_url):
     get_repo_url.return_value = "https://x-access-token:some-token@github.com/DIAGNijmegen/rse-panimg-does-not-exist"

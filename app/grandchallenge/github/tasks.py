@@ -149,15 +149,16 @@ def get_zipfile(*, pk: int):
             ghwm.save()
 
             create_codebuild_build.execute_on_commit(pk=ghwm.pk)
-
-        except Exception as e:
-            ghwm.stdout = str(getattr(e, "stdout", ""))
-            ghwm.stderr = str(getattr(e, "stderr", ""))
+        except Exception as error:
+            ghwm.stdout = getattr(error, "stdout", "")
+            ghwm.stderr = getattr(error, "stderr", str(error))
             ghwm.clone_status = GitHubWebhookMessage.CloneStatusChoices.FAILURE
             ghwm.save()
 
             if not ghwm.user_error:
-                raise
+                task_logger.error(
+                    f"Unhandled github message error: {error}", exc_info=True
+                )
 
 
 @lambda_task
