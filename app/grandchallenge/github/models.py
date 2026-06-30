@@ -136,24 +136,26 @@ class GitHubWebhookMessage(models.Model):
 
     @property
     def user_error(self):
+        lfs_error_message = (
+            f"Repository {self.repo_name} has used all of its LFS "
+            f"bandwidth. Please purchase more data packs on GitHub for "
+            f"this repo so that we can clone it."
+        )
+
+        repo_too_big_error_message = (
+            f"Repository {self.repo_name} is too large to checkout, "
+            f"please remove any large files from your git history, "
+            f"and upload the model separately."
+        )
+
         if "This repository is over its data quota" in self.stdout:
-            return (
-                f"Repository {self.repo_name} has used all of its LFS "
-                f"bandwidth. Please purchase more data packs on GitHub for "
-                f"this repo so that we can clone it."
-            )
+            return lfs_error_message
         elif "This repository exceeded its LFS budget" in self.stdout:
-            return (
-                f"Repository {self.repo_name} has used all of its LFS "
-                f"budget. Please assign more LFS budget on GitHub for "
-                f"this repo so that we can clone it."
-            )
-        elif "warning: Clone succeeded, but checkout failed" in self.stdout:
-            return (
-                f"Repository {self.repo_name} is too large to checkout, "
-                f"please remove any large files from your git history, "
-                f"or upload the built container and model separately."
-            )
+            return lfs_error_message
+        elif "warning: Clone succeeded, but checkout failed" in self.stderr:
+            return repo_too_big_error_message
+        elif "No space left on device" in self.stderr:
+            return repo_too_big_error_message
         else:
             return ""
 
