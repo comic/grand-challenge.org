@@ -30,27 +30,8 @@ def get_follow_object_pk(user, follow_object):
 
 
 @register.simple_tag
-def follow_form(*, user, object_id, content_type):
-    return FollowForm(
-        user=user,
-        initial={
-            "object_id": object_id,
-            "content_type": content_type,
-            "actor_only": False,
-        },
-    )
-
-
-@register.simple_tag()
-def get_content_type(follow_object):
-    try:
-        ct = ContentType.objects.get(
-            app_label=follow_object._meta.app_label,
-            model=follow_object._meta.model_name,
-        )
-    except AttributeError:
-        ct = None
-    return ct
+def follow_form(*, user, follow_object):
+    return FollowForm(user=user, follow_object=follow_object)
 
 
 @register.simple_tag()

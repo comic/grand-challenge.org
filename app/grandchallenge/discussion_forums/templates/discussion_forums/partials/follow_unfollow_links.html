@@ -1,7 +1,6 @@
 {% load follow_extras %}
 {% load activity_tags %}
 {% load meta_attr %}
-{% load crispy_forms_tags %}
 {% load url %}
 
 
@@ -16,11 +15,10 @@
         </form>
     {% endif %}
 {% else %}
-    {% get_content_type object as object_ct %}
-    {% follow_form user=request.user content_type=object_ct object_id=object.id as follow_form %}
-    <form class="d-inline" method="post" action="{% url 'notifications:follow-create' %}">
+    {% follow_form user=request.user follow_object=object as follow_form %}
+    <form class="d-inline" method="post" action="{{ object.follow_create_url }}">
         {% csrf_token %}
-        {{ follow_form|crispy }}
+        {{ follow_form }}
         <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-bell mr-1"></i>Subscribe
             to {{ object|verbose_name }}
         </button>
