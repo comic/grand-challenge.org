@@ -34,6 +34,8 @@ HEALTH_CHECK_DELAY_SECONDS=5
 HEALTH_CHECK_TIMEOUT_SECONDS=10
 
 # How long a single /invoke call is allowed to run.
+# Note that this does NOT correspond to the maximum runtime for the job set on Grand Challenge
+# The maximum runtime on GC includes I/O as well as model and auxiliary data loading
 INVOKE_TIMEOUT_SECONDS=300
 
 # --- Globals set by setup() -------------------------------------------------
