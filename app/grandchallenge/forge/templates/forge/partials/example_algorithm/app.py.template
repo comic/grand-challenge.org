@@ -1,13 +1,35 @@
 {% load forge %}
 """
-The following is an example algorithm inference server.
+Example algorithm inference server for Grand Challenge.
 
-Any implementation will do as long as it:
+Grand Challenge runs your algorithm as an HTTP server with two endpoints:
 
-1. Starts the inference server and loads the algorithm
-2. On the health endpoint indicates if the server is healthy (i.e. returns HTTP 200 OK)
-3. On the invoke endpoint invokes the algorithm for inference and returns HTTP 201 CREATED
+  GET  /health  — Called repeatedly after the container starts. Once this
+                  returns HTTP 200, Grand Challenge considers the server ready.
+  POST /invoke  — Called once per case. Your algorithm should read its input
+                  from /input, write its output to /output, and return HTTP 201.
 
+The lifecycle on Grand Challenge is:
+
+  1. Container starts → your server boots and loads the model
+  2. /health is polled until it returns 200 (timeout: ~5 minutes)
+  3. For each case:
+       a. Inputs are placed at /input (previous inputs/outputs are cleared)
+       b. POST /invoke is called
+       c. Your code reads /input, processes, writes to /output, returns 201
+  4. Container is kept warm for a while in case more cases arrive
+
+Key points:
+  - Load your model during startup (in the lifespan context), not during
+    /invoke. Each /invoke call has its own timeout, and spending that time
+    loading a model will cause failures.
+  - The server must listen on port 4743.
+  - /health must NOT redirect (302 is treated as a failure).
+  - /invoke must return exactly 201 on success. Any other status is a failure.
+  - Your container will have no internet access at runtime.
+
+Any implementation will do — FastAPI is used here as an example. The only
+requirements are the two endpoints and the LABEL in the Dockerfile.
 """
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -34,7 +56,12 @@ def _show_torch_cuda_info():
 
 
 def init_model():
-    # Initialize your model: any way you'd like, here we show-case torch
+    """Load and return your model.
+
+    This is called once during server startup (before /health returns 200).
+    The model is then reused across all /invoke calls — so load it here,
+    not inside the invoke handler.
+    """
     _show_torch_cuda_info()
 
     # Example how to set torch to use the GPU (if available)
@@ -42,10 +69,10 @@ def init_model():
     print(f"Using device: {device}")
     model = torch.nn.Linear(10, 1).to(device)
 
-    # Your model will be extracted to the `model_dir` at runtime on Grand Challenge
-    # Note: when testing locally, the local `./model` directory is mounted here.
-    # Eventually, you should upload it as a tarball to Grand Challenge!
-    # Go to Algorithm and upload it under Models.
+    # Your model will be extracted to `model_dir` at runtime on Grand Challenge.
+    # When testing locally, the local `./model` directory is mounted here.
+    # When you're ready for testing on Grand Challenge, upload it as a tarball
+    # via Your algorithm > Models on Grand Challenge.
     model_dir = Path("/opt/ml/model")
     with open(
         model_dir / "a_tarball_subdirectory" / "some_tarball_resource.txt", "r"
@@ -58,51 +85,55 @@ def init_model():
 MODELS = {}
 
 
-# During the lifespan of your inference server, your model should be ready
-# for invocations.It is important to load your model here, and not just
-# before running inference, to allow the inference time to be as short as
-# possible. Each invocation will have a timeout, so if your model still
-# needs to be loaded when the /invoke endpoint is called, there may not be
-# enough time for processing.
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load the ML model
+    """Server lifespan: load the model at startup, release at shutdown.
+
+    Everything before `yield` runs before the server accepts requests.
+    This is where you should do expensive initialization (loading weights,
+    warming up the GPU, etc.) so that /invoke can run as fast as possible.
+    """
     MODELS["answer_to_everything"] = init_model()
     yield
-    # Clean up the models and release the resources
     MODELS.clear()
 
 
 app = FastAPI(lifespan=lifespan)
 
 
-# After starting your inference server, the health endpoint will
-# be called repeatedly until it returns a 200 response.
-# Redirect responses will not be followed and will raise an exception.
-# Any other response will be ignored.
 @app.get("/health")
 async def health():
+    """Health check endpoint.
+
+    Grand Challenge polls this after the container starts.
+    Return 200 when the model is loaded and the server is ready to handle /invoke calls.
+    Redirect responses will not be followed and will raise an exception.
+    Any other response will be ignored.
+    """
     try:
-        # check if the model is initialized
         _ = MODELS["answer_to_everything"]
         return Response(status_code=status.HTTP_200_OK)
     except KeyError:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
 
 
-# After the health endpoint returns a 200 response,
-# the invoke endpoint will be called (one or more times)
-# to invoke inference on the inputs in the input folder.
-# When inference is done, this endpoint should return a 201 response.
-# Any other response will raise an exception and fail.
 @app.post("/invoke")
 async def invoke():
+    """Invoke endpoint — called once per case.
+
+    When this is called, the case's input files are available at /input.
+    Read them, run inference, write results to /output, and return 201.
+
+    This may be called multiple times (once per case) without the container
+    restarting. Each call gets fresh /input and /output directories.
+    """
     model = MODELS["answer_to_everything"]
     inference.run(model)
     return Response(status_code=status.HTTP_201_CREATED)
 
 
 if __name__ == "__main__":
+    # Grand Challenge expects the server on port 4743 — do not change this.
     log_config = LOGGING_CONFIG.copy()
     log_config["handlers"]["default"]["stream"] = "ext://sys.stdout"
     uvicorn.run(app, host="0.0.0.0", port=4743, log_config=log_config)

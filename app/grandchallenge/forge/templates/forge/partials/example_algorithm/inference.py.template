@@ -1,9 +1,35 @@
 {% load forge %}
 """
-The following is a simple example algorithm.
+Example algorithm for Grand Challenge.
+
+This module is called by app.py each time the /invoke endpoint is hit.
+It reads input from /input, runs inference, and writes output to /output.
+
+Your algorithm's interfaces:
+{% for interface_name, interface in object.algorithm_interface_names|zip:object.algorithm_interfaces %}
+  {{ interface_name }}:
+    Inputs:
+    {% for socket in interface.inputs %}
+      - /input/{{ socket.relative_path }}
+    {% endfor %}
+    Outputs:
+    {% for socket in interface.outputs %}
+      - /output/{{ socket.relative_path }}
+    {% endfor %}
+{% endfor %}
+
+Which interface is active for a given invocation is determined by the
+inputs.json file at /input/inputs.json — a system-generated file that
+describes the input sockets provided for this case.
+
+To test locally:  ./do_test_run.sh
+To save for upload to GC:   ./do_save.sh
 
 Any implementation will do as long as it produces the output as prescribed by the interface.
 
+For more details see:
+  https://grand-challenge.org/documentation/algorithms/
+  https://grand-challenge.org/documentation/runtime-environment/
 """
 from pathlib import Path
 import json
