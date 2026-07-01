@@ -1,217 +1,297 @@
 #!/usr/bin/env bash
+#
+# Builds the algorithm's Docker image, boots it as an HTTP server that
+# implements Grand Challenge's "invoke" API, then exercises it against each
+# configured interface. For each interface this script:
+#   1. stages the interface's input files into the container's /input mount
+#   2. calls POST /invoke and checks for a 201 response
+#   3. copies whatever the container wrote to /output back to the host
+#
+# Run this after changing the algorithm to confirm the container still
+# behaves correctly before uploading it (see ./do_save.sh).
 
-# Stop at first error
-set -e
+# Exit immediately on: an error in any command, use of an unset variable,
+# or a failure in any stage of a pipeline (not just the last stage).
+set -euo pipefail
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 DOCKER_IMAGE_TAG="example_algorithm_{{ object.slug }}"
 CONTAINER_NAME="example_algorithm_{{ object.slug }}_container"
-PORT=37847
-
-DOCKER_NOOP_VOLUME="${DOCKER_IMAGE_TAG}-volume"
 
 INPUT_DIR="${SCRIPT_DIR}/test/input"
 OUTPUT_DIR="${SCRIPT_DIR}/test/output"
+
 # Staging directories are bind-mounted into the container as /input and /output.
-# They start empty and are provisioned with hard-linked input files right before each
-# invocation.
+# They start empty and are (re)provisioned with hard-linked input files right
+# before each invocation — mimicking how Grand Challenge provisions inputs.
 STAGING_INPUT_DIR="${SCRIPT_DIR}/test/.staging_input"
 STAGING_OUTPUT_DIR="${SCRIPT_DIR}/test/.staging_output"
 
-echo "=+= (Re)build the container"
-source "${SCRIPT_DIR}/do_build.sh"
+# How long to wait for the container's /health endpoint to come up.
+# These match the timeouts used on Grand Challenge — do not change.
+HEALTH_CHECK_MAX_ATTEMPTS=30
+HEALTH_CHECK_DELAY_SECONDS=5
+HEALTH_CHECK_TIMEOUT_SECONDS=10
 
-echo "=+= Verifying container labels"
-API_METHOD=$(docker inspect --format='{% verbatim %}{{index .Config.Labels "org.grand-challenge.api-method"}}{% endverbatim %}' "$DOCKER_IMAGE_TAG" 2>/dev/null || echo "")
-if [ "$API_METHOD" != "invoke" ]; then
-    echo "ERROR: The container image is missing the required label:"
-    echo "  LABEL org.grand-challenge.api-method=\"invoke\""
-    echo ""
-    echo "Without this label, Grand Challenge will not recognize that your"
-    echo "container implements the invoke API and will default to exec mode."
-    echo "Please add this label to your Dockerfile."
-    exit 1
-fi
+# How long a single /invoke call is allowed to run.
+INVOKE_TIMEOUT_SECONDS=300
 
-cleanup() {
-    echo "=+= Cleaning permissions ..."
-    # Ensure permissions are set correctly on the output
-    # This allows the host user (e.g. you) to access and handle these files
+# --- Globals set by setup() -------------------------------------------------
+LOG_LINES_SHOWN=0
+DOCKER_VOLUME_TAG=""
+DOCKER_NETWORK_TAG=""
+TESTER_NAME=""
+CONTAINER_PORT=4743
+BASE_URL=""
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+main() {
+    setup
+    trap cleanup EXIT
+    build_container
+    start_container
+    check_health
+
 {% for interface_name in object.algorithm_interface_names %}
-    docker run --rm \
-      --platform=linux/amd64 \
-      --quiet \
-      --user root \
-      --volume "${OUTPUT_DIR}/{{ interface_name }}":/output \
-      --entrypoint /bin/sh \
-      $DOCKER_IMAGE_TAG \
-      -c "chmod -R -f o+rwX /output/* || true"
+    provision "{{ interface_name }}"
+    invoke
+    collect_output "{{ interface_name }}"
+    log "Wrote results to ${OUTPUT_DIR}/{{ interface_name }}"
 {% endfor %}
 
-    docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
-    echo "=+= Container stopped"
-
-    rm -rf "$STAGING_INPUT_DIR"
-    # Staging output may contain files owned by the container's UID on Linux
-    docker run --rm \
-      --platform=linux/amd64 \
-      --quiet \
-      --user root \
-      --volume "$STAGING_OUTPUT_DIR":/output \
-      --entrypoint /bin/sh \
-      $DOCKER_IMAGE_TAG \
-      -c "rm -rf /output/* || true" 2>/dev/null || true
-    rm -rf "$STAGING_OUTPUT_DIR"
-    docker volume rm "$DOCKER_NOOP_VOLUME" > /dev/null 2>&1 || true
+    log "Save this image for uploading via ./do_save.sh"
 }
 
-# This allows for the Docker user to read
-chmod -R -f o+rX "$INPUT_DIR" "${SCRIPT_DIR}/model"
+# ---------------------------------------------------------------------------
+# Helper Functions
+# ---------------------------------------------------------------------------
 
-{% for interface_name in object.algorithm_interface_names %}
-if [ -d "${OUTPUT_DIR}/{{ interface_name }}" ]; then
-  # This allows for the Docker user to write
-  chmod -f o+rwX "${OUTPUT_DIR}/{{ interface_name }}"
+setup() {
+    log "Setup ..."
 
-  echo "=+= Cleaning up any earlier output"
-  docker run --rm \
-      --platform=linux/amd64 \
-      --quiet \
-      --user root \
-      --volume "${OUTPUT_DIR}/{{ interface_name }}":/output \
-      --entrypoint /bin/sh \
-      $DOCKER_IMAGE_TAG \
-      -c "rm -rf /output/* || true"
-else
-  mkdir -p -m o+rwX "${OUTPUT_DIR}/{{ interface_name }}"
-fi
-{% endfor %}
+    # Allow the Docker user to read these on the host
+    chmod -R -f o+rX "$INPUT_DIR" "${SCRIPT_DIR}/model"
 
-# Create empty staging directories for /input and /output bind mounts
-rm -rf "$STAGING_INPUT_DIR" "$STAGING_OUTPUT_DIR"
-mkdir -m o+rwX "$STAGING_INPUT_DIR"
-mkdir -m o+rwX "$STAGING_OUTPUT_DIR"
+    # Disable promotional logs from Docker
+    export DOCKER_CLI_HINTS=false
 
-docker volume create "$DOCKER_NOOP_VOLUME" > /dev/null
+    # Create empty staging directories for the /input and /output bind mounts
+    rm -rf "$STAGING_INPUT_DIR" "$STAGING_OUTPUT_DIR"
+    mkdir -m o+rwX "$STAGING_INPUT_DIR"
+    mkdir -m o+rwX "$STAGING_OUTPUT_DIR"
 
-trap cleanup EXIT
+    # A scratch volume that mimics the ephemeral /tmp on Grand Challenge
+    DOCKER_VOLUME_TAG="${DOCKER_IMAGE_TAG}-scratch"
+    docker volume create "$DOCKER_VOLUME_TAG" > /dev/null
 
-echo "=+= Starting container"
+    # The container's listening port, and the URL the tester sidecar uses
+    # to reach it (resolved by container name via Docker's embedded DNS).
+    BASE_URL="http://${CONTAINER_NAME}:${CONTAINER_PORT}"
 
-## Note the extra arguments that are passed here:
-# '-p ${PORT}:4743'
-#    maps local port to container port 4743
-# '--gpus all'
-#    enables access to any GPUs present
-# '--volume <NAME>:/tmp'
-#   is added because on Grand Challenge this directory cannot be used to store permanent files
-# '--volume ../model:/opt/ml/model:ro'
-#   is added to provide access to the (optional) tarball-upload locally
-#
-# NOTE: --network none is NOT used here even though Grand Challenge runs
-# containers without network access. The invoke API requires the host to
-# reach the container's HTTP server via the mapped port, which is not
-# possible with --network none. In production, the sagemaker-shim calls
-# the invoke endpoint from inside the container so network isolation works.
-DOCKER_RUN_ARGS=(
-    -d {% if not no_gpus %}--gpus all{% endif %}
-    --name "$CONTAINER_NAME"
-    --platform=linux/amd64
-    -p ${PORT}:4743
-    --volume "$STAGING_INPUT_DIR":/input:ro
-    --volume "$STAGING_OUTPUT_DIR":/output
-    --volume "$DOCKER_NOOP_VOLUME":/tmp
-    --volume "${SCRIPT_DIR}/model":/opt/ml/model:ro
-)
+    # An isolated network that mimics the network restrictions on Grand Challenge.
+    # The algorithm container has no internet access, just like in production.
+    DOCKER_NETWORK_TAG="${DOCKER_IMAGE_TAG}-isolated"
+    docker network create --internal "$DOCKER_NETWORK_TAG" > /dev/null
 
-docker run "${DOCKER_RUN_ARGS[@]}" "$DOCKER_IMAGE_TAG" >/dev/null
+    # The tester sidecar: lives on the isolated network so it can reach the
+    # algorithm container by name, and is how we issue health/invoke checks
+    # without needing the host to route into that network.
+    TESTER_NAME="${DOCKER_IMAGE_TAG}-tester"
+    docker run --detach --name "$TESTER_NAME" \
+        --network "$DOCKER_NETWORK_TAG" \
+        curlimages/curl:latest sleep infinity > /dev/null
+}
 
-echo "=+= Container started"
+cleanup() {
+    log "Cleanup ..."
+
+    docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+    docker rm -f "$TESTER_NAME" >/dev/null 2>&1 || true
+    log "Containers stopped"
+
+    # Remove staging directories
+    rm -rf "$STAGING_INPUT_DIR"
+    # Staging output may contain files owned by the container's UID on Linux
+    docker run --rm --platform=linux/amd64 --quiet --user root \
+        --volume "$STAGING_OUTPUT_DIR":/output \
+        --entrypoint /bin/sh \
+        $DOCKER_IMAGE_TAG \
+        -c "rm -rf /output/* || true" 2>/dev/null || true
+    rm -rf "$STAGING_OUTPUT_DIR"
+
+    # Remove volumes and network
+    docker volume rm "$DOCKER_VOLUME_TAG" > /dev/null 2>&1 || true
+    docker network rm "$DOCKER_NETWORK_TAG" > /dev/null 2>&1 || true
+}
+
+build_container() {
+    log "(Re)build the container"
+    source "${SCRIPT_DIR}/do_build.sh"
+
+    log "Verifying container labels"
+    local api_method
+    api_method=$(docker inspect \
+        --format='{% verbatim %}{{index .Config.Labels "org.grand-challenge.api-method"}}{% endverbatim %}' \
+        "$DOCKER_IMAGE_TAG" 2>/dev/null || echo "")
+
+    if [ "$api_method" != "invoke" ]; then
+        log "ERROR: The container image is missing the required label:"
+        log "  LABEL org.grand-challenge.api-method=\"invoke\""
+        log ""
+        log "Without this label, Grand Challenge will not recognize that your"
+        log "container implements the invoke API and will default to exec mode."
+        log "Please add this label to your Dockerfile."
+        exit 1
+    fi
+}
+
+start_container() {
+    log "Starting container"
+
+    # Extra arguments worth calling out:
+    #   --network <isolated>   no internet access; the tester sidecar issues
+    #                          HTTP requests to the container by name via
+    #                          Docker's embedded DNS
+    #   --volume <vol>:/tmp    scratch space (Grand Challenge disallows writes
+    #                          elsewhere outside the mounted directories)
+    #   --volume model:/opt/ml/model:ro   the (optional) model tarball
+    local docker_run_args=(
+        --detach
+        --name "$CONTAINER_NAME"
+{% if not no_gpus %}        --gpus all{% endif %}
+        --platform=linux/amd64
+        --volume "${SCRIPT_DIR}/model":/opt/ml/model:ro
+        --volume "$STAGING_INPUT_DIR":/input:ro
+        --volume "$STAGING_OUTPUT_DIR":/output
+        --volume "$DOCKER_VOLUME_TAG":/tmp
+        --network "$DOCKER_NETWORK_TAG"
+    )
+
+    docker run "${docker_run_args[@]}" "$DOCKER_IMAGE_TAG" >/dev/null
+
+    log "Container started; reachable from tester sidecar at ${BASE_URL}"
+}
+
+flush_docker_log() {
+    # Prints any container log lines that haven't been shown yet.
+    local total_lines new_lines
+    total_lines=$(docker logs "$CONTAINER_NAME" 2>&1 | wc -l)
+    new_lines=$((total_lines - LOG_LINES_SHOWN))
+
+    if (( new_lines > 0 )); then
+        docker logs --timestamps --tail "$new_lines" "$CONTAINER_NAME"
+    fi
+
+    LOG_LINES_SHOWN=$total_lines
+}
+
+http_status() {
+    # Issues a request from inside the tester sidecar (not the host).
+    local method="$1"
+    local timeout_seconds="$2"
+    local url="$3"
+
+    docker exec "$TESTER_NAME" \
+        curl -s -o /dev/null -w "%{http_code}" --max-time "$timeout_seconds" \
+        -X "$method" "$url" \
+      || echo "000"
+}
 
 check_health() {
-    echo "=+= Waiting for health endpoint..."
+    log "Waiting for health endpoint..."
 
-    local max_attempts=30
-    local delay=10
+    local status
+    for ((i = 1; i <= HEALTH_CHECK_MAX_ATTEMPTS; i++)); do
+        status=$(http_status "GET" "$HEALTH_CHECK_TIMEOUT_SECONDS" "${BASE_URL}/health")
+        log "Health check attempt $i/${HEALTH_CHECK_MAX_ATTEMPTS} returned $status"
 
-    for ((i=1;i<=max_attempts;i++)); do
-        STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            --max-time 10 \
-            http://localhost:${PORT}/health || echo "000")
-
-        echo "Health check attempt $i/$max_attempts returned $STATUS"
-
-        if [[ "$STATUS" == "200" ]]; then
-            echo "=+= API healthy"
+        if [[ "$status" == "200" ]]; then
+            log "API healthy"
+            flush_docker_log
             return 0
         fi
 
-        if [[ "$STATUS" == "302" ]]; then
-            echo "Health endpoint returned 302 — failing"
+        if [[ "$status" == "302" ]]; then
+            log "Health endpoint returned 302 — failing"
+            flush_docker_log
             return 1
         fi
 
-        echo "Retrying in ${delay}s"
-        sleep "$delay"
+        log "Retrying in ${HEALTH_CHECK_DELAY_SECONDS}s"
+        sleep "$HEALTH_CHECK_DELAY_SECONDS"
     done
 
-    echo "Health endpoint never returned 200"
+    log "Health endpoint never returned 200"
+    flush_docker_log
     return 1
 }
 
-provision_input() {
+provision() {
     local interface_dir="$1"
-
-    echo "=+= Provisioning input for ${interface_dir}"
+    log "Provisioning input for ${interface_dir}"
 
     # Clear /output inside the container (host can't due to UID mismatch on Linux)
-    docker exec --user root "$CONTAINER_NAME" \
-        /bin/sh -c "rm -rf /output/*"
+    docker exec --user root "$CONTAINER_NAME" /bin/sh -c "rm -rf /output/*"
 
-    # Clear the input staging dir, then hard-link the interface's input files in
-    rm -rf "$STAGING_INPUT_DIR"/*
+    # Clear the input staging dir, then hard-link this interface's input files in
+    rm -rf "${STAGING_INPUT_DIR:?}"/*
     cp -rl "${INPUT_DIR}/${interface_dir}/." "$STAGING_INPUT_DIR/"
+}
+
+invoke() {
+    log "Calling invoke endpoint..."
+
+    local status
+    status=$(http_status "POST" "$INVOKE_TIMEOUT_SECONDS" "${BASE_URL}/invoke")
+    flush_docker_log
+
+    if [ "$status" != "201" ]; then
+        log "Invoke failed with status $status"
+        exit 1
+    fi
+
+    log "Invoke completed"
 }
 
 collect_output() {
     local interface_dir="$1"
+    local destination="${OUTPUT_DIR}/${interface_dir}"
+    log "Collecting output for ${interface_dir}"
 
-    echo "=+= Collecting output for ${interface_dir}"
+    if [ -d "$destination" ]; then
+        # Clean up any earlier collected output using a container (handles
+        # files owned by the container's UID on Linux)
+        docker run --rm --platform=linux/amd64 --quiet --user root \
+            --volume "$destination":/output \
+            --entrypoint /bin/sh \
+            $DOCKER_IMAGE_TAG \
+            -c "rm -rf /output/* || true"
+    else
+        mkdir -p -m o+rwX "$destination"
+    fi
 
     # Fix permissions so the host user can read the output files.
     # The container may have written them as a different UID on Linux.
     docker exec --user root "$CONTAINER_NAME" \
         /bin/sh -c "chmod -R -f o+rX /output/*"
 
-    # Copy the output from the staging directory to the host output directory
-    cp -r "$STAGING_OUTPUT_DIR/." "${OUTPUT_DIR}/${interface_dir}/"
+    # Hard-link from the staging directory to the host output directory
+    cp -rl "$STAGING_OUTPUT_DIR/." "${destination}/"
 }
 
-run_docker_forward_pass() {
-    local interface_dir="$1"
-
-    echo "=+= Doing a forward pass on ${interface_dir}"
-    echo "=+= Calling invoke endpoint"
-
-    STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-        --max-time 300 \
-        -X POST http://localhost:${PORT}/invoke || echo "000")
-
-    if [ "$STATUS" != "201" ]; then
-        echo "Invoke failed with status $STATUS"
-        exit 1
+log() {
+    local message="$1"
+    if [[ -t 1 ]]; then
+        printf "\e[38;2;36;150;237m> %s\e[0m\n" "$message"
+    else
+        printf "%s\n" "$message"
     fi
-
-    echo "=+= Invoke completed"
 }
 
-check_health
+# ---------------------------------------------------------------------------
 
-{% for interface_name in object.algorithm_interface_names %}
-provision_input "{{ interface_name }}"
-run_docker_forward_pass "{{ interface_name }}"
-collect_output "{{ interface_name }}"
-echo "=+= Wrote results to ${OUTPUT_DIR}/{{ interface_name }}"
-{% endfor %}
-
-echo "=+= Save this image for uploading via ./do_save.sh"
+main
