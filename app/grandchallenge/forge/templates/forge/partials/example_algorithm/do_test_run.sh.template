@@ -279,8 +279,8 @@ collect_output() {
     docker exec --user root "$CONTAINER_NAME" \
         /bin/sh -c "chmod -R -f o+rX /output/*"
 
-    # Hard-link from the staging directory to the host output directory
-    cp -rl "$STAGING_OUTPUT_DIR/." "${destination}/"
+    # Copy from the staging directory to the host output directory
+    cp -r "$STAGING_OUTPUT_DIR/." "${destination}/"
 }
 
 log() {
