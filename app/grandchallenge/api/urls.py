@@ -1,6 +1,5 @@
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from rest_framework import routers
 
 from grandchallenge.algorithms.views import (
     AlgorithmImageViewSet,
@@ -9,6 +8,7 @@ from grandchallenge.algorithms.views import (
     InvocationViewSet,
     JobViewSet,
 )
+from grandchallenge.api.routers import APIRouter
 from grandchallenge.api.views import GCAPIView
 from grandchallenge.archives.views import ArchiveItemViewSet, ArchiveViewSet
 from grandchallenge.cases.views import (
@@ -41,7 +41,7 @@ from grandchallenge.workstations.views import (
 
 app_name = "api"
 
-router = routers.DefaultRouter()
+router = APIRouter()
 
 # Algorithms
 router.register(
