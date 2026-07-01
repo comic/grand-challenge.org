@@ -82,7 +82,7 @@ def init_model():
     return model
 
 
-MODELS = {}
+MODEL = None
 
 
 @asynccontextmanager
@@ -93,9 +93,10 @@ async def lifespan(app: FastAPI):
     This is where you should do expensive initialization (loading weights,
     warming up the GPU, etc.) so that /invoke can run as fast as possible.
     """
-    MODELS["answer_to_everything"] = init_model()
+    global MODEL
+    MODEL = init_model()
     yield
-    MODELS.clear()
+    MODEL = None
 
 
 app = FastAPI(lifespan=lifespan)
@@ -110,11 +111,9 @@ async def health():
     Redirect responses will not be followed and will raise an exception.
     Any other response will be ignored.
     """
-    try:
-        _ = MODELS["answer_to_everything"]
-        return Response(status_code=status.HTTP_200_OK)
-    except KeyError:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    if MODEL is None:
+        return Response(status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
+    return Response(status_code=status.HTTP_200_OK)
 
 
 @app.post("/invoke")
@@ -127,8 +126,7 @@ async def invoke():
     This may be called multiple times (once per case) without the container
     restarting. Each call gets fresh /input and /output directories.
     """
-    model = MODELS["answer_to_everything"]
-    inference.run(model)
+    inference.run(MODEL)
     return Response(status_code=status.HTTP_201_CREATED)
 
 
