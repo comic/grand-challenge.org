@@ -1,5 +1,6 @@
 html,
-:root {
+:root,
+html[data-theme="light"] {
     --primary: #c44133;
     --secondary: #e74c3c;
 }
