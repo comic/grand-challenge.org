@@ -1,8 +1,4 @@
-html,
-:root,
-html[data-theme="dark"],
-html[data-theme="light"],
-html[data-theme="auto"] {
+html[data-theme] {
     --primary: #c44133;
     --secondary: #e74c3c;
     --breadcrumbs-bg: var(--primary);
