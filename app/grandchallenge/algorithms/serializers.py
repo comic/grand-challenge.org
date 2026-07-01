@@ -167,6 +167,8 @@ class EndpointPostSerializer(serializers.ModelSerializer):
                 "Algorithm image is not ready to be used"
             )
 
+        # TODO: check for remaining algorithm user credits
+
         if (
             Endpoint.objects.active()
             .filter(creator=user, algorithm_image__algorithm=algorithm)
