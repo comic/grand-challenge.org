@@ -4,7 +4,6 @@ import { getCookie } from "../../js/get_cookie.mjs";
 const defaultSortColumn = JSON.parse(
     document.getElementById("defaultSortColumn").textContent,
 );
-const textAlign = JSON.parse(document.getElementById("textAlign").textContent);
 const defaultSortOrder = JSON.parse(
     document.getElementById("defaultSortOrder").textContent,
 );
@@ -20,13 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
         lengthChange: false,
         pageLength: 25,
         serverSide: true,
-        columnDefs: [
-            ...$.fn.dataTable.defaults.columnDefs,
-            {
-                className: `align-middle text-${textAlign}`,
-                targets: "_all",
-            },
-        ],
         ajax: {
             url: ".",
             type: "POST",
