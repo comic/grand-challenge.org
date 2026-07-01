@@ -13,7 +13,6 @@ class PaginatedTableListView(ListView):
     columns = []
     search_fields = []
     default_sort_column = 0
-    text_align = "center"
     default_sort_order = "desc"
 
     def get_context_data(self, *, object_list=None, **kwargs):
@@ -22,7 +21,6 @@ class PaginatedTableListView(ListView):
             {
                 "columns": self.columns,
                 "default_sort_column": self.default_sort_column,
-                "text_align": self.text_align,
                 "default_sort_order": self.default_sort_order,
             }
         )
