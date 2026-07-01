@@ -34,6 +34,7 @@ class SessionAdmin(admin.ModelAdmin):
     list_display = [
         "pk",
         "get_logs",
+        "get_metrics",
         "creator",
         "created",
         "claimed_at",
@@ -81,6 +82,17 @@ class SessionAdmin(admin.ModelAdmin):
             return format_html(
                 "<a target=_blank href='{url}'>🔗</a>",
                 url=f"https://{obj.region}.console.aws.amazon.com/cloudwatch/home?region={obj.region}#logsV2:log-groups/log-group/{settings.COMPONENTS_SERVICE_LOG_GROUP_NAME}/log-events/ecs$252Fworkstation$252F{task_id}",
+            )
+        else:
+            return None
+
+    @admin.display(description="Metrics")
+    def get_metrics(self, obj):
+        if obj.task_arn:
+            task_id = obj.task_arn.split("/")[-1]
+            return format_html(
+                "<a target=_blank href='{url}'>🔗</a>",
+                url=f"https://{obj.region}.console.aws.amazon.com/cloudwatch/home?region={obj.region}#container-insights:performance/ECS:Task:Granular?~(query~(controls~(CW*3a*3aECS.cluster~(~'{settings.COMPONENTS_SERVICE_CLUSTER_NAME})~CW*3a*3aECS.taskId~(~'{task_id})))~context~(orchestrationService~'ecs))",
             )
         else:
             return None
