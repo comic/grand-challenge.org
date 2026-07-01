@@ -1,7 +1,7 @@
-html,
-:root {
+html[data-theme] {
     --primary: #c44133;
     --secondary: #e74c3c;
+    --breadcrumbs-bg: var(--primary);
 }
 
 div.invoice-example-text {

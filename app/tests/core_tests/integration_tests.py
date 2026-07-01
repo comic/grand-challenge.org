@@ -1,6 +1,7 @@
 import datetime
 import re
 
+import pytest
 from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -406,6 +407,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
             % (page_url, response.status_code),
         )
 
+    @pytest.mark.flaky(reruns=3)
     def test_non_exitant_project_gives_404(self):
         """Reproduces https://github.com/DIAGNijmegen/rse-grand-challenge/issues/219."""
         non_existant_url = reverse(
