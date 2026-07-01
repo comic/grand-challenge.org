@@ -21,6 +21,7 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmModelSerializer,
 )
 from grandchallenge.components.models import (
+    APIMethodChoices,
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKindChoices,
@@ -813,6 +814,7 @@ class TestEndpointCreate:
         algorithm.add_user(user)
         AlgorithmImageFactory(
             algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
             is_desired_version=True,
             is_manifest_valid=True,
             is_in_registry=True,
@@ -830,6 +832,7 @@ class TestEndpointCreate:
         algorithm.add_editor(user)
         AlgorithmImageFactory(
             algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
             is_desired_version=True,
             is_manifest_valid=True,
             is_in_registry=True,
@@ -839,6 +842,30 @@ class TestEndpointCreate:
         response = client.post(self.url, data={"algorithm": algorithm.api_url})
 
         assert response.status_code == status.HTTP_201_CREATED, response.data
+
+    def test_cannot_create_endpoint_with_exec_image(self, client):
+        user = UserFactory()
+        assign_perm("algorithms.add_endpoint", user)
+        algorithm = AlgorithmFactory()
+        algorithm.add_editor(user)
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            api_method=APIMethodChoices.EXEC,
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), response.data
+        assert (
+            str(response.data["non_field_errors"][0])
+            == "Algorithm image does not implement the invoke API"
+        )
 
     def test_cannot_create_endpoint_without_active_image(self, client):
         user = UserFactory()
@@ -864,6 +891,7 @@ class TestEndpointCreate:
         algorithm.add_editor(user)
         algorithm_image = AlgorithmImageFactory(
             algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
             is_desired_version=True,
             is_manifest_valid=True,
             is_in_registry=True,
@@ -888,6 +916,7 @@ class TestEndpointCreate:
         algorithm.add_editor(user)
         algorithm_image = AlgorithmImageFactory(
             algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
             is_desired_version=True,
             is_manifest_valid=True,
             is_in_registry=True,
@@ -907,6 +936,7 @@ class TestEndpointCreate:
         algorithm.add_editor(user)
         AlgorithmImageFactory(
             algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
             is_desired_version=True,
             is_manifest_valid=True,
             is_in_registry=True,

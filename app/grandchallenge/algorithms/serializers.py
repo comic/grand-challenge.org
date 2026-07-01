@@ -28,6 +28,7 @@ from grandchallenge.algorithms.models import (
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
+from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.components.serializers import (
     ComponentInterfaceSerializer,
     ComponentInterfaceValuePostSerializer,
@@ -165,6 +166,11 @@ class EndpointPostSerializer(serializers.ModelSerializer):
         if not algorithm.active_image:
             raise serializers.ValidationError(
                 "Algorithm image is not ready to be used"
+            )
+
+        if not algorithm.active_image.api_method == APIMethodChoices.INVOKE:
+            raise serializers.ValidationError(
+                "Algorithm image does not implement the invoke API"
             )
 
         # TODO: check for remaining algorithm user credits
