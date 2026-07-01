@@ -103,7 +103,7 @@ setup() {
     TESTER_NAME="${DOCKER_IMAGE_TAG}-tester"
     docker run --detach --name "$TESTER_NAME" \
         --network "$DOCKER_NETWORK_TAG" \
-        curlimages/curl:latest sleep infinity > /dev/null
+        curlimages/curl:latest sleep infinity > /dev/null 2>&1
 }
 
 cleanup() {
