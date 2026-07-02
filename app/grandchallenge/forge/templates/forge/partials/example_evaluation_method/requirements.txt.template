@@ -1,4 +1,6 @@
 {% load forge %}
+fastapi
+uvicorn
 {% if object.algorithm_output_sockets|has_panimg_kind or object.evaluation_additional_inputs|has_panimg_kind or object.evaluation_additional_outputs|has_panimg_kind %}
 SimpleITK
 {% endif %}

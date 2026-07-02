@@ -1,0 +1,88 @@
+{% load forge %}
+"""
+Evaluation method inference server for Grand Challenge.
+
+You should not need to edit this file. Instead, edit evaluate.py to implement
+your evaluation logic.
+
+Grand Challenge runs your evaluation method as an HTTP server with two endpoints:
+
+  GET  /health  — Called repeatedly after the container starts. Once this
+                  responds with HTTP 200 (OK), Grand Challenge considers
+                  the server ready.
+  POST /invoke  — Called once. Your evaluation should read its input from
+                  /input, compute metrics, write results to /output, and
+                  respond with HTTP 201 (Created) when done.
+
+The lifecycle on Grand Challenge is:
+
+  1. Container starts → your server boots
+  2. /health is polled until it responds with HTTP 200 (timeout: ~5 minutes)
+  3. Inputs (predictions.json and algorithm outputs) are placed at /input
+  4. POST /invoke is called
+  5. Your code reads /input, computes metrics, writes to /output, responds
+     with HTTP 201
+  6. Container stops and outputs are uploaded to Grand Challenge
+
+Key points:
+  - The server must listen on port 4743.
+  - /health must NOT redirect — Grand Challenge treats a redirect as a failure.
+  - /invoke must respond with HTTP 201 (Created) when done. Any other response
+    is treated as a failure.
+  - Your container will have no internet access at runtime.
+
+Any implementation will do — FastAPI is used here as an example. The only
+requirements are the two endpoints and the LABEL in the Dockerfile.
+"""
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Response, status
+import uvicorn
+
+import evaluate
+
+from uvicorn.config import LOGGING_CONFIG
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Server lifespan.
+
+    This is managed by FastAPI and runs exactly once — do not call it directly.
+    If your evaluation method needs to load resources at startup, do it here
+    before the yield.
+    """
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+@app.get("/health")
+async def health():
+    """Health check endpoint.
+
+    Grand Challenge polls this after the container starts. Respond with
+    HTTP 200 (OK) when the server is ready. A redirect response is treated
+    as a failure. Any other response is ignored and Grand Challenge will retry.
+    """
+    return Response(status_code=status.HTTP_200_OK)
+
+
+@app.post("/invoke")
+async def invoke():
+    """Invoke endpoint — called once per evaluation.
+
+    When this is called, the predictions and algorithm outputs are available
+    at /input. Compute metrics, write results to /output, then respond with
+    HTTP 201 (Created) when done. Any other response is treated as a failure.
+    """
+    evaluate.main()
+    return Response(status_code=status.HTTP_201_CREATED)
+
+
+if __name__ == "__main__":
+    # Grand Challenge expects the server on port 4743 — do not change this.
+    log_config = LOGGING_CONFIG.copy()
+    log_config["handlers"]["default"]["stream"] = "ext://sys.stdout"
+    uvicorn.run(app, host="0.0.0.0", port=4743, log_config=log_config)

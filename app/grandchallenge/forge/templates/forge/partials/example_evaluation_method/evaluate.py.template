@@ -1,32 +1,29 @@
 {% load forge %}
 """
-The following is a simple example evaluation method.
+Example evaluation method for Grand Challenge.
 
-It is meant to run within a container. Its steps are as follows:
+This is the file you should edit to implement your evaluation logic.
+It is called by app.py when the /invoke endpoint is hit.
 
-  1. Read the algorithm output
-  2. Associate original algorithm inputs with a ground truths via predictions.json
-  3. Calculate metrics by comparing the algorithm output to the ground truth
-  4. Repeat for all algorithm jobs that ran for this submission
-  5. Aggregate the calculated metrics
-  6. Save the metrics to metrics.json
+  main() — Called once per evaluation. Read algorithm outputs
+           from /input, compute metrics, write results to /output.
 
-To run it locally, you can call the following bash script:
+The evaluation steps are:
 
-  ./do_test_run.sh
+  1. Read algorithm outputs and associate them with ground truths via predictions.json
+  2. Calculate metrics by comparing the algorithm output to the ground truth
+  3. Repeat for all algorithm jobs that ran for this submission
+  4. Aggregate the calculated metrics
+  5. Save the metrics to /output/metrics.json
 
-This will start the evaluation and reads from ./test/input and writes to ./test/output
+To test locally:  ./do_test_run.sh
+To save for upload to GC:   ./do_save.sh
 
-To save the container and prep it for upload to Grand-Challenge.org you can call:
+Any implementation will do as long as it produces metrics.json in the expected format.
 
-  ./do_save.sh
-
-Any container that shows the same behaviour will do, this is purely an example of how one COULD do it.
-
-Reference the documentation to get details on the runtime environment on the platform:
-https://grand-challenge.org/documentation/runtime-environment/
-
-Happy programming!
+For more details see:
+  https://grand-challenge.org/documentation/evaluation/
+  https://grand-challenge.org/documentation/runtime-environment/
 """
 import json
 
