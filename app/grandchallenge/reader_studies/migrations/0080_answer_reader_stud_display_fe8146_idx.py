@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name="answer",
             index=models.Index(
-                fields=["display_set", "question", "is_ground_truth"],
+                fields=["display_set", "is_ground_truth"],
                 name="reader_stud_display_fe8146_idx",
             ),
         ),
