@@ -1208,9 +1208,10 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
                     "answer": answer.answer,
                     "answer_text": answer.answer_text,
                     "question_text": answer.question.question_text,
-                    "options": dict(
-                        answer.question.options.values_list("id", "title")
-                    ),
+                    "options": {
+                        option.id: option.title
+                        for option in answer.question.options.all()
+                    },
                     "explanation": answer.explanation,
                 }
                 for answer in answers

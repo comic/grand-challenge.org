@@ -1247,7 +1247,7 @@ def test_csv_export(client, answer_type, answer):
 
 
 @pytest.mark.django_db
-def test_ground_truth(client):
+def test_ground_truth(client, django_assert_max_num_queries):
     rs = ReaderStudyFactory(
         is_educational=True,
     )
@@ -1267,8 +1267,10 @@ def test_ground_truth(client):
     )
 
     op1 = CategoricalOptionFactory(question=q1, title="option1")
+
     op2 = CategoricalOptionFactory(question=q2, title="option1")
     op3 = CategoricalOptionFactory(question=q2, title="option1")
+
     op4 = CategoricalOptionFactory(question=q3, title="option1")
     op5 = CategoricalOptionFactory(question=q3, title="option1")
 
@@ -1291,14 +1293,15 @@ def test_ground_truth(client):
         display_set=ds,
     )
 
-    response = get_view_for_user(
-        viewname="api:reader-study-ground-truth",
-        reverse_kwargs={"pk": rs.pk, "case_pk": ds.pk},
-        user=reader,
-        client=client,
-        content_type="application/json",
-        follow=True,
-    )
+    with django_assert_max_num_queries(33):
+        response = get_view_for_user(
+            viewname="api:reader-study-ground-truth",
+            reverse_kwargs={"pk": rs.pk, "case_pk": ds.pk},
+            user=reader,
+            client=client,
+            content_type="application/json",
+            follow=True,
+        )
 
     assert response.status_code == 200
     response = response.json()
