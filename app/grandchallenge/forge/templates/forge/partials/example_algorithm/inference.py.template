@@ -2,8 +2,11 @@
 """
 Example algorithm for Grand Challenge.
 
-This module is called by app.py each time the /invoke endpoint is hit.
-It reads input from /input, runs inference, and writes output to /output.
+Edit this file to implement your algorithm. It contains:
+
+  init_model() — Called once at server startup. Load your model here.
+  run(model)   — Called each time the /invoke endpoint is hit. This should read input
+                 from /input, run inference, and write output to /output.
 
 Your algorithm's interfaces:
 {% for interface_name, interface in object.algorithm_interface_names|zip:object.algorithm_interfaces %}
@@ -43,7 +46,48 @@ INPUT_PATH = Path("/input")
 OUTPUT_PATH = Path("/output")
 RESOURCE_PATH = Path("resources")
 
+
+def _show_torch_cuda_info():
+    print("=+=" * 10)
+    print("Collecting Torch CUDA information")
+    print(f"Torch CUDA is available: {(available := torch.cuda.is_available())}")
+    if available:
+        print(f"\tnumber of devices: {torch.cuda.device_count()}")
+        print(f"\tcurrent device: { (current_device := torch.cuda.current_device())}")
+        print(f"\tproperties: {torch.cuda.get_device_properties(current_device)}")
+    print("=+=" * 10)
+
+
+def init_model():
+    """Load and return your model.
+
+    This is called once by app.py during server startup (before /health returns 200).
+    The model is then reused across all /invoke calls — so load it here,
+    not inside the run() function.
+    """
+    _show_torch_cuda_info()
+
+    # Example how to set torch to use the GPU (if available)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+    model = torch.nn.Linear(10, 1).to(device)
+
+    # Your model will be extracted to `model_dir` at runtime on Grand Challenge.
+    # When testing locally, the local `./model` directory is mounted here.
+    # When you're ready for testing on Grand Challenge, upload it as a tarball
+    # via Your algorithm > Models on Grand Challenge.
+    model_dir = Path("/opt/ml/model")
+    with open(
+        model_dir / "a_tarball_subdirectory" / "some_tarball_resource.txt", "r"
+    ) as f:
+        print(f.read())
+
+    return model
+
 def run(model):
+    """ This is called each time the /invoke endpoint is called.
+    This should read input from /input, run inference, and write output to /output.
+    """
     # The key is a tuple of the slugs of the input sockets
     interface_key = get_interface_key()
 
@@ -169,5 +213,4 @@ def get_interface_key():
 
 
 if __name__ == "__main__":
-    from app import init_model
     raise SystemExit(run(model=init_model()))

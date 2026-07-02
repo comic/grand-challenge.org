@@ -31,56 +31,19 @@ Key points:
 
 Any implementation will do — FastAPI is used here as an example. The only
 requirements are the two endpoints and the LABEL in the Dockerfile.
+
+You should not need to edit this file. Instead, edit inference.py to implement
+your algorithm's init_model() and run() functions.
 """
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI, Response, status
-import torch
 import uvicorn
 
 import inference
 
 
 from uvicorn.config import LOGGING_CONFIG
-
-
-def _show_torch_cuda_info():
-    print("=+=" * 10)
-    print("Collecting Torch CUDA information")
-    print(f"Torch CUDA is available: {(available := torch.cuda.is_available())}")
-    if available:
-        print(f"\tnumber of devices: {torch.cuda.device_count()}")
-        print(f"\tcurrent device: { (current_device := torch.cuda.current_device())}")
-        print(f"\tproperties: {torch.cuda.get_device_properties(current_device)}")
-    print("=+=" * 10)
-
-
-def init_model():
-    """Load and return your model.
-
-    This is called once during server startup (before /health returns 200).
-    The model is then reused across all /invoke calls — so load it here,
-    not inside the invoke handler.
-    """
-    _show_torch_cuda_info()
-
-    # Example how to set torch to use the GPU (if available)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
-    model = torch.nn.Linear(10, 1).to(device)
-
-    # Your model will be extracted to `model_dir` at runtime on Grand Challenge.
-    # When testing locally, the local `./model` directory is mounted here.
-    # When you're ready for testing on Grand Challenge, upload it as a tarball
-    # via Your algorithm > Models on Grand Challenge.
-    model_dir = Path("/opt/ml/model")
-    with open(
-        model_dir / "a_tarball_subdirectory" / "some_tarball_resource.txt", "r"
-    ) as f:
-        print(f.read())
-
-    return model
 
 
 MODEL = None
@@ -96,7 +59,7 @@ async def lifespan(app: FastAPI):
     warming up the GPU, etc.) so that /invoke can run as fast as possible.
     """
     global MODEL
-    MODEL = init_model()
+    MODEL = inference.init_model()
     yield
     MODEL = None
 
