@@ -4,7 +4,7 @@
 # implements Grand Challenge's "invoke" API, then exercises it against each
 # configured interface. For each interface this script:
 #   1. stages the interface's input files into the container's /input mount
-#   2. calls POST /invoke and checks for a 201 response
+#   2. calls POST /invoke and checks for a success response (HTTP 201 Created)
 #   3. copies whatever the container wrote to /output back to the host
 #
 # Run this after changing the algorithm to confirm the container still
@@ -63,7 +63,6 @@ main() {
     provision "{{ interface_name }}"
     invoke
     collect_output "{{ interface_name }}"
-    log "Wrote results to ${OUTPUT_DIR}/{{ interface_name }}"
 {% endfor %}
 
     log "Save this image for uploading via ./do_save.sh"
@@ -228,7 +227,7 @@ check_health() {
         fi
 
         if [[ "$status" == "302" ]]; then
-            log "Health endpoint returned 302 — failing"
+            log "Health endpoint returned HTTP 302 — failing"
             flush_docker_log
             return 1
         fi
@@ -237,7 +236,7 @@ check_health() {
         sleep "$HEALTH_CHECK_DELAY_SECONDS"
     done
 
-    log "Health endpoint never returned 200"
+    log "Health endpoint never returned HTTP 200"
     flush_docker_log
     return 1
 }
@@ -262,7 +261,7 @@ invoke() {
     flush_docker_log
 
     if [ "$status" != "201" ]; then
-        log "Invoke failed with status $status"
+        log "Invoke failed (expected HTTP 201 Created, got $status)"
         exit 1
     fi
 
@@ -293,6 +292,7 @@ collect_output() {
 
     # Copy from the staging directory to the host output directory
     cp -r "$STAGING_OUTPUT_DIR/." "${destination}/"
+    log "Wrote results to ${OUTPUT_DIR}/{{ interface_name }}"
 }
 
 # ---------------------------------------------------------------------------

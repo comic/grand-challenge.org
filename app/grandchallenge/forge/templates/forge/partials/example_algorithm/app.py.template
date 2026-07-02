@@ -2,38 +2,41 @@
 """
 Example algorithm inference server for Grand Challenge.
 
+You should not need to edit this file. Instead, edit inference.py to implement
+your algorithm's init_model() and run() functions.
+
 Grand Challenge runs your algorithm as an HTTP server with two endpoints:
 
   GET  /health  — Called repeatedly after the container starts. Once this
-                  returns HTTP 200, Grand Challenge considers the server ready.
+                  returns HTTP 200 (OK), Grand Challenge considers
+                  the server ready.
   POST /invoke  — Called once per case. Your algorithm should read its input
-                  from /input, write its output to /output, and return HTTP 201.
+                  from /input, write its output to /output, and signal
+                  completion by returning HTTP 201 (Created).
 
 The lifecycle on Grand Challenge is:
 
   1. Container starts → your server boots and loads the model
-  2. /health is polled until it returns 200 (timeout: ~5 minutes)
+  2. /health is polled until it responds with HTTP 200 (timeout: ~5 minutes)
   3. Inputs are placed at /input
   4. POST /invoke is called
-  5. Your code reads /input, does a forward pass, writes to /output, returns 201
+  5. Your code reads /input, does a forward pass, writes to /output,
+     and finally, responds with HTTP 201
   6. Container stops and outputs are uploaded to Grand Challenge
 
 Key points:
   - Load your model during startup (in the lifespan context), not during
     /invoke. The /invoke call has its own timeout, and spending that time
-    loading a model may not leave sufficient time for processing. Separating model loading
-    from inference makes your container ready for future optimizations where multiple cases
-    may be processed without restarting the container.
+    loading a model may not leave sufficient time for processing.
   - The server must listen on port 4743.
-  - /health must NOT redirect (302 is treated as a failure).
-  - /invoke must return exactly 201 on success. Any other status is a failure.
+  - /health must NOT redirect — Grand Challenge treats a redirect (HTTP 302) as a failure.
+  - /invoke must respond with HTTP 201 (Created) when done. Any other response
+    is treated as a failure.
   - Your container will have no internet access at runtime.
 
 Any implementation will do — FastAPI is used here as an example. The only
 requirements are the two endpoints and the LABEL in the Dockerfile.
 
-You should not need to edit this file. Instead, edit inference.py to implement
-your algorithm's init_model() and run() functions.
 """
 from contextlib import asynccontextmanager
 
@@ -71,10 +74,10 @@ app = FastAPI(lifespan=lifespan)
 async def health():
     """Health check endpoint.
 
-    Grand Challenge polls this after the container starts.
-    Return 200 when the model is loaded and the server is ready to handle /invoke calls.
-    Redirect responses will not be followed and will raise an exception.
-    Any other response will be ignored.
+    Grand Challenge polls this after the container starts. Respond with
+    HTTP 200 (OK) when the model is loaded and the server is ready.
+    A redirect response is treated as a failure. Any other response is
+    ignored and Grand Challenge will retry.
     """
     if MODEL is None:
         return Response(status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
@@ -86,8 +89,9 @@ async def invoke():
     """Invoke endpoint — called once per case.
 
     When this is called, the case's input files are available at /input.
-    Read them, run inference, write results to /output, and return 201.
-    Anything other than the status code returned by this method is ignored.
+    Read them, run inference, write results to /output, then signal
+    completion by responding with HTTP 201 (Created). Any other response
+    is treated as a failure.
 
     This may be called multiple times. Each call gets fresh /input and /output directories.
     """
