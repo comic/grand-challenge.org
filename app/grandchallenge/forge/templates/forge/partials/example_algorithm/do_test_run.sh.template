@@ -35,7 +35,7 @@ HEALTH_CHECK_TIMEOUT_SECONDS=10
 
 # How long a single /invoke call is allowed to run.
 # Note that this is NOT equivalent to the maximum runtime set for jobs on Grand Challenge
-# The maximum runtime on GC includes I/O as well as model and auxiliary data loading.
+# The maximum runtime on Grand Challenge includes I/O as well as model and auxiliary data loading.
 # Locally (when running this script) it only includes inference (I/O, model and auxiliary data loading happen before).
 INVOKE_TIMEOUT_SECONDS=300
 
