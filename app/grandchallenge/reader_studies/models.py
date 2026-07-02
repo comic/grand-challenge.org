@@ -2090,7 +2090,7 @@ class Answer(UUIDModel):
             ("creator", "display_set", "question", "is_ground_truth"),
         )
         indexes = [
-            models.Index(fields=["display_set", "is_ground_truth"]),
+            models.Index(fields=["is_ground_truth", "display_set"]),
         ]
 
     def __str__(self):
