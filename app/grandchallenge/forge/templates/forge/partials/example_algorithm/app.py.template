@@ -90,6 +90,7 @@ MODEL = None
 async def lifespan(app: FastAPI):
     """Server lifespan: load the model at startup, release at shutdown.
 
+    This is managed by FastAPI and runs exactly once — do not call it directly.
     Everything before `yield` runs before the server accepts requests.
     This is where you should do expensive initialization (loading weights,
     warming up the GPU, etc.) so that /invoke can run as fast as possible.
