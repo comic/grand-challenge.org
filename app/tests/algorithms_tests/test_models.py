@@ -440,6 +440,12 @@ def test_algorithm_image_remaining_specific_credits_include_endpoint_utilization
     )
     older_endpoint.endpoint_utilization.created = yesterday
     older_endpoint.endpoint_utilization.save()
+    endpoint_for_reader_study = EndpointFactory(
+        creator=user, algorithm_image=algorithm_image
+    )
+    endpoint_for_reader_study.endpoint_utilization.reader_studies.add(
+        ReaderStudyFactory()
+    )
     AlgorithmUserCredit.objects.create(
         user=user,
         algorithm=algorithm_image.algorithm,
@@ -470,10 +476,26 @@ def test_algorithm_image_remaining_specific_credits_include_endpoint_utilization
         1000
     )
     other_user_endpoint.endpoint_utilization.save()
+
+    assert (
+        algorithm_image.get_remaining_specific_credits(
+            user=user, algorithm=algorithm_image.algorithm
+        )
+        == 9
+    ), "endpoints from other users should be excluded"
+
     other_algorithm_endpoint.endpoint_utilization.compute_cost_euro_millicents = (
         1000
     )
     other_algorithm_endpoint.endpoint_utilization.save()
+
+    assert (
+        algorithm_image.get_remaining_specific_credits(
+            user=user, algorithm=algorithm_image.algorithm
+        )
+        == 9
+    ), "endpoints from other algorithms should be excluded"
+
     older_endpoint.endpoint_utilization.compute_cost_euro_millicents = 1000
     older_endpoint.endpoint_utilization.save()
 
@@ -482,7 +504,19 @@ def test_algorithm_image_remaining_specific_credits_include_endpoint_utilization
             user=user, algorithm=algorithm_image.algorithm
         )
         == 9
+    ), "older endpoint utilizations should be excluded"
+
+    endpoint_for_reader_study.endpoint_utilization.compute_cost_euro_millicents = (
+        1000
     )
+    endpoint_for_reader_study.endpoint_utilization.save()
+
+    assert (
+        algorithm_image.get_remaining_specific_credits(
+            user=user, algorithm=algorithm_image.algorithm
+        )
+        == 9
+    ), "endpoint utilizations linked to reader studies should be excluded"
 
 
 @pytest.mark.django_db()

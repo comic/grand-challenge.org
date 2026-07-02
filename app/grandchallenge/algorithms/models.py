@@ -921,6 +921,7 @@ class AlgorithmImage(UUIDModel, ComponentImage):
             created__date__gte=user_credit.valid_from,
             created__date__lte=user_credit.valid_until,
             algorithm=user_credit.algorithm,
+            reader_studies__isnull=True,
         ).aggregate(
             total=Sum("credits_consumed", default=0),
         )
