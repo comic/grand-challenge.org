@@ -49,6 +49,11 @@ def handle_completed_build_event(*, build_arn: str, build_status: str):
 
     if build.status == build.BuildStatusChoices.SUCCEEDED:
         add_image_to_algorithm.execute_on_commit(build_pk=build.pk)
+    else:
+        build.algorithm_image.import_status = (
+            build.algorithm_image.ImportStatusChoices.CANCELLED
+        )
+        build.algorithm_image.save()
 
 
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
