@@ -1,3 +1,4 @@
+from datetime import timedelta
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -80,8 +81,10 @@ class SessionAdmin(admin.ModelAdmin):
         if obj.task_arn:
             task_id = obj.task_arn.split("/")[-1]
             return format_html(
-                "<a target=_blank href='{url}'>🔗</a>",
-                url=f"https://{obj.region}.console.aws.amazon.com/cloudwatch/home?region={obj.region}#logsV2:log-groups/log-group/{settings.COMPONENTS_SERVICE_LOG_GROUP_NAME}/log-events/ecs$252Fworkstation$252F{task_id}",
+                "<a target=_blank href='https://{region}.console.aws.amazon.com/cloudwatch/home?region={region}#logsV2:log-groups/log-group/{log_group}/log-events/ecs$252Fworkstation$252F{task_id}'>🔗</a>",
+                region=obj.region,
+                log_group=settings.COMPONENTS_SERVICE_LOG_GROUP_NAME,
+                task_id=task_id,
             )
         else:
             return None
@@ -90,9 +93,18 @@ class SessionAdmin(admin.ModelAdmin):
     def get_metrics(self, obj):
         if obj.task_arn:
             task_id = obj.task_arn.split("/")[-1]
+            start = obj.created.strftime("%Y-%m-%dT%H*3a%M*3a%S.000Z")
+            end_time = (
+                obj.created + obj.maximum_duration + timedelta(minutes=10)
+            )
+            end = end_time.strftime("%Y-%m-%dT%H*3a%M*3a%S.000Z")
             return format_html(
-                "<a target=_blank href='{url}'>🔗</a>",
-                url=f"https://{obj.region}.console.aws.amazon.com/cloudwatch/home?region={obj.region}#container-insights:performance/ECS:Task:Granular?~(query~(controls~(CW*3a*3aECS.cluster~(~'{settings.COMPONENTS_SERVICE_CLUSTER_NAME})~CW*3a*3aECS.taskId~(~'{task_id})))~context~(orchestrationService~'ecs))",
+                "<a target=_blank href='https://{region}.console.aws.amazon.com/cloudwatch/home?region={region}#container-insights:performance/ECS:Task:Granular?~(query~(controls~(CW*3a*3aECS.cluster~(~'{cluster_name})~CW*3a*3aECS.taskId~(~'{task_id})))~context~(orchestrationService~'ecs~timeRange~(end~'{end}~start~'{start})))'>🔗</a>",
+                region=obj.region,
+                cluster_name=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
+                task_id=task_id,
+                end=end,
+                start=start,
             )
         else:
             return None
@@ -132,10 +144,8 @@ class FeedbackAdmin(ModelAdmin):
             + obj.user_comment,
         }
         return format_html(
-            '<a href="{}">{}</a>',
-            "https://github.com/diagnijmegen/rse-cirrus-core/issues/new?"
-            + urlencode(params),
-            "Create issue",
+            '<a href="https://github.com/diagnijmegen/rse-cirrus-core/issues/new?{query}">Create issue</a>',
+            query=urlencode(params),
         )
 
 
