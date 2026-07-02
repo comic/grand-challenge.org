@@ -1,4 +1,6 @@
 import pytest
+from actstream.actions import is_following, unfollow
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
@@ -706,3 +708,198 @@ def test_queries_on_topic_list_view(client, django_assert_max_num_queries):
                 "challenge_short_name": forum.linked_challenge.short_name,
             },
         )
+
+
+@pytest.mark.django_db
+def test_forum_follow_create_requires_login(client):
+    forum = ForumFactory()
+
+    response = get_view_for_user(
+        viewname="discussion-forums:forum-follow-create",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+        },
+        user=None,
+    )
+    assert response.status_code == 302
+    assert "/accounts/login/" in response.url
+
+
+@pytest.mark.django_db
+def test_forum_topic_follow_create_requires_login(
+    client, settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    forum = ForumFactory()
+    admin = UserFactory()
+    forum.linked_challenge.add_admin(admin)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        topic = ForumTopicFactory(forum=forum, creator=admin)
+
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-follow-create",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+            "slug": topic.slug,
+        },
+        user=None,
+    )
+    assert response.status_code == 302
+    assert "/accounts/login/" in response.url
+
+
+@pytest.mark.django_db
+def test_forum_follow_create(client):
+    admin = UserFactory()
+    forum = ForumFactory()
+    forum.linked_challenge.add_admin(admin)
+
+    # Admin auto-follows, so unfollow first
+    unfollow(admin, forum)
+    assert not is_following(admin, forum)
+
+    response = get_view_for_user(
+        viewname="discussion-forums:forum-follow-create",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+        },
+        user=admin,
+        data={
+            "user": admin.pk,
+            "content_type": ContentType.objects.get_for_model(forum).pk,
+            "object_id": str(forum.pk),
+            "actor_only": False,
+        },
+    )
+    assert response.status_code == 302
+    assert is_following(admin, forum)
+
+
+@pytest.mark.django_db
+def test_forum_follow_create_permission(client):
+    user = UserFactory()
+    participant = UserFactory()
+    forum = ForumFactory()
+    forum.linked_challenge.add_participant(participant)
+
+    # User without view_forum permission cannot subscribe
+    response = get_view_for_user(
+        viewname="discussion-forums:forum-follow-create",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+        },
+        user=user,
+        data={
+            "user": user.pk,
+            "content_type": ContentType.objects.get_for_model(forum).pk,
+            "object_id": str(forum.pk),
+            "actor_only": False,
+        },
+    )
+    assert response.status_code == 403
+    assert not is_following(user, forum)
+
+    # Participant with view_forum permission can subscribe
+    unfollow(participant, forum)
+    assert not is_following(participant, forum)
+
+    response = get_view_for_user(
+        viewname="discussion-forums:forum-follow-create",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+        },
+        user=participant,
+        data={
+            "user": participant.pk,
+            "content_type": ContentType.objects.get_for_model(forum).pk,
+            "object_id": str(forum.pk),
+            "actor_only": False,
+        },
+    )
+    assert response.status_code == 302
+    assert is_following(participant, forum)
+
+
+@pytest.mark.django_db
+def test_forum_topic_follow_create(
+    client, settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    admin = UserFactory()
+    participant = UserFactory()
+    forum = ForumFactory()
+    forum.linked_challenge.add_admin(admin)
+    forum.linked_challenge.add_participant(participant)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        topic = ForumTopicFactory(forum=forum, creator=admin)
+
+    # Participant does not auto-follow topics
+    assert not is_following(participant, topic)
+
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-follow-create",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+            "slug": topic.slug,
+        },
+        user=participant,
+        data={
+            "user": participant.pk,
+            "content_type": ContentType.objects.get_for_model(topic).pk,
+            "object_id": str(topic.pk),
+            "actor_only": False,
+        },
+    )
+    assert response.status_code == 302
+    assert is_following(participant, topic)
+
+
+@pytest.mark.django_db
+def test_forum_topic_follow_create_permission(
+    client, settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    user = UserFactory()
+    forum = ForumFactory()
+    admin = UserFactory()
+    forum.linked_challenge.add_admin(admin)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        topic = ForumTopicFactory(forum=forum, creator=admin)
+
+    # User without view_forumtopic permission cannot subscribe
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-follow-create",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+            "slug": topic.slug,
+        },
+        user=user,
+        data={
+            "user": user.pk,
+            "content_type": ContentType.objects.get_for_model(topic).pk,
+            "object_id": str(topic.pk),
+            "actor_only": False,
+        },
+    )
+    assert response.status_code == 403
+    assert not is_following(user, topic)

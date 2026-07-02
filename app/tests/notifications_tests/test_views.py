@@ -200,18 +200,19 @@ def test_forum_subscribe_and_unsubscribe(client):
     assert not is_following(admin, f)
 
     response = get_view_for_user(
-        viewname="notifications:follow-create",
+        viewname="discussion-forums:forum-follow-create",
         client=client,
         method=client.post,
-        data={
-            "user": admin.id,
-            "content_type": ContentType.objects.get(
-                app_label=f._meta.app_label, model=f._meta.model_name
-            ).id,
-            "object_id": f.id,
-            "actor_only": False,
+        reverse_kwargs={
+            "challenge_short_name": f.linked_challenge.short_name,
         },
         user=admin,
+        data={
+            "user": admin.pk,
+            "content_type": ContentType.objects.get_for_model(f).pk,
+            "object_id": str(f.pk),
+            "actor_only": False,
+        },
     )
     assert response.status_code == 302
     assert is_following(admin, f)
@@ -236,18 +237,20 @@ def test_topic_subscribe_and_unsubscribe(
     assert not is_following(user, t)
 
     response = get_view_for_user(
-        viewname="notifications:follow-create",
+        viewname="discussion-forums:topic-follow-create",
         client=client,
         method=client.post,
-        data={
-            "user": user.id,
-            "content_type": ContentType.objects.get(
-                app_label=t._meta.app_label, model=t._meta.model_name
-            ).id,
-            "object_id": t.id,
-            "actor_only": False,
+        reverse_kwargs={
+            "challenge_short_name": f.linked_challenge.short_name,
+            "slug": t.slug,
         },
         user=user,
+        data={
+            "user": user.pk,
+            "content_type": ContentType.objects.get_for_model(t).pk,
+            "object_id": str(t.pk),
+            "actor_only": False,
+        },
     )
     assert response.status_code == 302
     assert is_following(user, t)
@@ -313,20 +316,21 @@ def test_follow_create_permission(client):
 
     # not a participant, so cannot subscribe
     response = get_view_for_user(
-        viewname="notifications:follow-create",
+        viewname="discussion-forums:forum-follow-create",
         client=client,
         method=client.post,
-        data={
-            "user": user.id,
-            "content_type": ContentType.objects.get(
-                app_label=f._meta.app_label, model=f._meta.model_name
-            ).id,
-            "object_id": f.id,
-            "actor_only": False,
+        reverse_kwargs={
+            "challenge_short_name": f.linked_challenge.short_name,
         },
         user=user,
+        data={
+            "user": user.pk,
+            "content_type": ContentType.objects.get_for_model(f).pk,
+            "object_id": str(f.pk),
+            "actor_only": False,
+        },
     )
-    assert "You cannot create this subscription" in str(response.content)
+    assert response.status_code == 403
     assert len(Follow.objects.all()) == old_num_follows
 
     # Remove follows
@@ -335,18 +339,19 @@ def test_follow_create_permission(client):
 
     for u in [admin, participant]:
         response = get_view_for_user(
-            viewname="notifications:follow-create",
+            viewname="discussion-forums:forum-follow-create",
             client=client,
             method=client.post,
-            data={
-                "user": u.id,
-                "content_type": ContentType.objects.get(
-                    app_label=f._meta.app_label, model=f._meta.model_name
-                ).id,
-                "object_id": f.id,
-                "actor_only": False,
+            reverse_kwargs={
+                "challenge_short_name": f.linked_challenge.short_name,
             },
             user=u,
+            data={
+                "user": u.pk,
+                "content_type": ContentType.objects.get_for_model(f).pk,
+                "object_id": str(f.pk),
+                "actor_only": False,
+            },
         )
         assert response.status_code == 302
         assert is_following(u, f)

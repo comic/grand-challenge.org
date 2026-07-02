@@ -1,8 +1,11 @@
+from actstream.models import Follow
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Prefetch
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
@@ -20,6 +23,7 @@ from grandchallenge.discussion_forums.models import (
     ForumTopicKindChoices,
     TopicReadRecord,
 )
+from grandchallenge.notifications.forms import FollowForm
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -358,3 +362,77 @@ class MyForumPosts(ViewObjectPermissionListMixin, ListView):
         context = super().get_context_data()
         context.update({"forum": self.forum, "topic": None})
         return context
+
+
+class ForumFollowCreate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
+):
+    model = Follow
+    form_class = FollowForm
+    permission_required = "view_forum"
+    raise_exception = True
+    success_message = "Subscription successfully added"
+
+    @cached_property
+    def forum(self):
+        return self.request.challenge.discussion_forum
+
+    def get_permission_object(self):
+        return self.forum
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "follow_object": self.forum,
+            }
+        )
+        return kwargs
+
+    def get_success_url(self):
+        return self.forum.get_absolute_url()
+
+
+class ForumTopicFollowCreate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    CreateView,
+):
+    model = Follow
+    form_class = FollowForm
+    permission_required = "view_forumtopic"
+    raise_exception = True
+    success_message = "Subscription successfully added"
+
+    @cached_property
+    def forum(self):
+        return self.request.challenge.discussion_forum
+
+    @cached_property
+    def topic(self):
+        return get_object_or_404(
+            ForumTopic,
+            forum=self.forum,
+            slug=self.kwargs["slug"],
+        )
+
+    def get_permission_object(self):
+        return self.topic
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "follow_object": self.topic,
+            }
+        )
+        return kwargs
+
+    def get_success_url(self):
+        return self.topic.get_absolute_url()

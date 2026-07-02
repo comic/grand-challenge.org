@@ -25,7 +25,7 @@
         {% if 'view_forum' in user_perms %}
             <div class="col-12 col-md-6">
                 <div class="float-right controls-link-wrapper">
-                    {% include 'actstream/partials/follow_unfollow_links.html' with object=forum %}
+                    {% include 'discussion_forums/partials/follow_unfollow_links.html' with object=forum %}
                     <a href="{% url 'notifications:follow-list' %}" class="btn btn-primary btn-sm"><i class="fas fa-bookmark mr-1"></i>My Subscriptions</a>
                 </div>
             </div>

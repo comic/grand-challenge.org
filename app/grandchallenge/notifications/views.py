@@ -2,7 +2,7 @@ from actstream.models import Follow
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
-from django.views.generic import CreateView, DeleteView, ListView
+from django.views.generic import DeleteView, ListView
 from guardian.mixins import LoginRequiredMixin
 from rest_framework import mixins, viewsets
 from rest_framework.permissions import DjangoObjectPermissions
@@ -18,7 +18,6 @@ from grandchallenge.notifications.filters import (
     FollowFilter,
     NotificationFilter,
 )
-from grandchallenge.notifications.forms import FollowForm
 from grandchallenge.notifications.models import Notification
 from grandchallenge.notifications.serializers import (
     FollowSerializer,
@@ -183,20 +182,6 @@ class FollowDelete(
 
     def get_permission_object(self):
         return self.get_object()
-
-    def get_success_url(self):
-        return reverse("notifications:follow-list")
-
-
-class FollowCreate(LoginRequiredMixin, SuccessMessageMixin, CreateView):
-    model = Follow
-    form_class = FollowForm
-    success_message = "Subscription successfully added"
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
 
     def get_success_url(self):
         return reverse("notifications:follow-list")

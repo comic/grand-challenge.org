@@ -1,11 +1,13 @@
 from django.urls import path
 
 from grandchallenge.discussion_forums.views import (
+    ForumFollowCreate,
     ForumPostCreate,
     ForumPostDelete,
     ForumPostUpdate,
     ForumTopicCreate,
     ForumTopicDelete,
+    ForumTopicFollowCreate,
     ForumTopicListView,
     ForumTopicLockUpdate,
     ForumTopicPostList,
@@ -16,8 +18,13 @@ app_name = "discussion_forums"
 
 
 urlpatterns = [
-    path("topics/", ForumTopicListView.as_view(), name="topic-list"),
     path("posts/mine/", MyForumPosts.as_view(), name="my-posts"),
+    path(
+        "follow/",
+        ForumFollowCreate.as_view(),
+        name="forum-follow-create",
+    ),
+    path("topics/", ForumTopicListView.as_view(), name="topic-list"),
     path(
         "topics/create/",
         ForumTopicCreate.as_view(),
@@ -37,6 +44,11 @@ urlpatterns = [
         "topics/<slug:slug>/",
         ForumTopicPostList.as_view(),
         name="topic-post-list",
+    ),
+    path(
+        "topics/<slug:slug>/follow/",
+        ForumTopicFollowCreate.as_view(),
+        name="topic-follow-create",
     ),
     path(
         "topics/<slug:slug>/posts/create/",

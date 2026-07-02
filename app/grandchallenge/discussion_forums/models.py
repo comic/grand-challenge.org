@@ -51,6 +51,13 @@ class Forum(UUIDModel):
             kwargs={"challenge_short_name": self.parent_object.short_name},
         )
 
+    @property
+    def follow_create_url(self):
+        return reverse(
+            "discussion-forums:forum-follow-create",
+            kwargs={"challenge_short_name": self.parent_object.short_name},
+        )
+
 
 class ForumTopic(FieldChangeMixin, UUIDModel):
     forum = models.ForeignKey(
@@ -187,6 +194,16 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
     def get_absolute_url(self):
         return reverse(
             "discussion-forums:topic-post-list",
+            kwargs={
+                "challenge_short_name": self.forum.parent_object.short_name,
+                "slug": self.slug,
+            },
+        )
+
+    @property
+    def follow_create_url(self):
+        return reverse(
+            "discussion-forums:topic-follow-create",
             kwargs={
                 "challenge_short_name": self.forum.parent_object.short_name,
                 "slug": self.slug,
