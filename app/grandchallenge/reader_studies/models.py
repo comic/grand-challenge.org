@@ -2210,6 +2210,7 @@ class Answer(UUIDModel):
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
+        self.score = None
         if not self.is_ground_truth:
             try:
                 ground_truth = Answer.objects.get(
