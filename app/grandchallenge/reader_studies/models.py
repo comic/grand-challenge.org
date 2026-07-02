@@ -2089,6 +2089,9 @@ class Answer(UUIDModel):
         unique_together = (
             ("creator", "display_set", "question", "is_ground_truth"),
         )
+        indexes = [
+            models.Index(fields=["display_set", "question", "is_ground_truth"])
+        ]
 
     def __str__(self):
         return f"{self.question.question_text} {self.answer} ({self.creator})"
@@ -2201,10 +2204,10 @@ class Answer(UUIDModel):
         self.score = self.question.calculate_score(self.answer, ground_truth)
         return self.score
 
-    def save(self, *args, calculate_score=True, **kwargs):
+    def save(self, *args, **kwargs):
         adding = self._state.adding
 
-        if not self.is_ground_truth and calculate_score:
+        if not self.is_ground_truth:
             try:
                 ground_truth = Answer.objects.get(
                     question=self.question,

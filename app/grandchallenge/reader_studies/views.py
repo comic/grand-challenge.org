@@ -1193,10 +1193,14 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         reader_study = self.get_object()
         if not (reader_study.is_educational and reader_study.has_ground_truth):
             raise Http404()
-        answers = Answer.objects.filter(
-            display_set_id=case_pk,
-            question__reader_study=reader_study,
-            is_ground_truth=True,
+        answers = (
+            Answer.objects.filter(
+                display_set_id=case_pk,
+                question__reader_study=reader_study,
+                is_ground_truth=True,
+            )
+            .prefetch_related("question__options")
+            .select_related("question")
         )
         return JsonResponse(
             {
