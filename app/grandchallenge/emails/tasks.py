@@ -73,7 +73,7 @@ def get_receivers(action):
 @lambda_task(singleton=True, retry_on=(LockNotAcquiredException,))
 def send_bulk_email(
     *,
-    action: SendActionChoices,
+    action: str,
     email_pk: int,
     # Django paginator uses 1-indexing for paging
     current_page_number: int = 1,
@@ -84,6 +84,8 @@ def send_bulk_email(
     if email.status != Email.EmailStatusChoices.QUEUED:
         task_logger.error(f"Email status is {email.status}")
         return
+
+    action = SendActionChoices(action)
 
     receivers = get_receivers(action=action)
     paginator = Paginator(receivers, 100)
