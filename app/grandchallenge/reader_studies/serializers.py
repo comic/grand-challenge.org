@@ -352,6 +352,7 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             "last_edit_duration",
             "total_edit_duration",
             "is_ground_truth",
+            "score",
         )
         swagger_schema_fields = {
             "properties": {"answer": {"title": "Answer", **ANSWER_TYPE_SCHEMA}}

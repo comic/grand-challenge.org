@@ -103,6 +103,13 @@ def test_answer_create(client):
 
     q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
 
+    AnswerFactory(  # Ground truth answer for the question
+        question=q,
+        answer=True,
+        display_set=ds,
+        is_ground_truth=True,
+    )
+
     response = get_view_for_user(
         viewname="api:reader-studies-answer-list",
         user=reader,
@@ -117,12 +124,23 @@ def test_answer_create(client):
     )
     assert response.status_code == 201
 
+    # Check response JSON
+    answer = response.json()
+
+    assert answer["creator"] == reader.username
+    assert str(ds.pk) in answer["display_set"]
+    assert str(q.pk) in answer["question"]
+    assert answer["answer"] is True
+    assert answer["score"] == 1.0
+
+    # Check answer gets updated in database
     answer = Answer.objects.get(pk=response.data.get("pk"))
 
     assert answer.creator == reader
     assert answer.display_set == ds
     assert answer.question == q
     assert answer.answer is True
+    assert answer.score == 1.0
 
 
 @pytest.mark.django_db
@@ -214,9 +232,17 @@ def test_answer_update(client):
     )
     assert response.status_code == 200
 
+    # Check response JSON
+    answer_json = response.json()
+    assert str(ds.pk) in answer_json["display_set"]
+    assert answer_json["answer"] is False
+    assert answer_json["score"] is None
+
+    # Check answer gets updated in database
     answer.refresh_from_db()
     assert answer.answer is False
     assert answer.display_set == ds
+    assert answer.score is None
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-detail",
