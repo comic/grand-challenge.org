@@ -22,7 +22,7 @@ The lifecycle on Grand Challenge is:
 Key points:
   - Load your model during startup (in the lifespan context), not during
     /invoke. Each /invoke call has its own timeout, and spending that time
-    loading a model will cause failures.
+    loading a model may cause failures.
   - The server must listen on port 4743.
   - /health must NOT redirect (302 is treated as a failure).
   - /invoke must return exactly 201 on success. Any other status is a failure.
