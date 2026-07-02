@@ -907,7 +907,7 @@ class AlgorithmImage(UUIDModel, ComponentImage):
             algorithm=algorithm,
         )
 
-        spent_credits = Job.objects.filter(
+        spent_job_credits = Job.objects.filter(
             creator=user_credit.user,
             is_complimentary=False,
             created__date__gte=user_credit.valid_from,
@@ -916,8 +916,21 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         ).aggregate(
             total=Sum("credits_consumed", default=0),
         )
+        spent_endpoint_credits = EndpointUtilization.objects.filter(
+            creator=user_credit.user,
+            created__date__gte=user_credit.valid_from,
+            created__date__lte=user_credit.valid_until,
+            algorithm=user_credit.algorithm,
+            reader_studies__isnull=True,
+        ).aggregate(
+            total=Sum("credits_consumed", default=0),
+        )
 
-        return user_credit.credits - spent_credits["total"]
+        return (
+            user_credit.credits
+            - spent_job_credits["total"]
+            - spent_endpoint_credits["total"]
+        )
 
     @staticmethod
     def get_remaining_general_credits(*, user):

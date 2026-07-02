@@ -424,6 +424,101 @@ class TestJobLimits:
         assert algorithm.credits_per_job == expected_credits_per_job
 
 
+@pytest.mark.django_db
+def test_algorithm_image_remaining_specific_credits_include_endpoint_utilization():
+    today = now().date()
+    yesterday = today - timedelta(days=1)
+    user = UserFactory()
+    algorithm_image = AlgorithmImageFactory()
+    endpoint = EndpointFactory(creator=user, algorithm_image=algorithm_image)
+    other_user_endpoint = EndpointFactory(algorithm_image=algorithm_image)
+    other_algorithm_endpoint = EndpointFactory(
+        algorithm_image=AlgorithmImageFactory()
+    )
+    older_endpoint = EndpointFactory(
+        creator=user, algorithm_image=algorithm_image
+    )
+    older_endpoint.endpoint_utilization.created = yesterday
+    older_endpoint.endpoint_utilization.save()
+    endpoint_for_reader_study = EndpointFactory(
+        creator=user, algorithm_image=algorithm_image
+    )
+    endpoint_for_reader_study.endpoint_utilization.reader_studies.add(
+        ReaderStudyFactory()
+    )
+    AlgorithmUserCredit.objects.create(
+        user=user,
+        algorithm=algorithm_image.algorithm,
+        credits=10,
+        valid_from=today,
+        valid_until=today,
+        comment="test",
+    )
+
+    assert (
+        algorithm_image.get_remaining_specific_credits(
+            user=user, algorithm=algorithm_image.algorithm
+        )
+        == 10
+    )
+
+    endpoint.endpoint_utilization.compute_cost_euro_millicents = 1000
+    endpoint.endpoint_utilization.save()
+
+    assert (
+        algorithm_image.get_remaining_specific_credits(
+            user=user, algorithm=algorithm_image.algorithm
+        )
+        == 9
+    )
+
+    other_user_endpoint.endpoint_utilization.compute_cost_euro_millicents = (
+        1000
+    )
+    other_user_endpoint.endpoint_utilization.save()
+
+    assert (
+        algorithm_image.get_remaining_specific_credits(
+            user=user, algorithm=algorithm_image.algorithm
+        )
+        == 9
+    ), "endpoints from other users should be excluded"
+
+    other_algorithm_endpoint.endpoint_utilization.compute_cost_euro_millicents = (
+        1000
+    )
+    other_algorithm_endpoint.endpoint_utilization.save()
+
+    assert (
+        algorithm_image.get_remaining_specific_credits(
+            user=user, algorithm=algorithm_image.algorithm
+        )
+        == 9
+    ), "endpoints from other algorithms should be excluded"
+
+    older_endpoint.endpoint_utilization.compute_cost_euro_millicents = 1000
+    older_endpoint.endpoint_utilization.save()
+
+    assert (
+        algorithm_image.get_remaining_specific_credits(
+            user=user, algorithm=algorithm_image.algorithm
+        )
+        == 9
+    ), "older endpoint utilizations should be excluded"
+
+    endpoint_for_reader_study.endpoint_utilization.compute_cost_euro_millicents = (
+        1000
+    )
+    endpoint_for_reader_study.endpoint_utilization.save()
+
+    assert (
+        algorithm_image.get_remaining_specific_credits(
+            user=user, algorithm=algorithm_image.algorithm
+        )
+        == 9
+    ), "endpoint utilizations linked to reader studies should be excluded"
+
+
 @pytest.mark.django_db()
 def test_user_statistics():
     algorithm_image = AlgorithmImageFactory()
