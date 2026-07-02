@@ -64,7 +64,7 @@ echo "=+= Doing a forward pass"
 #   is added because on Grand Challenge this directory cannot be used to store permanent files
 # '--volume ../ground_truth:/opt/ml/input/data/ground_truth:ro'
 #   is added to provide access to the (optional) tarball-upload locally
-docker run --rm {% if not no_gpus %}--gpus all {% endif %}\
+docker run --rm {% if use_gpus %}--gpus all {% endif %}\
     --platform=linux/amd64 \
     --network none \
     --volume "$INPUT_DIR":/input:ro \

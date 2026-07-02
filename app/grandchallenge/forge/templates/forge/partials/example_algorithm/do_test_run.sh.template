@@ -164,7 +164,7 @@ start_container() {
     local docker_run_args=(
         --detach
         --name "$CONTAINER_NAME"
-{% if not no_gpus %}        --gpus all{% endif %}
+{% if use_gpus %}        --gpus all{% endif %}
         --platform=linux/amd64
         --volume "${SCRIPT_DIR}/model":/opt/ml/model:ro
         --volume "$STAGING_INPUT_DIR":/input:ro
