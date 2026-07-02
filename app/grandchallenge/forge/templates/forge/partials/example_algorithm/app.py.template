@@ -13,16 +13,17 @@ The lifecycle on Grand Challenge is:
 
   1. Container starts → your server boots and loads the model
   2. /health is polled until it returns 200 (timeout: ~5 minutes)
-  3. For each case:
-       a. Inputs are placed at /input (previous inputs/outputs are cleared)
-       b. POST /invoke is called
-       c. Your code reads /input, processes, writes to /output, returns 201
-  4. Container is kept warm for a while in case more cases arrive
+  3. Inputs are placed at /input
+  4. POST /invoke is called
+  5. Your code reads /input, does a forward pass, writes to /output, returns 201
+  6. Container stops and outputs are uploaded to Grand Challenge
 
 Key points:
   - Load your model during startup (in the lifespan context), not during
-    /invoke. Each /invoke call has its own timeout, and spending that time
-    loading a model may cause failures.
+    /invoke. The /invoke call has its own timeout, and spending that time
+    loading a model may not leave sufficient time for processing. Separating model loading
+    from inference makes your container ready for future optimizations where multiple cases
+    may be processed without restarting the container.
   - The server must listen on port 4743.
   - /health must NOT redirect (302 is treated as a failure).
   - /invoke must return exactly 201 on success. Any other status is a failure.
@@ -122,9 +123,9 @@ async def invoke():
 
     When this is called, the case's input files are available at /input.
     Read them, run inference, write results to /output, and return 201.
+    Anything other than the status code returned by this method is ignored.
 
-    This may be called multiple times (once per case) without the container
-    restarting. Each call gets fresh /input and /output directories.
+    This may be called multiple times. Each call gets fresh /input and /output directories.
     """
     inference.run(MODEL)
     return Response(status_code=status.HTTP_201_CREATED)
