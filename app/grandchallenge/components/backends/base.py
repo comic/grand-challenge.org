@@ -84,7 +84,7 @@ class CIVProvisioningTask(NamedTuple):
     task: functools.partial
 
 
-def duration_to_millicents(*, duration, usd_cents_per_hour):
+def duration_to_euro_millicents(*, duration, usd_cents_per_hour):
     return ceil(
         (duration.total_seconds() / 3600)
         * usd_cents_per_hour
@@ -485,7 +485,7 @@ class Executor(ABC):
         if utilization_duration is None:
             return None
         else:
-            return duration_to_millicents(
+            return duration_to_euro_millicents(
                 duration=utilization_duration,
                 usd_cents_per_hour=self.usd_cents_per_hour,
             )

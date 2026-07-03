@@ -29,7 +29,7 @@ from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
     EndpointOrchestrator,
 )
-from grandchallenge.components.backends.base import duration_to_millicents
+from grandchallenge.components.backends.base import duration_to_euro_millicents
 from grandchallenge.components.models import (  # noqa: F401
     APIMethodChoices,
     CIVForObjectMixin,
@@ -1749,7 +1749,7 @@ class Endpoint(FieldChangeMixin, UUIDModel):
     def handle_endpoint_stopped(self):
         self.endpoint_utilization.duration = now() - self.created
         self.endpoint_utilization.compute_cost_euro_millicents = (
-            duration_to_millicents(
+            duration_to_euro_millicents(
                 duration=self.endpoint_utilization.duration,
                 usd_cents_per_hour=self.orchestrator.usd_cents_per_hour,
             )

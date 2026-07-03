@@ -5,7 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.backends.base import duration_to_millicents
+from grandchallenge.components.backends.base import duration_to_euro_millicents
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.utilization.models import JobWarmPoolUtilization
@@ -60,7 +60,7 @@ def create_job_warm_pool_utilizations():
             JobWarmPoolUtilization.objects.create(
                 job=job,
                 duration=duration,
-                compute_cost_euro_millicents=duration_to_millicents(
+                compute_cost_euro_millicents=duration_to_euro_millicents(
                     duration=duration,
                     usd_cents_per_hour=executor.usd_cents_per_hour,
                 ),
