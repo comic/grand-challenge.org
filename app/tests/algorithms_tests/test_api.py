@@ -803,11 +803,6 @@ class TestEndpointKeepAlive:
         assert response.status_code == 400, response.data
         assert response.json() == {"status": "Endpoint duration limit reached"}
 
-        endpoint.refresh_from_db()
-        assert (
-            endpoint.maximum_duration == endpoint.endpoint_utilization.duration
-        )
-
 
 @pytest.mark.django_db
 class TestInvocationList:

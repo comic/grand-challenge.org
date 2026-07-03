@@ -1770,6 +1770,88 @@ class TestEndpointProperties:
 
 
 @pytest.mark.django_db
+def test_endpoint_duration_limit_without_credits():
+    endpoint = EndpointFactory.create()
+    utilization = endpoint.endpoint_utilization
+
+    duration_limit = endpoint.calculate_duration_limit()
+
+    utilization.refresh_from_db()
+    assert duration_limit == utilization.duration
+
+
+@pytest.mark.django_db
+def test_endpoint_duration_limit_with_zero_credits():
+    endpoint = EndpointFactory.create()
+    utilization = endpoint.endpoint_utilization
+    AlgorithmUserCreditFactory(
+        user=endpoint.creator,
+        algorithm=endpoint.algorithm_image.algorithm,
+        credits=0,
+        valid_from=now().date(),
+        valid_until=now().date(),
+        comment="test",
+    )
+
+    duration_limit = endpoint.calculate_duration_limit()
+
+    utilization.refresh_from_db()
+    assert duration_limit < utilization.duration
+
+
+@pytest.mark.django_db
+def test_endpoint_duration_limit_with_credits():
+    endpoint = EndpointFactory.create()
+    utilization = endpoint.endpoint_utilization
+    AlgorithmUserCreditFactory(
+        user=endpoint.creator,
+        algorithm=endpoint.algorithm_image.algorithm,
+        credits=1000,
+        valid_from=now().date(),
+        valid_until=now().date(),
+        comment="test",
+    )
+
+    duration_limit = endpoint.calculate_duration_limit()
+
+    utilization.refresh_from_db()
+    assert duration_limit > utilization.duration
+
+
+@pytest.mark.django_db
+def test_endpoint_keep_alive_limit_reached():
+    endpoint = EndpointFactory.create()
+
+    result = endpoint.keep_alive(seconds=60)
+
+    assert result.limit_reached
+    endpoint.refresh_from_db()
+    assert endpoint.maximum_duration < timedelta(seconds=60)
+
+
+@pytest.mark.django_db
+def test_endpoint_keep_alive():
+    endpoint = EndpointFactory.create()
+    AlgorithmUserCreditFactory(
+        user=endpoint.creator,
+        algorithm=endpoint.algorithm_image.algorithm,
+        credits=1000,
+        valid_from=now().date(),
+        valid_until=now().date(),
+        comment="test",
+    )
+
+    result = endpoint.keep_alive(seconds=60)
+
+    assert not result.limit_reached
+    endpoint.refresh_from_db()
+    assert (
+        endpoint.maximum_duration
+        == endpoint.endpoint_utilization.duration + timedelta(seconds=60)
+    )
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "algorithm_editor",
     (True, False),
