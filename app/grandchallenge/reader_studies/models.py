@@ -2089,11 +2089,6 @@ class Answer(UUIDModel):
         unique_together = (
             ("creator", "display_set", "question", "is_ground_truth"),
         )
-        indexes = [
-            models.Index(
-                fields=["is_ground_truth", "display_set", "question"]
-            ),
-        ]
 
     def __str__(self):
         return f"{self.question.question_text} {self.answer} ({self.creator})"
