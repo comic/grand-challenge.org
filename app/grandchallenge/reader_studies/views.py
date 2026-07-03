@@ -1196,6 +1196,7 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         answers = (
             Answer.objects.filter(
                 display_set_id=case_pk,
+                question__reader_study=reader_study,
                 is_ground_truth=True,
             )
             .prefetch_related("question__options")
