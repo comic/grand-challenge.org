@@ -1766,9 +1766,7 @@ class Endpoint(FieldChangeMixin, UUIDModel):
             update_fields=["duration", "compute_cost_euro_millicents"]
         )
 
-    def calculate_duration_limit(self):
-        self.update_utilization()  # required to update remaining credits
-
+    def _get_duration_limit(self):
         try:
             remaining_credits = (
                 self.algorithm_image.get_remaining_specific_credits(
@@ -1788,10 +1786,11 @@ class Endpoint(FieldChangeMixin, UUIDModel):
         return duration_limit
 
     def keep_alive(self, *, seconds):
-        duration_limit = self.calculate_duration_limit()
+        self.update_utilization()
         new_duration = self.endpoint_utilization.duration + timedelta(
             seconds=seconds
         )
+        duration_limit = self._get_duration_limit()
 
         limit_reached = new_duration >= duration_limit
         self.maximum_duration = min(new_duration, duration_limit)
