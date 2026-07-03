@@ -46,7 +46,7 @@ output_path="${SCRIPT_DIR}/$output_filename"
 # Save the Docker-container image and gzip it
 log "Saving the image (this can take a while)"
 docker save "$DOCKER_IMAGE_TAG" | gzip -c > "$output_path"
-logs "Saved as: ${output_filename}"
+log "Saved as: ${output_filename}"
 
 # Create the ground truth tarball
 log "Packing the ground truth (this can take a while)"
