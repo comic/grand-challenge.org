@@ -17,7 +17,7 @@ The evaluation steps are:
   5. Save the metrics to /output/metrics.json
 
 To test locally:  ./do_test_run.sh
-To save for upload to GC:   ./do_save.sh
+To save for upload to Grand Challenge:   ./do_save.sh
 
 Any implementation will do as long as it produces metrics.json in the expected format.
 
