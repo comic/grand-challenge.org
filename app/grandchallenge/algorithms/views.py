@@ -1,6 +1,5 @@
 import io
 import logging
-from datetime import timedelta
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -927,9 +926,7 @@ class EndpointViewSet(ReadOnlyModelViewSet):
     @action(detail=True, methods=["patch"])
     def keep_alive(self, request, *args, **kwargs):
         endpoint = self.get_object()
-        result = endpoint.keep_alive(
-            added_duration=timedelta(minutes=5),
-        )
+        result = endpoint.keep_alive(seconds=300)
 
         if result.limit_reached:
             return Response(
