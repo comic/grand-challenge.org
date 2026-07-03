@@ -1,6 +1,7 @@
 import logging
 import secrets
 from datetime import datetime, timedelta
+from typing import NamedTuple
 
 from actstream.actions import follow, is_following
 from dateutil.relativedelta import relativedelta
@@ -29,7 +30,10 @@ from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
     EndpointOrchestrator,
 )
-from grandchallenge.components.backends.base import duration_to_euro_millicents
+from grandchallenge.components.backends.base import (
+    duration_to_euro_millicents,
+    euro_millicents_to_duration,
+)
 from grandchallenge.components.models import (  # noqa: F401
     APIMethodChoices,
     CIVForObjectMixin,
@@ -1584,6 +1588,10 @@ class EndpointManager(models.QuerySet):
         )
 
 
+class KeepAliveResult(NamedTuple):
+    limit_reached: bool
+
+
 class Endpoint(FieldChangeMixin, UUIDModel):
     StatusChoices = EndpointStatusChoices
 
@@ -1680,7 +1688,7 @@ class Endpoint(FieldChangeMixin, UUIDModel):
             self.has_changed("status")
             and self.status == EndpointStatusChoices.STOPPED
         ):
-            self.handle_endpoint_stopped()
+            self.update_utilization()
 
     def create_groups(self):
         self.viewers_group = Group.objects.create(
@@ -1746,7 +1754,7 @@ class Endpoint(FieldChangeMixin, UUIDModel):
         self.full_clean()
         self.save()
 
-    def handle_endpoint_stopped(self):
+    def update_utilization(self):
         self.endpoint_utilization.duration = now() - self.created
         self.endpoint_utilization.compute_cost_euro_millicents = (
             duration_to_euro_millicents(
@@ -1756,6 +1764,39 @@ class Endpoint(FieldChangeMixin, UUIDModel):
         )
         self.endpoint_utilization.save(
             update_fields=["duration", "compute_cost_euro_millicents"]
+        )
+
+    def calculate_duration_limit(self):
+        self.update_utilization()  # required to update remaining credits
+
+        try:
+            remaining_credits = (
+                self.algorithm_image.get_remaining_specific_credits(
+                    user=self.creator, algorithm=self.algorithm_image.algorithm
+                )
+            )
+        except ObjectDoesNotExist:
+            remaining_credits = 0
+        remaining_euro_millicents = remaining_credits * 1000
+        duration_limit = (
+            self.endpoint_utilization.duration
+            + euro_millicents_to_duration(
+                euro_millicents=remaining_euro_millicents,
+                usd_cents_per_hour=self.orchestrator.usd_cents_per_hour,
+            )
+        )
+        return duration_limit
+
+    def keep_alive(self, *, added_duration):
+        duration_limit = self.calculate_duration_limit()
+        new_duration = self.endpoint_utilization.duration + added_duration
+
+        limit_reached = new_duration >= duration_limit
+        self.maximum_duration = min(new_duration, duration_limit)
+        self.save(update_fields=["maximum_duration"])
+
+        return KeepAliveResult(
+            limit_reached=limit_reached,
         )
 
     @property

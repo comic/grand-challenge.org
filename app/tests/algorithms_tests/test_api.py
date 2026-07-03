@@ -770,7 +770,7 @@ class TestEndpointDetail:
 
 
 @pytest.mark.django_db
-class TestEndpointReadOnly:
+class TestEndpointReadUpdateOnly:
     """Verify the viewset rejects write methods."""
 
     url = "/api/v1/algorithms/endpoints/"
@@ -781,23 +781,32 @@ class TestEndpointReadOnly:
         response = client.post(self.url, data={})
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_put_not_allowed(self, client):
-        endpoint = EndpointFactory()
-        client.force_login(user=endpoint.creator)
-        response = client.put(f"{self.url}{endpoint.pk}/", data={})
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_patch_not_allowed(self, client):
-        endpoint = EndpointFactory()
-        client.force_login(user=endpoint.creator)
-        response = client.patch(f"{self.url}{endpoint.pk}/", data={})
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
     def test_delete_not_allowed(self, client):
         endpoint = EndpointFactory()
         client.force_login(user=endpoint.creator)
         response = client.delete(f"{self.url}{endpoint.pk}/")
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+class TestEndpointKeepAlive:
+    def get_url(self, pk):
+        return f"/api/v1/algorithms/endpoints/{pk}/keep_alive/"
+
+    def test_duration_limit_reached(self, client):
+        endpoint = EndpointFactory()
+        client.force_login(user=endpoint.creator)
+        client.raise_request_exception = True
+
+        response = client.patch(self.get_url(endpoint.pk))
+
+        assert response.status_code == 400, response.data
+        assert response.json() == {"status": "Endpoint duration limit reached"}
+
+        endpoint.refresh_from_db()
+        assert (
+            endpoint.maximum_duration == endpoint.endpoint_utilization.duration
+        )
 
 
 @pytest.mark.django_db

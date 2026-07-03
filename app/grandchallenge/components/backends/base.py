@@ -93,6 +93,15 @@ def duration_to_euro_millicents(*, duration, usd_cents_per_hour):
     )
 
 
+def euro_millicents_to_duration(*, euro_millicents, usd_cents_per_hour):
+    return timedelta(
+        hours=euro_millicents
+        / 1000
+        / settings.COMPONENTS_USD_TO_EUR
+        / usd_cents_per_hour
+    )
+
+
 def serialize_aws_request(request, *, unsigned_headers=None):
     """
     The kwargs that will be passed to httpx.stream or httpx.request
