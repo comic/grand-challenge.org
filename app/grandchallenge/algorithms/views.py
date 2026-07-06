@@ -27,12 +27,15 @@ from django.views.generic import (
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from guardian.shortcuts import get_perms
+from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
     RetrieveModelMixin,
 )
 from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 
 from grandchallenge.algorithms.filters import (
@@ -919,6 +922,19 @@ class EndpointViewSet(ReadOnlyModelViewSet):
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_class = EndpointFilter
+
+    @action(detail=True, methods=["patch"])
+    def keep_alive(self, request, *args, **kwargs):
+        endpoint = self.get_object()
+        result = endpoint.keep_alive(seconds=300)
+
+        if result.limit_reached:
+            return Response(
+                {"status": "Endpoint duration limit reached"},
+                status=HTTP_400_BAD_REQUEST,
+            )
+        else:
+            return Response({"status": "Endpoint lifetime extended"})
 
 
 class InvocationViewSet(

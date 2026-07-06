@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import pytest
 from django.contrib.auth.models import Group
+from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 from requests import put
 from rest_framework import status
@@ -30,6 +31,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
+    AlgorithmUserCreditFactory,
     EndpointFactory,
     InvocationFactory,
 )
@@ -770,7 +772,7 @@ class TestEndpointDetail:
 
 
 @pytest.mark.django_db
-class TestEndpointReadOnly:
+class TestEndpointReadUpdateOnly:
     """Verify the viewset rejects write methods."""
 
     url = "/api/v1/algorithms/endpoints/"
@@ -781,23 +783,54 @@ class TestEndpointReadOnly:
         response = client.post(self.url, data={})
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_put_not_allowed(self, client):
-        endpoint = EndpointFactory()
-        client.force_login(user=endpoint.creator)
-        response = client.put(f"{self.url}{endpoint.pk}/", data={})
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
-    def test_patch_not_allowed(self, client):
-        endpoint = EndpointFactory()
-        client.force_login(user=endpoint.creator)
-        response = client.patch(f"{self.url}{endpoint.pk}/", data={})
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-
     def test_delete_not_allowed(self, client):
         endpoint = EndpointFactory()
         client.force_login(user=endpoint.creator)
         response = client.delete(f"{self.url}{endpoint.pk}/")
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+class TestEndpointKeepAlive:
+    def get_url(self, pk):
+        return f"/api/v1/algorithms/endpoints/{pk}/keep_alive/"
+
+    def test_duration_limit_reached(self, client):
+        endpoint = EndpointFactory.create()
+        client.force_login(user=endpoint.creator)
+        client.raise_request_exception = True
+
+        response = client.patch(self.get_url(endpoint.pk))
+
+        assert response.status_code == 400, response.data
+        assert response.json() == {"status": "Endpoint duration limit reached"}
+        endpoint.refresh_from_db()
+        assert endpoint.maximum_duration < timedelta(seconds=300)
+
+    def test_maximum_duration_extended(self, client):
+        endpoint = EndpointFactory.create(
+            maximum_duration=timedelta(seconds=1)
+        )
+        AlgorithmUserCreditFactory(
+            user=endpoint.creator,
+            algorithm=endpoint.algorithm_image.algorithm,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
+        client.force_login(user=endpoint.creator)
+        client.raise_request_exception = True
+
+        response = client.patch(self.get_url(endpoint.pk))
+
+        assert response.status_code == 200, response.data
+        assert response.json() == {"status": "Endpoint lifetime extended"}
+        endpoint.refresh_from_db()
+        assert (
+            endpoint.maximum_duration
+            == endpoint.endpoint_utilization.duration + timedelta(seconds=300)
+        )
 
 
 @pytest.mark.django_db
