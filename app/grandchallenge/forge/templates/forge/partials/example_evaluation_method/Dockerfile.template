@@ -26,10 +26,16 @@ RUN python -m pip install \
     --no-color \
     --requirement /opt/app/requirements.txt
 
+COPY --chown=user:user app.py /opt/app/
 COPY --chown=user:user helpers.py /opt/app/
 COPY --chown=user:user evaluate.py /opt/app/
 
 # Setting this will limit the number of workers used by the evaluate.py
 ENV GRAND_CHALLENGE_MAX_WORKERS=
 
-ENTRYPOINT ["python", "evaluate.py"]
+# This label is required — Grand Challenge uses it to detect that the container
+# implements the invoke API. Without it, the container defaults to exec mode.
+# Do not remove this label.
+LABEL org.grand-challenge.api-method="invoke"
+
+ENTRYPOINT ["python", "app.py"]
