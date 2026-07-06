@@ -43,6 +43,11 @@ and writes output results to:
 
 `./test/output`
 
+**Note on GPU support:** The script automatically detects whether NVIDIA GPU support
+is available on your machine. If not (e.g. on macOS), it will run the container on
+CPU instead. This does not affect the exported container — on Grand Challenge your
+algorithm will always have GPU access if enabled in the algorithm settings.
+
 ## Saving the container
 
 To save the container and prepare it for upload to grand-challenge.org, run:

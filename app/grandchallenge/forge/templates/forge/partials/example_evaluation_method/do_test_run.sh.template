@@ -44,6 +44,7 @@ DOCKER_NETWORK_TAG=""
 TESTER_NAME=""
 CONTAINER_PORT=4743
 BASE_URL=""
+GPU_ARGS=""
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -51,14 +52,21 @@ BASE_URL=""
 # ---------------------------------------------------------------------------
 
 main() {
+    # Prepare staging dirs, Docker network, and detect GPU support
     setup
     trap cleanup EXIT
+
     build_container
     start_container
+
+    # Poll /health until the server signals it's ready
     check_health
 
+    # Copy test input files into the container
     provision
+    # Call POST /invoke and wait for evaluation method completion
     invoke
+    # Copy the results back to the host
     collect_output
 
     log "Save this image for uploading via ./do_save.sh"
@@ -85,6 +93,20 @@ setup() {
 
     # Disable promotional logs from Docker
     export DOCKER_CLI_HINTS=false
+
+    # Detect whether the NVIDIA GPU runtime is available.
+    # On macOS or machines without nvidia-container-runtime, --gpus all would
+    # prevent the container from starting. In that case we skip the flag and
+    # the evaluation will run on CPU.
+    # This does not affect the exported container — on Grand Challenge your
+    # evaluation method will always have GPU access.
+    if docker info 2>/dev/null | grep -q "Runtimes:.*nvidia"; then
+        GPU_ARGS="--gpus all"
+        log "NVIDIA runtime detected — enabling GPU access"
+    else
+        GPU_ARGS=""
+        log "No NVIDIA runtime detected — running on CPU (this is fine for testing)"
+    fi
 
     # Create empty staging directories for the /input and /output bind mounts
     rm -rf "$STAGING_INPUT_DIR" "$STAGING_OUTPUT_DIR"
@@ -170,7 +192,7 @@ start_container() {
     local docker_run_args=(
         --detach
         --name "$CONTAINER_NAME"
-        {% if use_gpus %}--gpus all{% endif %}
+        ${GPU_ARGS:+$GPU_ARGS}
         --platform=linux/amd64
         --volume "$STAGING_INPUT_DIR":/input:ro
         --volume "$STAGING_OUTPUT_DIR":/output

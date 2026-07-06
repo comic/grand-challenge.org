@@ -2,7 +2,7 @@
 """
 Example algorithm inference server for Grand Challenge.
 
-You should not need to edit this file. Instead, edit inference.py to implement
+You should NOT need to edit this file. Instead, edit inference.py to implement
 your algorithm's init_model() and run() functions.
 
 Grand Challenge runs your algorithm as an HTTP server with two endpoints:
