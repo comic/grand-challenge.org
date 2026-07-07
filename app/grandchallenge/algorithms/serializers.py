@@ -173,7 +173,17 @@ class EndpointPostSerializer(serializers.ModelSerializer):
                 "Algorithm image does not implement the invoke API"
             )
 
-        # TODO: check for remaining algorithm user credits
+        try:
+            remaining_credits = AlgorithmImage.get_remaining_specific_credits(
+                user=user, algorithm=algorithm
+            )
+        except ObjectDoesNotExist:
+            remaining_credits = 0
+
+        if remaining_credits <= 0:
+            raise serializers.ValidationError(
+                "You have run out of algorithm credits"
+            )
 
         if (
             Endpoint.objects.active()

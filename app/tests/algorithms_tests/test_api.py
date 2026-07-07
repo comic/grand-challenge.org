@@ -807,6 +807,30 @@ class TestEndpointCreate:
         ), response.data
         assert response.data["algorithm"][0].code == "does_not_exist"
 
+    def test_cannot_create_endpoint_without_credits(self, client):
+        user = UserFactory()
+        assign_perm("algorithms.add_endpoint", user)
+        algorithm = AlgorithmFactory()
+        algorithm.add_editor(user)
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), response.data
+        assert (
+            str(response.data["non_field_errors"][0])
+            == "You have run out of algorithm credits"
+        )
+
     def test_user_with_permission_can_create_endpoint(self, client):
         user = UserFactory()
         assign_perm("algorithms.add_endpoint", user)
@@ -818,6 +842,14 @@ class TestEndpointCreate:
             is_desired_version=True,
             is_manifest_valid=True,
             is_in_registry=True,
+        )
+        AlgorithmUserCreditFactory(
+            algorithm=algorithm,
+            user=user,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
         )
 
         client.force_login(user=user)
@@ -836,6 +868,14 @@ class TestEndpointCreate:
             is_desired_version=True,
             is_manifest_valid=True,
             is_in_registry=True,
+        )
+        AlgorithmUserCreditFactory(
+            algorithm=algorithm,
+            user=user,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
         )
 
         client.force_login(user=user)
@@ -896,6 +936,14 @@ class TestEndpointCreate:
             is_manifest_valid=True,
             is_in_registry=True,
         )
+        AlgorithmUserCreditFactory(
+            algorithm=algorithm,
+            user=user,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
         EndpointFactory(creator=user, algorithm_image=algorithm_image)
 
         client.force_login(user=user)
@@ -921,6 +969,14 @@ class TestEndpointCreate:
             is_manifest_valid=True,
             is_in_registry=True,
         )
+        AlgorithmUserCreditFactory(
+            algorithm=algorithm,
+            user=user,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
         EndpointFactory(algorithm_image=algorithm_image)
 
         client.force_login(user=user)
@@ -940,6 +996,14 @@ class TestEndpointCreate:
             is_desired_version=True,
             is_manifest_valid=True,
             is_in_registry=True,
+        )
+        AlgorithmUserCreditFactory(
+            algorithm=algorithm,
+            user=user,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
         )
         endpoint = EndpointFactory(creator=user)
 
