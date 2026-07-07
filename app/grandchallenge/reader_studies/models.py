@@ -2147,7 +2147,7 @@ class Answer(UUIDModel):
         if not creator.has_perm("read_readerstudy", question.reader_study):
             raise ValidationError("This user is not a reader for this study.")
 
-        valid_options = question.options.values_list("id", flat=True)
+        valid_options = [option.id for option in question.options.all()]
         if question.answer_type == Question.AnswerType.CHOICE:
             if not question.required:
                 valid_options = (*valid_options, None)
@@ -2180,20 +2180,23 @@ class Answer(UUIDModel):
     @property
     def answer_text(self):
         if self.question.answer_type == Question.AnswerType.CHOICE:
-            return (
-                self.question.options.filter(pk=self.answer)
-                .values_list("title", flat=True)
-                .first()
-                or ""
+            return next(
+                (
+                    option.title
+                    for option in self.question.options.all()
+                    if option.pk == self.answer
+                ),
+                "",
             )
 
         if self.question.answer_type == Question.AnswerType.MULTIPLE_CHOICE:
             return ", ".join(
-                self.question.options.filter(pk__in=self.answer)
-                .order_by("title")
-                .values_list("title", flat=True)
+                sorted(
+                    option.title
+                    for option in self.question.options.all()
+                    if option.pk in self.answer
+                )
             )
-
         return self.answer
 
     def calculate_score(self, ground_truth):
@@ -2201,10 +2204,11 @@ class Answer(UUIDModel):
         self.score = self.question.calculate_score(self.answer, ground_truth)
         return self.score
 
-    def save(self, *args, calculate_score=True, **kwargs):
+    def save(self, *args, **kwargs):
         adding = self._state.adding
 
-        if not self.is_ground_truth and calculate_score:
+        self.score = None
+        if not self.is_ground_truth:
             try:
                 ground_truth = Answer.objects.get(
                     question=self.question,

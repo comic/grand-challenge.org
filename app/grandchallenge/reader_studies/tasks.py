@@ -29,7 +29,11 @@ def answers_from_ground_truth(
 
     all_answers = Answer.objects.filter(question__reader_study=reader_study)
 
-    for answer in all_answers.filter(is_ground_truth=True):
+    for answer in (
+        all_answers.filter(is_ground_truth=True)
+        .prefetch_related("question__options")
+        .select_related("question")
+    ):
         # Simplify permissions and create new answers
         answer._state.adding = True
         answer.id = None
@@ -43,7 +47,8 @@ def answers_from_ground_truth(
             display_set=answer.display_set,
             is_ground_truth=answer.is_ground_truth,
         )
-        answer.save(calculate_score=False)
+
+        answer.save()
 
 
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
