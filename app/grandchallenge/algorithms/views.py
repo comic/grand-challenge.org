@@ -1,5 +1,6 @@
 import io
 import logging
+from datetime import timedelta
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -86,6 +87,7 @@ from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
     InvocationPostSerializer,
     JobPostSerializer,
+    KeepAliveSerializer,
 )
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
@@ -926,7 +928,12 @@ class EndpointViewSet(ReadOnlyModelViewSet):
     @action(detail=True, methods=["patch"])
     def keep_alive(self, request, *args, **kwargs):
         endpoint = self.get_object()
-        result = endpoint.keep_alive(seconds=300)
+
+        params = KeepAliveSerializer(data=request.data)
+        params.is_valid(raise_exception=True)
+        duration = timedelta(minutes=params.validated_data["duration_minutes"])
+
+        result = endpoint.keep_alive(duration=duration)
 
         if result.limit_reached:
             return Response(

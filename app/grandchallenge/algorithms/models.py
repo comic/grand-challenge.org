@@ -1785,11 +1785,9 @@ class Endpoint(FieldChangeMixin, UUIDModel):
         )
         return duration_limit
 
-    def keep_alive(self, *, seconds):
+    def keep_alive(self, *, duration):
         self.update_utilization()
-        new_duration = self.endpoint_utilization.duration + timedelta(
-            seconds=seconds
-        )
+        new_duration = self.endpoint_utilization.duration + duration
         duration_limit = self._get_duration_limit()
 
         limit_reached = new_duration >= duration_limit

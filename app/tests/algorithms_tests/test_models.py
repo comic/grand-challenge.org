@@ -1773,7 +1773,7 @@ class TestEndpointProperties:
 def test_endpoint_keep_alive_limit_reached():
     endpoint = EndpointFactory.create()
 
-    result = endpoint.keep_alive(seconds=60)
+    result = endpoint.keep_alive(duration=timedelta(seconds=60))
 
     assert result.limit_reached
     endpoint.refresh_from_db()
@@ -1792,7 +1792,7 @@ def test_endpoint_keep_alive():
         comment="test",
     )
 
-    result = endpoint.keep_alive(seconds=60)
+    result = endpoint.keep_alive(duration=timedelta(seconds=60))
 
     assert not result.limit_reached
     endpoint.refresh_from_db()

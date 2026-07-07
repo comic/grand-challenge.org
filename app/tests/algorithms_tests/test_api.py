@@ -798,7 +798,6 @@ class TestEndpointKeepAlive:
     def test_duration_limit_reached(self, client):
         endpoint = EndpointFactory.create()
         client.force_login(user=endpoint.creator)
-        client.raise_request_exception = True
 
         response = client.patch(self.get_url(endpoint.pk))
 
@@ -820,7 +819,6 @@ class TestEndpointKeepAlive:
             comment="test",
         )
         client.force_login(user=endpoint.creator)
-        client.raise_request_exception = True
 
         response = client.patch(self.get_url(endpoint.pk))
 
@@ -831,6 +829,67 @@ class TestEndpointKeepAlive:
             endpoint.maximum_duration
             == endpoint.endpoint_utilization.duration + timedelta(seconds=300)
         )
+
+    def test_keep_alive_params(self, client):
+        endpoint = EndpointFactory.create(
+            maximum_duration=timedelta(seconds=0)
+        )
+        AlgorithmUserCreditFactory(
+            user=endpoint.creator,
+            algorithm=endpoint.algorithm_image.algorithm,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
+        client.force_login(user=endpoint.creator)
+
+        response = client.patch(
+            self.get_url(endpoint.pk),
+            content_type="application/json",
+            data={
+                "duration_minutes": 7,
+            },
+        )
+
+        assert response.status_code == 200, response.data
+        assert response.json() == {"status": "Endpoint lifetime extended"}
+        endpoint.refresh_from_db()
+        assert (
+            endpoint.maximum_duration
+            == endpoint.endpoint_utilization.duration + timedelta(minutes=7)
+        )
+
+    def test_keep_alive_params_limit(self, client):
+        endpoint = EndpointFactory.create(
+            maximum_duration=timedelta(seconds=0)
+        )
+        AlgorithmUserCreditFactory(
+            user=endpoint.creator,
+            algorithm=endpoint.algorithm_image.algorithm,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
+        client.force_login(user=endpoint.creator)
+
+        response = client.patch(
+            self.get_url(endpoint.pk),
+            content_type="application/json",
+            data={
+                "duration_minutes": 20,
+            },
+        )
+
+        assert response.status_code == 400, response.data
+        assert response.json() == {
+            "duration_minutes": [
+                "Ensure this value is less than or equal to 15."
+            ]
+        }
+        endpoint.refresh_from_db()
+        assert endpoint.maximum_duration == timedelta(seconds=0)
 
 
 @pytest.mark.django_db

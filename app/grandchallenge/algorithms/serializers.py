@@ -121,6 +121,15 @@ class AlgorithmModelSerializer(serializers.ModelSerializer):
         fields = ["pk", "algorithm", "created", "import_status", "model"]
 
 
+class KeepAliveSerializer(serializers.Serializer):
+    duration_minutes = serializers.IntegerField(
+        required=False,
+        default=5,
+        min_value=1,
+        max_value=15,
+    )
+
+
 class EndpointSerializer(serializers.ModelSerializer):
     algorithm = HyperlinkedRelatedField(
         source="algorithm_image.algorithm",
