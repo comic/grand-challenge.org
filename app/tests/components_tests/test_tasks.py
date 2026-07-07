@@ -52,6 +52,7 @@ from grandchallenge.components.tasks import (
     encode_b64j,
     handle_endpoint_invocation_event,
     handle_endpoint_status_event,
+    invoke_endpoint,
     parse_endpoint_invocation_outputs,
     preload_interactive_algorithms,
     remove_container_image_from_registry,
@@ -2015,3 +2016,35 @@ def test_parse_endpoint_invocation_outputs_cancelled_skipped(mocker):
     mock_get_outputs.assert_not_called()
     assert invocation.status == InvocationStatusChoices.CANCELLED
     assert invocation.outputs.count() == 0
+
+
+@pytest.mark.django_db
+def test_invoke_endpoint_calls_keep_alive(mocker):
+    invocation = InvocationFactory.create(
+        status=InvocationStatusChoices.PROVISIONED,
+    )
+    mock_keep_alive = mocker.patch.object(
+        Endpoint,
+        "keep_alive",
+    )
+
+    invoke_endpoint(**invocation.task_kwargs)
+
+    mock_keep_alive.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_invoke_endpoint_skips_keep_alive_for_reader_study_endpoint(mocker):
+    invocation = InvocationFactory.create(
+        status=InvocationStatusChoices.PROVISIONED,
+    )
+    reader_study = ReaderStudyFactory.create()
+    invocation.endpoint.endpoint_utilization.reader_studies.add(reader_study)
+    mock_keep_alive = mocker.patch.object(
+        Endpoint,
+        "keep_alive",
+    )
+
+    invoke_endpoint(**invocation.task_kwargs)
+
+    mock_keep_alive.assert_not_called()

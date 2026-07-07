@@ -510,6 +510,11 @@ class InvocationPostSerializer(serializers.ModelSerializer):
             status=InvocationStatusChoices.VALIDATING_INPUTS,
         )
 
+        if not invocation.endpoint.is_linked_to_reader_study:
+            invocation.endpoint.keep_alive(
+                seconds=invocation.orchestrator.time_limit.total_seconds()
+            )
+
         try:
             invocation.process_civ_data_objects_and_execute_linked_task(
                 civ_data_objects=civ_data_objects,
