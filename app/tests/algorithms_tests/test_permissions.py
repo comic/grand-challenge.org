@@ -552,3 +552,11 @@ def test_endpoint_permissions():
 
     with pytest.raises(Group.DoesNotExist):
         viewers_group.refresh_from_db()
+
+
+@pytest.mark.django_db
+def test_endpoint_creators_group_has_perm(settings):
+    creators_group = Group.objects.get(
+        name=settings.ALGORITHM_ENDPOINTS_CREATORS_GROUP_NAME
+    )
+    assert creators_group.permissions.filter(codename="add_endpoint").exists()
