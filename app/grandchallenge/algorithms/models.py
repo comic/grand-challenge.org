@@ -1604,7 +1604,10 @@ class Endpoint(FieldChangeMixin, UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    maximum_duration = models.DurationField(default=timedelta(minutes=10))
+    maximum_duration = models.DurationField(
+        default=timedelta(minutes=10),
+        editable=False,
+    )
     status = models.CharField(
         max_length=17,
         choices=EndpointStatusChoices,

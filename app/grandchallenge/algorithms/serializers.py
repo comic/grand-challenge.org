@@ -131,7 +131,14 @@ class EndpointSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Endpoint
-        fields = ["api_url", "pk", "algorithm", "status"]
+        fields = [
+            "api_url",
+            "pk",
+            "created",
+            "algorithm",
+            "status",
+            "maximum_duration",
+        ]
 
 
 class JobSerializer(serializers.ModelSerializer):
