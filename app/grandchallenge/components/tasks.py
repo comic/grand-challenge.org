@@ -1865,7 +1865,11 @@ def invoke_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     with check_lock_acquired():
-        invocation = model.objects.select_for_update(nowait=True).get(pk=pk)
+        invocation = (
+            model.objects.select_for_update(nowait=True)
+            .select_related("endpoint")
+            .get(pk=pk)
+        )
 
     if invocation.status == invocation.StatusChoices.CANCELLED:
         # Nothing to do
@@ -1879,6 +1883,11 @@ def invoke_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
         raise RuntimeError("Endpoint is not running")
 
     orchestrator = invocation.orchestrator
+
+    if not invocation.endpoint.is_linked_to_reader_study:
+        invocation.endpoint.keep_alive(
+            seconds=orchestrator.time_limit.total_seconds()
+        )
 
     try:
         orchestrator.invoke_endpoint(inference_id=invocation.inference_id)

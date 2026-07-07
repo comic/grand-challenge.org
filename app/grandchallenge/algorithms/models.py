@@ -1740,6 +1740,10 @@ class Endpoint(FieldChangeMixin, UUIDModel):
     def orchestrator(self):
         return EndpointOrchestrator(**self.orchestrator_kwargs)
 
+    @property
+    def is_linked_to_reader_study(self):
+        return self.endpoint_utilization.reader_studies.exists()
+
     def get_remaining_lifetime(self):
         if self.status in EndpointStatusChoices.get_active_choices():
             return self.created + self.maximum_duration - now()
@@ -1792,6 +1796,12 @@ class Endpoint(FieldChangeMixin, UUIDModel):
         return duration_limit
 
     def keep_alive(self, *, seconds):
+        if self.is_linked_to_reader_study:
+            raise RuntimeError(
+                "This method should only be used for endpoints that are not "
+                "linked to a reader study"
+            )
+
         self.update_utilization()
         new_duration = self.endpoint_utilization.duration + timedelta(
             seconds=seconds
