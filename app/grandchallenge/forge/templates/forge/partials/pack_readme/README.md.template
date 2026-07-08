@@ -34,6 +34,11 @@ Follow the steps below to get started with the phase pack effectively.
 Begin by using the provided test scripts to verify that the example templates work locally for both
 the example algorithm and example evaluation method.
 
+**Note on GPU support:** The test scripts automatically detect whether NVIDIA GPU support
+is available on your machine. If not (e.g. on macOS), the container will run on CPU instead.
+This does not affect the exported container — on Grand Challenge your algorithm will always
+have GPU access.
+
 
 ### Step 2: Manually Upload a Single Case
 Continue by [uploading a single example](https://grand-challenge.org/documentation/uploading-data/) case manually to an phase-linked archive to verify formats and validations were setup correctly. Most troubles will show up directly when uploading or in your notifications.
