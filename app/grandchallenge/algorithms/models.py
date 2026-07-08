@@ -1604,10 +1604,7 @@ class Endpoint(FieldChangeMixin, UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    maximum_duration = models.DurationField(
-        default=timedelta(minutes=10),
-        editable=False,
-    )
+    maximum_duration = models.DurationField(default=timedelta(minutes=10))
     status = models.CharField(
         max_length=17,
         choices=EndpointStatusChoices,
@@ -1742,6 +1739,9 @@ class Endpoint(FieldChangeMixin, UUIDModel):
     @property
     def orchestrator(self):
         return EndpointOrchestrator(**self.orchestrator_kwargs)
+
+    def get_remaining_lifetime(self):
+        return self.created + self.maximum_duration - now()
 
     def update_status(
         self,
