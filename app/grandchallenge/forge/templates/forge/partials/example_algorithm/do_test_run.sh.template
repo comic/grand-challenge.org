@@ -46,6 +46,7 @@ DOCKER_NETWORK_TAG=""
 TESTER_NAME=""
 CONTAINER_PORT=4743
 BASE_URL=""
+GPU_ARGS=""
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -53,15 +54,22 @@ BASE_URL=""
 # ---------------------------------------------------------------------------
 
 main() {
+    # Prepare staging dirs, Docker network, and detect GPU support
     setup
     trap cleanup EXIT
+
     build_container
     start_container
+
+    # Poll /health until the server signals it's ready
     check_health
 
 {% for interface_name in object.algorithm_interface_names %}
+    # Copy this interface's input files into the container
     provision "{{ interface_name }}"
+    # Call POST /invoke and wait for inference completion
     invoke
+    # Copy the results back to the host
     collect_output "{{ interface_name }}"
 {% endfor %}
 
@@ -72,10 +80,20 @@ main() {
 # Helper Functions
 # ---------------------------------------------------------------------------
 
+# Log a message to stdout with color based on level (when running in a terminal).
+#   info    = blue (default)
+#   warning = yellow
+#   error   = red
 log() {
     local message="$1"
+    local level="${2:-info}"
     if [[ -t 1 ]]; then
-        printf "\e[38;2;36;150;237m> %s\e[0m\n" "$message"
+        case "$level" in
+            info)    printf "\e[38;2;36;150;237m> %s\e[0m\n" "$message" ;;
+            warning) printf "\e[38;2;255;200;0m> %s\e[0m\n" "$message" ;;
+            error)   printf "\e[38;2;255;50;50m> %s\e[0m\n" "$message" ;;
+            *)       printf "\e[38;2;36;150;237m> %s\e[0m\n" "$message" ;;
+        esac
     else
         printf "%s\n" "$message"
     fi
@@ -89,6 +107,20 @@ setup() {
 
     # Disable promotional logs from Docker
     export DOCKER_CLI_HINTS=false
+
+    # Detect whether the NVIDIA GPU runtime is available.
+    # On macOS or machines without nvidia-container-runtime, --gpus all would
+    # prevent the container from starting. In that case we skip the flag and
+    # the algorithm will run on CPU (torch.cuda.is_available() returns False).
+    # This does not affect the exported container — on Grand Challenge your
+    # algorithm will always have GPU access.
+    if docker info 2>/dev/null | grep -q "Runtimes:.*nvidia"; then
+        GPU_ARGS="--gpus all"
+        log "NVIDIA runtime detected — enabling GPU access"
+    else
+        GPU_ARGS=""
+        log "No NVIDIA runtime detected — running on CPU (this is fine for testing)" warning
+    fi
 
     # Create empty staging directories for the /input and /output bind mounts
     rm -rf "$STAGING_INPUT_DIR" "$STAGING_OUTPUT_DIR"
@@ -150,12 +182,12 @@ build_container() {
         "$DOCKER_IMAGE_TAG" 2>/dev/null || echo "")
 
     if [ "$api_method" != "invoke" ]; then
-        log "ERROR: The container image is missing the required label:"
-        log "  LABEL org.grand-challenge.api-method=\"invoke\""
-        log ""
-        log "Without this label, Grand Challenge will not recognize that your"
-        log "container implements the invoke API and will default to exec mode."
-        log "Please add this label to your Dockerfile."
+        log "ERROR: The container image is missing the required label:" error
+        log "  LABEL org.grand-challenge.api-method=\"invoke\"" error
+        log "" error
+        log "Without this label, Grand Challenge will not recognize that your" error
+        log "container implements the invoke API and will default to exec mode." error
+        log "Please add this label to your Dockerfile." error
         exit 1
     fi
 }
@@ -173,7 +205,7 @@ start_container() {
     local docker_run_args=(
         --detach
         --name "$CONTAINER_NAME"
-{% if use_gpus %}        --gpus all{% endif %}
+        ${GPU_ARGS:+$GPU_ARGS}
         --platform=linux/amd64
         --volume "${SCRIPT_DIR}/model":/opt/ml/model:ro
         --volume "$STAGING_INPUT_DIR":/input:ro
@@ -227,7 +259,7 @@ check_health() {
         fi
 
         if [[ "$status" == "302" ]]; then
-            log "Health endpoint returned HTTP 302 — failing"
+            log "Health endpoint returned HTTP 302 — failing" error
             flush_docker_log
             return 1
         fi
@@ -236,7 +268,7 @@ check_health() {
         sleep "$HEALTH_CHECK_DELAY_SECONDS"
     done
 
-    log "Health endpoint never returned HTTP 200"
+    log "Health endpoint never returned HTTP 200" error
     flush_docker_log
     return 1
 }
@@ -261,7 +293,7 @@ invoke() {
     flush_docker_log
 
     if [ "$status" != "201" ]; then
-        log "Invoke failed (expected HTTP 201 Created, got $status)"
+        log "Invoke failed (expected HTTP 201 Created, got $status)" error
         exit 1
     fi
 

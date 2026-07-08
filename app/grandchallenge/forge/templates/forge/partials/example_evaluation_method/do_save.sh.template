@@ -13,10 +13,20 @@ export DOCKER_CLI_HINTS=false
 
 # ---------------------------------------------------------------------------
 
+# Log a message to stdout with color based on level (when running in a terminal).
+#   info    = blue (default)
+#   warning = yellow
+#   error   = red
 log() {
     local message="$1"
+    local level="${2:-info}"
     if [[ -t 1 ]]; then
-        printf "\e[38;2;36;150;237m> %s\e[0m\n" "$message"
+        case "$level" in
+            info)    printf "\e[38;2;36;150;237m> %s\e[0m\n" "$message" ;;
+            warning) printf "\e[38;2;255;200;0m> %s\e[0m\n" "$message" ;;
+            error)   printf "\e[38;2;255;50;50m> %s\e[0m\n" "$message" ;;
+            *)       printf "\e[38;2;36;150;237m> %s\e[0m\n" "$message" ;;
+        esac
     else
         printf "%s\n" "$message"
     fi
@@ -54,4 +64,4 @@ output_tarball_name="${SCRIPT_DIR}/ground_truth.tar.gz"
 tar -czf "$output_tarball_name" -C "${SCRIPT_DIR}/ground_truth" .
 log "Saved as: ground_truth.tar.gz"
 
-log "IMPORTANT: Please upload the ground_truth.tar.gz as separate Ground Truth to your Phase!"
+log "IMPORTANT: Please upload the ground_truth.tar.gz as separate Ground Truth to your Phase!" warning

@@ -2,7 +2,7 @@
 """
 Evaluation method inference server for Grand Challenge.
 
-You should not need to edit this file. Instead, edit evaluate.py to implement
+You should NOT need to edit this file. Instead, edit evaluate.py to implement
 your evaluation logic.
 
 Grand Challenge runs your evaluation method as an HTTP server with two endpoints:

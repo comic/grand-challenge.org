@@ -74,8 +74,9 @@ def init_model():
 
     # Your model will be extracted to `model_dir` at runtime on Grand Challenge.
     # When testing locally, the local `./model` directory is mounted here.
-    # When you're ready for testing on Grand Challenge, upload it as a tarball
+    # When you're ready for testing on Grand Challenge, upload your model as a tarball
     # via Your algorithm > Models on Grand Challenge.
+    # For now, just verify that we can read from the model directory
     model_dir = Path("/opt/ml/model")
     with open(
         model_dir / "a_tarball_subdirectory" / "some_tarball_resource.txt", "r"
