@@ -2023,14 +2023,14 @@ def test_invoke_endpoint_calls_keep_alive(mocker):
     invocation = InvocationFactory.create(
         status=InvocationStatusChoices.PROVISIONED,
     )
-    mock_keep_alive = mocker.patch.object(
+    spy_keep_alive = mocker.spy(
         Endpoint,
         "keep_alive",
     )
 
     invoke_endpoint(**invocation.task_kwargs)
 
-    mock_keep_alive.assert_called_once()
+    spy_keep_alive.assert_called_once()
 
 
 @pytest.mark.django_db
@@ -2040,11 +2040,11 @@ def test_invoke_endpoint_skips_keep_alive_for_reader_study_endpoint(mocker):
     )
     reader_study = ReaderStudyFactory.create()
     invocation.endpoint.endpoint_utilization.reader_studies.add(reader_study)
-    mock_keep_alive = mocker.patch.object(
+    spy_keep_alive = mocker.spy(
         Endpoint,
         "keep_alive",
     )
 
     invoke_endpoint(**invocation.task_kwargs)
 
-    mock_keep_alive.assert_not_called()
+    spy_keep_alive.assert_not_called()
