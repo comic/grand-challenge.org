@@ -1773,7 +1773,7 @@ class TestEndpointProperties:
 def test_endpoint_keep_alive_limit_reached():
     endpoint = EndpointFactory.create()
 
-    result = endpoint.keep_alive(seconds=60)
+    result = endpoint.keep_alive(duration=timedelta(seconds=60))
 
     assert result.limit_reached
     endpoint.refresh_from_db()
@@ -1792,7 +1792,7 @@ def test_endpoint_keep_alive():
         comment="test",
     )
 
-    result = endpoint.keep_alive(seconds=60)
+    result = endpoint.keep_alive(duration=timedelta(seconds=60))
 
     assert not result.limit_reached
     endpoint.refresh_from_db()
@@ -1814,7 +1814,7 @@ def test_endpoint_keep_alive_raises_for_reader_study_endpoint():
     )
 
     with pytest.raises(RuntimeError, match=expected_error_message):
-        endpoint.keep_alive(seconds=60)
+        endpoint.keep_alive(duration=timedelta(seconds=60))
 
     endpoint.refresh_from_db()
     assert endpoint.modified == modified
