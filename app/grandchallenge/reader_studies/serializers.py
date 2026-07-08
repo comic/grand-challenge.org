@@ -178,6 +178,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             "optional_hanging_protocols",
             "view_content",
             "description",
+            "descriptions_map_safe",
             "index",
         )
 

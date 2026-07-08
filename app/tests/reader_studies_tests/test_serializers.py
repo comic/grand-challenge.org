@@ -5,7 +5,8 @@ from grandchallenge.reader_studies.interactive_algorithms import (
 )
 from grandchallenge.reader_studies.models import QuestionWidgetKindChoices
 from grandchallenge.reader_studies.serializers import QuestionSerializer
-from tests.factories import UserFactory
+from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     QuestionFactory,
@@ -110,6 +111,38 @@ def test_display_set_title_tags_scrubbed(client):
 
     rendered_text = response.json()["title_safe"]
     assert rendered_text == "No tags allowedalert('XSS')"
+
+
+@pytest.mark.django_db
+def test_display_view_content_scrubbed(client):
+    image = ImageFactory(name="display-image")
+    image2 = ImageFactory(name="display-image-2")
+    rs = ReaderStudyFactory(
+        case_text={
+            image.name: "<b>My Help Text</b><script>naughty</script>",
+            image2.name: "<b>Another Help Text</b><script>naughty</script>",
+            "not-an-image": "Should not appear",
+        }
+    )
+    ds = DisplaySetFactory(reader_study=rs, title="empty")
+    ds.values.add(ComponentInterfaceValueFactory(image=image))
+    ds.values.add(ComponentInterfaceValueFactory(image=image2))
+
+    # Ensure duplicate values do not duplicate output.
+    ds.values.add(ComponentInterfaceValueFactory(image=image))
+
+    u = UserFactory()
+    rs.add_reader(u)
+
+    response = get_view_for_user(client=client, url=ds.api_url, user=u)
+    assert response.status_code == 200
+
+    rendered = response.json()
+    assert rendered["description"] == "<p><b>My Help Text</b>naughty</p>"
+    assert rendered["descriptions_map_safe"] == {
+        image.name: "<p><b>My Help Text</b>naughty</p>",
+        image2.name: "<p><b>Another Help Text</b>naughty</p>",
+    }
 
 
 @pytest.mark.parametrize(

@@ -1104,6 +1104,25 @@ class DisplaySet(
             return ""
 
     @property
+    def descriptions_map_safe(self) -> dict[str]:
+        case_text = self.reader_study.case_text
+        result = {}
+        if case_text:
+            seen_names = set()
+            output = ""
+
+            for val in self.values.all():
+                try:
+                    name = val.image.name
+                except AttributeError:
+                    continue
+
+                if name in case_text and name not in seen_names:
+                    seen_names.add(name)
+                    result[name] = md2html(case_text[name])
+        return result
+
+    @property
     def standard_index(self) -> int:
         return [*self.reader_study.display_sets.all()].index(self)
 
