@@ -795,10 +795,10 @@ class TestEndpointKeepAlive:
     def get_url(self, pk):
         return f"/api/v1/algorithms/endpoints/{pk}/keep_alive/"
 
-    def test_anonymous_returns_empty_for_existing(self, client):
+    def test_anonymous_returns_401(self, client):
         endpoint = EndpointFactory.create()
         response = client.patch(self.get_url(endpoint.pk))
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_no_permission_returns_404(self, client):
         user = UserFactory()
