@@ -1083,6 +1083,11 @@ class DisplaySet(
 
     @property
     def description(self) -> str:
+        # Note: Remove this after August 2026
+        return self.description_safe
+
+    @property
+    def description_safe(self) -> str:
         case_text = self.reader_study.case_text
 
         if case_text:
