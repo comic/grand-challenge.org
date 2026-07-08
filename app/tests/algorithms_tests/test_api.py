@@ -795,6 +795,40 @@ class TestEndpointKeepAlive:
     def get_url(self, pk):
         return f"/api/v1/algorithms/endpoints/{pk}/keep_alive/"
 
+    def test_anonymous_returns_empty_for_existing(self, client):
+        endpoint = EndpointFactory.create()
+        response = client.patch(self.get_url(endpoint.pk))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_no_permission_returns_404(self, client):
+        user = UserFactory()
+        endpoint = EndpointFactory()
+        client.force_login(user=user)
+        response = client.patch(self.get_url(endpoint.pk))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_viewer_group_member_cannot_extend_lifetime(self, client):
+        user = UserFactory()
+        endpoint = EndpointFactory.create(
+            maximum_duration=timedelta(seconds=1)
+        )
+        endpoint.viewers_group.user_set.add(user)
+        AlgorithmUserCreditFactory(
+            user=user,
+            algorithm=endpoint.algorithm_image.algorithm,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
+        client.force_login(user=user)
+
+        response = client.patch(self.get_url(endpoint.pk))
+
+        assert response.status_code == 403, response.data
+        endpoint.refresh_from_db()
+        assert endpoint.maximum_duration == timedelta(seconds=1)
+
     def test_duration_limit_reached(self, client):
         endpoint = EndpointFactory.create()
         client.force_login(user=endpoint.creator)
