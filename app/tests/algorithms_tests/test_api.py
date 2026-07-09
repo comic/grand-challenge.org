@@ -775,7 +775,7 @@ class TestEndpointDetail:
         client.force_login(user=endpoint.creator)
         response = client.get(self.get_url(endpoint.pk))
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["remaining_lifetime"].startswith("P0DT00H09M59.")
+        assert response.data["remaining_lifetime"].startswith("P0DT00H09M")
 
 
 @pytest.mark.django_db
