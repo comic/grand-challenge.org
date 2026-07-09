@@ -1835,6 +1835,23 @@ class InvocationStatusChoices(TextChoices):
     SUCCESS = "SUCCESS", _("Succeeded")
     CANCELLED = "CANCELLED", _("Cancelled")
 
+    @classmethod
+    def get_active_choices(cls):
+        return {
+            cls.VALIDATING_INPUTS,
+            cls.QUEUED,
+            cls.PROVISIONED,
+            cls.EXECUTING,
+            cls.EXECUTED,
+        }
+
+
+class InvocationManager(models.QuerySet):
+    def active(self):
+        return self.filter(
+            status__in=InvocationStatusChoices.get_active_choices()
+        )
+
 
 class Invocation(CIVForObjectMixin, UUIDModel):
     StatusChoices = InvocationStatusChoices
@@ -1883,6 +1900,8 @@ class Invocation(CIVForObjectMixin, UUIDModel):
         to=ComponentInterfaceValue,
         related_name="algorithms_invocations_as_output",
     )
+
+    objects = InvocationManager.as_manager()
 
     class Meta:
         ordering = ("-created",)

@@ -1390,6 +1390,44 @@ class TestInvocationCreate:
         ), response.data
         assert response.data["endpoint"][0].code == "does_not_exist"
 
+    def test_endpoint_limit_active_invocations(self, client, settings):
+        user = UserFactory()
+        endpoint = EndpointFactory(
+            creator=user,
+            status=EndpointStatusChoices.RUNNING,
+        )
+        ci_string = ComponentInterfaceFactory(
+            kind=ComponentInterface.Kind.STRING
+        )
+        interface = AlgorithmInterfaceFactory(inputs=[ci_string])
+        endpoint.algorithm_image.algorithm.interfaces.add(interface)
+        InvocationFactory.create_batch(
+            settings.ALGORITHM_ENDPOINTS_MAX_ACTIVE_INVOCATIONS_PER_ENDPOINT,
+            endpoint=endpoint,
+        )
+
+        client.force_login(user=user)
+        response = client.post(
+            self.url,
+            content_type="application/json",
+            data={
+                "endpoint": endpoint.api_url,
+                "inputs": [
+                    {"interface": ci_string.slug, "value": "foo"},
+                ],
+            },
+        )
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), response.data
+        assert response.json() == {
+            "non_field_errors": [
+                "There are too many active invocations for this endpoint, "
+                "please try again after they have completed"
+            ]
+        }
+
 
 @pytest.mark.django_db
 class TestInvocationReadCreateOnly:

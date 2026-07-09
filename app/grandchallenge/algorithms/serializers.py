@@ -478,6 +478,16 @@ class InvocationPostSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         endpoint = data["endpoint"]
+
+        if (
+            Invocation.objects.active().filter(endpoint=endpoint).count()
+            >= settings.ALGORITHM_ENDPOINTS_MAX_ACTIVE_INVOCATIONS_PER_ENDPOINT
+        ):
+            raise ValidationError(
+                "There are too many active invocations for this endpoint, "
+                "please try again after they have completed"
+            )
+
         inputs = data.pop("inputs")
         data["algorithm_interface"] = (
             validate_inputs_and_return_matching_interface(
