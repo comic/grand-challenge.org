@@ -1794,7 +1794,7 @@ def stop_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
 
     endpoint.orchestrator.deprovision()
     endpoint.update_status(status=endpoint.StatusChoices.STOPPED)
-    cancel_related_invocations.execute_on_commit(
+    cancel_active_invocations.execute_on_commit(
         endpoint_pk=endpoint.pk, _delay=300
     )
 
@@ -1819,7 +1819,7 @@ def stop_expired_endpoints(*, app_label: str, model_name: str):
 
 
 @lambda_task
-def cancel_related_invocations(*, endpoint_pk: str | UUID):
+def cancel_active_invocations(*, endpoint_pk: str | UUID):
     from grandchallenge.algorithms.models import Invocation
 
     invocations = list(
