@@ -23,16 +23,6 @@ def init_job_permissions(*_, **__):
     assign_perm("algorithms.add_job", g)
 
 
-def init_endpoint_creators_group(*_, **__):
-    from django.contrib.auth.models import Group
-    from guardian.shortcuts import assign_perm
-
-    g, _ = Group.objects.get_or_create(
-        name=settings.ALGORITHM_ENDPOINTS_CREATORS_GROUP_NAME
-    )
-    assign_perm("algorithms.add_endpoint", g)
-
-
 def init_endpoint_permissions(*_, **__):
     from django.contrib.auth.models import Group
     from guardian.shortcuts import assign_perm
@@ -59,7 +49,6 @@ class AlgorithmsConfig(AppConfig):
     def ready(self):
         post_migrate.connect(init_algorithm_creators_group, sender=self)
         post_migrate.connect(init_job_permissions, sender=self)
-        post_migrate.connect(init_endpoint_creators_group, sender=self)
         post_migrate.connect(init_endpoint_permissions, sender=self)
         post_migrate.connect(init_invocation_permissions, sender=self)
         # noinspection PyUnresolvedReferences
