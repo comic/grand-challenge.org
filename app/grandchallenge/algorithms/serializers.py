@@ -510,11 +510,6 @@ class InvocationPostSerializer(serializers.ModelSerializer):
             status=InvocationStatusChoices.VALIDATING_INPUTS,
         )
 
-        if not invocation.endpoint.is_linked_to_reader_study:
-            invocation.endpoint.keep_alive(
-                duration=invocation.orchestrator.time_limit
-            )
-
         try:
             invocation.process_civ_data_objects_and_execute_linked_task(
                 civ_data_objects=civ_data_objects,
@@ -532,5 +527,10 @@ class InvocationPostSerializer(serializers.ModelSerializer):
                     error_message=SystemErrorMessages.UNEXPECTED_ERROR,
                 )
                 logger.error(e, exc_info=True)
+
+        if not invocation.endpoint.is_linked_to_reader_study:
+            invocation.endpoint.keep_alive(
+                duration=invocation.orchestrator.time_limit
+            )
 
         return invocation
