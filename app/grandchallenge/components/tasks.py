@@ -1794,6 +1794,9 @@ def stop_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
 
     endpoint.orchestrator.deprovision()
     endpoint.update_status(status=endpoint.StatusChoices.STOPPED)
+    cancel_related_invocations.execute_on_commit(
+        endpoint_pk=endpoint.pk, _delay=300
+    )
 
 
 @lambda_task
@@ -1813,6 +1816,26 @@ def stop_expired_endpoints(*, app_label: str, model_name: str):
 
     for endpoint in endpoints_to_stop:
         stop_endpoint.execute_on_commit(**endpoint.task_kwargs)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def cancel_related_invocations(*, endpoint_pk: str | UUID):
+    from grandchallenge.algorithms.models import Invocation
+
+    invocations = list(
+        Invocation.objects.active()
+        .select_for_update(skip_locked=True)
+        .filter(endpoint=endpoint_pk)
+        .values_list("pk", flat=True)
+    )
+    Invocation.objects.filter(pk__in=invocations).update(
+        status=Invocation.StatusChoices.CANCELLED
+    )
+
+    if Invocation.objects.active().filter(endpoint=endpoint_pk).exists():
+        raise LockNotAcquiredException(
+            "Some invocations were locked and could not be cancelled"
+        )
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))

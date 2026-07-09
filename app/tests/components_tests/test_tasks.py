@@ -20,6 +20,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmImage,
     Endpoint,
     EndpointStatusChoices,
+    Invocation,
     InvocationStatusChoices,
     Job,
 )
@@ -1686,6 +1687,29 @@ def test_stop_endpoint_wrong_state_raises(mocker):
 
     assert endpoint.status == initial_status
     mock_update_status_method.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_stop_endpoint_cancels_active_invocations(
+    mocker, settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+    endpoint = EndpointFactory.create(status=EndpointStatusChoices.RUNNING)
+    for status in InvocationStatusChoices.get_active_choices():
+        InvocationFactory.create(endpoint=endpoint, status=status)
+        InvocationFactory.create(status=status)
+    mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        stop_endpoint(**endpoint.task_kwargs)
+
+    for invocation in Invocation.objects.filter(endpoint=endpoint):
+        assert invocation.status == InvocationStatusChoices.CANCELLED
+    for invocation in Invocation.objects.exclude(endpoint=endpoint):
+        assert invocation.status != InvocationStatusChoices.CANCELLED
 
 
 @pytest.mark.django_db
