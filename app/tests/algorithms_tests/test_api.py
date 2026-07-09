@@ -773,9 +773,19 @@ class TestEndpointDetail:
     def test_remaining_lifetime(self, client):
         endpoint = EndpointFactory.create()
         client.force_login(user=endpoint.creator)
+
         response = client.get(self.get_url(endpoint.pk))
+
         assert response.status_code == status.HTTP_200_OK
         assert response.data["remaining_lifetime"].startswith("P0DT00H09M")
+
+        endpoint.status = EndpointStatusChoices.STOPPED
+        endpoint.save()
+
+        response = client.get(self.get_url(endpoint.pk))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["remaining_lifetime"] == "P0DT00H00M00S"
 
 
 @pytest.mark.django_db
