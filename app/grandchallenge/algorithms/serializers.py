@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
+    DurationField,
     JSONField,
     SerializerMethodField,
     URLField,
@@ -129,10 +130,20 @@ class EndpointSerializer(serializers.ModelSerializer):
         read_only=True,
     )
     status = CharField(source="get_status_display", read_only=True)
+    remaining_lifetime = DurationField(
+        source="get_remaining_lifetime",
+        read_only=True,
+    )
 
     class Meta:
         model = Endpoint
-        fields = ["api_url", "pk", "algorithm", "status"]
+        fields = [
+            "api_url",
+            "pk",
+            "algorithm",
+            "status",
+            "remaining_lifetime",
+        ]
 
 
 class EndpointPostSerializer(serializers.ModelSerializer):

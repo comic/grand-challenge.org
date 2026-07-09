@@ -1740,6 +1740,12 @@ class Endpoint(FieldChangeMixin, UUIDModel):
     def orchestrator(self):
         return EndpointOrchestrator(**self.orchestrator_kwargs)
 
+    def get_remaining_lifetime(self):
+        if self.status in EndpointStatusChoices.get_active_choices():
+            return self.created + self.maximum_duration - now()
+        else:
+            return timedelta(seconds=0)
+
     def update_status(
         self,
         *,
