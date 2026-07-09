@@ -926,6 +926,9 @@ LAMBDA_TASKS_QUEUES = {
 LAMBDA_TASKS_LOCAL_WORKERS = int(
     os.environ.get("LAMBDA_TASKS_LOCAL_WORKERS", "0")
 )
+LAMBDA_TASKS_NOOP_EXECUTION = strtobool(
+    os.environ.get("LAMBDA_TASKS_NOOP_EXECUTION", "False")
+)
 
 COMPONENTS_DEFAULT_BACKEND = os.environ.get(
     "COMPONENTS_DEFAULT_BACKEND",
@@ -1430,7 +1433,8 @@ if DEBUG:
             "RESULTS_CACHE_SIZE": 100,
         }
 else:
-    if LAMBDA_TASKS_LOCAL_WORKERS:
+    if LAMBDA_TASKS_LOCAL_WORKERS or LAMBDA_TASKS_NOOP_EXECUTION:
         raise ImproperlyConfigured(
-            "LAMBDA_TASKS_LOCAL_WORKERS should only be set in development"
+            "LAMBDA_TASKS_LOCAL_WORKERS or LAMBDA_TASKS_NOOP_EXECUTION "
+            "should only be set in development"
         )
