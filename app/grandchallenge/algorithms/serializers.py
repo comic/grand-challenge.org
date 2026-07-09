@@ -28,6 +28,7 @@ from grandchallenge.algorithms.models import (
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
+from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.components.serializers import (
     ComponentInterfaceSerializer,
     ComponentInterfaceValuePostSerializer,
@@ -132,6 +133,81 @@ class EndpointSerializer(serializers.ModelSerializer):
     class Meta:
         model = Endpoint
         fields = ["api_url", "pk", "algorithm", "status"]
+
+
+class EndpointPostSerializer(serializers.ModelSerializer):
+    algorithm = HyperlinkedRelatedField(
+        queryset=Algorithm.objects.none(),
+        view_name="api:algorithm-detail",
+        write_only=True,
+    )
+    status = CharField(source="get_status_display", read_only=True)
+
+    class Meta:
+        model = Endpoint
+        fields = ["pk", "algorithm", "status"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if "request" in self.context:
+            user = self.context["request"].user
+
+            self.fields["algorithm"].queryset = filter_by_permission(
+                queryset=Algorithm.objects.all(),
+                user=user,
+                codename="execute_algorithm",
+            )
+
+    def validate(self, data):
+        algorithm = data.pop("algorithm")
+        user = self.context["request"].user
+
+        if not algorithm.active_image:
+            raise serializers.ValidationError(
+                "Algorithm image is not ready to be used"
+            )
+
+        if not algorithm.active_image.api_method == APIMethodChoices.INVOKE:
+            raise serializers.ValidationError(
+                "Algorithm image does not implement the invoke API"
+            )
+
+        try:
+            remaining_credits = AlgorithmImage.get_remaining_specific_credits(
+                user=user, algorithm=algorithm
+            )
+        except ObjectDoesNotExist:
+            remaining_credits = 0
+
+        if remaining_credits <= 0:
+            raise serializers.ValidationError(
+                "You have run out of algorithm credits"
+            )
+
+        if (
+            Endpoint.objects.active()
+            .filter(creator=user, algorithm_image__algorithm=algorithm)
+            .count()
+            > 0
+        ):
+            raise ValidationError(
+                "You already have an active endpoint for this algorithm"
+            )
+
+        if (
+            Endpoint.objects.active().filter(creator=user).count()
+            >= settings.ALGORITHM_ENDPOINTS_MAX_ACTIVE_ENDPOINTS_PER_USER
+        ):
+            raise ValidationError("You have too many active endpoints")
+
+        data["creator"] = user
+        data["algorithm_image"] = algorithm.active_image
+        data["algorithm_model"] = algorithm.active_model
+        data["requires_gpu_type"] = algorithm.job_requires_gpu_type
+        data["requires_memory_gb"] = algorithm.job_requires_memory_gb
+
+        return data
 
 
 class JobSerializer(serializers.ModelSerializer):

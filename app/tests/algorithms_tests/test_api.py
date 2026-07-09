@@ -21,12 +21,14 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmModelSerializer,
 )
 from grandchallenge.components.models import (
+    APIMethodChoices,
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKindChoices,
 )
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
@@ -772,16 +774,262 @@ class TestEndpointDetail:
 
 
 @pytest.mark.django_db
-class TestEndpointReadUpdateOnly:
-    """Verify the viewset rejects write methods."""
-
+class TestEndpointCreate:
     url = "/api/v1/algorithms/endpoints/"
 
-    def test_post_not_allowed(self, client):
-        endpoint = EndpointFactory()
-        client.force_login(user=endpoint.creator)
+    def test_anonymous_returns_not_authenticated(self, client):
         response = client.post(self.url, data={})
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert (
+            response.status_code == status.HTTP_401_UNAUTHORIZED
+        ), response.data
+
+    def test_no_permission_returns_403(self, client):
+        user = UserFactory()
+        algorithm = AlgorithmFactory()
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN, response.data
+
+    def test_user_without_algorithm_access_cannot_create_endpoint(
+        self, client
+    ):
+        user = UserFactory()
+        assign_perm("algorithms.add_endpoint", user)
+        algorithm = AlgorithmFactory()
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), response.data
+        assert response.data["algorithm"][0].code == "does_not_exist"
+
+    def test_cannot_create_endpoint_without_credits(self, client):
+        user = UserFactory()
+        assign_perm("algorithms.add_endpoint", user)
+        algorithm = AlgorithmFactory()
+        algorithm.add_editor(user)
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), response.data
+        assert (
+            str(response.data["non_field_errors"][0])
+            == "You have run out of algorithm credits"
+        )
+
+    def test_user_with_permission_can_create_endpoint(self, client):
+        user = UserFactory()
+        assign_perm("algorithms.add_endpoint", user)
+        algorithm = AlgorithmFactory()
+        algorithm.add_user(user)
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+        AlgorithmUserCreditFactory(
+            algorithm=algorithm,
+            user=user,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert response.status_code == status.HTTP_201_CREATED, response.data
+
+    def test_editor_with_permission_can_create_endpoint(self, client):
+        user = UserFactory()
+        assign_perm("algorithms.add_endpoint", user)
+        algorithm = AlgorithmFactory()
+        algorithm.add_editor(user)
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+        AlgorithmUserCreditFactory(
+            algorithm=algorithm,
+            user=user,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert response.status_code == status.HTTP_201_CREATED, response.data
+
+    def test_cannot_create_endpoint_with_exec_image(self, client):
+        user = UserFactory()
+        assign_perm("algorithms.add_endpoint", user)
+        algorithm = AlgorithmFactory()
+        algorithm.add_editor(user)
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            api_method=APIMethodChoices.EXEC,
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), response.data
+        assert (
+            str(response.data["non_field_errors"][0])
+            == "Algorithm image does not implement the invoke API"
+        )
+
+    def test_cannot_create_endpoint_without_active_image(self, client):
+        user = UserFactory()
+        assign_perm("algorithms.add_endpoint", user)
+        algorithm = AlgorithmFactory()
+        algorithm.add_editor(user)
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), response.data
+        assert (
+            str(response.data["non_field_errors"][0])
+            == "Algorithm image is not ready to be used"
+        )
+
+    def test_cannot_create_multiple_endpoints_for_algorithm(self, client):
+        user = UserFactory()
+        assign_perm("algorithms.add_endpoint", user)
+        algorithm = AlgorithmFactory()
+        algorithm.add_editor(user)
+        algorithm_image = AlgorithmImageFactory(
+            algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+        AlgorithmUserCreditFactory(
+            algorithm=algorithm,
+            user=user,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
+        EndpointFactory(creator=user, algorithm_image=algorithm_image)
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), response.data
+        assert (
+            str(response.data["non_field_errors"][0])
+            == "You already have an active endpoint for this algorithm"
+        )
+
+    def test_can_create_endpoint_with_existing_from_other_user(self, client):
+        user = UserFactory()
+        assign_perm("algorithms.add_endpoint", user)
+        algorithm = AlgorithmFactory()
+        algorithm.add_editor(user)
+        algorithm_image = AlgorithmImageFactory(
+            algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+        AlgorithmUserCreditFactory(
+            algorithm=algorithm,
+            user=user,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
+        EndpointFactory(algorithm_image=algorithm_image)
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert response.status_code == status.HTTP_201_CREATED, response.data
+
+    def test_cannot_create_too_many_active_endpoints(self, client, settings):
+        settings.ALGORITHM_ENDPOINTS_MAX_ACTIVE_ENDPOINTS_PER_USER = 1
+        user = UserFactory()
+        assign_perm("algorithms.add_endpoint", user)
+        algorithm = AlgorithmFactory()
+        algorithm.add_editor(user)
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+        AlgorithmUserCreditFactory(
+            algorithm=algorithm,
+            user=user,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
+        endpoint = EndpointFactory(creator=user)
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), response.data
+        assert (
+            str(response.data["non_field_errors"][0])
+            == "You have too many active endpoints"
+        )
+
+        endpoint.status = EndpointStatusChoices.STOPPED
+        endpoint.save()
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert response.status_code == status.HTTP_201_CREATED, response.data
+
+
+@pytest.mark.django_db
+class TestEndpointCreateReadUpdateOnly:
+    url = "/api/v1/algorithms/endpoints/"
 
     def test_delete_not_allowed(self, client):
         endpoint = EndpointFactory()
@@ -970,9 +1218,6 @@ class TestInvocationDetail:
 @pytest.mark.django_db
 class TestInvocationCreate:
     url = "/api/v1/algorithms/invocations/"
-
-    def get_url(self, pk):
-        return f"{self.url}{pk}/"
 
     def test_anonymous_returns_not_authenticated(self, client):
         response = client.post(self.url, data={})
