@@ -138,7 +138,10 @@ def test_display_view_content_scrubbed(client):
     assert response.status_code == 200
 
     rendered = response.json()
-    assert rendered["description"] == "<p><b>My Help Text</b>naughty</p>"
+    assert (
+        rendered["description"]
+        == "<p><b>My Help Text</b>naughty</p><p><b>Another Help Text</b>naughty</p>"
+    )
     assert rendered["descriptions_map_safe"] == {
         image.name: "<p><b>My Help Text</b>naughty</p>",
         image2.name: "<p><b>Another Help Text</b>naughty</p>",

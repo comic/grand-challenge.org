@@ -5,6 +5,7 @@ import pytest
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 from django.db.utils import IntegrityError
+from django.utils.safestring import SafeString
 
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -675,6 +676,10 @@ def test_display_set_description():
 
     for ds in rs.display_sets.all():
         assert ds.description == result[ds.pk]
+
+        assert len(ds.descriptions_map_safe) > 0
+        for v in ds.descriptions_map_safe.values():
+            assert isinstance(v, SafeString)
 
 
 @pytest.fixture(scope="function")

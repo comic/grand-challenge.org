@@ -26,6 +26,7 @@ from django.db.models.functions import Coalesce
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
+from django.utils.safestring import SafeString
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from pictures.models import PictureField
@@ -1104,22 +1105,20 @@ class DisplaySet(
             return ""
 
     @property
-    def descriptions_map_safe(self) -> dict[str]:
+    def descriptions_map_safe(self) -> dict[str, SafeString]:
         case_text = self.reader_study.case_text
+        if not case_text:
+            return {}
+
         result = {}
-        if case_text:
-            seen_names = set()
-            output = ""
+        for val in self.values.all():
+            try:
+                name = val.image.name
+            except AttributeError:
+                continue
 
-            for val in self.values.all():
-                try:
-                    name = val.image.name
-                except AttributeError:
-                    continue
-
-                if name in case_text and name not in seen_names:
-                    seen_names.add(name)
-                    result[name] = md2html(case_text[name])
+            if name in case_text and name not in result:
+                result[name] = md2html(case_text[name])
         return result
 
     @property
