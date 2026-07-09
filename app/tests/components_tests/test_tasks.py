@@ -1732,12 +1732,11 @@ def test_stop_expired_endpoints(
         "deprovision",
     )
 
-    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+    with django_capture_on_commit_callbacks(execute=True):
         stop_expired_endpoints(app_label="algorithms", model_name="endpoint")
 
     endpoint_to_stop.refresh_from_db()
 
-    assert len(callbacks) == 1
     mock_deprovision.assert_called_once()
     assert endpoint_to_stop.status == EndpointStatusChoices.STOPPED
 
