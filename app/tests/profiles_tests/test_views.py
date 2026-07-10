@@ -246,7 +246,7 @@ def test_one_click_unsubscribe_functionality_for_notifications(
     user = UserFactory()
     user.user_profile.notification_email_choice = notification_preference
     user.user_profile.save()
-    assert user.user_profile.receive_newsletter is None
+    assert user.user_profile.receive_newsletter is False
 
     token = user.user_profile.unsubscribe_token
     response = get_view_for_user(
@@ -263,7 +263,7 @@ def test_one_click_unsubscribe_functionality_for_notifications(
         == NotificationEmailOptions.DISABLED
     )
     # newsletter preference remains unchanged
-    assert user.user_profile.receive_newsletter is None
+    assert user.user_profile.receive_newsletter is False
     assert VerificationUserSet.objects.count() == 0
 
 
