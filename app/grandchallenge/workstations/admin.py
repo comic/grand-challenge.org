@@ -99,7 +99,7 @@ class SessionAdmin(admin.ModelAdmin):
             )
             end = end_time.strftime("%Y-%m-%dT%H*3a%M*3a%S.000Z")
             return format_html(
-                "<a target=_blank href='https://{region}.console.aws.amazon.com/cloudwatch/home?region={region}#container-insights:performance/ECS:Task:Granular?~(query~(controls~(CW*3a*3aECS.cluster~(~'{cluster_name})~CW*3a*3aECS.taskId~(~'{task_id})))~context~(orchestrationService~'ecs~timeRange~(end~'{end}~start~'{start})))'>🔗</a>",
+                "<a target=_blank href=\"https://{region}.console.aws.amazon.com/cloudwatch/home?region={region}#container-insights:performance/ECS:Task:Granular?~(query~(controls~(CW*3a*3aECS.cluster~(~'{cluster_name})~CW*3a*3aECS.taskId~(~'{task_id})))~context~(orchestrationService~'ecs~timeRange~(end~'{end}~start~'{start})))\">🔗</a>",
                 region=obj.region,
                 cluster_name=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
                 task_id=task_id,
