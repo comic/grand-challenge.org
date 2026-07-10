@@ -39,8 +39,6 @@
 {% block body %}
     {# Block used by django-allauth #}
 
-    {% include "grandchallenge/partials/newsletter_signup_modal.html" %}
-
     {% block navbar %}
         {% include "grandchallenge/partials/navbar.html" with hide_userlinks=False %}
     {% endblock %}
@@ -103,11 +101,6 @@
 {% block script %}
     {% include "grandchallenge/partials/script.html" %}
     {% include "timezones/partials/detect_timezone.html" %}
-
-    {% if request.user.is_authenticated and request.user.user_profile.receive_newsletter == None %}
-        <script type="module" src="{% static 'js/newsletter_modal.mjs' %}"></script>
-    {% endif %}
-
 {% endblock %}
 </body>
 </html>

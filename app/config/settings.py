@@ -422,7 +422,6 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.sentry_dsn",
                 "grandchallenge.core.context_processors.footer_links",
                 "grandchallenge.core.context_processors.about_page",
-                "grandchallenge.core.context_processors.newsletter_signup",
                 "grandchallenge.core.context_processors.viewport_names",
                 "grandchallenge.core.context_processors.workstation_domains",
             ],

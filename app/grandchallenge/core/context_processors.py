@@ -9,7 +9,6 @@ from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.hanging_protocols.models import ViewportNames
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.policies.models import Policy
-from grandchallenge.profiles.forms import NewsletterSignupForm
 
 logger = logging.getLogger(__name__)
 
@@ -70,10 +69,6 @@ def footer_links(*_, **__):
 
 def about_page(*_, **__):
     return {"about_page_url": settings.FLATPAGE_ABOUT_URL}
-
-
-def newsletter_signup(*_, **__):
-    return {"newletter_signup_form": NewsletterSignupForm}
 
 
 def viewport_names(*_, **__):
