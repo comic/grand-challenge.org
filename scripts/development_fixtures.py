@@ -180,25 +180,35 @@ def _set_user_permissions(users):
     users["admin"].is_staff = True
     users["admin"].save()
 
-    org = Organization(
+    reader_study_org = Organization(
         title="Reader Study Creators",
         logo=create_uploaded_image(),
         location="NL",
         website=reverse("home"),
     )
-    org.full_clean()
-    org.save()
+    reader_study_org.full_clean()
+    reader_study_org.save()
 
-    assign_perm("reader_studies.add_readerstudy", org.members_group)
-    users["readerstudy"].groups.add(org.members_group)
+    assign_perm(
+        "reader_studies.add_readerstudy", reader_study_org.members_group
+    )
+    users["readerstudy"].groups.add(reader_study_org.members_group)
 
-    workstation_group = Group.objects.get(
-        name=settings.WORKSTATIONS_CREATORS_GROUP_NAME
+    workstation_org = Organization(
+        title="Workstation Creators",
+        logo=create_uploaded_image(),
+        location="NL",
+        website=reverse("home"),
     )
-    users["workstation"].groups.add(workstation_group)
-    users["workstation"].user_permissions.add(
-        Permission.objects.get(codename="add_workstationconfig")
+    workstation_org.full_clean()
+    workstation_org.save()
+
+    assign_perm("workstations.add_workstation", workstation_org.members_group)
+    assign_perm(
+        "workstation_configs.add_workstationconfig",
+        workstation_org.members_group,
     )
+    users["workstation"].groups.add(workstation_org.members_group)
 
     algorithm_group = Group.objects.get(
         name=settings.ALGORITHMS_CREATORS_GROUP_NAME

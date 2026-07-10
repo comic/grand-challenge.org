@@ -42,14 +42,6 @@ from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
 
 
-@pytest.fixture
-def workstation_creator(settings):
-    u = UserFactory()
-    g = Group.objects.get(name=settings.WORKSTATIONS_CREATORS_GROUP_NAME)
-    g.user_set.add(u)
-    return u
-
-
 @pytest.mark.django_db
 class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
@@ -94,10 +86,9 @@ class TestObjectPermissionRequiredViews:
 
 
 @pytest.mark.django_db
-def test_workstation_create_detail(
-    client, workstation_creator, uploaded_image
-):
-    user = workstation_creator
+def test_workstation_create_detail(client, uploaded_image):
+    user = UserFactory()
+    assign_perm("workstations.add_workstation", user)
 
     title = "my Workstation"
     description = "my AWESOME workstation"
