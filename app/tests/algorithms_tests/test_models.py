@@ -1773,7 +1773,7 @@ class TestEndpointProperties:
 def test_endpoint_keep_alive_limit_reached():
     endpoint = EndpointFactory.create()
 
-    result = endpoint.keep_alive(seconds=60)
+    result = endpoint.keep_alive(duration=timedelta(seconds=60))
 
     assert result.limit_reached
     endpoint.refresh_from_db()
@@ -1792,7 +1792,7 @@ def test_endpoint_keep_alive():
         comment="test",
     )
 
-    result = endpoint.keep_alive(seconds=60)
+    result = endpoint.keep_alive(duration=timedelta(seconds=60))
 
     assert not result.limit_reached
     endpoint.refresh_from_db()
@@ -1800,6 +1800,24 @@ def test_endpoint_keep_alive():
         endpoint.maximum_duration
         == endpoint.endpoint_utilization.duration + timedelta(seconds=60)
     )
+
+
+@pytest.mark.django_db
+def test_endpoint_keep_alive_raises_for_reader_study_endpoint():
+    endpoint = EndpointFactory.create()
+    modified = endpoint.modified
+    reader_study = ReaderStudyFactory.create()
+    endpoint.endpoint_utilization.reader_studies.add(reader_study)
+    expected_error_message = (
+        "This method should only be used for endpoints that are not "
+        "linked to a reader study"
+    )
+
+    with pytest.raises(RuntimeError, match=expected_error_message):
+        endpoint.keep_alive(duration=timedelta(seconds=60))
+
+    endpoint.refresh_from_db()
+    assert endpoint.modified == modified
 
 
 @pytest.mark.django_db

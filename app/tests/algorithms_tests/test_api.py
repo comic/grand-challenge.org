@@ -47,6 +47,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.factories import ImageFactory, UserFactory
+from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
     create_upload_from_file,
@@ -1427,6 +1428,68 @@ class TestInvocationCreate:
                 "please try again after they have completed"
             ]
         }
+
+    def test_create_invocation_extends_maximum_duration(self, client):
+        user = UserFactory()
+        endpoint = EndpointFactory.create(
+            creator=user,
+            status=EndpointStatusChoices.RUNNING,
+            maximum_duration=timedelta(seconds=0),
+        )
+        ci_string = ComponentInterfaceFactory(
+            kind=ComponentInterface.Kind.STRING
+        )
+        interface = AlgorithmInterfaceFactory(inputs=[ci_string])
+        endpoint.algorithm_image.algorithm.interfaces.add(interface)
+
+        client.force_login(user=user)
+        response = client.post(
+            self.url,
+            content_type="application/json",
+            data={
+                "endpoint": endpoint.api_url,
+                "inputs": [
+                    {"interface": ci_string.slug, "value": "foo"},
+                ],
+            },
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED, response.data
+        endpoint.refresh_from_db()
+        assert endpoint.maximum_duration.total_seconds() > 0
+
+    def test_create_invocation_retains_maximum_duration_for_reader_study_endpoint(
+        self, client
+    ):
+        user = UserFactory()
+        endpoint = EndpointFactory.create(
+            creator=user,
+            status=EndpointStatusChoices.RUNNING,
+            maximum_duration=timedelta(seconds=0),
+        )
+        reader_study = ReaderStudyFactory.create()
+        endpoint.endpoint_utilization.reader_studies.add(reader_study)
+        ci_string = ComponentInterfaceFactory(
+            kind=ComponentInterface.Kind.STRING
+        )
+        interface = AlgorithmInterfaceFactory(inputs=[ci_string])
+        endpoint.algorithm_image.algorithm.interfaces.add(interface)
+
+        client.force_login(user=user)
+        response = client.post(
+            self.url,
+            content_type="application/json",
+            data={
+                "endpoint": endpoint.api_url,
+                "inputs": [
+                    {"interface": ci_string.slug, "value": "foo"},
+                ],
+            },
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED, response.data
+        endpoint.refresh_from_db()
+        assert endpoint.maximum_duration.total_seconds() == 0
 
 
 @pytest.mark.django_db

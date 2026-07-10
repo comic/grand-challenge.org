@@ -528,4 +528,9 @@ class InvocationPostSerializer(serializers.ModelSerializer):
                 )
                 logger.error(e, exc_info=True)
 
+        if not invocation.endpoint.is_linked_to_reader_study:
+            invocation.endpoint.keep_alive(
+                duration=invocation.orchestrator.time_limit
+            )
+
         return invocation

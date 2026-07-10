@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import NamedTuple
 from uuid import UUID
 
@@ -178,8 +178,9 @@ class EndpointOrchestrator:
             return 30
 
     @property
-    def _time_limit(self):
-        return self._executor._time_limit
+    def time_limit(self):
+        # Add buffer time to upload invocation result
+        return self._executor._time_limit + timedelta(seconds=10)
 
     @property
     def runtime_setup_result_key(self):
@@ -336,9 +337,7 @@ class EndpointOrchestrator:
             ContentType="application/json",
             InputLocation=self._invocation_s3_uri,
             InferenceId=inference_id,
-            InvocationTimeoutSeconds=int(
-                self._time_limit.total_seconds() + 10
-            ),  # Add buffer time to upload invocation result
+            InvocationTimeoutSeconds=int(self.time_limit.total_seconds()),
         )
 
     @staticmethod
