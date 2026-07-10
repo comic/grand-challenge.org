@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db.models import Prefetch
+from drf_spectacular.utils import extend_schema_field
 from rest_framework.fields import (
     BooleanField,
     CharField,
@@ -151,6 +152,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
     )
     index = SerializerMethodField()
     title_safe = SerializerMethodField()
+    descriptions_map_safe = SerializerMethodField()
 
     def get_index(self, obj) -> int | None:
         if obj.reader_study.shuffle_hanging_list:
@@ -165,6 +167,15 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
     def get_title_safe(self, obj) -> str:
         return clean(obj.title, no_tags=True)
 
+    @extend_schema_field(
+        {
+            "type": "object",
+            "additionalProperties": {"type": "string"},
+        }
+    )
+    def get_descriptions_map_safe(self, obj) -> dict[str, str]:
+        return obj.descriptions_map_safe
+
     class Meta:
         model = DisplaySet
         fields = (
@@ -178,6 +189,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             "optional_hanging_protocols",
             "view_content",
             "description",
+            "descriptions_map_safe",
             "index",
         )
 
