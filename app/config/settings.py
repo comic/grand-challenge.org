@@ -1007,9 +1007,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 # When using bootstrap error messages need to be renamed to danger
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
-# The name of the group whose members will be able to create reader studies
-READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
-
 ###############################################################################
 #
 # challenges

@@ -12,8 +12,9 @@ from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from faker import Faker
+from guardian.shortcuts import assign_perm
 from knox.models import AuthToken, hash_token
 from knox.settings import CONSTANTS
 
@@ -42,6 +43,7 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -50,6 +52,7 @@ from grandchallenge.reader_studies.models import (
     QuestionWidgetKindChoices,
     ReaderStudy,
 )
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.task_categories.models import TaskType
 from grandchallenge.utilization.models import SessionUtilization
 from grandchallenge.verifications.models import Verification
@@ -76,6 +79,7 @@ DEFAULT_USERS = [
 ]
 
 
+@transaction.atomic
 def run():
     """Creates the main project, demo user and demo challenge."""
     print("🔨 Creating development fixtures 🔨")
@@ -176,10 +180,17 @@ def _set_user_permissions(users):
     users["admin"].is_staff = True
     users["admin"].save()
 
-    rs_group = Group.objects.get(
-        name=settings.READER_STUDY_CREATORS_GROUP_NAME
+    org = Organization(
+        title="Reader Study Creators",
+        logo=create_uploaded_image(),
+        location="NL",
+        website=reverse("home"),
     )
-    users["readerstudy"].groups.add(rs_group)
+    org.full_clean()
+    org.save()
+
+    assign_perm("reader_studies.add_readerstudy", org.members_group)
+    users["readerstudy"].groups.add(org.members_group)
 
     workstation_group = Group.objects.get(
         name=settings.WORKSTATIONS_CREATORS_GROUP_NAME

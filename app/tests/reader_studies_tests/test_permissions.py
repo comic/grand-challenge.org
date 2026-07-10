@@ -9,7 +9,7 @@ from tests.reader_studies_tests.factories import (
     QuestionFactory,
     ReaderStudyFactory,
 )
-from tests.reader_studies_tests.utils import TwoReaderStudies, get_rs_creator
+from tests.reader_studies_tests.utils import TwoReaderStudies
 from tests.utils import get_view_for_user
 
 
@@ -20,7 +20,8 @@ def test_rs_list_permissions(client):
     assert response.status_code == 200
     assert "Add a new reader study" not in response.rendered_content
 
-    creator = get_rs_creator()
+    creator = UserFactory()
+    assign_perm("reader_studies.add_readerstudy", creator)
 
     # Creators should be able to see the create button
     response = get_view_for_user(
@@ -66,7 +67,9 @@ def test_rs_list_permissions(client):
 
 @pytest.mark.django_db
 def test_rs_create_permissions(client):
-    creator = get_rs_creator()
+    creator = UserFactory()
+    assign_perm("reader_studies.add_readerstudy", creator)
+
     # Creators should be able to get the create view
     response = get_view_for_user(
         viewname="reader-studies:create", client=client, user=creator

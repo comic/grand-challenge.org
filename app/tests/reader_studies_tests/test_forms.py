@@ -103,7 +103,7 @@ from tests.reader_studies_tests.factories import (
     ReaderStudyFactory,
     ReaderStudyPermissionRequestFactory,
 )
-from tests.reader_studies_tests.utils import TwoReaderStudies, get_rs_creator
+from tests.reader_studies_tests.utils import TwoReaderStudies
 from tests.uploads_tests.factories import UserUploadFactory
 from tests.utilization_tests.factories import SessionUtilizationFactory
 from tests.utils import get_view_for_user
@@ -196,7 +196,9 @@ def test_reader_update_form(client):
 @pytest.mark.django_db
 def test_reader_study_create(client, uploaded_image):
     # The study creator should automatically get added to the editors group
-    creator = get_rs_creator()
+    creator = UserFactory()
+    assign_perm("reader_studies.add_readerstudy", creator)
+
     ws = WorkstationFactory()
 
     def try_create_rs(
