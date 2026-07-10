@@ -7,7 +7,6 @@ from datetime import timedelta
 from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
@@ -210,14 +209,29 @@ def _set_user_permissions(users):
     )
     users["workstation"].groups.add(workstation_org.members_group)
 
-    algorithm_group = Group.objects.get(
-        name=settings.ALGORITHMS_CREATORS_GROUP_NAME
+    algorithm_org = Organization(
+        title="Algorithm Creators",
+        logo=create_uploaded_image(),
+        location="NL",
+        website=reverse("home"),
     )
-    users["algorithm"].groups.add(algorithm_group)
+    algorithm_org.full_clean()
+    algorithm_org.save()
 
-    add_archive_perm = Permission.objects.get(codename="add_archive")
-    users["archive"].user_permissions.add(add_archive_perm)
-    users["demo"].user_permissions.add(add_archive_perm)
+    assign_perm("algorithms.add_algorithm", algorithm_org.members_group)
+    users["algorithm"].groups.add(algorithm_org.members_group)
+
+    archive_org = Organization(
+        title="Archive Creators",
+        logo=create_uploaded_image(),
+        location="NL",
+        website=reverse("home"),
+    )
+    archive_org.full_clean()
+    archive_org.save()
+
+    assign_perm("archives.add_archive", archive_org.members_group)
+    users["archive"].groups.add(archive_org.members_group)
 
 
 def _create_demo_challenge(users, algorithm):

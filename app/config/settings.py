@@ -1161,8 +1161,6 @@ PUSH_CLOUDWATCH_METRICS = strtobool(
     os.environ.get("PUSH_CLOUDWATCH_METRICS", "False")
 )
 
-# The name of the group whose members will be able to create algorithms
-ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
 ALGORITHMS_MAX_ACTIVE_JOBS = int(
     # The maximum number of active jobs for the entire system
     os.environ.get("ALGORITHMS_MAX_ACTIVE_JOBS", "128")

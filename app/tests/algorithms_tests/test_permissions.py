@@ -47,14 +47,6 @@ from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
-def test_algorithm_creators_group_has_perm(settings):
-    creators_group = Group.objects.get(
-        name=settings.ALGORITHMS_CREATORS_GROUP_NAME
-    )
-    assert creators_group.permissions.filter(codename="add_algorithm").exists()
-
-
-@pytest.mark.django_db
 def test_algorithm_groups_permissions_are_assigned():
     alg = AlgorithmFactory()
 

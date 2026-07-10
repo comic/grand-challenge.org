@@ -70,8 +70,7 @@ def test_create_link_view(client, settings):
     )
     assert reverse("algorithms:custom-create") not in response.rendered_content
 
-    g = Group.objects.get(name=settings.ALGORITHMS_CREATORS_GROUP_NAME)
-    g.user_set.add(user)
+    assign_perm("algorithms.add_algorithm", user)
 
     response = get_view_for_user(
         viewname="algorithms:create-redirect", client=client, user=user

@@ -6,6 +6,7 @@ from actstream.actions import is_following
 from bs4 import BeautifulSoup
 from django.core.validators import MaxValueValidator, MinValueValidator
 from factory.django import ImageField
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.algorithms.forms import (
     AlgorithmAlgorithmInterfaceDeleteForm,
@@ -54,7 +55,6 @@ from tests.algorithms_tests.factories import (
     AlgorithmPermissionRequestFactory,
     ReaderStudyAlgorithmImplementationFactory,
 )
-from tests.algorithms_tests.utils import get_algorithm_creator
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.conftest import get_interface_form_data
 from tests.evaluation_tests.factories import PhaseFactory
@@ -167,7 +167,8 @@ def test_user_update_form(client):
 @pytest.mark.django_db
 def test_algorithm_create(client, uploaded_image):
     # The algorithm creator should automatically get added to the editors group
-    creator = get_algorithm_creator()
+    creator = UserFactory()
+    assign_perm("algorithms.add_algorithm", creator)
     VerificationFactory(user=creator, is_verified=True)
 
     ws = WorkstationFactory()
@@ -529,7 +530,7 @@ def test_create_job_field_validation_no_input_after_widget_choice(
 
 
 def create_algorithm_with_input(**kwargs):
-    creator = get_algorithm_creator()
+    creator = UserFactory()
     VerificationFactory(user=creator, is_verified=True)
     alg = AlgorithmFactory()
     alg.add_editor(user=creator)
