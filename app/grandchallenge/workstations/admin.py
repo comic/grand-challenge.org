@@ -6,6 +6,7 @@ from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.template.defaultfilters import linebreaksbr
 from django.utils.html import format_html
+from django.utils.timezone import now
 
 from grandchallenge.components.admin import ComponentImageAdmin
 from grandchallenge.core.admin import (
@@ -94,10 +95,19 @@ class SessionAdmin(admin.ModelAdmin):
         if obj.task_arn:
             task_id = obj.task_arn.split("/")[-1]
             start = obj.created.strftime("%Y-%m-%dT%H*3a%M*3a%S.000Z")
-            end_time = (
-                obj.created + obj.maximum_duration + timedelta(minutes=10)
-            )
+
+            if obj.claimed_at:
+                end_time = obj.claimed_at + obj.maximum_duration
+            else:
+                end_time = obj.created + timedelta(
+                    hours=settings.WORKSTATIONS_MAXIMUM_UNCLAIMED_SESSION_HOURS
+                )
+
+            end_time += timedelta(minutes=settings.WORKSTATIONS_GRACE_MINUTES)
+            end_time = min(now(), end_time)
+
             end = end_time.strftime("%Y-%m-%dT%H*3a%M*3a%S.000Z")
+
             return format_html(
                 "<a target=_blank href=\"https://{region}.console.aws.amazon.com/cloudwatch/home?region={region}#container-insights:performance/ECS:Task:Granular?~(query~(controls~(CW*3a*3aECS.cluster~(~'{cluster_name})~CW*3a*3aECS.taskId~(~'{task_id})))~context~(orchestrationService~'ecs~timeRange~(end~'{end}~start~'{start})))\">🔗</a>",
                 region=obj.region,
