@@ -3,11 +3,9 @@ from crispy_forms.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
-from django.forms import CheckboxInput, Select
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.policies.models import Policy
 from grandchallenge.profiles.models import UserProfile
 
@@ -34,7 +32,6 @@ class UserProfileForm(forms.ModelForm):
             "notification_email_choice",
             "receive_newsletter",
         )
-        widgets = {"receive_newsletter": CheckboxInput()}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -165,22 +162,6 @@ class SignupForm(UserProfileForm):
         user_profile.save()
 
 
-class NewsletterSignupForm(SaveFormInitMixin, forms.ModelForm):
-    class Meta:
-        model = UserProfile
-        fields = ("receive_newsletter",)
-        widgets = {
-            "receive_newsletter": Select(
-                choices=((True, "Yes, sign me up!"), (False, "No, thanks."))
-            )
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["receive_newsletter"].help_text = None
-        self.helper.form_show_labels = False
-
-
 class SubscriptionPreferenceForm(forms.ModelForm):
     class Meta:
         model = UserProfile
@@ -188,9 +169,6 @@ class SubscriptionPreferenceForm(forms.ModelForm):
             "notification_email_choice",
             "receive_newsletter",
         )
-        widgets = {
-            "receive_newsletter": CheckboxInput,
-        }
 
     def __init__(
         self,

@@ -3,7 +3,6 @@ from django.urls import path, re_path
 from grandchallenge.groups.views import UserAutocomplete
 from grandchallenge.profiles.views import (
     EmailPreferencesManagementView,
-    NewsletterSignUp,
     NewsletterUnsubscribeView,
     NotificationUnsubscribeView,
     UserProfileDetail,
@@ -42,10 +41,5 @@ urlpatterns = [
         r"^(?P<username>[\@\.\+\w-]+)/$",
         UserProfileDetail.as_view(),
         name="profile-detail",
-    ),
-    re_path(
-        r"^(?P<username>[\@\.\+\w-]+)/newsletter-sign-up/$",
-        NewsletterSignUp.as_view(),
-        name="newsletter-sign-up",
     ),
 ]

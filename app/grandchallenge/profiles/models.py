@@ -83,8 +83,6 @@ class UserProfile(models.Model):
         default=None, null=True, editable=False
     )
     receive_newsletter = models.BooleanField(
-        null=True,
-        blank=True,
         help_text="Would you like to be put on our mailing list and receive newsletters about Grand Challenge updates?",
     )
     notification_email_choice = models.CharField(
@@ -279,7 +277,7 @@ class UserProfileGroupObjectPermission(GroupObjectPermissionBase):
 @disable_for_loaddata
 def create_user_profile(instance, created, *_, **__):
     if created:
-        UserProfile.objects.create(user=instance)
+        UserProfile.objects.create(user=instance, receive_newsletter=False)
 
 
 post_save.connect(create_user_profile, sender=settings.AUTH_USER_MODEL)
