@@ -60,7 +60,7 @@ jobs:
             - name: Pull the algorithm-example base container
               run: |
                 docker pull --platform=linux/amd64 \
-                pytorch/pytorch:2.9.1-cuda12.6-cudnn9-runtime
+                pytorch/pytorch:2.13.0-cuda12.6-cudnn9-runtime
             - name: Run the forge integration tests
               run: |
                 cd app
