@@ -1818,7 +1818,7 @@ def stop_expired_endpoints(*, app_label: str, model_name: str):
         stop_endpoint.execute_on_commit(**endpoint.task_kwargs)
 
 
-@lambda_task
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def cancel_active_invocations(*, endpoint_pk: str | UUID):
     from grandchallenge.algorithms.models import Invocation
 
@@ -1833,7 +1833,7 @@ def cancel_active_invocations(*, endpoint_pk: str | UUID):
     )
 
     if Invocation.objects.active().filter(endpoint=endpoint_pk).exists():
-        task_logger.error(
+        raise LockNotAcquiredException(
             "Some invocations were locked and could not be cancelled"
         )
 
