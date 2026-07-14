@@ -1822,20 +1822,17 @@ def stop_expired_endpoints(*, app_label: str, model_name: str):
 def cancel_active_invocations(*, endpoint_pk: str | UUID):
     from grandchallenge.algorithms.models import Invocation
 
-    invocations = list(
-        Invocation.objects.active()
-        .select_for_update(skip_locked=True)
-        .filter(endpoint=endpoint_pk)
-        .values_list("pk", flat=True)
-    )
+    with check_lock_acquired():
+        invocations = list(
+            Invocation.objects.active()
+            .select_for_update(nowait=True)
+            .filter(endpoint=endpoint_pk)
+            .values_list("pk", flat=True)
+        )
+
     Invocation.objects.filter(pk__in=invocations).update(
         status=Invocation.StatusChoices.CANCELLED
     )
-
-    if Invocation.objects.active().filter(endpoint=endpoint_pk).exists():
-        raise LockNotAcquiredException(
-            "Some invocations were locked and could not be cancelled"
-        )
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
