@@ -7,13 +7,13 @@ from datetime import timedelta
 from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
 from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from faker import Faker
+from guardian.shortcuts import assign_perm
 from knox.models import AuthToken, hash_token
 from knox.settings import CONSTANTS
 
@@ -42,6 +42,7 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.modalities.models import ImagingModality
+from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -50,6 +51,7 @@ from grandchallenge.reader_studies.models import (
     QuestionWidgetKindChoices,
     ReaderStudy,
 )
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.task_categories.models import TaskType
 from grandchallenge.utilization.models import SessionUtilization
 from grandchallenge.verifications.models import Verification
@@ -76,6 +78,7 @@ DEFAULT_USERS = [
 ]
 
 
+@transaction.atomic
 def run():
     """Creates the main project, demo user and demo challenge."""
     print("🔨 Creating development fixtures 🔨")
@@ -176,27 +179,59 @@ def _set_user_permissions(users):
     users["admin"].is_staff = True
     users["admin"].save()
 
-    rs_group = Group.objects.get(
-        name=settings.READER_STUDY_CREATORS_GROUP_NAME
+    reader_study_org = Organization(
+        title="Reader Study Creators",
+        logo=create_uploaded_image(),
+        location="NL",
+        website=reverse("home"),
     )
-    users["readerstudy"].groups.add(rs_group)
+    reader_study_org.full_clean()
+    reader_study_org.save()
 
-    workstation_group = Group.objects.get(
-        name=settings.WORKSTATIONS_CREATORS_GROUP_NAME
+    assign_perm(
+        "reader_studies.add_readerstudy", reader_study_org.members_group
     )
-    users["workstation"].groups.add(workstation_group)
-    users["workstation"].user_permissions.add(
-        Permission.objects.get(codename="add_workstationconfig")
-    )
+    users["readerstudy"].groups.add(reader_study_org.members_group)
 
-    algorithm_group = Group.objects.get(
-        name=settings.ALGORITHMS_CREATORS_GROUP_NAME
+    workstation_org = Organization(
+        title="Workstation Creators",
+        logo=create_uploaded_image(),
+        location="NL",
+        website=reverse("home"),
     )
-    users["algorithm"].groups.add(algorithm_group)
+    workstation_org.full_clean()
+    workstation_org.save()
 
-    add_archive_perm = Permission.objects.get(codename="add_archive")
-    users["archive"].user_permissions.add(add_archive_perm)
-    users["demo"].user_permissions.add(add_archive_perm)
+    assign_perm("workstations.add_workstation", workstation_org.members_group)
+    assign_perm(
+        "workstation_configs.add_workstationconfig",
+        workstation_org.members_group,
+    )
+    users["workstation"].groups.add(workstation_org.members_group)
+
+    algorithm_org = Organization(
+        title="Algorithm Creators",
+        logo=create_uploaded_image(),
+        location="NL",
+        website=reverse("home"),
+    )
+    algorithm_org.full_clean()
+    algorithm_org.save()
+
+    assign_perm("algorithms.add_algorithm", algorithm_org.members_group)
+    users["algorithm"].groups.add(algorithm_org.members_group)
+
+    archive_org = Organization(
+        title="Archive Creators",
+        logo=create_uploaded_image(),
+        location="NL",
+        website=reverse("home"),
+    )
+    archive_org.full_clean()
+    archive_org.save()
+
+    assign_perm("archives.add_archive", archive_org.members_group)
+    users["archive"].groups.add(archive_org.members_group)
 
 
 def _create_demo_challenge(users, algorithm):

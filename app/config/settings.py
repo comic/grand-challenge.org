@@ -1006,9 +1006,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 # When using bootstrap error messages need to be renamed to danger
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
-# The name of the group whose members will be able to create reader studies
-READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
-
 ###############################################################################
 #
 # challenges
@@ -1075,8 +1072,6 @@ WORKSTATIONS_NUMBER_UNCLAIMED_SESSIONS = int(
 WORKSTATIONS_MAXIMUM_UNCLAIMED_SESSION_HOURS = int(
     os.environ.get("WORKSTATIONS_MAXIMUM_UNCLAIMED_SESSION_HOURS", "8")
 )
-# The name of the group whose members will be able to create workstations
-WORKSTATIONS_CREATORS_GROUP_NAME = "workstation_creators"
 WORKSTATIONS_SESSION_DURATION_LIMIT = int(
     os.environ.get("WORKSTATIONS_SESSION_DURATION_LIMIT", "10000")
 )
@@ -1165,8 +1160,6 @@ PUSH_CLOUDWATCH_METRICS = strtobool(
     os.environ.get("PUSH_CLOUDWATCH_METRICS", "False")
 )
 
-# The name of the group whose members will be able to create algorithms
-ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
 ALGORITHMS_MAX_ACTIVE_JOBS = int(
     # The maximum number of active jobs for the entire system
     os.environ.get("ALGORITHMS_MAX_ACTIVE_JOBS", "128")

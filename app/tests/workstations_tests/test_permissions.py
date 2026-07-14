@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import pytest
 from django.contrib.auth.models import Group
-from guardian.shortcuts import get_perms
+from guardian.shortcuts import assign_perm, get_perms
 
 from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import SessionFactory, UserFactory, WorkstationFactory
@@ -10,21 +10,15 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-def test_workstation_creators_group_exists(settings):
-    assert Group.objects.get(name=settings.WORKSTATIONS_CREATORS_GROUP_NAME)
-
-
-@pytest.mark.django_db
-def test_create_view_permission(client, settings):
+def test_create_view_permission(client):
     u = UserFactory()
-    g = Group.objects.get(name=settings.WORKSTATIONS_CREATORS_GROUP_NAME)
 
     response = get_view_for_user(
         client=client, user=u, viewname="workstations:create"
     )
     assert response.status_code == 403
 
-    g.user_set.add(u)
+    assign_perm("workstations.add_workstation", u)
 
     response = get_view_for_user(
         client=client, user=u, viewname="workstations:create"
