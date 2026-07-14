@@ -1184,6 +1184,8 @@ def start_service(*, pk: str | UUID, app_label: str, model_name: str):
             environment=service.environment,
             client_token=client_token,
         )
+    except RetryStep:
+        raise
     except Exception as error:
         task_logger.error(error, exc_info=True)
 

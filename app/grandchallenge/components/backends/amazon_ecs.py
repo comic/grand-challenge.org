@@ -2,8 +2,10 @@ import time
 from typing import NamedTuple
 
 import boto3
+from botocore.exceptions import ClientError
 from django.conf import settings
 
+from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.evaluation.utils import get
 
 
@@ -175,16 +177,26 @@ class ECSTaskOrchestrator:
         }
 
     def _register_task_definition(self):
-        response = self._ecs_client.register_task_definition(
-            # DO NOT specify memory on the task. We need to take this from
-            # the container definition so that the correct amount of memory
-            # is reserved by ECS and then limited for the container,
-            # see https://docs.aws.amazon.com/AmazonECS/latest/developerguide/memory-management.html#ecs-mi-memory-calculation
-            containerDefinitions=self._container_definitions,
-            family=self._task_definition_family,
-            requiresCompatibilities=["EC2"],
-            taskRoleArn=settings.COMPONENTS_SERVICE_TASK_ROLE_ARN,
-        )
+        try:
+            response = self._ecs_client.register_task_definition(
+                # DO NOT specify memory on the task. We need to take this from
+                # the container definition so that the correct amount of memory
+                # is reserved by ECS and then limited for the container,
+                # see https://docs.aws.amazon.com/AmazonECS/latest/developerguide/memory-management.html#ecs-mi-memory-calculation
+                containerDefinitions=self._container_definitions,
+                family=self._task_definition_family,
+                requiresCompatibilities=["EC2"],
+                taskRoleArn=settings.COMPONENTS_SERVICE_TASK_ROLE_ARN,
+            )
+        except ClientError as error:
+            if (
+                "Too many concurrent attempts to create a new revision of the specified family"
+                in error.response["Error"]["Message"]
+            ):
+                raise RetryStep("Request throttled") from error
+            else:
+                raise error
+
         return response["taskDefinition"]["taskDefinitionArn"]
 
     @property
