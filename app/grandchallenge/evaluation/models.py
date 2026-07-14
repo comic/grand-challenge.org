@@ -6,7 +6,6 @@ from actstream.actions import follow, is_following
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
-from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import mail_managers
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -51,11 +50,7 @@ from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
-from grandchallenge.core.models import (
-    FieldChangeMixin,
-    TitleSlugDescriptionModel,
-    UUIDModel,
-)
+from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
@@ -72,7 +67,6 @@ from grandchallenge.evaluation.tasks import (
     assign_submission_permissions,
     calculate_ranks,
     check_prerequisites_for_evaluation_execution,
-    update_combined_leaderboard,
 )
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
     get_jsonpath,
@@ -2506,204 +2500,6 @@ class EvaluationGroupObjectPermission(GroupObjectPermissionBase):
     )
 
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
-
-
-class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
-    class CombinationMethodChoices(models.TextChoices):
-        MEAN = "MEAN", "Mean"
-        MEDIAN = "MEDIAN", "Median"
-        SUM = "SUM", "Sum"
-
-    challenge = models.ForeignKey(
-        Challenge, on_delete=models.PROTECT, editable=False
-    )
-    phases = models.ManyToManyField(Phase, through="CombinedLeaderboardPhase")
-    combination_method = models.CharField(
-        max_length=6,
-        choices=CombinationMethodChoices.choices,
-        default=CombinationMethodChoices.MEAN,
-    )
-
-    class Meta:
-        unique_together = (("challenge", "slug"),)
-
-    @cached_property
-    def public_phases(self):
-        return self.phases.filter(public=True)
-
-    @property
-    def concrete_combination_method(self):
-        if self.combination_method == self.CombinationMethodChoices.MEAN:
-            return mean
-        elif self.combination_method == self.CombinationMethodChoices.MEDIAN:
-            return median
-        elif self.combination_method == self.CombinationMethodChoices.SUM:
-            return sum
-        else:
-            raise NotImplementedError
-
-    @cached_property
-    def _combined_ranks_object(self):
-        result = cache.get(self.combined_ranks_cache_key)
-
-        if (
-            result is None
-            or result["phases"] != {phase.pk for phase in self.public_phases}
-            or result["combination_method"] != self.combination_method
-        ):
-            self.schedule_combined_ranks_update()
-            return None
-        else:
-            return result
-
-    @property
-    def combined_ranks(self):
-        combined_ranks = self._combined_ranks_object
-        if combined_ranks is not None:
-            return combined_ranks["results"]
-        else:
-            return []
-
-    @property
-    def combined_ranks_users(self):
-        return [cr["user"] for cr in self.combined_ranks]
-
-    @property
-    def combined_ranks_created(self):
-        combined_ranks = self._combined_ranks_object
-        if combined_ranks is not None:
-            return combined_ranks["created"]
-        else:
-            return None
-
-    @property
-    def users_best_evaluation_per_phase(self):
-        evaluations = Evaluation.objects.filter(
-            # Note, only use public phases here to prevent leaking of
-            # evaluations for hidden phases
-            submission__phase__in=self.public_phases,
-            published=True,
-            status=Evaluation.SUCCESS,
-            rank__gt=0,
-        ).values(
-            "submission__creator__username",
-            "submission__phase__pk",
-            "pk",
-            "created",
-            "rank",
-        )
-
-        users_best_evaluation_per_phase = {}
-
-        for evaluation in evaluations.iterator():
-            phase = evaluation["submission__phase__pk"]
-            user = evaluation["submission__creator__username"]
-
-            if user not in users_best_evaluation_per_phase:
-                users_best_evaluation_per_phase[user] = {}
-
-            if (
-                phase not in users_best_evaluation_per_phase[user]
-                or evaluation["rank"]
-                < users_best_evaluation_per_phase[user][phase]["rank"]
-            ):
-                users_best_evaluation_per_phase[user][phase] = {
-                    "pk": evaluation["pk"],
-                    "created": evaluation["created"],
-                    "rank": evaluation["rank"],
-                }
-
-        return users_best_evaluation_per_phase
-
-    @property
-    def combined_ranks_cache_key(self):
-        return f"{self._meta.app_label}.{self._meta.model_name}.combined_ranks.{self.pk}"
-
-    def update_combined_ranks_cache(self):
-        combined_ranks = []
-        num_phases = self.public_phases.count()
-
-        now = timezone.now()
-        for user, evaluations in self.users_best_evaluation_per_phase.items():
-            if len(evaluations) == num_phases:  # Exclude missing data
-                combined_ranks.append(
-                    {
-                        "user": user,
-                        "combined_rank": self.concrete_combination_method(
-                            evaluation["rank"]
-                            for evaluation in evaluations.values()
-                        ),
-                        "created": max(
-                            evaluation["created"]
-                            for evaluation in evaluations.values()
-                        ),
-                        "evaluations": {
-                            phase: {
-                                "pk": evaluation["pk"],
-                                "rank": evaluation["rank"],
-                            }
-                            for phase, evaluation in evaluations.items()
-                        },
-                    }
-                )
-
-        self._rank_combined_rank_scores(combined_ranks)
-
-        cache_object = {
-            "phases": {phase.pk for phase in self.public_phases},
-            "combination_method": self.combination_method,
-            "created": now,
-            "results": combined_ranks,
-        }
-
-        cache.set(self.combined_ranks_cache_key, cache_object, timeout=None)
-
-    @staticmethod
-    def _rank_combined_rank_scores(combined_ranks):
-        """In-place addition of a rank based on the combined rank"""
-        combined_ranks.sort(key=lambda x: x["combined_rank"])
-        current_score = current_rank = None
-
-        for idx, score in enumerate(
-            cr["combined_rank"] for cr in combined_ranks
-        ):
-            if score != current_score:
-                current_score = score
-                current_rank = idx + 1
-
-            combined_ranks[idx]["rank"] = current_rank
-
-    def schedule_combined_ranks_update(self):
-        update_combined_leaderboard.execute_on_commit(pk=self.pk)
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.schedule_combined_ranks_update()
-
-    def get_absolute_url(self):
-        return reverse(
-            "evaluation:combined-leaderboard-detail",
-            kwargs={
-                "challenge_short_name": self.challenge.short_name,
-                "slug": self.slug,
-            },
-        )
-
-    def delete(self, *args, **kwargs):
-        cache.delete(self.combined_ranks_cache_key)
-        return super().delete(*args, **kwargs)
-
-
-class CombinedLeaderboardPhase(models.Model):
-    # Through table for the combined leaderboard
-    # https://docs.djangoproject.com/en/4.2/topics/db/models/#intermediary-manytomany
-    phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
-    combined_leaderboard = models.ForeignKey(
-        CombinedLeaderboard, on_delete=models.CASCADE
-    )
-
-    class Meta:
-        unique_together = (("phase", "combined_leaderboard"),)
 
 
 class OptionalHangingProtocolPhase(models.Model):

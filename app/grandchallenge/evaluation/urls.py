@@ -5,10 +5,6 @@ from grandchallenge.evaluation.views import (
     AlgorithmInterfaceForPhaseDelete,
     AlgorithmInterfacesForPhaseCopy,
     AlgorithmInterfacesForPhaseList,
-    CombinedLeaderboardCreate,
-    CombinedLeaderboardDelete,
-    CombinedLeaderboardDetail,
-    CombinedLeaderboardUpdate,
     ConfigureAlgorithmPhasesView,
     EvaluationAdminList,
     EvaluationCreate,
@@ -69,26 +65,6 @@ urlpatterns = [
         name="configure-algorithm-phases",
     ),
     path("submissions/", SubmissionList.as_view(), name="submission-list"),
-    path(
-        "combined-leaderboards/create/",
-        CombinedLeaderboardCreate.as_view(),
-        name="combined-leaderboard-create",
-    ),
-    path(
-        "combined-leaderboards/<slug:slug>/",
-        CombinedLeaderboardDetail.as_view(),
-        name="combined-leaderboard-detail",
-    ),
-    path(
-        "combined-leaderboards/<slug:slug>/update/",
-        CombinedLeaderboardUpdate.as_view(),
-        name="combined-leaderboard-update",
-    ),
-    path(
-        "combined-leaderboards/<slug:slug>/delete/",
-        CombinedLeaderboardDelete.as_view(),
-        name="combined-leaderboard-delete",
-    ),
     path(
         "<slug:slug>/admin/",
         EvaluationAdminList.as_view(),

@@ -16,7 +16,6 @@ from grandchallenge.core.admin import (
     UserObjectPermissionAdmin,
 )
 from grandchallenge.evaluation.models import (
-    CombinedLeaderboard,
     Evaluation,
     EvaluationGroundTruth,
     EvaluationGroundTruthGroupObjectPermission,
@@ -275,14 +274,6 @@ class EvaluationAdmin(admin.ModelAdmin):
             "<a target=_blank href='{url}'>🔗</a>",
             url=executor.external_admin_url,
         )
-
-
-@admin.register(CombinedLeaderboard)
-class CombinedLeaderboardAdmin(admin.ModelAdmin):
-    readonly_fields = (
-        "challenge",
-        "phases",
-    )
 
 
 @admin.register(EvaluationGroundTruth)
