@@ -328,11 +328,9 @@ def test_session_stopped_schedules_stop_for_correct_endpoints(
         "deprovision",
     )
 
-    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+    with django_capture_on_commit_callbacks(execute=True):
         session.status = Session.STOPPED
         session.save()
-
-    assert len(callbacks) == 1
 
     user_implementation_endpoint.refresh_from_db()
     other_user_implementation_endpoint.refresh_from_db()
