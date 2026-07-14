@@ -1794,9 +1794,7 @@ def stop_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
 
     endpoint.orchestrator.deprovision()
     endpoint.update_status(status=endpoint.StatusChoices.STOPPED)
-    cancel_active_invocations.execute_on_commit(
-        endpoint_pk=endpoint.pk, _delay=300
-    )
+    cancel_active_invocations.execute_on_commit(endpoint_pk=endpoint.pk)
 
 
 @lambda_task
