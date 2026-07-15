@@ -809,8 +809,6 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
                     required=False,
                 )
 
-        self.init_form_helper()
-
     def clean(self):
         cleaned_data = super().clean()
         selected_phases = [

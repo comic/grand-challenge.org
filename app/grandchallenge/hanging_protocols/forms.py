@@ -1,7 +1,6 @@
 import json
 from typing import NamedTuple
 
-from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Div, Layout, Submit
 from django import forms
 from django.conf import settings
@@ -42,7 +41,6 @@ class HangingProtocolForm(SaveFormInitMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Div(
                 "title",
