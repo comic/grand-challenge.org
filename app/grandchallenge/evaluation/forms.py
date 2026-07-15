@@ -45,7 +45,6 @@ from grandchallenge.core.widgets import (
 )
 from grandchallenge.evaluation.models import (
     EXTRA_RESULT_COLUMNS_SCHEMA,
-    CombinedLeaderboard,
     Evaluation,
     EvaluationGroundTruth,
     Method,
@@ -683,18 +682,6 @@ class SubmissionForm(
             "algorithm_model",
         )
         widgets = {"creator": forms.HiddenInput, "phase": forms.HiddenInput}
-
-
-class CombinedLeaderboardForm(SaveFormInitMixin, forms.ModelForm):
-    def __init__(self, *args, challenge, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.fields["phases"].queryset = challenge.phase_set.all()
-
-    class Meta:
-        model = CombinedLeaderboard
-        fields = ("title", "description", "phases", "combination_method")
-        widgets = {"phases": forms.CheckboxSelectMultiple}
 
 
 class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):

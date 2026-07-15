@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from django.contrib.auth.models import Group
-from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.utils import timezone
 from factory.django import ImageField
@@ -26,12 +25,10 @@ from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.error_messages import EvaluationErrorMessages
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.evaluation.models import (
-    CombinedLeaderboard,
     Evaluation,
     PhaseAlgorithmInterface,
     Submission,
 )
-from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import (
     PaymentStatusChoices,
@@ -58,7 +55,6 @@ from tests.components_tests.factories import (
 )
 from tests.conftest import get_interface_form_data
 from tests.evaluation_tests.factories import (
-    CombinedLeaderboardFactory,
     EvaluationFactory,
     EvaluationGroundTruthFactory,
     MethodFactory,
@@ -224,7 +220,6 @@ def algorithm_phase_with_multiple_inputs():
 class TestLoginViews:
     def test_login_redirect(self, client):
         e = EvaluationFactory(time_limit=60)
-        cl = CombinedLeaderboardFactory()
         gt = EvaluationGroundTruthFactory()
 
         for view_name, kwargs in [
@@ -257,9 +252,6 @@ class TestLoginViews:
             ("evaluation-admin-list", {"slug": e.submission.phase.slug}),
             ("update", {"pk": e.pk}),
             ("phase-algorithm-create", {"slug": e.submission.phase.slug}),
-            ("combined-leaderboard-create", {}),
-            ("combined-leaderboard-update", {"slug": cl.slug}),
-            ("combined-leaderboard-delete", {"slug": cl.slug}),
             ("ground-truth-create", {"slug": e.submission.phase.slug}),
             (
                 "ground-truth-detail",
@@ -1372,166 +1364,6 @@ def test_method_update_view(client):
 
     method.refresh_from_db()
     assert method.comment == "blah"
-
-
-@pytest.mark.django_db
-def test_combined_leaderboard_create(client):
-    ch1, ch2 = ChallengeFactory.create_batch(2)
-    ph1 = PhaseFactory(challenge=ch1)
-    _ = PhaseFactory(challenge=ch2)
-    user = UserFactory()
-
-    response = get_view_for_user(
-        viewname="evaluation:combined-leaderboard-create",
-        client=client,
-        user=user,
-        reverse_kwargs={"challenge_short_name": ch1.short_name},
-    )
-    assert response.status_code == 403
-
-    ch1.add_admin(user)
-
-    response = get_view_for_user(
-        viewname="evaluation:combined-leaderboard-create",
-        client=client,
-        user=user,
-        reverse_kwargs={"challenge_short_name": ch1.short_name},
-    )
-    assert response.status_code == 200
-    # Only phases for this challenge
-    assert {*response.context["form"].fields["phases"].queryset} == {ph1}
-
-    response = get_view_for_user(
-        viewname="evaluation:combined-leaderboard-create",
-        client=client,
-        method=client.post,
-        user=user,
-        reverse_kwargs={"challenge_short_name": ch1.short_name},
-        data={
-            "title": "combined",
-            "phases": [ph1.pk],
-            "combination_method": "MEAN",
-        },
-    )
-    assert response.status_code == 302
-
-    # Should be created for the first challenge
-    assert CombinedLeaderboard.objects.get().challenge == ch1
-
-
-@pytest.mark.django_db
-def test_combined_leaderboard_delete(client):
-    challenge = ChallengeFactory()
-    _ = PhaseFactory(challenge=challenge)
-    leaderboard = CombinedLeaderboardFactory(challenge=challenge)
-    user = UserFactory()
-    update_combined_leaderboard(pk=leaderboard.pk)
-
-    # Sanity check
-    assert CombinedLeaderboard.objects.filter(pk=leaderboard.pk).exists()
-    assert cache.get(leaderboard.combined_ranks_cache_key) is not None
-
-    view_args = {
-        "viewname": "evaluation:combined-leaderboard-delete",
-        "client": client,
-        "user": user,
-        "reverse_kwargs": {
-            "challenge_short_name": challenge.short_name,
-            "slug": leaderboard.slug,
-        },
-    }
-
-    response = get_view_for_user(**view_args)
-    assert response.status_code == 403
-
-    challenge.add_admin(user)
-
-    response = get_view_for_user(**view_args)
-    assert response.status_code == 200
-
-    response = get_view_for_user(
-        method=client.post,
-        **view_args,
-    )
-    assert response.status_code == 302
-
-    assert not CombinedLeaderboard.objects.filter(pk=leaderboard.pk).exists()
-    assert cache.get(leaderboard.combined_ranks_cache_key) is None
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "viewtype",
-    ("detail", "update", "delete"),
-)
-def test_combined_leaderboard_only_visible_for_challenge(client, viewtype):
-    ch1, ch2 = ChallengeFactory.create_batch(2)
-    _ = PhaseFactory(challenge=ch1)
-    _ = PhaseFactory(challenge=ch2)
-    leaderboard = CombinedLeaderboardFactory(challenge=ch1)
-
-    user = UserFactory()
-    ch1.add_admin(user)
-    ch2.add_admin(user)
-
-    response = get_view_for_user(
-        viewname=f"evaluation:combined-leaderboard-{viewtype}",
-        client=client,
-        reverse_kwargs={
-            "challenge_short_name": ch1.short_name,
-            "slug": leaderboard.slug,
-        },
-        user=user,
-    )
-    assert response.status_code == 200
-
-    response = get_view_for_user(
-        viewname=f"evaluation:combined-leaderboard-{viewtype}",
-        client=client,
-        reverse_kwargs={
-            "challenge_short_name": ch2.short_name,
-            "slug": leaderboard.slug,
-        },
-        user=user,
-    )
-    assert response.status_code == 404
-
-
-@pytest.mark.django_db
-def test_update_view_permissions(client):
-    ch1 = ChallengeFactory()
-    ph1 = PhaseFactory(challenge=ch1)
-    _ = PhaseFactory()
-    leaderboard = CombinedLeaderboardFactory(challenge=ch1)
-
-    user = UserFactory()
-
-    response = get_view_for_user(
-        viewname="evaluation:combined-leaderboard-update",
-        client=client,
-        reverse_kwargs={
-            "challenge_short_name": ch1.short_name,
-            "slug": leaderboard.slug,
-        },
-        user=user,
-    )
-    assert response.status_code == 403
-
-    ch1.add_admin(user)
-
-    response = get_view_for_user(
-        viewname="evaluation:combined-leaderboard-update",
-        client=client,
-        reverse_kwargs={
-            "challenge_short_name": ch1.short_name,
-            "slug": leaderboard.slug,
-        },
-        user=user,
-    )
-    assert response.status_code == 200
-
-    # Only phases for this challenge
-    assert {*response.context["form"].fields["phases"].queryset} == {ph1}
 
 
 @pytest.mark.django_db

@@ -578,17 +578,6 @@ def calculate_ranks(*, phase_pk: str | uuid.UUID):
         evaluations, ["rank", "rank_score", "rank_per_metric"]
     )
 
-    for leaderboard in phase.combinedleaderboard_set.all():
-        leaderboard.schedule_combined_ranks_update()
-
-
-@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
-def update_combined_leaderboard(*, pk: str | uuid.UUID):
-    from grandchallenge.evaluation.models import CombinedLeaderboard
-
-    leaderboard = CombinedLeaderboard.objects.get(pk=pk)
-    leaderboard.update_combined_ranks_cache()
-
 
 @lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
 def assign_evaluation_permissions(*, phase_pks: list[str | uuid.UUID]):

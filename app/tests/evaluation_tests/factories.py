@@ -2,7 +2,6 @@ import factory
 
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.models import (
-    CombinedLeaderboard,
     Evaluation,
     EvaluationGroundTruth,
     Method,
@@ -49,14 +48,6 @@ class EvaluationFactory(factory.django.DjangoModelFactory):
     submission = factory.SubFactory(SubmissionFactory)
     requires_memory_gb = 4
     requires_gpu_type = GPUTypeChoices.NO_GPU
-
-
-class CombinedLeaderboardFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = CombinedLeaderboard
-
-    challenge = factory.SubFactory(ChallengeFactory)
-    title = factory.sequence(lambda n: f"Combined Leaderboard {n}")
 
 
 class EvaluationGroundTruthFactory(factory.django.DjangoModelFactory):
