@@ -32,12 +32,8 @@ class SaveFormHelper(FormHelper):
         render time from the form's current fields
 
     The lazy layout means field ordering and dynamic field addition
-    don't matter — whatever fields exist when the form is rendered
+    work seamlessly — whatever fields exist when the form is rendered
     will be included.
-
-    If a custom layout is set via `self.helper.layout = Layout(...)`,
-    the gc-disable-after-submit attribute is still preserved (it lives
-    on helper.attrs, not in the layout).
     """
 
     def __init__(self, form=None):
@@ -79,8 +75,7 @@ class SaveFormInitMixin:
     will be included in the rendered form.
 
     Forms that need a custom layout can set self.helper.layout in
-    their __init__ after calling super(). The gc-disable-after-submit
-    attribute is always preserved.
+    their __init__ after calling super().
     """
 
     def __init__(self, *args, **kwargs):
