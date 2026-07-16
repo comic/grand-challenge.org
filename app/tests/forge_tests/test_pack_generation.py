@@ -353,7 +353,7 @@ def test_pack_example_evaluation_save(tmp_path):
         _test_script_run(script_path=evaluation_path / "do_save.sh")
 
     # Check if saved image exists
-    tar_filename = f"example-evaluation-{phase_context['slug']}"
+    tar_filename = f"example_evaluation_{phase_context['slug']}"
     pattern = str(evaluation_path / f"{tar_filename}_*.tar.gz")
     matching_files = glob.glob(pattern)
     assert len(matching_files) == 1, (

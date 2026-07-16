@@ -1,25 +1,38 @@
 {% load forge %}
 """
-The following is a simple example algorithm.
+Example algorithm for Grand Challenge.
 
-It is meant to run within a container.
+Edit this file to implement your algorithm. It contains:
 
-To run the container locally, you can call the following bash script:
+  init_model() — Called once at server startup. Load your model here.
+  run(model)   — Called each time the /invoke endpoint is hit. This should read input
+                 from /input, run inference, and write output to /output.
 
-  ./do_test_run.sh
+Your algorithm's interfaces:
+{% for interface_name, interface in object.algorithm_interface_names|zip:object.algorithm_interfaces %}
+  {{ interface_name }}:
+    Inputs:
+    {% for socket in interface.inputs %}
+      - /input/{{ socket.relative_path }}
+    {% endfor %}
+    Outputs:
+    {% for socket in interface.outputs %}
+      - /output/{{ socket.relative_path }}
+    {% endfor %}
+{% endfor %}
 
-This will start the inference and reads from ./test/input and writes to ./test/output
+Which interface is active for a given invocation is determined by the
+inputs.json file at /input/inputs.json — a system-generated file that
+describes the input sockets provided for this case.
 
-To save the container and prep it for upload to Grand-Challenge.org you can call:
+To test locally:  ./do_test_run.sh
+To save for upload to GC:   ./do_save.sh
 
-  ./do_save.sh
+Any implementation will do as long as it produces the output as prescribed by the interface.
 
-Any container that shows the same behaviour will do, this is purely an example of how one COULD do it.
-
-Reference the documentation to get details on the runtime environment on the platform:
-https://grand-challenge.org/documentation/runtime-environment/
-
-Happy programming!
+For more details see:
+  https://grand-challenge.org/documentation/algorithms/
+  https://grand-challenge.org/documentation/runtime-environment/
 """
 from pathlib import Path
 import json
@@ -33,7 +46,49 @@ INPUT_PATH = Path("/input")
 OUTPUT_PATH = Path("/output")
 RESOURCE_PATH = Path("resources")
 
-def run():
+
+def _show_torch_cuda_info():
+    print("=+=" * 10)
+    print("Collecting Torch CUDA information")
+    print(f"Torch CUDA is available: {(available := torch.cuda.is_available())}")
+    if available:
+        print(f"\tnumber of devices: {torch.cuda.device_count()}")
+        print(f"\tcurrent device: { (current_device := torch.cuda.current_device())}")
+        print(f"\tproperties: {torch.cuda.get_device_properties(current_device)}")
+    print("=+=" * 10)
+
+
+def init_model():
+    """Load and return your model.
+
+    This is called once by app.py during server startup (before /health returns 200).
+    The model is then reused across all /invoke calls — so load it here,
+    not inside the run() function.
+    """
+    _show_torch_cuda_info()
+
+    # Example how to set torch to use the GPU (if available)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+    model = torch.nn.Linear(10, 1).to(device)
+
+    # Your model will be extracted to `model_dir` at runtime on Grand Challenge.
+    # When testing locally, the local `./model` directory is mounted here.
+    # When you're ready for testing on Grand Challenge, upload your model as a tarball
+    # via Your algorithm > Models on Grand Challenge.
+    # For now, just verify that we can read from the model directory
+    model_dir = Path("/opt/ml/model")
+    with open(
+        model_dir / "a_tarball_subdirectory" / "some_tarball_resource.txt", "r"
+    ) as f:
+        print(f.read())
+
+    return model
+
+def run(model):
+    """ This is called each time the /invoke endpoint is called.
+    This should read input from /input, run inference, and write output to /output.
+    """
     # The key is a tuple of the slugs of the input sockets
     interface_key = get_interface_key()
 
@@ -45,10 +100,10 @@ def run():
     }[interface_key]
 
     # Call the handler
-    return handler()
+    return handler(model)
 
 {% for interface_name, interface in object.algorithm_interface_names|zip:object.algorithm_interfaces %}
-def {{ interface_name }}_handler():
+def {{ interface_name }}_handler(model):
     # Read the input
     {% for socket in interface.inputs %}
     {% if socket.is_dicom_image_kind %}
@@ -71,22 +126,9 @@ def {{ interface_name }}_handler():
     {% endfor %}
 
     # Process the inputs: any way you'd like, here we show-case torch
-    _show_torch_cuda_info()
-
-    # Example how to set torch to use the GPU (if available)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
-    model = torch.nn.Linear(10, 1).to(device)
-    input = torch.randn(1, 10).to(device)
-    output = model(input)
-
-    # Your model will be extracted to the `model_dir` at runtime on Grand Challenge
-    # Note: when testing locally, the local `./model` directory is mounted here.
-    # Eventually, you should upload it as a tarball to Grand Challenge!
-    # Go to Algorithm and upload it under Models.
-    model_dir = Path("/opt/ml/model")
-    with open(model_dir / "a_tarball_subdirectory" / "some_tarball_resource.txt", "r") as f:
-        print(f.read())
+    model_input = torch.randn(1, 10).to(device)
+    model_output = model(model_input)
 
     # For now, let us make bogus predictions
     {% for socket in interface.outputs %}
@@ -171,16 +213,5 @@ def get_interface_key():
 {% endif %}
 
 
-def _show_torch_cuda_info():
-    print("=+=" * 10)
-    print("Collecting Torch CUDA information")
-    print(f"Torch CUDA is available: {(available := torch.cuda.is_available())}")
-    if available:
-        print(f"\tnumber of devices: {torch.cuda.device_count()}")
-        print(f"\tcurrent device: { (current_device := torch.cuda.current_device())}")
-        print(f"\tproperties: {torch.cuda.get_device_properties(current_device)}")
-    print("=+=" * 10)
-
-
 if __name__ == "__main__":
-    raise SystemExit(run())
+    raise SystemExit(run(model=init_model()))

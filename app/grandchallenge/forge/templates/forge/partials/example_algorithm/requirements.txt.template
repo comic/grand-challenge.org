@@ -12,3 +12,5 @@ pylibjpeg
 pylibjpeg-libjpeg
 pylibjpeg-openjpeg
 {% endif %}
+fastapi
+uvicorn

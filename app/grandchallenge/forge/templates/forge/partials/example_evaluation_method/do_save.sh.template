@@ -1,19 +1,42 @@
 #!/usr/bin/env bash
+#
+# Saves the evaluation method's Docker image and ground truth as a tarball for upload to
+# Grand Challenge. Run this after do_test_run.sh confirms everything works.
 
-# Stop at first error
-set -e
+set -euo pipefail
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+DOCKER_IMAGE_TAG="example_evaluation_{{ object.slug }}"
 
-# Set default container name
-DOCKER_IMAGE_TAG="example-evaluation-{{ object.slug }}"
+# Disable promotional logs from Docker
+export DOCKER_CLI_HINTS=false
 
-echo ""
-echo "= STEP 1 = (Re)build the image"
+# ---------------------------------------------------------------------------
+
+# Log a message to stdout with color based on level (when running in a terminal).
+#   info    = blue (default)
+#   warning = yellow
+#   error   = red
+log() {
+    local message="$1"
+    local level="${2:-info}"
+    if [[ -t 1 ]]; then
+        case "$level" in
+            info)    printf "\e[38;2;36;150;237m> %s\e[0m\n" "$message" ;;
+            warning) printf "\e[38;2;255;200;0m> %s\e[0m\n" "$message" ;;
+            error)   printf "\e[38;2;255;50;50m> %s\e[0m\n" "$message" ;;
+            *)       printf "\e[38;2;36;150;237m> %s\e[0m\n" "$message" ;;
+        esac
+    else
+        printf "%s\n" "$message"
+    fi
+}
+
+# ---------------------------------------------------------------------------
+
+log "(Re)build the image"
 export DOCKER_QUIET_BUILD=1
 source "${SCRIPT_DIR}/do_build.sh"
-echo "==== Done"
-echo ""
 
 # Get the build information from the Docker image tag
 build_timestamp=$( docker inspect --format='{% verbatim %}{{ .Created }}{% endverbatim %}' "$DOCKER_IMAGE_TAG")
@@ -31,25 +54,14 @@ output_filename="${DOCKER_IMAGE_TAG}_${formatted_build_info}.tar.gz"
 output_path="${SCRIPT_DIR}/$output_filename"
 
 # Save the Docker-container image and gzip it
-echo "= STEP 2 = Saving the image"
-echo "This can take a while."
-
+log "Saving the image (this can take a while)"
 docker save "$DOCKER_IMAGE_TAG" | gzip -c > "$output_path"
-printf "Saved as: \e[32m${output_filename}\e[0m\n"
+log "Saved as: ${output_filename}"
 
-echo "==== Done"
-echo ""
-
-
-# Create the tarbal
-echo "= STEP 3 = Packing the ground truth"
-echo "This can take a while."
+# Create the ground truth tarball
+log "Packing the ground truth (this can take a while)"
 output_tarball_name="${SCRIPT_DIR}/ground_truth.tar.gz"
+tar -czf "$output_tarball_name" -C "${SCRIPT_DIR}/ground_truth" .
+log "Saved as: ground_truth.tar.gz"
 
-tar -czf $output_tarball_name -C "${SCRIPT_DIR}/ground_truth" .
-printf "Saved as: \e[32mground_truth.tar.gz\e[0m\n"
-
-echo "==== Done"
-echo ""
-
-printf "\e[31mIMPORTANT: Please upload the ground_truth.tar.gz as seperate Ground Truth to your Phase!\e[0m\n"
+log "IMPORTANT: Please upload the ground_truth.tar.gz as separate Ground Truth to your Phase!" warning

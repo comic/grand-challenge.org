@@ -114,7 +114,7 @@ def copy_and_render(
     context = {
         "object": context_object,
         "grand_challenge_forge_version": settings.COMMIT_ID,
-        "no_gpus": settings.FORGE_DISABLE_GPUS,
+        "use_gpus": not settings.FORGE_DISABLE_GPUS,
     }
 
     if extra_context:
