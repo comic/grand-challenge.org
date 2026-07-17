@@ -245,7 +245,7 @@ def process_{{ interface_name }}(job,
             values=job["inputs"],
             slug="{{ socket.slug }}",
     )
-    {% elif socket.is_file_kind %}
+    {% elif socket.is_file_kind or socket.is_json_file_kind %}
     file_name_{{ socket.slug|dash_to_underscore }} = get_file_name(
             values=job["inputs"],
             slug="{{ socket.slug }}",
@@ -291,7 +291,7 @@ def get_interface_key(job):
     socket_slugs = [sv["socket"]["slug"] for sv in job["inputs"]]
     return tuple(sorted(socket_slugs))
 
-{% if object.algorithm_input_sockets|has_image_kind or object.evaluation_additional_inputs|has_image_kind %}
+{% if object.algorithm_input_sockets|has_image_kind %}
 def get_image_name(*, values, slug):
     # This tells us the user-provided name of the input or output image
     for value in values:
@@ -302,7 +302,7 @@ def get_image_name(*, values, slug):
 {% endif %}
 
 
-{% if object.algorithm_input_sockets|has_file_kind or object.evaluation_additional_inputs|has_file_kind %}
+{% if object.algorithm_input_sockets|has_file_kind or object.algorithm_input_sockets|has_json_file_kind %}
 import re
 
 def get_file_name(*, values, slug):

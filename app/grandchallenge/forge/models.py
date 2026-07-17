@@ -24,6 +24,7 @@ class ForgeSocket(BaseModel):
     is_dicom_image_kind: bool = False
     is_json_kind: bool = False
     is_file_kind: bool = False
+    is_json_file_kind: bool = False
 
     @property
     def has_example_value(self):

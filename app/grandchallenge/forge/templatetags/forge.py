@@ -33,6 +33,11 @@ def has_file_kind(arg):
     return any(item.is_file_kind for item in arg)
 
 
+@register.filter
+def has_json_file_kind(arg):
+    return any(item.is_json_file_kind for item in arg)
+
+
 @register.filter(name="zip")
 def zip_items(a, b):
     return zip(a, b, strict=True)

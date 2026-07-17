@@ -747,6 +747,7 @@ class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
             is_dicom_image_kind=self.is_dicom_image_kind,
             is_json_kind=self.is_json_kind,
             is_file_kind=self.is_file_kind,
+            is_json_file_kind=self.is_json_kind and not self.store_in_database,
         )
 
     class Meta:
