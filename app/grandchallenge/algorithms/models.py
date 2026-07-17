@@ -1589,7 +1589,8 @@ class EndpointManager(models.QuerySet):
 
 
 class KeepAliveResult(NamedTuple):
-    limit_reached: bool
+    lifetime_extended: bool
+    message: str = ""
 
 
 class Endpoint(FieldChangeMixin, UUIDModel):
@@ -1802,6 +1803,12 @@ class Endpoint(FieldChangeMixin, UUIDModel):
                 "linked to a reader study"
             )
 
+        if self.status not in EndpointStatusChoices.get_active_choices():
+            return KeepAliveResult(
+                lifetime_extended=False,
+                message="Endpoint no longer active",
+            )
+
         self.update_utilization()
         new_duration = self.endpoint_utilization.duration + duration
         duration_limit = self._get_duration_limit()
@@ -1810,9 +1817,16 @@ class Endpoint(FieldChangeMixin, UUIDModel):
         self.maximum_duration = min(new_duration, duration_limit)
         self.save(update_fields=["maximum_duration"])
 
-        return KeepAliveResult(
-            limit_reached=limit_reached,
-        )
+        if limit_reached:
+            return KeepAliveResult(
+                lifetime_extended=False,
+                message="Endpoint duration limit reached",
+            )
+        else:
+            return KeepAliveResult(
+                lifetime_extended=True,
+                message="Endpoint lifetime extended",
+            )
 
     @property
     def api_url(self) -> str:
