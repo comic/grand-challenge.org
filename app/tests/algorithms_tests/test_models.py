@@ -1775,7 +1775,8 @@ def test_endpoint_keep_alive_limit_reached():
 
     result = endpoint.keep_alive(duration=timedelta(seconds=60))
 
-    assert result.limit_reached
+    assert not result.lifetime_extended
+    assert "Endpoint duration limit reached" in result.message
     endpoint.refresh_from_db()
     assert endpoint.maximum_duration < timedelta(seconds=60)
 
@@ -1794,7 +1795,7 @@ def test_endpoint_keep_alive():
 
     result = endpoint.keep_alive(duration=timedelta(seconds=60))
 
-    assert not result.limit_reached
+    assert result.lifetime_extended
     endpoint.refresh_from_db()
     assert (
         endpoint.maximum_duration
