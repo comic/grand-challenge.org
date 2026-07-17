@@ -123,7 +123,7 @@ class AlgorithmModelSerializer(serializers.ModelSerializer):
         fields = ["pk", "algorithm", "created", "import_status", "model"]
 
 
-class HyperlinkedEndpointSerializer(serializers.ModelSerializer):
+class EndpointSerializer(serializers.ModelSerializer):
     algorithm = HyperlinkedRelatedField(
         source="algorithm_image.algorithm",
         view_name="api:algorithm-detail",
@@ -146,7 +146,7 @@ class HyperlinkedEndpointSerializer(serializers.ModelSerializer):
         ]
 
 
-class EndpointPostSerializer(HyperlinkedEndpointSerializer):
+class EndpointPostSerializer(EndpointSerializer):
     algorithm = HyperlinkedRelatedField(
         source="algorithm_image.algorithm",
         queryset=Algorithm.objects.none(),
@@ -417,7 +417,7 @@ class JobPostSerializer(JobSerializer):
         return job
 
 
-class HyperlinkedInvocationSerializer(serializers.ModelSerializer):
+class InvocationSerializer(serializers.ModelSerializer):
     """Serializer with hyperlinks for use in public API"""
 
     endpoint = HyperlinkedRelatedField(
