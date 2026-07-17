@@ -51,6 +51,13 @@ DEFAULT_PHASE_CONTEXT_STUB = {
                     "is_file_kind": True,
                 },
                 {
+                    "slug": "json-file-input-socket-slug",
+                    "relative_path": "json-file-input-value.json",
+                    "example_value": {"key": "value"},
+                    "is_json_kind": True,
+                    "is_json_file_kind": True,
+                },
+                {
                     "slug": "dicom-image-set-input-socket-slug",
                     "relative_path": "images/dicom-image-set-input-value",
                     "is_dicom_image_kind": True,
@@ -82,6 +89,13 @@ DEFAULT_PHASE_CONTEXT_STUB = {
                     "slug": "yet-another-non-json-output-socket-slug",
                     "relative_path": "yet-another-non-json-output-value",
                     "is_file_kind": True,
+                },
+                {
+                    "slug": "json-file-output-socket-slug",
+                    "relative_path": "json-file-output-value.json",
+                    "example_value": {"key": "value"},
+                    "is_json_kind": True,
+                    "is_json_file_kind": True,
                 },
                 {
                     "slug": "dicom-image-set-output-socket-slug",
@@ -212,6 +226,13 @@ DEFAULT_ALGORITHM_CONTEXT_STUB = {
                     "is_file_kind": True,
                 },
                 {
+                    "slug": "json-file-input-socket-slug",
+                    "relative_path": "json-file-input-value.json",
+                    "example_value": {"key": "value"},
+                    "is_json_kind": True,
+                    "is_json_file_kind": True,
+                },
+                {
                     "slug": "dicom-image-set-input-socket-slug",
                     "relative_path": "images/dicom-image-set-input-value",
                     "is_dicom_image_kind": True,
@@ -243,6 +264,13 @@ DEFAULT_ALGORITHM_CONTEXT_STUB = {
                     "slug": "yet-another-non-json-output-socket-slug",
                     "relative_path": "yet-another-non-json-output-value",
                     "is_file_kind": True,
+                },
+                {
+                    "slug": "json-file-output-socket-slug",
+                    "relative_path": "json-file-output-value.json",
+                    "example_value": {"key": "value"},
+                    "is_json_kind": True,
+                    "is_json_file_kind": True,
                 },
                 {
                     "slug": "dicom-image-set-output-socket-slug",
