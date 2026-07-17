@@ -28,7 +28,7 @@ class SaveFormHelper(FormHelper):
     """
     - Sets the gc-disable-after-submit attribute on the form element
     - Generates a default layout lazily at render time
-      (rather than snapshotting fields are construction time)
+      (rather than snapshotting fields at construction time)
     """
 
     def __init__(self, form=None):
