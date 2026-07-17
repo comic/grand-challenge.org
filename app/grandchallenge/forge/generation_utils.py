@@ -80,7 +80,7 @@ def socket_to_socket_value(socket):
             },
             socket=socket,
         )
-    elif socket.is_file_kind:
+    elif socket.is_file_kind or socket.is_json_file_kind:
         return ForgeSocketValue(
             file=f"https://grand-challenge.org/media/some-link/{socket.relative_path}",
             socket=socket,
