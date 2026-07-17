@@ -26,14 +26,9 @@ class PhaseMixin:
 
 class SaveFormHelper(FormHelper):
     """
-    A FormHelper subclass that:
-      - Sets the gc-disable-after-submit attribute on the form element
-      - Generates a default layout (Fieldset + Save button) lazily at
-        render time from the form's current fields
-
-    The lazy layout means field ordering and dynamic field addition
-    work seamlessly — whatever fields exist when the form is rendered
-    will be included.
+    - Sets the gc-disable-after-submit attribute on the form element
+    - Generates a default layout lazily at render time
+      (rather than snapshotting fields are construction time)
     """
 
     def __init__(self, form=None):
@@ -67,17 +62,6 @@ class SaveFormHelper(FormHelper):
 
 
 class SaveFormInitMixin:
-    """
-    Mixin that sets up a SaveFormHelper on the form.
-
-    The helper uses lazy layout generation, so MRO ordering does not
-    matter — fields added by any mixin (before or after this one)
-    will be included in the rendered form.
-
-    Forms that need a custom layout can set self.helper.layout in
-    their __init__ after calling super().
-    """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = SaveFormHelper(self)
