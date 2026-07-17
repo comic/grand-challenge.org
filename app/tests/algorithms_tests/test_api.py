@@ -1044,6 +1044,39 @@ class TestEndpointCreate:
 
         assert response.status_code == status.HTTP_201_CREATED, response.data
 
+    def test_created_endpoint_response_fields(self, client):
+        user = UserFactory()
+        assign_perm("algorithms.add_endpoint", user)
+        algorithm = AlgorithmFactory()
+        algorithm.add_user(user)
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+        AlgorithmUserCreditFactory(
+            algorithm=algorithm,
+            user=user,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert response.status_code == status.HTTP_201_CREATED, response.data
+        assert response.data.keys() == {
+            "algorithm",
+            "api_url",
+            "pk",
+            "remaining_lifetime",
+            "status",
+        }
+
 
 @pytest.mark.django_db
 class TestEndpointCreateReadUpdateOnly:

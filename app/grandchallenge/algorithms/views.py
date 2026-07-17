@@ -83,7 +83,7 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
     EndpointPostSerializer,
-    EndpointSerializer,
+    HyperlinkedEndpointSerializer,
     HyperlinkedInvocationSerializer,
     HyperlinkedJobSerializer,
     InvocationPostSerializer,
@@ -930,7 +930,7 @@ class EndpointViewSet(
         if self.action == "create":
             return EndpointPostSerializer
         else:
-            return EndpointSerializer
+            return HyperlinkedEndpointSerializer
 
     @action(detail=True, methods=["patch"])
     def keep_alive(self, request, *args, **kwargs):
