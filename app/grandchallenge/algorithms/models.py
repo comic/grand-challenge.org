@@ -1814,6 +1814,11 @@ class Endpoint(FieldChangeMixin, UUIDModel):
         duration_limit = self._get_duration_limit()
 
         limit_reached = new_duration >= duration_limit
+
+        # Update maximum_duration regardless of whether the limit is reached,
+        # because the new duration limit may be shorter than the current value
+        # when available credits have reduced, e.g. due to other running
+        # endpoints.
         self.maximum_duration = min(new_duration, duration_limit)
         self.save(update_fields=["maximum_duration"])
 
