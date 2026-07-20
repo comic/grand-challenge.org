@@ -1045,7 +1045,10 @@ def handle_event(*, event: dict, backend: str):
 
 
 @lambda_task(
-    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+    queue=LambdaTaskQueueChoices.MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=LONG_TASK_HARD_TIMEOUT,
 )
 def parse_job_outputs(
     *,
