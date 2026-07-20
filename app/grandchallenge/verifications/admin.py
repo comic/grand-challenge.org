@@ -51,6 +51,7 @@ class VerificationAdmin(admin.ModelAdmin):
         "email_school_names",
         "signup_email_if_different",
         "email",
+        "comment",
         "email_is_academic",
         "email_is_verified",
         "is_verified",
