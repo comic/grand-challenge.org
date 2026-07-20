@@ -24,38 +24,47 @@ class PhaseMixin:
         super().__init__(*args, **kwargs)
 
 
+class SaveFormHelper(FormHelper):
+    """
+    - Sets the gc-disable-after-submit attribute on the form element
+    - Generates a default layout lazily at render time
+      (rather than snapshotting fields at construction time)
+    """
+
+    def __init__(self, form=None):
+        # Skip super().__init__(form) to avoid eagerly snapshotting fields
+        super().__init__()
+        self.form = form
+        self.attrs["gc-disable-after-submit"] = True
+        self._custom_layout = None
+
+    @property
+    def layout(self):
+        if self._custom_layout is not None:
+            return self._custom_layout
+
+        if self.form is not None:
+            return Layout(
+                Fieldset(None, *self.form.fields.keys()),
+                StrictButton(
+                    "Save",
+                    css_class="btn-primary",
+                    type="submit",
+                    css_id="submit-id-save",
+                ),
+            )
+
+        return Layout()
+
+    @layout.setter
+    def layout(self, value):
+        self._custom_layout = value
+
+
 class SaveFormInitMixin:
-    """
-    Mixin that adds some save features to a form via init:
-      - a 'Save' button
-      - disabling fieldsets after the form is submitted
-
-    When used in a form with dynamically created fields,
-    this mixin needs to be placed before any other mixins.
-    """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.init_form_helper()
-
-    def init_form_helper(self):
-        self.helper = FormHelper(self)
-        self.helper.attrs["gc-disable-after-submit"] = True
-        self.helper.layout = Layout(
-            Fieldset(
-                None,  # Legend
-                self.helper.layout,
-            ),
-            StrictButton(
-                "Save",
-                css_class="btn-primary",
-                type="submit",
-                css_id="submit-id-save",
-            ),
-        )
-
-    class Media:
-        js = ["js/disable_after_submit.mjs"]
+        self.helper = SaveFormHelper(self)
 
 
 class WorkstationUserFilterMixin(UserMixin):

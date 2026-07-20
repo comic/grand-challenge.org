@@ -1,4 +1,3 @@
-from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout, Submit
 from django.conf import settings
 from django.forms import ModelForm
@@ -72,7 +71,6 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
     def __init__(self, *args, read_only=False, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Fieldset("", *GENERAL_FIELDS),
             Fieldset(
