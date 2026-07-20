@@ -6,9 +6,9 @@ from rest_framework.exceptions import ErrorDetail
 
 from grandchallenge.algorithms.models import Endpoint, Invocation, Job
 from grandchallenge.algorithms.serializers import (
-    HyperlinkedInvocationSerializer,
     HyperlinkedJobSerializer,
     InvocationPostSerializer,
+    InvocationSerializer,
     JobPostSerializer,
 )
 from grandchallenge.cases.models import RawImageUploadSession
@@ -598,7 +598,7 @@ def test_hyperlinked_invocation_serializer(rf):
         interface__kind=InterfaceKindChoices.PANIMG_IMAGE, image=ImageFactory()
     )
     invocation.inputs.set([civ])
-    serializer = HyperlinkedInvocationSerializer(
+    serializer = InvocationSerializer(
         invocation, context={"request": rf.get("/foo", secure=True)}
     )
     assert serializer.data["status"] == invocation.get_status_display()

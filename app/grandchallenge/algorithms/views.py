@@ -84,9 +84,9 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmSerializer,
     EndpointPostSerializer,
     EndpointSerializer,
-    HyperlinkedInvocationSerializer,
     HyperlinkedJobSerializer,
     InvocationPostSerializer,
+    InvocationSerializer,
     JobPostSerializer,
 )
 from grandchallenge.components.backends.exceptions import (
@@ -937,13 +937,13 @@ class EndpointViewSet(
         endpoint = self.get_object()
         result = endpoint.keep_alive(duration=timedelta(seconds=300))
 
-        if result.limit_reached:
+        if result.lifetime_extended:
+            return Response({"status": result.message})
+        else:
             return Response(
-                {"status": "Endpoint duration limit reached"},
+                {"status": result.message},
                 status=HTTP_400_BAD_REQUEST,
             )
-        else:
-            return Response({"status": "Endpoint lifetime extended"})
 
 
 class InvocationViewSet(
@@ -958,7 +958,7 @@ class InvocationViewSet(
         if self.action == "create":
             return InvocationPostSerializer
         else:
-            return HyperlinkedInvocationSerializer
+            return InvocationSerializer
 
 
 class AlgorithmPermissionRequestCreate(

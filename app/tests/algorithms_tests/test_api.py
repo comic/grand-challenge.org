@@ -1044,6 +1044,39 @@ class TestEndpointCreate:
 
         assert response.status_code == status.HTTP_201_CREATED, response.data
 
+    def test_created_endpoint_response_fields(self, client):
+        user = UserFactory()
+        assign_perm("algorithms.add_endpoint", user)
+        algorithm = AlgorithmFactory()
+        algorithm.add_user(user)
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            api_method=APIMethodChoices.INVOKE,
+            is_desired_version=True,
+            is_manifest_valid=True,
+            is_in_registry=True,
+        )
+        AlgorithmUserCreditFactory(
+            algorithm=algorithm,
+            user=user,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"algorithm": algorithm.api_url})
+
+        assert response.status_code == status.HTTP_201_CREATED, response.data
+        assert response.data.keys() == {
+            "algorithm",
+            "api_url",
+            "pk",
+            "remaining_lifetime",
+            "status",
+        }
+
 
 @pytest.mark.django_db
 class TestEndpointCreateReadUpdateOnly:
@@ -1131,6 +1164,62 @@ class TestEndpointKeepAlive:
             endpoint.maximum_duration
             == endpoint.endpoint_utilization.duration + timedelta(seconds=300)
         )
+
+    @pytest.mark.parametrize(
+        "endpoint_status", EndpointStatusChoices.get_active_choices()
+    )
+    def test_ok_for_active_status(self, client, endpoint_status):
+        endpoint = EndpointFactory.create(
+            maximum_duration=timedelta(seconds=1),
+            status=endpoint_status,
+        )
+        AlgorithmUserCreditFactory(
+            user=endpoint.creator,
+            algorithm=endpoint.algorithm_image.algorithm,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
+        client.force_login(user=endpoint.creator)
+
+        response = client.patch(self.get_url(endpoint.pk))
+
+        assert response.status_code == 200, response.data
+        assert response.json() == {"status": "Endpoint lifetime extended"}
+        endpoint.refresh_from_db()
+        assert (
+            endpoint.maximum_duration
+            == endpoint.endpoint_utilization.duration + timedelta(seconds=300)
+        )
+
+    @pytest.mark.parametrize(
+        "endpoint_status",
+        set(EndpointStatusChoices).difference(
+            EndpointStatusChoices.get_active_choices()
+        ),
+    )
+    def test_response_for_nonactive_status(self, client, endpoint_status):
+        endpoint = EndpointFactory.create(
+            maximum_duration=timedelta(seconds=0),
+            status=endpoint_status,
+        )
+        AlgorithmUserCreditFactory(
+            user=endpoint.creator,
+            algorithm=endpoint.algorithm_image.algorithm,
+            credits=1000,
+            valid_from=now().date(),
+            valid_until=now().date(),
+            comment="test",
+        )
+        client.force_login(user=endpoint.creator)
+
+        response = client.patch(self.get_url(endpoint.pk))
+
+        assert response.status_code == 400, response.data
+        assert response.json() == {"status": "Endpoint no longer active"}
+        endpoint.refresh_from_db()
+        assert endpoint.maximum_duration == timedelta(seconds=0)
 
 
 @pytest.mark.django_db

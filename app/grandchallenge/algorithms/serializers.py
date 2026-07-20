@@ -146,17 +146,12 @@ class EndpointSerializer(serializers.ModelSerializer):
         ]
 
 
-class EndpointPostSerializer(serializers.ModelSerializer):
+class EndpointPostSerializer(EndpointSerializer):
     algorithm = HyperlinkedRelatedField(
+        source="algorithm_image.algorithm",
         queryset=Algorithm.objects.none(),
         view_name="api:algorithm-detail",
-        write_only=True,
     )
-    status = CharField(source="get_status_display", read_only=True)
-
-    class Meta:
-        model = Endpoint
-        fields = ["pk", "algorithm", "status"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -171,7 +166,7 @@ class EndpointPostSerializer(serializers.ModelSerializer):
             )
 
     def validate(self, data):
-        algorithm = data.pop("algorithm")
+        algorithm = data["algorithm_image"]["algorithm"]
         user = self.context["request"].user
 
         if not algorithm.active_image:
@@ -422,7 +417,7 @@ class JobPostSerializer(JobSerializer):
         return job
 
 
-class HyperlinkedInvocationSerializer(serializers.ModelSerializer):
+class InvocationSerializer(serializers.ModelSerializer):
     """Serializer with hyperlinks for use in public API"""
 
     endpoint = HyperlinkedRelatedField(
