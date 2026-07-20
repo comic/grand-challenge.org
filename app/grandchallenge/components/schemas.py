@@ -636,7 +636,6 @@ ANSWER_TYPE_SCHEMA = {
 
 VEGA_LITE_SCHEMA = {
     "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-    "$ref": "https://vega.github.io/schema/vega-lite/v5.json",
 }
 
 AFFINE_TRANSFORM_REGISTRATION_SCHEMA = {
