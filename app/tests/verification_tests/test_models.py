@@ -39,6 +39,21 @@ def test_email_sent_to_correct_email():
 
 
 @pytest.mark.django_db
+def test_updating_verification_does_not_trigger_email_validation():
+    verification = VerificationFactory(email="test@foo.bar")
+    verification.comment = "A comment"
+
+    # The email already exists in the Verification table, so clean_email
+    # would reject it on a new instance, but on update
+    # this check should be skipped.
+    verification.full_clean()
+    verification.save()
+
+    verification.refresh_from_db()
+    assert verification.comment == "A comment"
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "perm_request_factory, perm_request_entity_attr, entity_factory",
     [

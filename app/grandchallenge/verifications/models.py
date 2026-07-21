@@ -43,30 +43,33 @@ class Verification(FieldChangeMixin, models.Model):
     is_verified = models.BooleanField(default=None, null=True, editable=False)
     verified_at = models.DateTimeField(blank=True, null=True, editable=False)
 
+    comment = models.TextField(blank=True)
+
     def __str__(self):
         return f"Verification for {self.user}"
 
     def clean(self, *args, **kwargs):
         super().clean_fields(*args, **kwargs)
 
-        self.email = clean_email(email=self.email)
+        if self._state.adding:
+            self.email = clean_email(email=self.email)
 
-        if is_free(self.email):
-            raise ValidationError(
-                "Email hosted on this domain cannot be used for verification, "
-                "please provide your work, corporate or institutional email."
-            )
+            if is_free(self.email):
+                raise ValidationError(
+                    "Email hosted on this domain cannot be used for verification, "
+                    "please provide your work, corporate or institutional email."
+                )
 
-        if (
-            get_user_model()
-            .objects.filter(email__iexact=self.email)
-            .exclude(pk=self.user.pk)
-            .exists()
-            or EmailAddress.objects.filter(email__iexact=self.email)
-            .exclude(user=self.user)
-            .exists()
-        ):
-            raise ValidationError("This email is already in use.")
+            if (
+                get_user_model()
+                .objects.filter(email__iexact=self.email)
+                .exclude(pk=self.user.pk)
+                .exists()
+                or EmailAddress.objects.filter(email__iexact=self.email)
+                .exclude(user=self.user)
+                .exists()
+            ):
+                raise ValidationError("This email is already in use.")
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
