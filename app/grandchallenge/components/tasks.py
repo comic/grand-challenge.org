@@ -1106,9 +1106,7 @@ def parse_job_output_interface(
 
     executor = job.get_executor(backend=backend)
 
-    # Defensive copy to avoid mutating the original list
-    remaining_pks = list(interface_pks)
-    interface_pk = remaining_pks.pop(0)
+    interface_pk = interface_pks.pop(0)
 
     interface_model = job.output_interfaces.model
     try:
@@ -1128,27 +1126,24 @@ def parse_job_output_interface(
             error_message=str(e),
             detailed_error_message=e.message_details,
         )
-        return
     except Exception:
         job.update_status(
             status=job.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
         task_logger.error("Could not parse outputs", exc_info=True)
-        return
     else:
         job.outputs.add(*outputs)
-
-    if remaining_pks:
-        parse_job_output_interface.execute_on_commit(
-            job_pk=job_pk,
-            job_app_label=job_app_label,
-            job_model_name=job_model_name,
-            backend=backend,
-            interface_pks=remaining_pks,
-        )
-    else:
-        job.update_status(status=job.SUCCESS)
+        if interface_pks:
+            parse_job_output_interface.execute_on_commit(
+                job_pk=job_pk,
+                job_app_label=job_app_label,
+                job_model_name=job_model_name,
+                backend=backend,
+                interface_pks=interface_pks,
+            )
+        else:
+            job.update_status(status=job.SUCCESS)
 
 
 @lambda_task(retry_on=(RetryStep,))
