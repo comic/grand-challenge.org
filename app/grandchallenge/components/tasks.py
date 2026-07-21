@@ -1044,9 +1044,7 @@ def handle_event(*, event: dict, backend: str):
         parse_job_outputs.execute_on_commit(**job.task_kwargs)
 
 
-@lambda_task(
-    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
-)
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def parse_job_outputs(
     *,
     job_pk: str | UUID,
@@ -1075,7 +1073,7 @@ def parse_job_outputs(
         job.update_status(status=job.PARSING)
 
         # Kick off the parsing chain
-        parse_job_output_interface.execute_on_commit(
+        parse_singular_job_output.execute_on_commit(
             job_pk=job_pk,
             job_app_label=job_app_label,
             job_model_name=job_model_name,
@@ -1087,7 +1085,7 @@ def parse_job_outputs(
 @lambda_task(
     queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
 )
-def parse_job_output_interface(
+def parse_singular_job_output(
     *,
     job_pk: str | UUID,
     job_app_label: str,
@@ -1135,7 +1133,7 @@ def parse_job_output_interface(
     else:
         job.outputs.add(*outputs)
         if interface_pks:
-            parse_job_output_interface.execute_on_commit(
+            parse_singular_job_output.execute_on_commit(
                 job_pk=job_pk,
                 job_app_label=job_app_label,
                 job_model_name=job_model_name,
