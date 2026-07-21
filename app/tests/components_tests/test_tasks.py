@@ -35,6 +35,7 @@ from grandchallenge.components.backends.base import (
     InferenceResult,
     RuntimeSetupResult,
 )
+from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.models import (
     APIMethodChoices,
     ComponentInterfaceValue,
@@ -55,6 +56,8 @@ from grandchallenge.components.tasks import (
     handle_endpoint_status_event,
     invoke_endpoint,
     parse_endpoint_invocation_outputs,
+    parse_job_outputs,
+    parse_singular_job_output,
     preload_interactive_algorithms,
     remove_container_image_from_registry,
     remove_inactive_container_images,
@@ -77,6 +80,7 @@ from grandchallenge.workstations.models import WorkstationImage
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     EndpointFactory,
@@ -88,7 +92,10 @@ from tests.cases_tests.factories import (
     DICOMImageSetUploadFactory,
     RawImageUploadSessionFactory,
 )
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
     EvaluationGroundTruthFactory,
@@ -2071,3 +2078,281 @@ def test_invoke_endpoint_skips_keep_alive_for_reader_study_endpoint(mocker):
     invoke_endpoint(**invocation.task_kwargs)
 
     spy_keep_alive.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_parse_job_outputs(
+    settings, django_capture_on_commit_callbacks, mocker
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+
+    int_socket_0, int_socket_1, int_socket_2, int_socket_3 = (
+        ComponentInterfaceFactory.create_batch(
+            4, kind=InterfaceKindChoices.INTEGER
+        )
+    )
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[int_socket_0],
+        outputs=[int_socket_1, int_socket_2, int_socket_3],
+    )
+    ai.algorithm.interfaces.add(interface)
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        status=Job.EXECUTED,
+        time_limit=60,
+    )
+
+    class TestExecutor:
+        def get_outputs(self, output_interfaces):
+            return [
+                ComponentInterfaceValueFactory(interface=interface, value=42)
+                for interface in output_interfaces
+            ]
+
+    mocker.patch(
+        "grandchallenge.algorithms.models.Job.get_executor",
+        return_value=TestExecutor(),
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        parse_job_outputs(**job.task_kwargs)
+
+    job.refresh_from_db()
+    assert job.error_message == ""
+    assert job.status == Job.SUCCESS
+    assert job.outputs.count() == 3
+
+
+@pytest.mark.django_db
+def test_parse_job_outputs_incorrect_state(
+    settings, django_capture_on_commit_callbacks, mocker
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        status=Job.CANCELLED,
+        time_limit=60,
+    )
+
+    with pytest.raises(
+        RuntimeError, match="Job is not ready for output parsing"
+    ):
+        with django_capture_on_commit_callbacks(execute=True):
+            parse_job_outputs(**job.task_kwargs)
+
+    job.status = job.EXECUTED
+    job.save()
+
+    job.outputs.add(ComponentInterfaceValueFactory())
+
+    with pytest.raises(RuntimeError, match="Job already has outputs"):
+        with django_capture_on_commit_callbacks(execute=True):
+            parse_job_outputs(**job.task_kwargs)
+
+
+@pytest.mark.django_db
+def test_parse_singular_job_output(
+    settings, django_capture_on_commit_callbacks, mocker
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+
+    int_socket_0, int_socket_1, int_socket_2, int_socket_3 = (
+        ComponentInterfaceFactory.create_batch(
+            4, kind=InterfaceKindChoices.INTEGER
+        )
+    )
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[int_socket_0],
+        outputs=[int_socket_1, int_socket_2, int_socket_3],
+    )
+    ai.algorithm.interfaces.add(interface)
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        status=Job.PARSING,
+        time_limit=60,
+    )
+
+    class TestExecutor:
+        def get_outputs(self, output_interfaces):
+            return [
+                ComponentInterfaceValueFactory(interface=interface, value=42)
+                for interface in output_interfaces
+            ]
+
+    mocker.patch(
+        "grandchallenge.algorithms.models.Job.get_executor",
+        return_value=TestExecutor(),
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        parse_singular_job_output(
+            **job.task_kwargs,
+            interface_pks=[int_socket_1.pk, int_socket_2.pk, int_socket_3.pk],
+        )
+
+    job.refresh_from_db()
+    assert job.error_message == ""
+    assert job.status == Job.SUCCESS
+    assert job.outputs.count() == 3
+
+
+@pytest.mark.django_db
+def test_parse_singular_job_output_incorrect_state(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        status=Job.CANCELLED,
+        time_limit=60,
+    )
+
+    with pytest.raises(RuntimeError, match="Job is not in parsing state"):
+        with django_capture_on_commit_callbacks(execute=True):
+            parse_singular_job_output(**job.task_kwargs, interface_pks=[42])
+
+
+@pytest.mark.django_db
+def test_parse_singular_job_output_nonexistent_interface(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        status=Job.PARSING,
+        time_limit=60,
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        parse_singular_job_output(**job.task_kwargs, interface_pks=[42])
+
+    job.refresh_from_db()
+    assert job.status == Job.FAILURE
+    assert job.error_message == "Output interface with pk=42 does not exist"
+
+
+@pytest.mark.django_db
+def test_parse_singular_job_output_executor_exception(
+    settings, django_capture_on_commit_callbacks, mocker
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+
+    int_socket_0, int_socket_1, int_socket_2, int_socket_3 = (
+        ComponentInterfaceFactory.create_batch(
+            4, kind=InterfaceKindChoices.INTEGER
+        )
+    )
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[int_socket_0],
+        outputs=[int_socket_1, int_socket_2, int_socket_3],
+    )
+    ai.algorithm.interfaces.add(interface)
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        status=Job.PARSING,
+        time_limit=60,
+    )
+
+    class TestExecutor:
+        def get_outputs(self, *_, **__):
+            raise Exception("Test execution that should not be passed to user")
+
+    mocker.patch(
+        "grandchallenge.algorithms.models.Job.get_executor",
+        return_value=TestExecutor(),
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        parse_singular_job_output(
+            **job.task_kwargs, interface_pks=[int_socket_1.pk]
+        )
+
+    job.refresh_from_db()
+    assert job.status == Job.FAILURE
+    assert job.error_message == "An unexpected error occurred"
+
+
+@pytest.mark.django_db
+def test_parse_singular_job_output_executor_component_exception(
+    settings, django_capture_on_commit_callbacks, mocker
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+
+    int_socket_0, int_socket_1, int_socket_2, int_socket_3 = (
+        ComponentInterfaceFactory.create_batch(
+            4, kind=InterfaceKindChoices.INTEGER
+        )
+    )
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[int_socket_0],
+        outputs=[int_socket_1, int_socket_2, int_socket_3],
+    )
+    ai.algorithm.interfaces.add(interface)
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        status=Job.PARSING,
+        time_limit=60,
+    )
+
+    class TestExecutor:
+        def get_outputs(self, *_, **__):
+            raise ComponentException(
+                "Test execution that should be passed to user"
+            )
+
+    mocker.patch(
+        "grandchallenge.algorithms.models.Job.get_executor",
+        return_value=TestExecutor(),
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        parse_singular_job_output(
+            **job.task_kwargs, interface_pks=[int_socket_1.pk]
+        )
+
+    job.refresh_from_db()
+    assert job.status == Job.FAILURE
+    assert job.error_message == "Test execution that should be passed to user"

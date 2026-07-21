@@ -1044,12 +1044,7 @@ def handle_event(*, event: dict, backend: str):
         parse_job_outputs.execute_on_commit(**job.task_kwargs)
 
 
-@lambda_task(
-    queue=LambdaTaskQueueChoices.MEM8G,
-    retry_on=(LockNotAcquiredException,),
-    soft_timeout=LONG_TASK_SOFT_TIMEOUT,
-    hard_timeout=LONG_TASK_HARD_TIMEOUT,
-)
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def parse_job_outputs(
     *,
     job_pk: str | UUID,
@@ -1062,18 +1057,66 @@ def parse_job_outputs(
     with check_lock_acquired():
         job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
 
-    executor = job.get_executor(backend=backend)
-
     if job.status != job.EXECUTED:
         raise RuntimeError("Job is not ready for output parsing")
 
     if job.outputs.exists():
         raise RuntimeError("Job already has outputs")
 
+    interface_pks = list(
+        job.output_interfaces.order_by("pk").values_list("pk", flat=True)
+    )
+
+    job.update_status(status=job.PARSING)
+
+    # Kick off the parsing chain
+    parse_singular_job_output.execute_on_commit(
+        job_pk=job_pk,
+        job_app_label=job_app_label,
+        job_model_name=job_model_name,
+        backend=backend,
+        interface_pks=interface_pks,
+    )
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+)
+def parse_singular_job_output(
+    *,
+    job_pk: str | UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,
+    interface_pks: list[int],
+):
+    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
+
+    with check_lock_acquired():
+        job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
+
+    if not interface_pks:
+        raise RuntimeError("No output interfaces to parse")
+
+    if job.status != job.PARSING:
+        raise RuntimeError("Job is not in parsing state")
+
+    executor = job.get_executor(backend=backend)
+
+    interface_pk = interface_pks.pop(0)
+
+    interface_model = job.output_interfaces.model
     try:
-        outputs = executor.get_outputs(
-            output_interfaces=job.output_interfaces.all()
+        interface = interface_model.objects.get(pk=interface_pk)
+    except interface_model.DoesNotExist:
+        job.update_status(
+            status=job.FAILURE,
+            error_message=f"Output interface with pk={interface_pk} does not exist",
         )
+        return
+
+    try:
+        outputs = executor.get_outputs(output_interfaces=[interface])
     except ComponentException as e:
         job.update_status(
             status=job.FAILURE,
@@ -1088,7 +1131,16 @@ def parse_job_outputs(
         task_logger.error("Could not parse outputs", exc_info=True)
     else:
         job.outputs.add(*outputs)
-        job.update_status(status=job.SUCCESS)
+        if interface_pks:
+            parse_singular_job_output.execute_on_commit(
+                job_pk=job_pk,
+                job_app_label=job_app_label,
+                job_model_name=job_model_name,
+                backend=backend,
+                interface_pks=interface_pks,
+            )
+        else:
+            job.update_status(status=job.SUCCESS)
 
 
 @lambda_task(retry_on=(RetryStep,))
