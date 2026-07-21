@@ -1067,19 +1067,16 @@ def parse_job_outputs(
         job.output_interfaces.order_by("pk").values_list("pk", flat=True)
     )
 
-    if not interface_pks:
-        job.update_status(status=job.SUCCESS)
-    else:
-        job.update_status(status=job.PARSING)
+    job.update_status(status=job.PARSING)
 
-        # Kick off the parsing chain
-        parse_singular_job_output.execute_on_commit(
-            job_pk=job_pk,
-            job_app_label=job_app_label,
-            job_model_name=job_model_name,
-            backend=backend,
-            interface_pks=interface_pks,
-        )
+    # Kick off the parsing chain
+    parse_singular_job_output.execute_on_commit(
+        job_pk=job_pk,
+        job_app_label=job_app_label,
+        job_model_name=job_model_name,
+        backend=backend,
+        interface_pks=interface_pks,
+    )
 
 
 @lambda_task(
@@ -1098,8 +1095,10 @@ def parse_singular_job_output(
     with check_lock_acquired():
         job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
 
+    if not interface_pks:
+        raise RuntimeError("No output interfaces to parse")
+
     if job.status != job.PARSING:
-        # Check for changes in status
         raise RuntimeError("Job is not in parsing state")
 
     executor = job.get_executor(backend=backend)
