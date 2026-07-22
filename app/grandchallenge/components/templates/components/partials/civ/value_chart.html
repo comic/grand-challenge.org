@@ -8,4 +8,9 @@
             <span class="sr-only">Loading...</span>
         </div>
     </div>
+    {% if civ.interface.description %}
+        <div class="text-muted">
+            Description: {{ civ.interface.description }}
+        </div>
+    {% endif %}
 {% endblock %}
