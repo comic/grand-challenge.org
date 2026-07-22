@@ -1,5 +1,8 @@
-const numImageInputs = JSON.parse(
-    document.getElementById("numImageInputs").textContent,
+const numPanimgInputs = JSON.parse(
+    document.getElementById("numPanimgInputs").textContent,
+);
+const numDicomInputs = JSON.parse(
+    document.getElementById("numDicomInputs").textContent,
 );
 const numFileInputs = JSON.parse(
     document.getElementById("numFileInputs").textContent,
@@ -14,7 +17,8 @@ const averageJobDuration = moment.duration(
 const timeout = 5000;
 
 const cards = {
-    imageImport: document.getElementById("imageImportCard"),
+    panimgImport: document.getElementById("panimgImportCard"),
+    dicomImport: document.getElementById("dicomImportCard"),
     fileImport: document.getElementById("fileImportCard"),
     job: document.getElementById("jobCard"),
     resultImport: document.getElementById("resultImportCard"),
@@ -31,27 +35,45 @@ function getJobStatus(jobUrl) {
 
 function handleJobStatus(job) {
     const jobStatus = job.status.toLowerCase();
-    const imageInputs = job.inputs.filter(
-        i => i.interface.super_kind === "Image",
+    const panimgInputs = job.inputs.filter(
+        i =>
+            i.interface.super_kind === "Image" &&
+            i.interface.kind !== "DICOM Image Set",
+    );
+    const dicomInputs = job.inputs.filter(
+        i => i.interface.kind === "DICOM Image Set",
     );
     const fileInputs = job.inputs.filter(
         i => i.interface.super_kind === "File",
     );
 
-    updateCardStatus(
-        cards.imageImport,
-        jobStatus,
-        imageInputs,
-        numImageInputs,
-        "image",
-    );
-    updateCardStatus(
-        cards.fileImport,
-        jobStatus,
-        fileInputs,
-        numFileInputs,
-        "file",
-    );
+    if (cards.panimgImport) {
+        updateCardStatus(
+            cards.panimgImport,
+            jobStatus,
+            panimgInputs,
+            numPanimgInputs,
+            "image",
+        );
+    }
+    if (cards.dicomImport) {
+        updateCardStatus(
+            cards.dicomImport,
+            jobStatus,
+            dicomInputs,
+            numDicomInputs,
+            "image",
+        );
+    }
+    if (cards.fileImport) {
+        updateCardStatus(
+            cards.fileImport,
+            jobStatus,
+            fileInputs,
+            numFileInputs,
+            "file",
+        );
+    }
 
     if (jobStatus === "succeeded") {
         setCardCompleteMessage(cards.job, "View Results");
