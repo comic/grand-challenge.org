@@ -157,6 +157,27 @@ class FlexibleWidgetPrefixes(StrEnum):
     SEARCH = f"flexible_search{INTERFACE_FORM_FIELD_PREFIX}"
 
 
+def _strip_external_refs(*, schema):
+    """Return a copy of the schema with external $ref URIs removed from
+    definitions. The browser-side JSON editor cannot resolve external
+    URIs; full validation still happens server-side."""
+    return {
+        **schema,
+        "definitions": {
+            key: (
+                {
+                    k: v
+                    for k, v in definition.items()
+                    if k != "$ref" or not v.startswith("http")
+                }
+                if isinstance(definition, dict)
+                else definition
+            )
+            for key, definition in schema["definitions"].items()
+        },
+    }
+
+
 class InterfaceFormFieldsMixin:
     possible_widgets = {
         UserUploadMultipleWidget,
@@ -287,7 +308,8 @@ class InterfaceFormFieldsMixin:
         )
 
         if field_type == forms.JSONField:
-            kwargs["widget"] = JSONEditorWidget(schema=schema)
+            widget_schema = _strip_external_refs(schema=schema)
+            kwargs["widget"] = JSONEditorWidget(schema=widget_schema)
         kwargs["validators"] = [JSONValidator(schema=schema)]
 
         return field_type(**kwargs)

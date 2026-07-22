@@ -2,6 +2,7 @@ import json
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.forms import JSONField
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.archives.forms import ArchiveItemUpdateForm
@@ -14,6 +15,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,
 )
+from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import DisplaySetUpdateForm
 from grandchallenge.uploads.models import UserUpload
 from tests.archives_tests.factories import ArchiveItemFactory
@@ -295,3 +297,20 @@ def test_help_text_does_not_include_download_link_without_example():
     help_text = str(field.help_text)
     assert "This is a test description" in help_text
     assert "Download an example" not in help_text
+
+
+@pytest.mark.django_db
+def test_chart_interface_widget_schema_has_no_external_ref():
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.CHART,
+        store_in_database=True,
+    )
+
+    fields = InterfaceFormFieldsMixin().get_fields_for_interface(interface=ci)
+    field = fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"]
+    assert isinstance(field, JSONField)
+    assert isinstance(field.widget, JSONEditorWidget)
+
+    widget_schema = field.widget.schema
+    chart_def = widget_schema["definitions"]["CHART"]
+    assert "$ref" not in chart_def
