@@ -1991,6 +1991,38 @@ def test_display_set_partial_update_errors_returned(client):
 
 
 @pytest.mark.django_db
+def test_display_sets_not_duplicated_when_user_is_reader_and_editor(client):
+    reader_study = ReaderStudyFactory(shuffle_hanging_list=False)
+    user = UserFactory()
+
+    reader_study.add_reader(user)
+    reader_study.add_editor(user)
+
+    DisplaySetFactory.create_batch(3, reader_study=reader_study)
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(reader_study.pk)},
+        user=user,
+        client=client,
+        method=client.get,
+    )
+    assert response.json()["count"] == 3
+
+    reader_study.shuffle_hanging_list = True
+    reader_study.save()
+
+    response = get_view_for_user(
+        viewname="api:reader-studies-display-set-list",
+        data={"reader_study": str(reader_study.pk)},
+        user=user,
+        client=client,
+        method=client.get,
+    )
+    assert response.json()["count"] == 3
+
+
+@pytest.mark.django_db
 def test_display_sets_shuffled_per_user(client):
     n_display_sets = 10
     reader_study = ReaderStudyFactory(shuffle_hanging_list=False)
