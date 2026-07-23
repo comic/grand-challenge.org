@@ -1474,6 +1474,60 @@ class TestAlgorithmImageCredits:
             == 5
         )
 
+    def test_recently_expired_credits_do_not_reduce_general_credits(
+        self, settings
+    ):
+        settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER = 1000
+
+        user = UserFactory()
+        algorithm = AlgorithmFactory(minimum_credits_per_job=200)
+        algorithm_image = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=algorithm,
+        )
+
+        # Another algorithm to check general credits against
+        other_algorithm = AlgorithmFactory(minimum_credits_per_job=200)
+        other_algorithm_image = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=other_algorithm,
+        )
+
+        # Create credits that expired yesterday
+        AlgorithmUserCreditFactory(
+            user=user,
+            algorithm=algorithm,
+            credits=5000,
+            valid_from=now().date() - timedelta(days=20),
+            valid_until=now().date() - timedelta(days=1),
+            comment="test",
+        )
+
+        # User ran jobs during the credit validity period (15 days ago)
+        for _ in range(3):
+            job = AlgorithmJobFactory(
+                creator=user,
+                algorithm_image=algorithm_image,
+                is_complimentary=False,
+                time_limit=3600,
+            )
+            job.credits_consumed = 200
+            job.created = now() - timedelta(days=15)
+            job.save(update_fields=["credits_consumed", "created"])
+
+        # The expired credits covered those jobs, so general credits
+        # should not be reduced by them
+        assert (
+            other_algorithm_image.get_remaining_non_complimentary_jobs(
+                user=user
+            )
+            == 5
+        )
+
     def test_active_credits_with_spent_credits(self):
 
         user = UserFactory()
