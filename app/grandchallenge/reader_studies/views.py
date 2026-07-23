@@ -1353,7 +1353,12 @@ class DisplaySetViewSet(
 
     def create_randomized_qs(self, queryset):
         set_seed(1 / int(self.request.user.pk))
-        queryset = queryset.order_by("?")
+        # Deduplicate before applying random ordering. The incoming qs may
+        # contain duplicates when a user belongs to both readers and editors
+        distinct_pks = queryset.values_list("pk", flat=True).distinct()
+        queryset = queryset.model.objects.filter(pk__in=distinct_pks).order_by(
+            "?"
+        )
         # Save the queryset to determine each item's index in the serializer
         self.randomized_qs = list(queryset)
         return queryset
