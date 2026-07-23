@@ -94,6 +94,7 @@ from grandchallenge.components.backends.exceptions import (
 )
 from grandchallenge.components.models import (
     ImportStatusChoices,
+    InterfaceKindChoices,
     InterfaceKinds,
 )
 from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
@@ -709,8 +710,11 @@ class JobProgressDetail(
                 "job_detail_api": reverse(
                     "api:algorithms-job-detail", kwargs={"pk": self.object.pk}
                 ),
-                "num_image_inputs": self.object.algorithm_interface.inputs.filter(
-                    kind__in=InterfaceKinds.image
+                "num_panimg_inputs": self.object.algorithm_interface.inputs.filter(
+                    kind__in=InterfaceKinds.panimg
+                ).count(),
+                "num_dicom_inputs": self.object.algorithm_interface.inputs.filter(
+                    kind=InterfaceKindChoices.DICOM_IMAGE_SET
                 ).count(),
                 "num_file_inputs": self.object.algorithm_interface.inputs.filter(
                     Q(kind__in=InterfaceKinds.file)

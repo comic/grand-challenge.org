@@ -26,37 +26,56 @@
 {% block content %}
 
     <div class="row equal-height">
-
-        <div class="col-md-4 mb-3">
-            <div id="fileImportCard" class="card text-center border-primary">
-                <div class="card-body">
-                    <h5 class="card-title">Importing Files</h5>
-                    <div class="text-center p-3 statusSymbol">
-                        <div class="text-secondary spinner-grow" role="status"><span
-                                class="sr-only">Loading...</span></div>
+        {% if num_file_inputs > 0 %}
+            <div class="col-md mb-3">
+                <div id="fileImportCard" class="card text-center border-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Importing Files</h5>
+                        <div class="text-center p-3 statusSymbol">
+                            <div class="text-secondary spinner-grow" role="status"><span
+                                    class="sr-only">Loading...</span></div>
+                        </div>
+                        <p class="card-text">
+                            <a href="{% url 'algorithms:job-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}"
+                               class="stretched-link statusMessage"></a>
+                        </p>
                     </div>
-                    <p class="card-text">
-                        <a href="{% url 'algorithms:job-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}"
-                           class="stretched-link statusMessage"></a>
-                    </p>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4 mb-3">
-            <div id="imageImportCard" class="card text-center border-primary">
-                <div class="card-body">
-                    <h5 class="card-title">Importing Images</h5>
-                    <div class="text-center p-3 statusSymbol">
-                        <div class="text-secondary spinner-grow" role="status"><span
-                                class="sr-only">Loading...</span></div>
+        {% endif %}
+        {% if num_panimg_inputs > 0 %}
+            <div class="col-md mb-3">
+                <div id="panimgImportCard" class="card text-center border-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Importing Images</h5>
+                        <div class="text-center p-3 statusSymbol">
+                            <div class="text-secondary spinner-grow" role="status"><span
+                                    class="sr-only">Loading...</span></div>
+                        </div>
+                        <p class="card-text">
+                            <a href="{% url 'cases:raw-image-upload-session-list' %}" class="stretched-link statusMessage"></a>
+                        </p>
                     </div>
-                    <p class="card-text">
-                        <a href="{% url 'cases:raw-image-upload-session-list' %}" class="stretched-link statusMessage"></a>
-                    </p>
                 </div>
             </div>
-        </div>
-        <div class="col-md-4 mb-3">
+        {% endif %}
+        {% if num_dicom_inputs > 0 %}
+            <div class="col-md mb-3">
+                <div id="dicomImportCard" class="card text-center border-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Importing DICOM</h5>
+                        <div class="text-center p-3 statusSymbol">
+                            <div class="text-secondary spinner-grow" role="status"><span
+                                    class="sr-only">Loading...</span></div>
+                        </div>
+                        <p class="card-text">
+                            <a href="{% url 'cases:dicom-image-set-upload-list' %}" class="stretched-link statusMessage"></a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        <div class="col-md mb-3">
             <div id="jobCard" class="card text-center border-light text-muted">
                 <div class="card-body">
                     <h5 class="card-title">Running Algorithm</h5>
@@ -78,7 +97,8 @@
 
     {{ object.algorithm_image.algorithm.average_duration|json_script:"averageJobDuration" }}
     {{ job_detail_api|json_script:"jobDetailAPI" }}
-    {{ num_image_inputs|json_script:"numImageInputs" }}
+    {{ num_panimg_inputs|json_script:"numPanimgInputs" }}
+    {{ num_dicom_inputs|json_script:"numDicomInputs" }}
     {{ num_file_inputs|json_script:"numFileInputs" }}
     <script src="{% static 'vendored/moment.js/moment.min.js' %}"></script>
     <script type="module" src="{% static 'algorithms/js/job_session.mjs' %}"></script>
