@@ -11,7 +11,8 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import Count, Q, Sum, TextChoices
+from django.db.models import Count, Exists, OuterRef, Q, Sum, TextChoices
+from django.db.models.functions import TruncDate
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.template.defaultfilters import truncatechars
@@ -943,23 +944,21 @@ class AlgorithmImage(UUIDModel, ComponentImage):
 
         user_credits = settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER
 
-        user_algorithms_with_active_credits = (
-            AlgorithmUserCredit.objects.active_credits()
-            .filter(
-                user=user,
-            )
-            .values_list("algorithm__pk", flat=True)
+        covered_by_specific_credits = AlgorithmUserCredit.objects.filter(
+            user=user,
+            algorithm=OuterRef("algorithm_image__algorithm"),
+            valid_from__lte=OuterRef("created_date"),
+            valid_until__gte=OuterRef("created_date"),
         )
 
         spent_credits = (
-            Job.objects.filter(
+            Job.objects.annotate(created_date=TruncDate("created"))
+            .filter(
                 creator=user,
                 is_complimentary=False,
                 created__gte=timezone.now() - relativedelta(months=1),
             )
-            .exclude(
-                algorithm_image__algorithm__pk__in=user_algorithms_with_active_credits
-            )
+            .exclude(Exists(covered_by_specific_credits))
             .aggregate(
                 total=Sum("credits_consumed", default=0),
             )
