@@ -278,6 +278,7 @@ class EvaluationAdmin(admin.ModelAdmin):
 
 @admin.register(EvaluationGroundTruth)
 class EvaluationGroundTruthAdmin(admin.ModelAdmin):
+    exclude = ("ground_truth",)
     list_display = ("phase", "created", "is_desired_version", "comment")
     list_filter = ("is_desired_version",)
     search_fields = ("phase__slug", "comment")
@@ -286,7 +287,6 @@ class EvaluationGroundTruthAdmin(admin.ModelAdmin):
         "phase",
         "checksum",
         "size_in_storage",
-        "ground_truth",
     )
 
 

@@ -37,11 +37,11 @@ def cancel_image_imports(modeladmin, request, queryset):
 
 class ComponentImageAdmin(admin.ModelAdmin):
     ordering = ("-created",)
+    exclude = ("image",)
     readonly_fields = (
         "creator",
         "user_upload",
         "import_status",
-        "image",
     )
     list_display = (
         "pk",
