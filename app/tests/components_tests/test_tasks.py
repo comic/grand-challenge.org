@@ -2081,8 +2081,9 @@ def test_invoke_endpoint_skips_keep_alive_for_reader_study_endpoint(mocker):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("test_idempotent", [True, False])
 def test_parse_job_outputs(
-    settings, django_capture_on_commit_callbacks, mocker
+    settings, django_capture_on_commit_callbacks, mocker, test_idempotent
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
@@ -2124,6 +2125,10 @@ def test_parse_job_outputs(
     with django_capture_on_commit_callbacks(execute=True):
         parse_job_outputs(**job.task_kwargs)
 
+    if test_idempotent:
+        with django_capture_on_commit_callbacks(execute=True):
+            parse_job_outputs(**job.task_kwargs)
+
     job.refresh_from_db()
     assert job.error_message == ""
     assert job.status == Job.SUCCESS
@@ -2152,19 +2157,11 @@ def test_parse_job_outputs_incorrect_state(
         with django_capture_on_commit_callbacks(execute=True):
             parse_job_outputs(**job.task_kwargs)
 
-    job.status = job.EXECUTED
-    job.save()
-
-    job.outputs.add(ComponentInterfaceValueFactory())
-
-    with pytest.raises(RuntimeError, match="Job already has outputs"):
-        with django_capture_on_commit_callbacks(execute=True):
-            parse_job_outputs(**job.task_kwargs)
-
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("test_idempotent", [True, False])
 def test_parse_singular_job_output(
-    settings, django_capture_on_commit_callbacks, mocker
+    settings, django_capture_on_commit_callbacks, mocker, test_idempotent
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
@@ -2208,6 +2205,17 @@ def test_parse_singular_job_output(
             **job.task_kwargs,
             interface_pks=[int_socket_1.pk, int_socket_2.pk, int_socket_3.pk],
         )
+
+    if test_idempotent:
+        with django_capture_on_commit_callbacks(execute=True):
+            parse_singular_job_output(
+                **job.task_kwargs,
+                interface_pks=[
+                    int_socket_1.pk,
+                    int_socket_2.pk,
+                    int_socket_3.pk,
+                ],
+            )
 
     job.refresh_from_db()
     assert job.error_message == ""
