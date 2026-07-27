@@ -242,222 +242,256 @@ class Notification(UUIDModel):
         else:
             raise RuntimeError(f"Unhandled notification type {kind!r}")
 
-    def print_notification(self, user):  # noqa: C901
-        try:
-            if self.type == NotificationTypeChoices.FORUM_POST:
-                return format_html(
-                    "{profile_link} {message} {action_object} in {target}.",
-                    profile_link=user_profile_link(self.actor),
-                    message=self.message,
-                    action_object=format_html(
-                        '<a href="{}">{}</a>',
-                        self.action_object.get_absolute_url(),
-                        self.action_object.subject,
-                    ),
-                    target=format_html(
-                        '<a href="{}">{}</a>',
-                        self.target.get_absolute_url(),
-                        self.target,
-                    ),
-                )
-            elif self.type == NotificationTypeChoices.FORUM_POST_REPLY:
-                return format_html(
-                    "{profile_link} {message} {target}.",
-                    profile_link=user_profile_link(self.actor),
-                    message=self.message,
-                    target=format_html(
-                        '<a href="{}">{}</a>',
-                        self.target.get_absolute_url(),
-                        self.target.subject,
-                    ),
-                )
-            elif self.type == NotificationTypeChoices.ACCESS_REQUEST:
-                if self.target_content_type.model == "challenge":
-                    notification_addition = format_html(
-                        '<span class="text-truncate font-italic text-muted align-middle '
-                        'mx-2">| Accept or decline <a href="{link}"> here </a>.</span>',
-                        link=reverse(
-                            "participants:registration-list",
-                            kwargs={
-                                "challenge_short_name": self.target.short_name
-                            },
-                        ),
-                    )
-                else:
-                    notification_addition = ""
-                return format_html(
-                    "{profile_link} {message} {target}. {addition}",
-                    profile_link=user_profile_link(self.actor),
-                    message=self.message,
-                    target=format_html(
-                        '<a href="{}">{}</a>',
-                        self.target.get_absolute_url(),
-                        self.target,
-                    ),
-                    addition=notification_addition,
-                )
-            elif self.type == NotificationTypeChoices.REQUEST_UPDATE:
-                if self.target._meta.model_name == "registrationrequest":
-                    target_url = self.target.challenge.get_absolute_url()
-                    target_name = self.target.challenge.short_name
-                else:
-                    target_url = self.target.base_object.get_absolute_url()
-                    target_name = self.target.object_name
-                return format_html(
-                    "Your registration request for {target} {message}.",
-                    target=format_html(
-                        '<a href="{url}">{name}</a>',
-                        url=target_url,
-                        name=target_name,
-                    ),
-                    message=self.message,
-                )
-            elif self.type == NotificationTypeChoices.NEW_ADMIN:
-                return format_html(
-                    "You were {message} {target}.",
-                    message=self.message,
-                    target=format_html(
-                        '<a href="{}">{}</a>',
-                        self.target.get_absolute_url(),
-                        self.target,
-                    ),
-                )
-            elif (
-                self.type == NotificationTypeChoices.EVALUATION_STATUS
-                and self.actor == user
-            ):
-                if self.action_object.error_message:
-                    error_message = format_html(
-                        '<span class ="text-truncate font-italic text-muted align-middle '
-                        'mx-2">| {}</span>',
-                        self.action_object.error_message,
-                    )
-                else:
-                    error_message = ""
+    @property
+    def _required_objects_exist(self) -> bool:
+        if self.type in (
+            NotificationTypeChoices.FORUM_POST,
+            NotificationTypeChoices.MISSING_METHOD,
+        ):
+            return (
+                self.actor is not None
+                and self.action_object is not None
+                and self.target is not None
+            )
+        elif self.type == NotificationTypeChoices.FORUM_POST_REPLY:
+            return self.actor is not None and self.target is not None
+        elif self.type == NotificationTypeChoices.ACCESS_REQUEST:
+            return self.actor is not None and self.target is not None
+        elif self.type in (
+            NotificationTypeChoices.REQUEST_UPDATE,
+            NotificationTypeChoices.NEW_ADMIN,
+        ):
+            return self.target is not None
+        elif self.type == NotificationTypeChoices.EVALUATION_STATUS:
+            return (
+                self.action_object is not None
+                and self.target is not None
+                and getattr(self.action_object, "submission", None) is not None
+                and getattr(self.target, "challenge", None) is not None
+            )
+        elif self.type == NotificationTypeChoices.JOB_STATUS:
+            return self.target is not None
+        elif self.type == NotificationTypeChoices.IMAGE_IMPORT_STATUS:
+            return self.action_object is not None
+        elif self.type in (
+            NotificationTypeChoices.FILE_COPY_STATUS,
+            NotificationTypeChoices.CIV_VALIDATION,
+        ):
+            return self.actor is not None
+        else:
+            return True
 
-                return format_html(
-                    "Your {action_object} to {target} {message}. {error}",
-                    action_object=format_html(
-                        '<a href="{}">{}</a>',
-                        self.action_object.submission.get_absolute_url(),
-                        "submission",
+    def print_notification(self, user):  # noqa: C901
+        if not self._required_objects_exist:
+            return format_html(
+                "<em>This notification refers to an object that has been "
+                "deleted.</em>"
+            )
+
+        if self.type == NotificationTypeChoices.FORUM_POST:
+            return format_html(
+                "{profile_link} {message} {action_object} in {target}.",
+                profile_link=user_profile_link(self.actor),
+                message=self.message,
+                action_object=format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.get_absolute_url(),
+                    self.action_object.subject,
+                ),
+                target=format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.get_absolute_url(),
+                    self.target,
+                ),
+            )
+        elif self.type == NotificationTypeChoices.FORUM_POST_REPLY:
+            return format_html(
+                "{profile_link} {message} {target}.",
+                profile_link=user_profile_link(self.actor),
+                message=self.message,
+                target=format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.get_absolute_url(),
+                    self.target.subject,
+                ),
+            )
+        elif self.type == NotificationTypeChoices.ACCESS_REQUEST:
+            if self.target_content_type.model == "challenge":
+                notification_addition = format_html(
+                    '<span class="text-truncate font-italic text-muted align-middle '
+                    'mx-2">| Accept or decline <a href="{link}"> here </a>.</span>',
+                    link=reverse(
+                        "participants:registration-list",
+                        kwargs={
+                            "challenge_short_name": self.target.short_name
+                        },
                     ),
-                    target=format_html(
-                        '<a href="{}">{}</a>',
-                        self.target.challenge.get_absolute_url(),
-                        self.target.challenge.short_name,
-                    ),
-                    message=self.message,
-                    error=error_message,
-                )
-            elif (
-                self.type == NotificationTypeChoices.EVALUATION_STATUS
-                and self.actor != user
-                and self.message != "succeeded"
-            ):
-                if self.action_object.error_message:
-                    error_message = format_html(
-                        '<span class ="text-truncate font-italic text-muted align-middle '
-                        'mx-2">| {}</span>',
-                        self.action_object.error_message,
-                    )
-                else:
-                    error_message = ""
-                return format_html(
-                    "The {action_object} from {user_profile} to {target} {message}. {error}",
-                    action_object=format_html(
-                        '<a href="{}">{}</a>',
-                        self.action_object.submission.get_absolute_url(),
-                        "submission",
-                    ),
-                    user_profile=user_profile_link(
-                        self.action_object.submission.creator
-                    ),
-                    target=format_html(
-                        '<a href="{}">{}</a>',
-                        self.target.challenge.get_absolute_url(),
-                        self.target.challenge.short_name,
-                    ),
-                    message=self.message,
-                    error=error_message,
-                )
-            elif (
-                self.type == NotificationTypeChoices.EVALUATION_STATUS
-                and self.actor != user
-                and self.message == "succeeded"
-            ):
-                return format_html(
-                    "There is a new {action_object} for {target} from {user_profile}.",
-                    action_object=format_html(
-                        '<a href="{}">{}</a>',
-                        self.action_object.submission.get_absolute_url(),
-                        "result",
-                    ),
-                    target=format_html(
-                        '<a href="{}">{}</a>',
-                        self.target.challenge.get_absolute_url(),
-                        self.target.challenge.short_name,
-                    ),
-                    user_profile=user_profile_link(self.actor),
-                )
-            elif self.type == NotificationTypeChoices.MISSING_METHOD:
-                return format_html(
-                    "The {action_object} from {user_profile} could not be evaluated because "
-                    "there is no valid evaluation method for {target}.",
-                    action_object=format_html(
-                        '<a href="{}">{}</a>',
-                        self.action_object.get_absolute_url(),
-                        "submission",
-                    ),
-                    user_profile=user_profile_link(self.actor),
-                    target=format_html(
-                        '<a href="{}">{}</a>',
-                        self.target.get_absolute_url(),
-                        self.target,
-                    ),
-                )
-            elif self.type == NotificationTypeChoices.JOB_STATUS:
-                if self.actor and self.actor != user:
-                    addition = format_html(
-                        " | {}", user_profile_link(self.actor)
-                    )
-                else:
-                    addition = ""
-                return format_html(
-                    "{message}. {addition} {description}",
-                    message=self.message,
-                    addition=addition,
-                    description=format_html(
-                        '<span class="text-truncate font-italic text-muted align-middle '
-                        'mx-2 ">| Inspect the output and any error messages <a href="{}">'
-                        "here</a>.</span>",
-                        self.description,
-                    ),
-                )
-            elif self.type == NotificationTypeChoices.IMAGE_IMPORT_STATUS:
-                return format_html(
-                    "Your {action_object} failed "
-                    "with the following error: {message}",
-                    action_object=format_html(
-                        '<a href="{}">{}</a>',
-                        self.action_object.get_absolute_url(),
-                        "upload",
-                    ),
-                    message=self.description,
-                )
-            elif self.type in [
-                NotificationTypeChoices.FILE_COPY_STATUS,
-                NotificationTypeChoices.CIV_VALIDATION,
-            ]:
-                return self.description
-        except AttributeError as error:
-            if "'NoneType' object has no attribute" in str(error):
-                return format_html(
-                    "<em>This notification refers to an object that has been "
-                    "deleted.</em>"
                 )
             else:
-                raise
+                notification_addition = ""
+            return format_html(
+                "{profile_link} {message} {target}. {addition}",
+                profile_link=user_profile_link(self.actor),
+                message=self.message,
+                target=format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.get_absolute_url(),
+                    self.target,
+                ),
+                addition=notification_addition,
+            )
+        elif self.type == NotificationTypeChoices.REQUEST_UPDATE:
+            if self.target._meta.model_name == "registrationrequest":
+                target_url = self.target.challenge.get_absolute_url()
+                target_name = self.target.challenge.short_name
+            else:
+                target_url = self.target.base_object.get_absolute_url()
+                target_name = self.target.object_name
+            return format_html(
+                "Your registration request for {target} {message}.",
+                target=format_html(
+                    '<a href="{url}">{name}</a>',
+                    url=target_url,
+                    name=target_name,
+                ),
+                message=self.message,
+            )
+        elif self.type == NotificationTypeChoices.NEW_ADMIN:
+            return format_html(
+                "You were {message} {target}.",
+                message=self.message,
+                target=format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.get_absolute_url(),
+                    self.target,
+                ),
+            )
+        elif (
+            self.type == NotificationTypeChoices.EVALUATION_STATUS
+            and self.actor == user
+        ):
+            if self.action_object.error_message:
+                error_message = format_html(
+                    '<span class ="text-truncate font-italic text-muted align-middle '
+                    'mx-2">| {}</span>',
+                    self.action_object.error_message,
+                )
+            else:
+                error_message = ""
+
+            return format_html(
+                "Your {action_object} to {target} {message}. {error}",
+                action_object=format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.submission.get_absolute_url(),
+                    "submission",
+                ),
+                target=format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.challenge.get_absolute_url(),
+                    self.target.challenge.short_name,
+                ),
+                message=self.message,
+                error=error_message,
+            )
+        elif (
+            self.type == NotificationTypeChoices.EVALUATION_STATUS
+            and self.actor != user
+            and self.message != "succeeded"
+        ):
+            if self.action_object.error_message:
+                error_message = format_html(
+                    '<span class ="text-truncate font-italic text-muted align-middle '
+                    'mx-2">| {}</span>',
+                    self.action_object.error_message,
+                )
+            else:
+                error_message = ""
+            return format_html(
+                "The {action_object} from {user_profile} to {target} {message}. {error}",
+                action_object=format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.submission.get_absolute_url(),
+                    "submission",
+                ),
+                user_profile=user_profile_link(
+                    self.action_object.submission.creator
+                ),
+                target=format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.challenge.get_absolute_url(),
+                    self.target.challenge.short_name,
+                ),
+                message=self.message,
+                error=error_message,
+            )
+        elif (
+            self.type == NotificationTypeChoices.EVALUATION_STATUS
+            and self.actor != user
+            and self.message == "succeeded"
+        ):
+            return format_html(
+                "There is a new {action_object} for {target} from {user_profile}.",
+                action_object=format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.submission.get_absolute_url(),
+                    "result",
+                ),
+                target=format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.challenge.get_absolute_url(),
+                    self.target.challenge.short_name,
+                ),
+                user_profile=user_profile_link(self.actor),
+            )
+        elif self.type == NotificationTypeChoices.MISSING_METHOD:
+            return format_html(
+                "The {action_object} from {user_profile} could not be evaluated because "
+                "there is no valid evaluation method for {target}.",
+                action_object=format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.get_absolute_url(),
+                    "submission",
+                ),
+                user_profile=user_profile_link(self.actor),
+                target=format_html(
+                    '<a href="{}">{}</a>',
+                    self.target.get_absolute_url(),
+                    self.target,
+                ),
+            )
+        elif self.type == NotificationTypeChoices.JOB_STATUS:
+            if self.actor and self.actor != user:
+                addition = format_html(" | {}", user_profile_link(self.actor))
+            else:
+                addition = ""
+            return format_html(
+                "{message}. {addition} {description}",
+                message=self.message,
+                addition=addition,
+                description=format_html(
+                    '<span class="text-truncate font-italic text-muted align-middle '
+                    'mx-2 ">| Inspect the output and any error messages <a href="{}">'
+                    "here</a>.</span>",
+                    self.description,
+                ),
+            )
+        elif self.type == NotificationTypeChoices.IMAGE_IMPORT_STATUS:
+            return format_html(
+                "Your {action_object} failed "
+                "with the following error: {message}",
+                action_object=format_html(
+                    '<a href="{}">{}</a>',
+                    self.action_object.get_absolute_url(),
+                    "upload",
+                ),
+                message=self.description,
+            )
+        elif self.type in [
+            NotificationTypeChoices.FILE_COPY_STATUS,
+            NotificationTypeChoices.CIV_VALIDATION,
+        ]:
+            return self.description
 
 
 class NotificationUserObjectPermission(UserObjectPermissionBase):
