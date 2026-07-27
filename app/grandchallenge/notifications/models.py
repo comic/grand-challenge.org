@@ -270,7 +270,7 @@ class Notification(UUIDModel):
                 and getattr(self.target, "challenge", None) is not None
             )
         elif self.type == NotificationTypeChoices.JOB_STATUS:
-            return self.actor is not None and self.target is not None
+            return self.target is not None
         elif self.type == NotificationTypeChoices.IMAGE_IMPORT_STATUS:
             return self.action_object is not None
         elif self.type in (
