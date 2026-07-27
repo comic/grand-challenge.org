@@ -2081,9 +2081,8 @@ def test_invoke_endpoint_skips_keep_alive_for_reader_study_endpoint(mocker):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("test_idempotent", [True, False])
 def test_parse_job_outputs(
-    settings, django_capture_on_commit_callbacks, mocker, test_idempotent
+    settings, django_capture_on_commit_callbacks, mocker
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
@@ -2125,9 +2124,63 @@ def test_parse_job_outputs(
     with django_capture_on_commit_callbacks(execute=True):
         parse_job_outputs(**job.task_kwargs)
 
-    if test_idempotent:
-        with django_capture_on_commit_callbacks(execute=True):
-            parse_job_outputs(**job.task_kwargs)
+    job.refresh_from_db()
+    assert job.error_message == ""
+    assert job.status == Job.SUCCESS
+    assert job.outputs.count() == 3
+
+
+@pytest.mark.django_db
+def test_parse_job_outputs_idempotent(
+    settings, django_capture_on_commit_callbacks, mocker
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+
+    int_socket_0, int_socket_1, int_socket_2, int_socket_3 = (
+        ComponentInterfaceFactory.create_batch(
+            4, kind=InterfaceKindChoices.INTEGER
+        )
+    )
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[int_socket_0],
+        outputs=[int_socket_1, int_socket_2, int_socket_3],
+    )
+    ai.algorithm.interfaces.add(interface)
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        status=Job.EXECUTED,
+        time_limit=60,
+    )
+
+    class TestExecutor:
+        def get_outputs(self, output_interfaces):
+            return [
+                ComponentInterfaceValueFactory(interface=interface, value=42)
+                for interface in output_interfaces
+            ]
+
+    mocker.patch(
+        "grandchallenge.algorithms.models.Job.get_executor",
+        return_value=TestExecutor(),
+    )
+
+    ComponentInterfaceValue.objects.all().delete()
+    assert ComponentInterfaceValue.objects.count() == 0
+
+    with django_capture_on_commit_callbacks(execute=True):
+        parse_job_outputs(**job.task_kwargs)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        parse_job_outputs(**job.task_kwargs)
+
+    assert ComponentInterfaceValue.objects.count() == 3
 
     job.refresh_from_db()
     assert job.error_message == ""
@@ -2159,9 +2212,8 @@ def test_parse_job_outputs_incorrect_state(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("test_idempotent", [True, False])
 def test_parse_singular_job_output(
-    settings, django_capture_on_commit_callbacks, mocker, test_idempotent
+    settings, django_capture_on_commit_callbacks, mocker
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
@@ -2206,16 +2258,69 @@ def test_parse_singular_job_output(
             interface_pks=[int_socket_1.pk, int_socket_2.pk, int_socket_3.pk],
         )
 
-    if test_idempotent:
-        with django_capture_on_commit_callbacks(execute=True):
-            parse_singular_job_output(
-                **job.task_kwargs,
-                interface_pks=[
-                    int_socket_1.pk,
-                    int_socket_2.pk,
-                    int_socket_3.pk,
-                ],
-            )
+    job.refresh_from_db()
+    assert job.error_message == ""
+    assert job.status == Job.SUCCESS
+    assert job.outputs.count() == 3
+
+
+@pytest.mark.django_db
+def test_parse_singular_job_output_idempotent(
+    settings, django_capture_on_commit_callbacks, mocker
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+
+    int_socket_0, int_socket_1, int_socket_2, int_socket_3 = (
+        ComponentInterfaceFactory.create_batch(
+            4, kind=InterfaceKindChoices.INTEGER
+        )
+    )
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[int_socket_0],
+        outputs=[int_socket_1, int_socket_2, int_socket_3],
+    )
+    ai.algorithm.interfaces.add(interface)
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        status=Job.PARSING,
+        time_limit=60,
+    )
+
+    class TestExecutor:
+        def get_outputs(self, output_interfaces):
+            return [
+                ComponentInterfaceValueFactory(interface=interface, value=42)
+                for interface in output_interfaces
+            ]
+
+    mocker.patch(
+        "grandchallenge.algorithms.models.Job.get_executor",
+        return_value=TestExecutor(),
+    )
+
+    ComponentInterfaceValue.objects.all().delete()
+    assert ComponentInterfaceValue.objects.count() == 0
+
+    with django_capture_on_commit_callbacks(execute=True):
+        parse_singular_job_output(
+            **job.task_kwargs,
+            interface_pks=[int_socket_1.pk, int_socket_2.pk, int_socket_3.pk],
+        )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        parse_singular_job_output(
+            **job.task_kwargs,
+            interface_pks=[int_socket_1.pk, int_socket_2.pk, int_socket_3.pk],
+        )
+
+    assert ComponentInterfaceValue.objects.count() == 3
 
     job.refresh_from_db()
     assert job.error_message == ""
