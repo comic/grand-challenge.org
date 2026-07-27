@@ -50,12 +50,10 @@ class MissingRequiredObjectsFilter(admin.SimpleListFilter):
                 .distinct()
             )
 
-        content_types_by_id = {
-            ct.pk: ct for ct in ContentType.objects.filter(pk__in=all_ct_ids)
-        }
+        content_types = list(ContentType.objects.filter(pk__in=all_ct_ids))
 
         for ct_field, id_field in gfk_fields:
-            for content_type in content_types_by_id.values():
+            for content_type in content_types:
                 model_class = content_type.model_class()
                 if model_class is None:
                     dangling_pks.update(
