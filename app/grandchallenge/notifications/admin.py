@@ -14,6 +14,27 @@ from grandchallenge.notifications.models import (
 )
 
 
+class MissingRequiredObjectsFilter(admin.SimpleListFilter):
+    title = "missing required objects"
+    parameter_name = "objects_missing"
+
+    def lookups(self, request, model_admin):
+        return [
+            ("1", "Yes"),
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() != "1":
+            return queryset
+
+        pks = [
+            notification.pk
+            for notification in queryset.iterator()
+            if not notification._required_objects_exist
+        ]
+        return queryset.filter(pk__in=pks)
+
+
 class FollowAdmin(admin.ModelAdmin):
     list_display = (
         "__str__",
@@ -41,7 +62,7 @@ class NotificationAdmin(admin.ModelAdmin):
         "target",
         "read",
     )
-    list_filter = ("type", "read")
+    list_filter = ("type", "read", MissingRequiredObjectsFilter)
     raw_id_fields = (
         "actor_content_type",
         "target_content_type",
