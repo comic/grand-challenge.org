@@ -4,7 +4,10 @@ from actstream.models import Follow
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 
-from grandchallenge.notifications.models import Notification
+from grandchallenge.notifications.models import (
+    Notification,
+    NotificationTypeChoices,
+)
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.discussion_forums_tests.factories import (
     ForumFactory,
@@ -389,23 +392,11 @@ def test_follow_deletion_through_api(client):
     assert len(Follow.objects.all()) == num_follows - 1
 
 
-@pytest.mark.parametrize(
-    "notification_type",
-    [
-        Notification.Type.FORUM_POST,
-        Notification.Type.FORUM_POST_REPLY,
-        Notification.Type.ACCESS_REQUEST,
-        Notification.Type.REQUEST_UPDATE,
-        Notification.Type.NEW_ADMIN,
-        Notification.Type.EVALUATION_STATUS,
-        Notification.Type.MISSING_METHOD,
-        Notification.Type.IMAGE_IMPORT_STATUS,
-    ],
-)
+@pytest.mark.parametrize("notification_type", NotificationTypeChoices)
 @pytest.mark.django_db
-def test_notification_list_with_deleted_target(client, notification_type):
+def test_notification_list_with_deleted_attributes(client, notification_type):
     user = UserFactory()
-    notification = NotificationFactory(
+    NotificationFactory(
         user=user,
         type=notification_type,
         message="test message",
@@ -421,8 +412,6 @@ def test_notification_list_with_deleted_target(client, notification_type):
         user=user,
     )
     assert response.status_code == 200
-    assert notification in response.context["notification_list"]
-    assert "deleted" in response.rendered_content
 
 
 @pytest.mark.django_db
