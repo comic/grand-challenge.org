@@ -4,10 +4,7 @@ from actstream.models import Follow
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 
-from grandchallenge.notifications.models import (
-    Notification,
-    NotificationTypeChoices,
-)
+from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.discussion_forums_tests.factories import (
     ForumFactory,
@@ -394,7 +391,16 @@ def test_follow_deletion_through_api(client):
 
 @pytest.mark.parametrize(
     "notification_type",
-    set(NotificationTypeChoices).difference({NotificationTypeChoices.GENERIC}),
+    [
+        Notification.Type.FORUM_POST,
+        Notification.Type.FORUM_POST_REPLY,
+        Notification.Type.ACCESS_REQUEST,
+        Notification.Type.REQUEST_UPDATE,
+        Notification.Type.NEW_ADMIN,
+        Notification.Type.EVALUATION_STATUS,
+        Notification.Type.MISSING_METHOD,
+        Notification.Type.IMAGE_IMPORT_STATUS,
+    ],
 )
 @pytest.mark.django_db
 def test_notification_list_with_deleted_target(client, notification_type):
