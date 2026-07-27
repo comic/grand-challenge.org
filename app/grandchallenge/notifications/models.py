@@ -242,7 +242,45 @@ class Notification(UUIDModel):
         else:
             raise RuntimeError(f"Unhandled notification type {kind!r}")
 
+    @property
+    def _required_objects_exist(self) -> bool:
+        if self.type in (
+            NotificationTypeChoices.FORUM_POST,
+            NotificationTypeChoices.MISSING_METHOD,
+        ):
+            return (
+                self.actor is not None
+                and self.action_object is not None
+                and self.target is not None
+            )
+        elif self.type == NotificationTypeChoices.FORUM_POST_REPLY:
+            return self.actor is not None and self.target is not None
+        elif self.type == NotificationTypeChoices.ACCESS_REQUEST:
+            return self.actor is not None and self.target is not None
+        elif self.type in (
+            NotificationTypeChoices.REQUEST_UPDATE,
+            NotificationTypeChoices.NEW_ADMIN,
+        ):
+            return self.target is not None
+        elif self.type == NotificationTypeChoices.EVALUATION_STATUS:
+            return (
+                self.action_object is not None
+                and self.target is not None
+                and getattr(self.action_object, "submission", None) is not None
+                and getattr(self.target, "challenge", None) is not None
+            )
+        elif self.type == NotificationTypeChoices.IMAGE_IMPORT_STATUS:
+            return self.action_object is not None
+        else:
+            return True
+
     def print_notification(self, user):  # noqa: C901
+        if not self._required_objects_exist:
+            return format_html(
+                "<em>This notification refers to an object that has been "
+                "deleted.</em>"
+            )
+
         if self.type == NotificationTypeChoices.FORUM_POST:
             return format_html(
                 "{profile_link} {message} {action_object} in {target}.",
