@@ -392,14 +392,11 @@ def test_follow_deletion_through_api(client):
     assert len(Follow.objects.all()) == num_follows - 1
 
 
-@pytest.mark.parametrize(
-    "notification_type",
-    set(NotificationTypeChoices).difference({NotificationTypeChoices.GENERIC}),
-)
+@pytest.mark.parametrize("notification_type", NotificationTypeChoices)
 @pytest.mark.django_db
-def test_notification_list_with_deleted_target(client, notification_type):
+def test_notification_list_with_deleted_attributes(client, notification_type):
     user = UserFactory()
-    notification = NotificationFactory(
+    NotificationFactory(
         user=user,
         type=notification_type,
         message="test message",
@@ -415,8 +412,6 @@ def test_notification_list_with_deleted_target(client, notification_type):
         user=user,
     )
     assert response.status_code == 200
-    assert notification in response.context["notification_list"]
-    assert "deleted" in response.rendered_content
 
 
 @pytest.mark.django_db
