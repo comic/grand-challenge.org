@@ -2187,6 +2187,16 @@ def test_parse_job_outputs_idempotent(
     assert job.status == Job.SUCCESS
     assert job.outputs.count() == 3
 
+    # Test idempotency (i.e. no errors) when the job is in a failure state
+    job.status = Job.FAILURE
+    job.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        parse_job_outputs(**job.task_kwargs)
+
+    job.refresh_from_db()
+    assert job.status == Job.FAILURE
+
 
 @pytest.mark.django_db
 def test_parse_job_outputs_incorrect_state(
@@ -2365,6 +2375,10 @@ def test_parse_singular_job_output_nonexistent_interface(
         time_limit=60,
     )
 
+    with django_capture_on_commit_callbacks(execute=True):
+        parse_singular_job_output(**job.task_kwargs, interface_pks=[42])
+
+    # Idempotent
     with django_capture_on_commit_callbacks(execute=True):
         parse_singular_job_output(**job.task_kwargs, interface_pks=[42])
 
