@@ -1105,8 +1105,7 @@ def parse_singular_job_output(  # noqa: C901
     if job.status != job.PARSING:
         raise RuntimeError("Job is not in parsing state")
 
-    interface_pk = interface_pks[0]
-    remaining_interface_pks = interface_pks[1:]
+    interface_pk, *remaining_interface_pks = interface_pks
 
     interface_model = job.output_interfaces.model
     try:
