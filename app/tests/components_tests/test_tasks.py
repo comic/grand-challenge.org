@@ -2177,8 +2177,13 @@ def test_parse_job_outputs_idempotent(
     with django_capture_on_commit_callbacks(execute=True):
         parse_job_outputs(**job.task_kwargs)
 
-    with django_capture_on_commit_callbacks(execute=True):
-        parse_job_outputs(**job.task_kwargs)
+    assert ComponentInterfaceValue.objects.count() == 3
+
+    with pytest.raises(
+        RuntimeError, match="Job is not ready for output parsing"
+    ):
+        with django_capture_on_commit_callbacks(execute=True):
+            parse_job_outputs(**job.task_kwargs)
 
     assert ComponentInterfaceValue.objects.count() == 3
 
@@ -2186,16 +2191,6 @@ def test_parse_job_outputs_idempotent(
     assert job.error_message == ""
     assert job.status == Job.SUCCESS
     assert job.outputs.count() == 3
-
-    # Test idempotency (i.e. no errors) when the job is in a failure state
-    job.status = Job.FAILURE
-    job.save()
-
-    with django_capture_on_commit_callbacks(execute=True):
-        parse_job_outputs(**job.task_kwargs)
-
-    job.refresh_from_db()
-    assert job.status == Job.FAILURE
 
 
 @pytest.mark.django_db
@@ -2324,13 +2319,22 @@ def test_parse_singular_job_output_idempotent(
             interface_pks=[int_socket_1.pk, int_socket_2.pk, int_socket_3.pk],
         )
 
-    with django_capture_on_commit_callbacks(execute=True):
-        parse_singular_job_output(
-            **job.task_kwargs,
-            interface_pks=[int_socket_1.pk, int_socket_2.pk, int_socket_3.pk],
-        )
-
     assert ComponentInterfaceValue.objects.count() == 3
+
+    with pytest.raises(RuntimeError, match="Job is not in parsing state"):
+        with django_capture_on_commit_callbacks(execute=True):
+            parse_singular_job_output(
+                **job.task_kwargs,
+                interface_pks=[
+                    int_socket_1.pk,
+                    int_socket_2.pk,
+                    int_socket_3.pk,
+                ],
+            )
+
+    assert (
+        ComponentInterfaceValue.objects.count() == 3
+    )  # Still only created 3 outputs
 
     job.refresh_from_db()
     assert job.error_message == ""
@@ -2375,10 +2379,6 @@ def test_parse_singular_job_output_nonexistent_interface(
         time_limit=60,
     )
 
-    with django_capture_on_commit_callbacks(execute=True):
-        parse_singular_job_output(**job.task_kwargs, interface_pks=[42])
-
-    # Idempotent
     with django_capture_on_commit_callbacks(execute=True):
         parse_singular_job_output(**job.task_kwargs, interface_pks=[42])
 

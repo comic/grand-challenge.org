@@ -1057,10 +1057,6 @@ def parse_job_outputs(
     with check_lock_acquired():
         job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
 
-    if job.status in (job.SUCCESS, job.FAILURE, job.PARSING):
-        # Nothing to do
-        return
-
     if job.status != job.EXECUTED:
         raise RuntimeError("Job is not ready for output parsing")
 
@@ -1098,9 +1094,6 @@ def parse_singular_job_output(  # noqa: C901
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
     with check_lock_acquired():
         job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
-
-    if job.status in (job.SUCCESS, job.FAILURE):
-        return  # Nothing to do: reached a terminal point
 
     if job.status != job.PARSING:
         raise RuntimeError("Job is not in parsing state")
