@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.core.utils.query import set_seed
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
@@ -2088,7 +2089,7 @@ def test_display_sets_shuffled_per_user(client):
 
 
 @pytest.mark.django_db
-def test_display_set_index(client):
+def test_display_set_index(client, mocker):
     n_display_sets = 10
     reader_study = ReaderStudyFactory()
     user = UserFactory()
@@ -2111,9 +2112,8 @@ def test_display_set_index(client):
     assert [x["index"] for x in response.json()["results"]] == [
         *range(n_display_sets)
     ]
-    assert [x["order"] for x in response.json()["results"]] == [
-        *range(10, 10 * (n_display_sets + 1), 10)
-    ]
+    unshuffled_order = [x["order"] for x in response.json()["results"]]
+    assert unshuffled_order == [*range(10, 10 * (n_display_sets + 1), 10)]
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-detail",
@@ -2124,6 +2124,11 @@ def test_display_set_index(client):
     )
 
     assert response.json()["index"] == 0
+
+    # Ensure fixed randomness for shuffling so that we can test the order is different when shuffling is enabled
+    mocker.patch(
+        "grandchallenge.reader_studies.views.set_seed", lambda *_: set_seed(1)
+    )
 
     reader_study.shuffle_hanging_list = True
     reader_study.save()
@@ -2150,6 +2155,9 @@ def test_display_set_index(client):
         *range(n_display_sets)
     ]
     shuffled_order = [x["order"] for x in response.json()["results"]]
+    assert (
+        unshuffled_order != shuffled_order
+    ), "The order should be different when shuffling is enabled"
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-detail",
