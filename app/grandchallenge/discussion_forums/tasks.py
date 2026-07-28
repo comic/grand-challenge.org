@@ -2,7 +2,6 @@ from uuid import UUID
 
 from actstream.actions import follow
 from django.apps import apps
-from django.db import transaction
 from lambda_tasks.decorators import lambda_task
 from lambda_tasks.logging import task_logger
 
@@ -32,15 +31,9 @@ def create_forum_notifications(
         )
         return
 
-    try:
-        # Do not lock here as notifications (and emails) might take a while to be created,
-        # rather, we apply a lock at the end of this task.
-        obj = model.objects.get(pk=object_pk)
-    except model.DoesNotExist:
-        task_logger.error(
-            "Forum notifications are not created because the object no longer exists."
-        )
-        return  # Nothing to do here
+    # Do not lock here as notifications (and emails) might take a while to be created,
+    # rather, we apply a lock at the end of this task.
+    obj = model.objects.get(pk=object_pk)
 
     follow(
         user=obj.creator,
@@ -76,13 +69,5 @@ def create_forum_notifications(
 
     # To prevent orphaned notifications we do a final check on the existence
     # of the action object and lock it for the remainder of the transaction.
-    with check_lock_acquired():  # Will be retried if the lock is not acquired
-        try:
-            model.objects.select_for_update(nowait=True).get(pk=object_pk)
-        except (
-            model.DoesNotExist
-        ):  # Silently rollback without raising an exception
-            task_logger.error(
-                "Forum notifications are not created because the object no longer exists."
-            )
-            transaction.set_rollback(True)
+    with check_lock_acquired():
+        model.objects.select_for_update(nowait=True).get(pk=object_pk)
