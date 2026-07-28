@@ -2088,13 +2088,16 @@ def test_display_sets_shuffled_per_user(client):
     ]
 
 
-@pytest.mark.flaky(reruns=3)
 @pytest.mark.django_db
 def test_display_set_index(client):
     n_display_sets = 10
     reader_study = ReaderStudyFactory()
     user = UserFactory()
     reader_study.add_reader(user)
+
+    assert not DisplaySet.objects.filter(
+        reader_study=reader_study
+    ).exists(), "Sanity DisplaySets should not exist yet"
 
     DisplaySetFactory.create_batch(n_display_sets, reader_study=reader_study)
 
@@ -2154,8 +2157,14 @@ def test_display_set_index(client):
 
     # determine shuffled index of first Displayset
     set_seed(1 / int(user.pk))
-    queryset = list(DisplaySet.objects.all().order_by("?"))
-    new_index = queryset.index(DisplaySet.objects.first())
+    distinct_pks = (
+        DisplaySet.objects.filter(reader_study=reader_study)
+        .values_list("pk", flat=True)
+        .distinct()
+    )
+    queryset = DisplaySet.objects.filter(pk__in=distinct_pks).order_by("?")
+    queryset_list = list(queryset)
+    new_index = queryset_list.index(DisplaySet.objects.first())
 
     assert response.json()["index"] == new_index
 
