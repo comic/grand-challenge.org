@@ -7,7 +7,6 @@ from django.urls import reverse
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import InterfaceKindChoices
-from grandchallenge.core.utils.query import set_seed
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
@@ -2142,6 +2141,11 @@ def test_display_set_index(client):
         for x in response.json()["results"]
         if x["pk"] == str(DisplaySet.objects.last().pk)
     ][0]
+    first = [
+        x
+        for x in response.json()["results"]
+        if x["pk"] == str(DisplaySet.objects.first().pk)
+    ][0]
     assert [x["index"] for x in response.json()["results"]] == [
         *range(n_display_sets)
     ]
@@ -2155,18 +2159,9 @@ def test_display_set_index(client):
         method=client.get,
     )
 
-    # determine shuffled index of first Displayset
-    set_seed(1 / int(user.pk))
-    distinct_pks = (
-        DisplaySet.objects.filter(reader_study=reader_study)
-        .values_list("pk", flat=True)
-        .distinct()
-    )
-    queryset = DisplaySet.objects.filter(pk__in=distinct_pks).order_by("?")
-    queryset_list = list(queryset)
-    new_index = queryset_list.index(DisplaySet.objects.first())
-
-    assert response.json()["index"] == new_index
+    assert (
+        response.json()["index"] == first["index"]
+    ), "Index of first display set should be the same as in the list view"
 
     reader_study.shuffle_hanging_list = False
     reader_study.save()
