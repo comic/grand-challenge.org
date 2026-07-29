@@ -43,7 +43,10 @@ from grandchallenge.components.models import (
     ComponentInterface,
     SourceChoices,
 )
-from grandchallenge.components.schemas import generate_component_json_schema
+from grandchallenge.components.schemas import (
+    generate_component_json_schema,
+    generate_widget_json_schema,
+)
 from grandchallenge.components.widgets import (
     FileSearchInputWidget,
     SearchSelect,
@@ -155,27 +158,6 @@ class FlexibleWidgetPrefixes(StrEnum):
     CHOICE = f"flexible_widget_choice{INTERFACE_FORM_FIELD_PREFIX}"
     UPLOAD = f"flexible_upload{INTERFACE_FORM_FIELD_PREFIX}"
     SEARCH = f"flexible_search{INTERFACE_FORM_FIELD_PREFIX}"
-
-
-def _strip_external_refs(*, schema):
-    """Return a copy of the schema with external $ref URIs removed from
-    definitions. The browser-side JSON editor cannot resolve external
-    URIs; full validation still happens server-side."""
-    return {
-        **schema,
-        "definitions": {
-            key: (
-                {
-                    k: v
-                    for k, v in definition.items()
-                    if k != "$ref" or not v.startswith("http")
-                }
-                if isinstance(definition, dict)
-                else definition
-            )
-            for key, definition in schema["definitions"].items()
-        },
-    }
 
 
 class InterfaceFormFieldsMixin:
@@ -308,7 +290,10 @@ class InterfaceFormFieldsMixin:
         )
 
         if field_type == forms.JSONField:
-            widget_schema = _strip_external_refs(schema=schema)
+            widget_schema = generate_widget_json_schema(
+                component_interface=interface,
+                required=kwargs["required"],
+            )
             kwargs["widget"] = JSONEditorWidget(schema=widget_schema)
         kwargs["validators"] = [JSONValidator(schema=schema)]
 

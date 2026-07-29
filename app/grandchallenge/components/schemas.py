@@ -775,3 +775,27 @@ def generate_component_json_schema(*, component_interface, required):
                     {"$ref": f"#/definitions/{component_interface.kind}"},
                 ],
             }
+
+
+def generate_widget_json_schema(*, component_interface, required):
+    """Generate a JSON schema safe for the browser-side JSON editor.
+
+    For CHART interfaces, replaces the external Vega-Lite $ref with a
+    permissive inline definition (full validation still happens
+    server-side).
+    """
+    schema = generate_component_json_schema(
+        component_interface=component_interface,
+        required=required,
+    )
+
+    if component_interface.kind == "CHART":
+        schema = {
+            **schema,
+            "definitions": {
+                **schema["definitions"],
+                "CHART": {"type": "object"},
+            },
+        }
+
+    return schema

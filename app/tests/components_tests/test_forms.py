@@ -314,3 +314,4 @@ def test_chart_interface_widget_schema_has_no_external_ref():
     widget_schema = field.widget.schema
     chart_def = widget_schema["definitions"]["CHART"]
     assert "$ref" not in chart_def
+    assert chart_def == {"type": "object"}
