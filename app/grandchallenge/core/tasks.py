@@ -118,7 +118,7 @@ def _get_metrics():
 
     metric_data.append(
         {
-            "MetricName": "EndpointsSagemaker",
+            "MetricName": "EndpointsOnSagemaker",
             "Dimensions": [{"Name": "Model", "Value": Endpoint.__name__}],
             "Value": _get_endpoints_count_from_sagemaker(),
             "Unit": "Count",
