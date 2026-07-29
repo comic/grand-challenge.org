@@ -1080,7 +1080,7 @@ def parse_job_outputs(
     queue=LambdaTaskQueueChoices.MEM8G,
     retry_on=(LockNotAcquiredException,),
 )
-def parse_singular_job_output(  # noqa: C901
+def parse_singular_job_output(
     *,
     job_pk: str | UUID,
     job_app_label: str,
