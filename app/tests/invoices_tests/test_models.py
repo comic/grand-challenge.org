@@ -540,31 +540,31 @@ def test_postpaid_suggested_total_above_minimum_increment():
         euro_millicents_to_euros(
             euro_millicents=postpaid_invoice.total_unpaid_costs_euro_millicents
         )
-        == 326
+        == 773
     )
     assert (
         euro_millicents_to_euros(
             euro_millicents=postpaid_invoice.suggested_total_postpaid_amount_euro_millicents
         )
-        == 500
+        == 1000
     )
     assert (
         euro_millicents_to_euros(
             euro_millicents=postpaid_invoice.surplus_euro_millicents
         )
-        == 174
+        == 227
     )
     assert (
         euro_millicents_to_euros(
             euro_millicents=postpaid_invoice.suggested_compute_cost_euro_millicents
         )
-        == 123
+        == 114
     )
     assert (
         euro_millicents_to_euros(
             euro_millicents=postpaid_invoice.suggested_storage_cost_euro_millicents
         )
-        == 377
+        == 886
     )
 
 
@@ -636,7 +636,7 @@ def test_postpaid_suggested_costs_extra_storage_and_compute_incurred():
         euro_millicents_to_euros(
             euro_millicents=postpaid_invoice.total_unpaid_costs_euro_millicents
         )
-        == 87
+        == 192
     )
     assert (
         euro_millicents_to_euros(
@@ -648,19 +648,19 @@ def test_postpaid_suggested_costs_extra_storage_and_compute_incurred():
         euro_millicents_to_euros(
             euro_millicents=postpaid_invoice.surplus_euro_millicents
         )
-        == 163
+        == 58
     )
     assert (
         euro_millicents_to_euros(
             euro_millicents=postpaid_invoice.suggested_compute_cost_euro_millicents
         )
-        == 91
+        == 41
     )
     assert (
         euro_millicents_to_euros(
             euro_millicents=postpaid_invoice.suggested_storage_cost_euro_millicents
         )
-        == 159
+        == 209
     )
 
 

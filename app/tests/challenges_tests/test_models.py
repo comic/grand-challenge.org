@@ -15,6 +15,8 @@ from grandchallenge.challenges.models import (
     Challenge,
     ChallengeRequest,
     OnboardingTask,
+    registry_cost_euro_millicents_per_gb,
+    storage_cost_euro_millicents_per_gb,
 )
 from grandchallenge.discussion_forums.models import ForumTopicKindChoices
 from grandchallenge.invoices.models import (
@@ -968,11 +970,14 @@ def test_total_costs_properties():
 
     challenge = refresh_challenge(challenge=challenge)
 
+    expected_projected_storage = (
+        30 * storage_cost_euro_millicents_per_gb()
+        + 70 * registry_cost_euro_millicents_per_gb()
+    )
+
     assert (
-        euro_millicents_to_euros(
-            euro_millicents=challenge.total_projected_storage_cost_euro_millicents
-        )
-        == 67
+        challenge.total_projected_storage_cost_euro_millicents
+        == expected_projected_storage
     )
     assert (
         euro_millicents_to_euros(
@@ -996,9 +1001,9 @@ def test_total_costs_properties():
         euro_millicents_to_euros(
             euro_millicents=challenge.unpaid_storage_costs_euro_millicents
         )
-        == 0
+        == 22
     )
-    assert round(challenge.compute_cost_share, 2) == 0.13
+    assert round(challenge.compute_cost_share, 2) == 0.06
 
 
 @pytest.mark.django_db
@@ -1018,11 +1023,14 @@ def test_total_projected_storage_costs_beyond_prepaid_amount():
 
     challenge = refresh_challenge(challenge=challenge)
 
+    expected_projected_storage = (
+        30 * storage_cost_euro_millicents_per_gb()
+        + 70 * registry_cost_euro_millicents_per_gb()
+    )
+
     assert (
-        euro_millicents_to_euros(
-            euro_millicents=challenge.total_projected_storage_cost_euro_millicents
-        )
-        == 67
+        challenge.total_projected_storage_cost_euro_millicents
+        == expected_projected_storage
     )
     assert (
         euro_millicents_to_euros(
@@ -1034,7 +1042,7 @@ def test_total_projected_storage_costs_beyond_prepaid_amount():
         euro_millicents_to_euros(
             euro_millicents=challenge.unpaid_storage_costs_euro_millicents
         )
-        == 66
+        == 171
     )
 
 
@@ -1100,8 +1108,8 @@ def test_postpaid_calculation_ignores_other_nonpaid_invoices(
 @pytest.mark.parametrize(
     "already_paid_amount, to_be_paid_amount",
     (
-        (10, 57),
-        (100, 0),
+        (10, 162),
+        (200, 0),
     ),
 )
 @pytest.mark.django_db

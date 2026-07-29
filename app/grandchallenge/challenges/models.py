@@ -923,9 +923,13 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     @cached_property
     def total_projected_storage_cost_euro_millicents(self):
         return (
-            self.size_in_storage / settings.GIGABYTE
-            + self.size_in_registry / settings.GIGABYTE
-        ) * storage_cost_euro_millicents_per_gb()
+            self.size_in_storage
+            / settings.GIGABYTE
+            * storage_cost_euro_millicents_per_gb()
+            + self.size_in_registry
+            / settings.GIGABYTE
+            * registry_cost_euro_millicents_per_gb()
+        )
 
     @cached_property
     def compute_cost_euro_millicents(self):
@@ -1036,6 +1040,17 @@ def storage_cost_euro_millicents_per_gb():
     return (
         settings.CHALLENGE_NUM_SUPPORT_YEARS
         * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB_EXCLUDING_TAX
+        * (1 + settings.COMPONENTS_TAX_RATE)
+        * settings.COMPONENTS_USD_TO_EUR
+        / settings.TERABYTE
+        * settings.GIGABYTE
+    )
+
+
+def registry_cost_euro_millicents_per_gb():
+    return (
+        settings.CHALLENGE_NUM_SUPPORT_YEARS
+        * settings.COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB_EXCLUDING_TAX
         * (1 + settings.COMPONENTS_TAX_RATE)
         * settings.COMPONENTS_USD_TO_EUR
         / settings.TERABYTE
