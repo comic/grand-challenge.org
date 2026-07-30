@@ -792,6 +792,8 @@ def generate_widget_json_schema(*, component_interface, required):
         **schema,
         "definitions": {
             **schema["definitions"],
+            # Charts contain an external reference to the Vega-List schema, which the
+            # json editor widget can't resolve
             "CHART": {"type": "object"},
         },
     }
