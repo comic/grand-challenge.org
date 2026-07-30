@@ -116,7 +116,31 @@ def _get_metrics():
             }
         )
 
+    metric_data.append(
+        {
+            "MetricName": "EndpointsOnSagemaker",
+            "Dimensions": [{"Name": "Model", "Value": Endpoint.__name__}],
+            "Value": _get_endpoints_count_from_sagemaker(),
+            "Unit": "Count",
+        }
+    )
+
     return metric_data
+
+
+def _get_endpoints_count_from_sagemaker():
+    count = 0
+    sagemaker_client = boto3.client(
+        "sagemaker",
+        region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
+    )
+
+    paginator = sagemaker_client.get_paginator("list_endpoints")
+
+    for page in paginator.paginate():
+        count += len(page["Endpoints"])
+
+    return count
 
 
 def schedule_process_picture(

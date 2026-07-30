@@ -12,7 +12,7 @@ from tests.factories import SessionFactory, UploadSessionFactory
 
 
 @pytest.mark.django_db
-def test_get_metrics():
+def test_get_metrics(mocker):
     ai = AlgorithmImageFactory(
         import_status=AlgorithmImage.ImportStatusChoices.COMPLETED
     )
@@ -36,6 +36,9 @@ def test_get_metrics():
     s = UploadSessionFactory()
     s.status = s.SUCCESS
     s.save()
+
+    client = mocker.MagicMock()
+    mocker.patch("grandchallenge.core.tasks.boto3.client", return_value=client)
 
     # Note, this is the format expected by CloudWatch,
     # consult the API when changing this
@@ -367,4 +370,10 @@ def test_get_metrics():
         },
         {"MetricName": "OldestActiveSession", "Value": 0, "Unit": "Seconds"},
         {"MetricName": "OldestActiveEndpoint", "Value": 0, "Unit": "Seconds"},
+        {
+            "MetricName": "EndpointsOnSagemaker",
+            "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
     ]
