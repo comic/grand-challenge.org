@@ -775,3 +775,26 @@ def generate_component_json_schema(*, component_interface, required):
                     {"$ref": f"#/definitions/{component_interface.kind}"},
                 ],
             }
+
+
+def generate_widget_json_schema(*, component_interface, required):
+    """Generate a JSON schema safe for the browser-side JSON editor.
+    Replaces external $ref with a permissive inline definition
+    Full validation still happens server-side via the full json schema.
+    """
+    schema = generate_component_json_schema(
+        component_interface=component_interface,
+        required=required,
+    )
+
+    schema = {
+        **schema,
+        "definitions": {
+            **schema["definitions"],
+            # Charts contain an external reference to the Vega-List schema, which the
+            # json editor widget can't resolve
+            "CHART": {"type": "object"},
+        },
+    }
+
+    return schema

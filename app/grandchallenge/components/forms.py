@@ -43,7 +43,10 @@ from grandchallenge.components.models import (
     ComponentInterface,
     SourceChoices,
 )
-from grandchallenge.components.schemas import generate_component_json_schema
+from grandchallenge.components.schemas import (
+    generate_component_json_schema,
+    generate_widget_json_schema,
+)
 from grandchallenge.components.widgets import (
     FileSearchInputWidget,
     SearchSelect,
@@ -287,7 +290,11 @@ class InterfaceFormFieldsMixin:
         )
 
         if field_type == forms.JSONField:
-            kwargs["widget"] = JSONEditorWidget(schema=schema)
+            widget_schema = generate_widget_json_schema(
+                component_interface=interface,
+                required=kwargs["required"],
+            )
+            kwargs["widget"] = JSONEditorWidget(schema=widget_schema)
         kwargs["validators"] = [JSONValidator(schema=schema)]
 
         return field_type(**kwargs)

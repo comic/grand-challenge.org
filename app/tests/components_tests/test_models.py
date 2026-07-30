@@ -27,7 +27,10 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
     InterfaceKinds,
 )
-from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
+from grandchallenge.components.schemas import (
+    INTERFACE_VALUE_SCHEMA,
+    generate_widget_json_schema,
+)
 from grandchallenge.components.tasks import (
     delete_container_image,
     remove_container_image_from_registry,
@@ -163,6 +166,24 @@ def test_clean_store_in_db_true(kind, expectation):
 def test_all_interfaces_in_schema():
     for i in InterfaceKinds.json:
         assert str(i) in INTERFACE_VALUE_SCHEMA["definitions"]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind", InterfaceKinds.json)
+def test_widget_schema_has_no_external_refs(kind):
+    ci = ComponentInterfaceFactory(
+        kind=kind,
+        store_in_database=True,
+    )
+    widget_schema = generate_widget_json_schema(
+        component_interface=ci, required=True
+    )
+    for key, definition in widget_schema["definitions"].items():
+        ref = definition.get("$ref", "")
+        assert not ref or ref.startswith("#"), (
+            f"Definition '{key}' contains external $ref: '{ref}'. "
+            f"Handle this in generate_widget_json_schema."
+        )
 
 
 def test_all_interfaces_covered():
