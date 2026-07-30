@@ -2215,6 +2215,15 @@ def test_parse_job_outputs_incorrect_state(
         with django_capture_on_commit_callbacks(execute=True):
             parse_job_outputs(**job.task_kwargs)
 
+    job.status = job.EXECUTED
+    job.save()
+
+    job.outputs.add(ComponentInterfaceValueFactory())
+
+    with pytest.raises(RuntimeError, match="Job already has outputs"):
+        with django_capture_on_commit_callbacks(execute=True):
+            parse_job_outputs(**job.task_kwargs)
+
 
 @pytest.mark.django_db
 def test_parse_singular_job_output(

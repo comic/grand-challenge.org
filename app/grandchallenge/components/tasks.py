@@ -1060,6 +1060,9 @@ def parse_job_outputs(
     if job.status != job.EXECUTED:
         raise RuntimeError("Job is not ready for output parsing")
 
+    if job.outputs.exists():
+        raise RuntimeError("Job already has outputs")
+
     job.update_status(status=job.PARSING)
 
     interface_pks = list(
