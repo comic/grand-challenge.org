@@ -779,9 +779,8 @@ def generate_component_json_schema(*, component_interface, required):
 
 def generate_widget_json_schema(*, component_interface, required):
     """Generate a JSON schema safe for the browser-side JSON editor.
-    Replaces the external Vega-Lite $ref with a
-    permissive inline definition (full validation still happens
-    server-side).
+    Replaces external $ref with a permissive inline definition
+    Full validation still happens server-side via the full json schema.
     """
     schema = generate_component_json_schema(
         component_interface=component_interface,
