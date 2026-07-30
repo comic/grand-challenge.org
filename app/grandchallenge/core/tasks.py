@@ -118,9 +118,9 @@ def _get_metrics():
 
     metric_data.append(
         {
-            "MetricName": "EndpointsOnSagemaker",
+            "MetricName": "LeftoverEndpointsOnSagemaker",
             "Dimensions": [{"Name": "Model", "Value": Endpoint.__name__}],
-            "Value": _get_endpoints_count_from_sagemaker(),
+            "Value": _count_leftover_endpoints_on_sagemaker(),
             "Unit": "Count",
         }
     )
@@ -128,17 +128,23 @@ def _get_metrics():
     return metric_data
 
 
-def _get_endpoints_count_from_sagemaker():
-    count = 0
+def _count_leftover_endpoints_on_sagemaker():
     sagemaker_client = boto3.client(
         "sagemaker",
         region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
     )
 
+    active_endpoint_names = {
+        endpoint.endpoint_name for endpoint in Endpoint.objects.active()
+    }
+
+    count = 0
     paginator = sagemaker_client.get_paginator("list_endpoints")
 
     for page in paginator.paginate():
-        count += len(page["Endpoints"])
+        for endpoint in page["Endpoints"]:
+            if endpoint["EndpointName"] not in active_endpoint_names:
+                count += 1
 
     return count
 
