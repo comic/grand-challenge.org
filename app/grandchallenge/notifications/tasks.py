@@ -38,7 +38,7 @@ def send_unread_notification_instant_emails(*, user_profile_ids: list[int]):
             UserProfile.objects.select_for_update(nowait=True)
             .filter(pk__in=user_profile_ids)
             .order_by("pk")
-            .values_list("pk")
+            .values_list("pk", flat=True)
         )
 
     profiles = (
