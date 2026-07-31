@@ -177,134 +177,87 @@ def test_challenge_onboarding_task_due_emails(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "description, created_offsets, expected_recipients_indices",
+    "description, created_at, reminder_count, status, expected_email",
     [
         (
-            "single valid request",
-            [
-                (
-                    "Target",
-                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=15),
-                ),
-            ],
-            [0],  # 1 email
+            "first reminder due",
+            _fixed_now - timedelta(days=15),
+            0,
+            ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+            True,
         ),
         (
-            "too young request",
-            [
-                (
-                    "Too young",
-                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(hours=1),
-                ),
-            ],
-            [],  # 0 emails
+            "too young for first reminder",
+            _fixed_now - timedelta(hours=1),
+            0,
+            ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+            False,
         ),
         (
-            "too old request",
-            [
-                (
-                    "Too old",
-                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=42),
-                ),
-            ],
-            [],  # 0 emails
+            "second reminder due",
+            _fixed_now - timedelta(days=15),
+            1,
+            ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+            True,
         ),
         (
-            "wrong status request",
-            [
-                (
-                    "Wrong status",
-                    ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
-                    timedelta(days=15),
-                ),
-            ],
-            [],  # 0 emails
+            "max reminders reached",
+            _fixed_now - timedelta(days=15),
+            3,
+            ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+            False,
         ),
         (
-            "multiple valid requests",
-            [
-                (
-                    "Target 1",
-                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=15),
-                ),
-                (
-                    "Target 2",
-                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=30),
-                ),
-            ],
-            [0, 1],  # 2 emails
-        ),
-        (
-            "mix of valid and invalid",
-            [
-                (
-                    "Valid",
-                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=15),
-                ),
-                (
-                    "Too young",
-                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(hours=1),
-                ),
-                (
-                    "Too old",
-                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=40),
-                ),
-                (
-                    "Wrong status",
-                    ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
-                    timedelta(days=15),
-                ),
-            ],
-            [0],  # 1 email
+            "wrong status",
+            _fixed_now - timedelta(days=15),
+            0,
+            ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+            False,
         ),
     ],
 )
 def test_challenge_request_draft_reminder_emails(
-    mocker, description, created_offsets, expected_recipients_indices
+    mocker,
+    settings,
+    description,
+    created_at,
+    reminder_count,
+    status,
+    expected_email,
 ):
+    # Overwrite settings so the test is not dependent on the actual settings values
+    settings.CHALLENGE_REQUEST_AGE_START_DRAFT_REMINDER_CUTOFF = timedelta(
+        days=7
+    )
+    settings.CHALLENGE_REQUEST_MAX_DRAFT_REMINDERS = 2
+
     mocker.patch(
         "grandchallenge.challenges.tasks.now",
         return_value=_fixed_now,
     )
 
-    requests = []
-    for title, status, offset in created_offsets:
-        challenge_request = ChallengeRequestFactory(
-            title=title,
-            status=status,
-        )
-        challenge_request.created = _fixed_now - offset
-        challenge_request.save()
-        requests.append(challenge_request)
+    challenge_request = ChallengeRequestFactory(
+        title="Test Request",
+        status=status,
+        draft_reminder_count=reminder_count,
+    )
+    challenge_request.created = created_at
+    challenge_request.save()
 
     mail.outbox.clear()
 
     send_challenge_request_draft_reminder_emails()
 
-    expected_recipients = [
-        requests[i].creator.email for i in expected_recipients_indices
-    ]
-    assert len(mail.outbox) == len(expected_recipients), description
-
-    actual_recipients = {r for m in mail.outbox for r in m.recipients()}
-    assert actual_recipients == set(expected_recipients)
-
-    for i in expected_recipients_indices:
-        user_emails = [
-            m
-            for m in mail.outbox
-            if requests[i].creator.email in m.recipients()
-        ]
-        assert len(user_emails) == 1
-        assert requests[i].title in user_emails[0].body
+    if expected_email:
+        assert len(mail.outbox) == 1, description
+        assert challenge_request.creator.email in mail.outbox[0].recipients()
+        assert challenge_request.title in mail.outbox[0].body
+        challenge_request.refresh_from_db()
+        assert challenge_request.draft_reminder_count == reminder_count + 1
+    else:
+        assert len(mail.outbox) == 0, description
+        challenge_request.refresh_from_db()
+        assert challenge_request.draft_reminder_count == reminder_count
 
 
 @pytest.mark.django_db

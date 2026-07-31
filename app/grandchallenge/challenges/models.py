@@ -1106,6 +1106,13 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             "This email address will be visible on the challenge website, so please provide an address that you are comfortable sharing publicly."
         ),
     )
+    draft_reminder_count = models.PositiveSmallIntegerField(
+        default=0,
+        editable=False,
+        help_text=(
+            "Number of reminders sent to the challenge organizers to submit this draft for review."
+        ),
+    )
     start_date = models.DateField(
         help_text="Estimated start date for this challenge.",
         null=True,
