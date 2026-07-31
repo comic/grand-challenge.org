@@ -133,9 +133,9 @@ Based on the following information:
                         <tr>
                             <td>Data storage phase {{ forloop.counter }}</td>
                             <td>{{ task.average_size_test_case_mb }} MB average size per case,
-                                 {{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }},
+                                {{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }},
                                 {{ task.average_size_job_output_mb }} MB average output per job,
-                                 {{ phase.number_of_jobs }} job{{ phase.number_of_jobs|pluralize }},
+                                {{ phase.number_of_jobs }} job{{ phase.number_of_jobs|pluralize }},
                                 for {{ num_support_years }} year{{ num_support_years|pluralize }}</td>
                             <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
                             <td>{{ phase.data_storage_size_gb }}</td>
