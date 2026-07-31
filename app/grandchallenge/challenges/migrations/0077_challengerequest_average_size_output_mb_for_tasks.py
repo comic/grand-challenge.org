@@ -8,7 +8,10 @@ import grandchallenge.core.validators
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("challenges", "0071_alter_challengerequest_status_and_more"),
+        (
+            "challenges",
+            "0076_remove_challengerequest_algorithm_maximum_settable_memory_gb_for_tasks_and_more",
+        ),
     ]
 
     operations = [
