@@ -14,7 +14,7 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.notifications.tasks import (
-    send_unread_notification_instant_email,
+    send_unread_notification_instant_emails,
 )
 from grandchallenge.profiles.models import NotificationEmailOptions
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
@@ -157,6 +157,8 @@ class Notification(UUIDModel):
             action_object=action_object, actor=actor, kind=kind, target=target
         )
 
+        instant_email_user_profile_pks = []
+
         for receiver in receivers:
             Notification.objects.create(
                 user=receiver,
@@ -172,9 +174,12 @@ class Notification(UUIDModel):
                 receiver.user_profile.notification_email_choice
                 == NotificationEmailOptions.INSTANT
             ):
-                send_unread_notification_instant_email.execute_on_commit(
-                    user_profile_id=receiver.user_profile.pk
-                )
+                instant_email_user_profile_pks.append(receiver.user_profile.pk)
+
+        if instant_email_user_profile_pks:
+            send_unread_notification_instant_emails.execute_on_commit(
+                user_profile_ids=instant_email_user_profile_pks
+            )
 
     @staticmethod
     def get_receivers(*, kind, actor, action_object, target):  # noqa: C901
