@@ -88,7 +88,11 @@ def test_notification_email_counts():
 
 
 @pytest.mark.django_db
-def test_instant_email_notification_opt_in():
+def test_instant_email_notification_opt_in(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
     inactive_user, user_no_email, user_instant_email, user_daily_email = (
         UserFactory.create_batch(4)
     )
@@ -111,18 +115,19 @@ def test_instant_email_notification_opt_in():
     )
     user_daily_email.user_profile.save()
 
-    Notification.send(
-        kind=Notification.Type.FILE_COPY_STATUS, actor=inactive_user
-    )
-    Notification.send(
-        kind=Notification.Type.FILE_COPY_STATUS, actor=user_no_email
-    )
-    Notification.send(
-        kind=Notification.Type.FILE_COPY_STATUS, actor=user_instant_email
-    )
-    Notification.send(
-        kind=Notification.Type.FILE_COPY_STATUS, actor=user_daily_email
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        Notification.send(
+            kind=Notification.Type.FILE_COPY_STATUS, actor=inactive_user
+        )
+        Notification.send(
+            kind=Notification.Type.FILE_COPY_STATUS, actor=user_no_email
+        )
+        Notification.send(
+            kind=Notification.Type.FILE_COPY_STATUS, actor=user_instant_email
+        )
+        Notification.send(
+            kind=Notification.Type.FILE_COPY_STATUS, actor=user_daily_email
+        )
 
     # only the user with instant notification emails enabled gets an email
     assert len(mail.outbox) == 1

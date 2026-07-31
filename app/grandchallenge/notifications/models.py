@@ -3,7 +3,6 @@ from actstream.models import Follow, followers
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.sites.models import Site
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -14,11 +13,10 @@ from grandchallenge.core.guardian import (
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.core.utils.query import check_lock_acquired
-from grandchallenge.profiles.models import (
-    NotificationEmailOptions,
-    UserProfile,
+from grandchallenge.notifications.tasks import (
+    send_unread_notification_instant_emails,
 )
+from grandchallenge.profiles.models import NotificationEmailOptions
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.subdomains.utils import reverse
 
@@ -158,7 +156,8 @@ class Notification(UUIDModel):
         receivers = Notification.get_receivers(
             action_object=action_object, actor=actor, kind=kind, target=target
         )
-        site = Site.objects.get_current()
+
+        instant_email_user_profile_pks = []
 
         for receiver in receivers:
             Notification.objects.create(
@@ -175,14 +174,12 @@ class Notification(UUIDModel):
                 receiver.user_profile.notification_email_choice
                 == NotificationEmailOptions.INSTANT
             ):
-                with check_lock_acquired():
-                    user_profile = UserProfile.objects.select_for_update(
-                        nowait=True
-                    ).get(pk=receiver.user_profile.pk)
+                instant_email_user_profile_pks.append(receiver.user_profile.pk)
 
-                user_profile.dispatch_unread_notifications_email(
-                    site=site, unread_notification_count=1
-                )
+        if instant_email_user_profile_pks:
+            send_unread_notification_instant_emails.execute_on_commit(
+                user_profile_ids=instant_email_user_profile_pks
+            )
 
     @staticmethod
     def get_receivers(*, kind, actor, action_object, target):  # noqa: C901
