@@ -4,8 +4,8 @@ from urllib.parse import urlencode
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.signing import Signer
-from django.db import models, transaction
-from django.db.models import TextChoices
+from django.db import models
+from django.db.models import Count, F, Q, TextChoices
 from django.db.models.signals import post_save
 from django.template.defaultfilters import pluralize
 from django.utils.functional import cached_property
@@ -44,7 +44,32 @@ class NotificationEmailOptions(TextChoices):
     INSTANT = "INSTANT", _("Send me an email immediately")
 
 
+class UserProfileQuerySet(models.QuerySet):
+    def with_unread_notifications(self):
+        return (
+            self.annotate(
+                unread_notification_count=Count(
+                    "user__notification__pk",
+                    filter=Q(user__notification__read=False)
+                    & (
+                        Q(notification_email_last_sent_at__isnull=True)
+                        | Q(
+                            user__notification__created__gt=F(
+                                "notification_email_last_sent_at"
+                            )
+                        )
+                    ),
+                    distinct=True,
+                )
+            )
+            .filter(unread_notification_count__gt=0)
+            .distinct()
+        )
+
+
 class UserProfile(models.Model):
+    objects = UserProfileQuerySet.as_manager()
+
     user = models.OneToOneField(
         get_user_model(),
         unique=True,
@@ -216,14 +241,12 @@ class UserProfile(models.Model):
             url=reverse("notifications:list"),
         )
 
-        transaction.on_commit(
-            lambda: send_standard_email_batch(
-                site=site,
-                subject=subject,
-                markdown_message=msg,
-                recipients=[self.user],
-                subscription_type=EmailSubscriptionTypes.NOTIFICATION,
-            )
+        send_standard_email_batch(
+            site=site,
+            subject=subject,
+            markdown_message=msg,
+            recipients=[self.user],
+            subscription_type=EmailSubscriptionTypes.NOTIFICATION,
         )
 
     def dispatch_unread_direct_messages_email(
