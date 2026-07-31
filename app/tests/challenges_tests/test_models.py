@@ -214,8 +214,8 @@ def test_is_active_until_set():
         (  # High output storage costs
             dict(
                 task_ids=[1],
-                algorithm_maximum_settable_memory_gb_for_tasks=[32],
-                algorithm_selectable_gpu_type_choices_for_tasks=[["", "T4"]],
+                algorithm_maximum_settable_memory_gb=32,
+                algorithm_selectable_gpu_type_choices=["", "T4"],
                 average_size_test_case_mb_for_tasks=[100],
                 average_size_job_output_mb_for_tasks=[10000],
                 inference_time_average_minutes_for_tasks=[5],
