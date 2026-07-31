@@ -1071,6 +1071,7 @@ budget_field_names = (
     "algorithm_selectable_gpu_type_choices",
     "algorithm_maximum_settable_memory_gb",
     "average_size_test_case_mb_for_tasks",
+    "average_size_job_output_mb_for_tasks",
     "inference_time_average_minutes_for_tasks",
     "task_id_for_phases",
     "number_of_teams_for_phases",
@@ -1257,6 +1258,23 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     "items": {
                         "type": "integer",
                         "minimum": 1,
+                        "maximum": 10000,
+                    },
+                }
+            )
+        ],
+    )
+    average_size_job_output_mb_for_tasks = models.JSONField(
+        help_text="Average size of the output per job in MB, for each task.",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 0,
                         "maximum": 10000,
                     },
                 }
@@ -1652,6 +1670,13 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             for task_index in self.task_index_for_phases
         ]
 
+    @property
+    def average_size_job_output_mb_for_phases(self):
+        return [
+            self.average_size_job_output_mb_for_tasks[task_index]
+            for task_index in self.task_index_for_phases
+        ]
+
     @cached_property
     def number_of_submissions_for_phases(self):
         return [
@@ -1708,11 +1733,31 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @cached_property
     def data_storage_size_gb_for_phases(self):
-        return [
-            round(n_images * image_mb * settings.MEGABYTE / settings.GIGABYTE)
-            for n_images, image_mb in zip(
+        input_size_mb_for_phases = [
+            n_images * input_mb
+            for n_images, input_mb in zip(
                 self.number_of_test_cases_for_phases,
                 self.average_size_test_case_mb_for_phases,
+                strict=True,
+            )
+        ]
+
+        output_size_mb_for_phases = [
+            n_jobs * output_mb
+            for n_jobs, output_mb in zip(
+                self.number_of_algorithm_jobs_for_phases,
+                self.average_size_job_output_mb_for_phases,
+                strict=True,
+            )
+        ]
+        return [
+            round(
+                (input_size_mb + output_size_mb)
+                * (settings.MEGABYTE / settings.GIGABYTE)
+            )
+            for input_size_mb, output_size_mb in zip(
+                input_size_mb_for_phases,
+                output_size_mb_for_phases,
                 strict=True,
             )
         ]
@@ -1865,7 +1910,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             for task_id in self.task_ids
         ]
 
-    @cached_property
+    @property
     def data_storage_costs_euros_for_tasks(self):
         return [
             sum(
@@ -1987,6 +2032,9 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 "average_size_test_case_mb": self.average_size_test_case_mb_for_tasks[
                     task_index
                 ],
+                "average_size_job_output_mb": self.average_size_job_output_mb_for_tasks[
+                    task_index
+                ],
                 "compute_costs_euros": self.compute_costs_euros_for_tasks[
                     task_index
                 ],
@@ -2021,6 +2069,9 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     phase_index
                 ],
                 "data_storage_size_gb": self.data_storage_size_gb_for_phases[
+                    phase_index
+                ],
+                "number_of_jobs": self.number_of_algorithm_jobs_for_phases[
                     phase_index
                 ],
                 "compute_costs_euros": self.compute_costs_euros_for_phases[

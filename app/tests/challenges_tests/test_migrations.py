@@ -7,9 +7,13 @@ from guardian.shortcuts import get_group_perms, get_user_perms, remove_perm
 
 from tests.factories import ChallengeRequestFactory
 
-_migration = importlib.import_module(
+_migration_0070 = importlib.import_module(
     "grandchallenge.challenges.migrations"
     ".0070_assign_review_perm_to_reviewers_group"
+)
+_migration_0079 = importlib.import_module(
+    "grandchallenge.challenges.migrations"
+    ".0079_set_average_size_job_output_for_tasks"
 )
 
 
@@ -30,7 +34,9 @@ def test_assign_review_perm_to_reviewers_group(settings):
         reviewers_group, challenge_request
     )
 
-    _migration.assign_review_perm_to_reviewers_group(apps, schema_editor=None)
+    _migration_0070.assign_review_perm_to_reviewers_group(
+        apps, schema_editor=None
+    )
 
     assert "review_challengerequest" in get_group_perms(
         reviewers_group, challenge_request
@@ -53,8 +59,34 @@ def test_assign_change_perm_to_creators():
         challenge_request.creator, challenge_request
     )
 
-    _migration.assign_change_perm_to_creators(apps, schema_editor=None)
+    _migration_0070.assign_change_perm_to_creators(apps, schema_editor=None)
 
     assert "change_challengerequest" in get_user_perms(
         challenge_request.creator, challenge_request
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "task_ids, expected",
+    [
+        ([], []),
+        ([1], [0]),
+        ([1, 2, 3], [0, 0, 0]),
+    ],
+)
+def test_set_average_size_job_output_mb_for_tasks(task_ids, expected):
+    challenge_request = ChallengeRequestFactory(
+        task_ids=task_ids,
+        average_size_job_output_mb_for_tasks=[],
+    )
+
+    # The field is empty before the migration.
+    assert challenge_request.average_size_job_output_mb_for_tasks == []
+
+    _migration_0079.set_average_size_job_output_mb_for_tasks(
+        apps, schema_editor=None
+    )
+
+    challenge_request.refresh_from_db()
+    assert challenge_request.average_size_job_output_mb_for_tasks == expected

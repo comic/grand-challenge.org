@@ -153,13 +153,14 @@ def test_is_active_until_set():
                 algorithm_maximum_settable_memory_gb=32,
                 algorithm_selectable_gpu_type_choices=["", "T4"],
                 average_size_test_case_mb_for_tasks=[10],
+                average_size_job_output_mb_for_tasks=[1],
                 inference_time_average_minutes_for_tasks=[10],
                 task_id_for_phases=[1],
                 number_of_teams_for_phases=[3],
                 number_of_submissions_per_team_for_phases=[10],
                 number_of_test_cases_for_phases=[100],
             ),
-            706.27,
+            708.28,
             6000,
         ),
         (
@@ -168,13 +169,14 @@ def test_is_active_until_set():
                 algorithm_maximum_settable_memory_gb=32,
                 algorithm_selectable_gpu_type_choices=["", "T4"],
                 average_size_test_case_mb_for_tasks=[10],
+                average_size_job_output_mb_for_tasks=[1],
                 inference_time_average_minutes_for_tasks=[10],
                 task_id_for_phases=[1],
                 number_of_teams_for_phases=[10],
                 number_of_submissions_per_team_for_phases=[10],
                 number_of_test_cases_for_phases=[100],
             ),
-            2353.06,
+            2359.76,
             7500,
         ),
         (
@@ -183,13 +185,14 @@ def test_is_active_until_set():
                 algorithm_maximum_settable_memory_gb=32,
                 algorithm_selectable_gpu_type_choices=["", "A10G", "T4"],
                 average_size_test_case_mb_for_tasks=[10],
+                average_size_job_output_mb_for_tasks=[1],
                 inference_time_average_minutes_for_tasks=[10],
                 task_id_for_phases=[1],
                 number_of_teams_for_phases=[10],
                 number_of_submissions_per_team_for_phases=[10],
                 number_of_test_cases_for_phases=[100],
             ),
-            3553.30,
+            3560,
             9000,
         ),
         (
@@ -198,6 +201,7 @@ def test_is_active_until_set():
                 algorithm_maximum_settable_memory_gb=32,
                 algorithm_selectable_gpu_type_choices=["", "T4"],
                 average_size_test_case_mb_for_tasks=[10, 100],
+                average_size_job_output_mb_for_tasks=[1, 1],
                 inference_time_average_minutes_for_tasks=[5, 10],
                 task_id_for_phases=[1, 1, 2, 2],
                 number_of_submissions_per_team_for_phases=[10, 1, 10, 1],
@@ -206,6 +210,22 @@ def test_is_active_until_set():
             ),
             363.23,
             6000,
+        ),
+        (  # High output storage costs
+            dict(
+                task_ids=[1],
+                algorithm_maximum_settable_memory_gb=32,
+                algorithm_selectable_gpu_type_choices=["", "T4"],
+                average_size_test_case_mb_for_tasks=[100],
+                average_size_job_output_mb_for_tasks=[10000],
+                inference_time_average_minutes_for_tasks=[5],
+                task_id_for_phases=[1],
+                number_of_teams_for_phases=[3],
+                number_of_submissions_per_team_for_phases=[10],
+                number_of_test_cases_for_phases=[100],
+            ),
+            20048.79,
+            25500,
         ),
     ],
 )
@@ -259,6 +279,7 @@ def test_challenge_request_budget_calculation(settings):
         algorithm_maximum_settable_memory_gb=32,
         algorithm_selectable_gpu_type_choices=["", "T4"],
         average_size_test_case_mb_for_tasks=[100],
+        average_size_job_output_mb_for_tasks=[10],
         inference_time_average_minutes_for_tasks=[10],
         task_id_for_phases=[1, 1],
         number_of_teams_for_phases=[10, 10],
@@ -272,24 +293,27 @@ def test_challenge_request_budget_calculation(settings):
             "compute_costs_euros_per_hour": 1.17,
             "compute_time_hours": 16667,
             "compute_costs_euros": 19500.39,
-            "data_storage_size_gb": 10,
-            "data_storage_costs_euros": 6.70,
-            "compute_and_storage_costs_euros": 19507.09,
+            "data_storage_size_gb": 986,
+            "data_storage_costs_euros": 660.62,
+            "compute_and_storage_costs_euros": 20161.01,
         },
         {
             # "name": "Phase 2",
             "compute_costs_euros_per_hour": 1.17,
             "compute_time_hours": 8333,
             "compute_costs_euros": 9749.61,
-            "data_storage_size_gb": 49,
-            "data_storage_costs_euros": 32.83,
-            "compute_and_storage_costs_euros": 9782.44,
+            "data_storage_size_gb": 537,
+            "data_storage_costs_euros": 359.79,
+            "compute_and_storage_costs_euros": 10109.40,
         },
     ]
     assert challenge_request.storage_costs_euros_per_gb() == 0.67
     for i_phase in range(2):
         assert (
-            costs_for_phases[i_phase]["compute_and_storage_costs_euros"]
+            pytest.approx(
+                costs_for_phases[i_phase]["compute_and_storage_costs_euros"],
+                abs=0.01,
+            )
             == costs_for_phases[i_phase]["compute_costs_euros"]
             + costs_for_phases[i_phase]["data_storage_costs_euros"]
         )
@@ -321,7 +345,7 @@ def test_challenge_request_budget_calculation(settings):
             challenge_request.storage_costs_euros_for_tasks[0],
             abs=0.01,
         )
-        == 4059.53
+        == 5040.41
     )
     assert (
         pytest.approx(
@@ -337,20 +361,26 @@ def test_challenge_request_budget_calculation(settings):
             + challenge_request.storage_costs_euros_for_tasks[0],
             abs=0.01,
         )
-        == 33309.53
+        == 34290.41
     )
 
     for i_phase in range(2):
         assert (
-            challenge_request.compute_and_storage_costs_euros_for_phases[
-                i_phase
-            ]
+            pytest.approx(
+                challenge_request.compute_and_storage_costs_euros_for_phases[
+                    i_phase
+                ],
+                abs=0.01,
+            )
             == challenge_request.compute_costs_euros_for_phases[i_phase]
             + challenge_request.data_storage_costs_euros_for_phases[i_phase]
         )
 
     assert (
-        challenge_request.total_compute_and_storage_costs_euros
+        pytest.approx(
+            challenge_request.total_compute_and_storage_costs_euros,
+            abs=0.01,
+        )
         == challenge_request.compute_and_storage_costs_euros_for_phases[0]
         + challenge_request.compute_and_storage_costs_euros_for_phases[1]
         + challenge_request.total_docker_storage_costs_euros
@@ -665,6 +695,7 @@ def test_challenge_request_submission_cleaning(data, expected_error):
                 "algorithm_maximum_settable_memory_gb": 32,
                 "algorithm_selectable_gpu_type_choices": ["", "T4"],
                 "average_size_test_case_mb_for_tasks": [10, 100],
+                "average_size_job_output_mb_for_tasks": [1, 1],
                 "inference_time_average_minutes_for_tasks": [5, 10],
                 "task_id_for_phases": [1, 1, 2, 2],
                 "number_of_submissions_per_team_for_phases": [10, 1, 10, 1],
@@ -678,6 +709,7 @@ def test_challenge_request_submission_cleaning(data, expected_error):
                 "algorithm_maximum_settable_memory_gb": 32,
                 "algorithm_selectable_gpu_type_choices": ["", "T4"],
                 "average_size_test_case_mb_for_tasks": [10, 100],
+                "average_size_job_output_mb_for_tasks": [1, 1],
                 "inference_time_average_minutes_for_tasks": [5, 10],
                 "task_id_for_phases": [1, 1, 2, 2],
                 "number_of_submissions_per_team_for_phases": [10, 1, 10, 1],

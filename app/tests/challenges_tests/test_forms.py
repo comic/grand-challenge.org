@@ -105,6 +105,7 @@ def test_budget_update_form():
         "algorithm_maximum_settable_memory_gb": 32,
         "algorithm_selectable_gpu_type_choices": '["", "T4"]',
         "average_size_test_case_mb_for_tasks": "[10, 100]",
+        "average_size_job_output_mb_for_tasks": "[1, 1]",
         "task_id_for_phases": "[1, 1, 2, 2]",
         "number_of_teams_for_phases": "[500, 500, 500, 500]",
         "number_of_submissions_per_team_for_phases": "[10, 1, 10, 1]",
@@ -121,6 +122,7 @@ def test_budget_update_form():
         "algorithm_maximum_settable_memory_gb": 32,
         "algorithm_selectable_gpu_type_choices": '["", "T4"]',
         "average_size_test_case_mb_for_tasks": "[10, 100]",
+        "average_size_job_output_mb_for_tasks": "[1, 1]",
         "inference_time_average_minutes_for_tasks": "[5, 10]",
         "task_id_for_phases": "[1, 1, 2, 2]",
         "number_of_teams_for_phases": "[500, 500, 500, 500]",
@@ -140,6 +142,10 @@ def test_budget_update_form():
         ({"task_ids": "[1, 1]"}, "task ids are not unique"),
         (
             {"average_size_test_case_mb_for_tasks": "[10]"},
+            "not all tasks defined",
+        ),
+        (
+            {"average_size_job_output_mb_for_tasks": "[1]"},
             "not all tasks defined",
         ),
         (
@@ -178,6 +184,7 @@ def test_budget_update_form_invalid(invalid_data, reason_invalid):
         "algorithm_maximum_settable_memory_gb": 32,
         "algorithm_selectable_gpu_type_choices": '["", "T4"]',
         "average_size_test_case_mb_for_tasks": "[10, 100]",
+        "average_size_job_output_mb_for_tasks": "[1, 1]",
         "inference_time_average_minutes_for_tasks": "[5, 10]",
         "task_id_for_phases": "[1, 1, 2, 2]",
         "number_of_teams_for_phases": "[10, 10, 10, 10]",
