@@ -11,9 +11,9 @@ _migration_0070 = importlib.import_module(
     "grandchallenge.challenges.migrations"
     ".0070_assign_review_perm_to_reviewers_group"
 )
-_migration_0078 = importlib.import_module(
+_migration_0079 = importlib.import_module(
     "grandchallenge.challenges.migrations"
-    ".0078_set_average_size_job_output_for_tasks"
+    ".0079_set_average_size_job_output_for_tasks"
 )
 
 
@@ -84,7 +84,7 @@ def test_set_average_size_job_output_mb_for_tasks(task_ids, expected):
     # The field is empty before the migration.
     assert challenge_request.average_size_job_output_mb_for_tasks == []
 
-    _migration_0078.set_average_size_job_output_mb_for_tasks(
+    _migration_0079.set_average_size_job_output_mb_for_tasks(
         apps, schema_editor=None
     )
 

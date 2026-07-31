@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "challenges",
-            "0076_remove_challengerequest_algorithm_maximum_settable_memory_gb_for_tasks_and_more",
+            "0077_challengerequest_draft_reminder_count",
         ),
     ]
 

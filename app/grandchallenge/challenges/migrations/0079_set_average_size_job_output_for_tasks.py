@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "challenges",
-            "0077_challengerequest_average_size_output_mb_for_tasks",
+            "0078_challengerequest_average_size_output_mb_for_tasks",
         ),
     ]
 
