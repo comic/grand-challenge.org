@@ -1,18 +1,22 @@
 import pytest
 
-from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.core.tasks import _get_metrics
+from grandchallenge.algorithms.models import (
+    AlgorithmImage,
+    EndpointStatusChoices,
+)
+from grandchallenge.core.tasks import _get_metrics, _get_metrics_sagemaker
 from grandchallenge.evaluation.models import Method
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
+    EndpointFactory,
 )
 from tests.evaluation_tests.factories import EvaluationFactory, MethodFactory
 from tests.factories import SessionFactory, UploadSessionFactory
 
 
 @pytest.mark.django_db
-def test_get_metrics(mocker):
+def test_get_metrics():
     ai = AlgorithmImageFactory(
         import_status=AlgorithmImage.ImportStatusChoices.COMPLETED
     )
@@ -36,9 +40,6 @@ def test_get_metrics(mocker):
     s = UploadSessionFactory()
     s.status = s.SUCCESS
     s.save()
-
-    client = mocker.MagicMock()
-    mocker.patch("grandchallenge.core.tasks.boto3.client", return_value=client)
 
     # Note, this is the format expected by CloudWatch,
     # consult the API when changing this
@@ -370,10 +371,67 @@ def test_get_metrics(mocker):
         },
         {"MetricName": "OldestActiveSession", "Value": 0, "Unit": "Seconds"},
         {"MetricName": "OldestActiveEndpoint", "Value": 0, "Unit": "Seconds"},
+    ]
+
+
+@pytest.mark.django_db
+def test_get_metrics_sagemaker(mocker):
+    client = mocker.MagicMock()
+    mocker.patch("grandchallenge.core.tasks.boto3.client", return_value=client)
+
+    result = _get_metrics_sagemaker()
+
+    assert result == [
         {
-            "MetricName": "EndpointsOnSagemaker",
+            "MetricName": "TotalEndpoints",
             "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
             "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "UntrackedEndpoints",
+            "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+    ]
+
+
+@pytest.mark.django_db
+def test_get_metrics_sagemaker_untracked_endpoints(mocker):
+    endpoint_tracked = EndpointFactory.create()
+    endpoint_untracked = EndpointFactory.create(
+        status=EndpointStatusChoices.STOPPED
+    )
+    EndpointFactory.create()  # active in database, but not active on sagemaker
+
+    paginator = mocker.MagicMock()
+    paginator.paginate.return_value = [
+        {
+            "Endpoints": [
+                {"EndpointName": endpoint_tracked.endpoint_name},
+                {"EndpointName": endpoint_untracked.endpoint_name},
+            ]
+        },
+    ]
+
+    client = mocker.MagicMock()
+    client.get_paginator.return_value = paginator
+    mocker.patch("grandchallenge.core.tasks.boto3.client", return_value=client)
+
+    result = _get_metrics_sagemaker()
+
+    assert result == [
+        {
+            "MetricName": "TotalEndpoints",
+            "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
+            "Value": 2,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "UntrackedEndpoints",
+            "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
+            "Value": 1,
             "Unit": "Count",
         },
     ]

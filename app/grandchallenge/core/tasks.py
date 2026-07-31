@@ -42,6 +42,30 @@ def put_cloudwatch_metrics():
         )
 
 
+@lambda_task(
+    singleton=True,
+    # No need to retry here as the periodic task calls this again
+    retry_singleton=False,
+)
+def put_cloudwatch_metrics_sagemaker():
+    if not settings.PUSH_CLOUDWATCH_METRICS:
+        return
+
+    cloudwatch_client = boto3.client(
+        "cloudwatch", region_name=settings.AWS_CLOUDWATCH_REGION_NAME
+    )
+
+    site = Site.objects.get_current()
+    namespace = f"{site.domain}/SageMaker"
+    metric_data = _get_metrics_sagemaker()
+
+    for idx in range(0, len(metric_data), CLOUDWATCH_METRICS_LIMIT):
+        cloudwatch_client.put_metric_data(
+            Namespace=namespace,
+            MetricData=metric_data[idx : idx + CLOUDWATCH_METRICS_LIMIT],
+        )
+
+
 def _get_metrics():
     metric_data = []
 
@@ -116,31 +140,45 @@ def _get_metrics():
             }
         )
 
-    metric_data.append(
-        {
-            "MetricName": "EndpointsOnSagemaker",
-            "Dimensions": [{"Name": "Model", "Value": Endpoint.__name__}],
-            "Value": _get_endpoints_count_from_sagemaker(),
-            "Unit": "Count",
-        }
-    )
-
     return metric_data
 
 
-def _get_endpoints_count_from_sagemaker():
-    count = 0
+def _get_metrics_sagemaker():
     sagemaker_client = boto3.client(
         "sagemaker",
         region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
     )
 
+    active_endpoint_names = {
+        endpoint.endpoint_name for endpoint in Endpoint.objects.active()
+    }
+
+    total_endpoints_count = 0
+    untracked_endpoints_count = 0
     paginator = sagemaker_client.get_paginator("list_endpoints")
 
     for page in paginator.paginate():
-        count += len(page["Endpoints"])
+        total_endpoints_count += len(page["Endpoints"])
+        for endpoint in page["Endpoints"]:
+            if endpoint["EndpointName"] not in active_endpoint_names:
+                untracked_endpoints_count += 1
 
-    return count
+    metric_data = [
+        {
+            "MetricName": "TotalEndpoints",
+            "Dimensions": [{"Name": "Model", "Value": Endpoint.__name__}],
+            "Value": total_endpoints_count,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "UntrackedEndpoints",
+            "Dimensions": [{"Name": "Model", "Value": Endpoint.__name__}],
+            "Value": untracked_endpoints_count,
+            "Unit": "Count",
+        },
+    ]
+
+    return metric_data
 
 
 def schedule_process_picture(
