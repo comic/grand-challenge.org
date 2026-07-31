@@ -371,7 +371,7 @@ def test_get_metrics(mocker):
         {"MetricName": "OldestActiveSession", "Value": 0, "Unit": "Seconds"},
         {"MetricName": "OldestActiveEndpoint", "Value": 0, "Unit": "Seconds"},
         {
-            "MetricName": "EndpointsOnSagemaker",
+            "MetricName": "LeftoverEndpointsOnSagemaker",
             "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
             "Value": 0,
             "Unit": "Count",
