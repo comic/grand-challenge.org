@@ -34,9 +34,12 @@ def send_unread_notification_instant_emails(*, user_profile_ids: list[int]):
     site = Site.objects.get_current()
 
     with check_lock_acquired():
-        UserProfile.objects.select_for_update(nowait=True).filter(
-            pk__in=user_profile_ids
-        ).exists()  # Exists resolves the queryset
+        len(
+            UserProfile.objects.select_for_update(nowait=True)
+            .filter(pk__in=user_profile_ids)
+            .order_by("pk")
+            .values_list("pk", flat=True)
+        )
 
     profiles = (
         UserProfile.objects.filter(
