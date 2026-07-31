@@ -1,4 +1,5 @@
 import boto3
+from botocore.exceptions import ClientError
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db.models import Count
@@ -116,14 +117,22 @@ def _get_metrics():
             }
         )
 
-    metric_data.append(
-        {
-            "MetricName": "LeftoverEndpointsOnSagemaker",
-            "Dimensions": [{"Name": "Model", "Value": Endpoint.__name__}],
-            "Value": _count_leftover_endpoints_on_sagemaker(),
-            "Unit": "Count",
-        }
-    )
+    try:
+        leftover_endpoints_on_sagemaker = (
+            _count_leftover_endpoints_on_sagemaker()
+        )
+    except ClientError:
+        # Avoid the task from failing and pass with missing data.
+        pass
+    else:
+        metric_data.append(
+            {
+                "MetricName": "LeftoverEndpointsOnSagemaker",
+                "Dimensions": [{"Name": "Model", "Value": Endpoint.__name__}],
+                "Value": leftover_endpoints_on_sagemaker,
+                "Unit": "Count",
+            }
+        )
 
     return metric_data
 

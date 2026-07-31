@@ -1,4 +1,5 @@
 import pytest
+from botocore.exceptions import ClientError
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.core.tasks import _get_metrics
@@ -377,3 +378,24 @@ def test_get_metrics(mocker):
             "Unit": "Count",
         },
     ]
+
+
+@pytest.mark.django_db
+def test_get_metrics_passes_on_client_error(mocker):
+    client = mocker.MagicMock()
+    mocker.patch(
+        "grandchallenge.core.tasks.boto3.client",
+        return_value=client,
+        side_effect=ClientError(
+            error_response={
+                "Error": {"Code": "ThrottlingException", "Message": "Foo"}
+            },
+            operation_name="ListEndpoints",
+        ),
+    )
+
+    result = _get_metrics()
+    metric_names = {metric["MetricName"] for metric in result}
+
+    assert metric_names
+    assert "LeftoverEndpointsOnSagemaker" not in metric_names
