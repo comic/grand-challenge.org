@@ -1,11 +1,16 @@
 import pytest
+from django.core import mail
 
 from grandchallenge.discussion_forums.models import (
     ForumPost,
     ForumTopic,
+    ForumTopicKindChoices,
     TopicReadRecord,
 )
+from grandchallenge.notifications.models import Notification
+from grandchallenge.profiles.models import NotificationEmailOptions
 from tests.discussion_forums_tests.factories import (
+    ForumFactory,
     ForumPostFactory,
     ForumTopicFactory,
 )
@@ -61,3 +66,73 @@ def test_get_unread_topic_posts_for_user():
     assert [new_post] == list(
         topic.get_unread_topic_posts_for_user(user=user).all()
     )
+
+
+@pytest.mark.django_db
+def test_forum_notifications_and_emails(
+    django_capture_on_commit_callbacks, settings, mocker, caplog
+):
+    """Test that the create_forum_notifications task creates notifications, sends instant emails, and handles deleted objects during the task execution"""
+
+    settings.LAMBDA_TASKS_EAGER = True
+
+    forum = ForumFactory()
+    participant = UserFactory()
+
+    forum.linked_challenge.add_participant(participant)
+    user_profile = participant.user_profile
+    user_profile.notification_email_choice = NotificationEmailOptions.INSTANT
+    user_profile.save()
+
+    Notification.objects.all().delete()
+    mail.outbox.clear()
+
+    assert Notification.objects.count() == 0
+    assert len(mail.outbox) == 0
+
+    def create_announcement():
+        caplog.clear()
+        with caplog.at_level("ERROR", logger="lambda_tasks.logging"):
+            with django_capture_on_commit_callbacks(execute=True):
+                ForumTopicFactory(
+                    forum=forum, kind=ForumTopicKindChoices.ANNOUNCE
+                )
+
+    create_announcement()
+    # No errors were logged during the task execution
+    assert not caplog.messages
+
+    assert Notification.objects.count() == 2
+    for notification in Notification.objects.all():
+        assert notification.action_object == ForumTopic.objects.first()
+
+    assert len(mail.outbox) == 1
+    assert "You have 1 new notification" in mail.outbox[0].subject
+
+    Notification.objects.all().delete()
+    mail.outbox.clear()
+
+    original_send = Notification.send
+
+    def send_and_delete(*args, **kwargs):
+        result = original_send(*args, **kwargs)
+        # Simulate deletion during notification sending (i.e. during the task execution)
+        ForumTopic.objects.filter(forum=forum).delete()
+        return result
+
+    mocker.patch.object(Notification, "send", side_effect=send_and_delete)
+
+    create_announcement()
+
+    # The task should have logged an error
+    assert len(caplog.messages) == 1
+
+    # Verify the error is about an object not existing (since we deleted it during the task)
+    assert (
+        f"{ForumTopic.__name__} matching query does not exist"
+        in caplog.messages[0]
+    )
+
+    # Crucial: notifications and emails were not created because the task failed
+    assert not Notification.objects.exists()
+    assert len(mail.outbox) == 0

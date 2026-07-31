@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.signing import Signer
-from django.db import models
+from django.db import models, transaction
 from django.db.models import TextChoices
 from django.db.models.signals import post_save
 from django.template.defaultfilters import pluralize
@@ -216,12 +216,14 @@ class UserProfile(models.Model):
             url=reverse("notifications:list"),
         )
 
-        send_standard_email_batch(
-            site=site,
-            subject=subject,
-            markdown_message=msg,
-            recipients=[self.user],
-            subscription_type=EmailSubscriptionTypes.NOTIFICATION,
+        transaction.on_commit(
+            lambda: send_standard_email_batch(
+                site=site,
+                subject=subject,
+                markdown_message=msg,
+                recipients=[self.user],
+                subscription_type=EmailSubscriptionTypes.NOTIFICATION,
+            )
         )
 
     def dispatch_unread_direct_messages_email(
