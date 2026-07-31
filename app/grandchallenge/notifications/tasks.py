@@ -36,7 +36,7 @@ def send_unread_notification_instant_emails(*, user_profile_ids: list[int]):
     with check_lock_acquired():
         UserProfile.objects.select_for_update(nowait=True).filter(
             pk__in=user_profile_ids
-        )
+        ).exists()  # Exists resolves the queryset
 
     profiles = (
         UserProfile.objects.filter(
