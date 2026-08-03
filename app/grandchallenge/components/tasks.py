@@ -1693,7 +1693,10 @@ def add_file_to_object(
 
 
 @lambda_task(
-    queue=LambdaTaskQueueChoices.MEM8G, retry_on=(LockNotAcquiredException,)
+    queue=LambdaTaskQueueChoices.MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=LONG_TASK_SOFT_TIMEOUT,  # TODO: revert
+    hard_timeout=LONG_TASK_HARD_TIMEOUT,  # TODO: revert
 )
 def assign_tarball_from_upload(
     *,
