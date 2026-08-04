@@ -4,7 +4,11 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from lambda_tasks.decorators import lambda_task
 
-from config.lambda_tasks import LambdaTaskQueueChoices
+from config.lambda_tasks import (
+    LONG_TASK_HARD_TIMEOUT,
+    LONG_TASK_SOFT_TIMEOUT,
+    LambdaTaskQueueChoices,
+)
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -160,7 +164,11 @@ def add_image_to_answer(
         }
 
 
-@lambda_task(queue=LambdaTaskQueueChoices.MEM8G)
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G,
+    soft_timeout=LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=LONG_TASK_HARD_TIMEOUT,
+)
 def copy_reader_study_display_sets(*, orig_pk: str | UUID, new_pk: str | UUID):
     orig = ReaderStudy.objects.get(pk=orig_pk)
     new = ReaderStudy.objects.get(pk=new_pk)
