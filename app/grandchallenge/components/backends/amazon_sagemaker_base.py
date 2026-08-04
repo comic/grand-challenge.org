@@ -786,13 +786,13 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             # SageMakers warm pool reuse logic
             return self._instance_type.nvme_volume_size
         else:
-            if required_gb > settings.COMPONENTS_EBS_VOLUME_SIZE_LIMIT:
+            if required_gb > settings.COMPONENTS_EBS_VOLUME_SIZE_LIMIT_GB:
                 logger.error(
                     f"Job {self._job_id} likely needs {required_gb} GB but "
-                    f"instance is limited to {settings.COMPONENTS_EBS_VOLUME_SIZE_LIMIT} GB due to EBS limits. "
+                    f"instance is limited to {settings.COMPONENTS_EBS_VOLUME_SIZE_LIMIT_GB} GB due to EBS limits. "
                     "Attempting to run the job anyway."
                 )
-                return settings.COMPONENTS_EBS_VOLUME_SIZE_LIMIT
+                return settings.COMPONENTS_EBS_VOLUME_SIZE_LIMIT_GB
             else:
                 return required_gb
 
