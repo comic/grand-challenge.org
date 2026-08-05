@@ -1995,7 +1995,7 @@ def test_parse_endpoint_invocation_outputs_failure(mocker):
     )
     mocker.patch.object(
         EndpointOrchestrator,
-        "get_outputs",
+        "create_value_for_output",
         side_effect=Exception,
     )
 
@@ -2016,9 +2016,9 @@ def test_parse_endpoint_invocation_outputs_failure(mocker):
 @pytest.mark.django_db
 def test_parse_endpoint_invocation_outputs_wrong_state_raises(mocker, status):
     invocation = InvocationFactory(status=status)
-    mock_get_outputs = mocker.patch.object(
+    mock_create_value_for_output = mocker.patch.object(
         EndpointOrchestrator,
-        "get_outputs",
+        "create_value_for_output",
     )
 
     with pytest.raises(
@@ -2027,7 +2027,7 @@ def test_parse_endpoint_invocation_outputs_wrong_state_raises(mocker, status):
         parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
     invocation.refresh_from_db()
 
-    mock_get_outputs.assert_not_called()
+    mock_create_value_for_output.assert_not_called()
     assert invocation.status == status
     assert invocation.outputs.count() == 0
 
@@ -2035,15 +2035,15 @@ def test_parse_endpoint_invocation_outputs_wrong_state_raises(mocker, status):
 @pytest.mark.django_db
 def test_parse_endpoint_invocation_outputs_cancelled_skipped(mocker):
     invocation = InvocationFactory(status=InvocationStatusChoices.CANCELLED)
-    mock_get_outputs = mocker.patch.object(
+    mock_create_value_for_output = mocker.patch.object(
         EndpointOrchestrator,
-        "get_outputs",
+        "create_value_for_output",
     )
 
     parse_endpoint_invocation_outputs(**invocation.task_kwargs, event={})
     invocation.refresh_from_db()
 
-    mock_get_outputs.assert_not_called()
+    mock_create_value_for_output.assert_not_called()
     assert invocation.status == InvocationStatusChoices.CANCELLED
     assert invocation.outputs.count() == 0
 
@@ -2080,6 +2080,23 @@ def test_invoke_endpoint_skips_keep_alive_for_reader_study_endpoint(mocker):
     spy_keep_alive.assert_not_called()
 
 
+class FixedOutputExecutor:
+    def create_value_for_output(self, *, interface):
+        return ComponentInterfaceValueFactory(interface=interface, value=42)
+
+
+class RaisedExceptionExecutor:
+    def create_value_for_output(self, *, interface):
+        raise Exception("Test exception that should not be passed to user")
+
+
+class RaisedComponentExceptionExecutor:
+    def create_value_for_output(self, *, interface):
+        raise ComponentException(
+            "Test exception that should be passed to user"
+        )
+
+
 @pytest.mark.django_db
 def test_parse_job_outputs(
     settings, django_capture_on_commit_callbacks, mocker
@@ -2109,16 +2126,9 @@ def test_parse_job_outputs(
         time_limit=60,
     )
 
-    class TestExecutor:
-        def get_outputs(self, output_interfaces):
-            return [
-                ComponentInterfaceValueFactory(interface=interface, value=42)
-                for interface in output_interfaces
-            ]
-
     mocker.patch(
         "grandchallenge.algorithms.models.Job.get_executor",
-        return_value=TestExecutor(),
+        return_value=FixedOutputExecutor(),
     )
 
     with django_capture_on_commit_callbacks(execute=True):
@@ -2159,16 +2169,9 @@ def test_parse_job_outputs_idempotent(
         time_limit=60,
     )
 
-    class TestExecutor:
-        def get_outputs(self, output_interfaces):
-            return [
-                ComponentInterfaceValueFactory(interface=interface, value=42)
-                for interface in output_interfaces
-            ]
-
     mocker.patch(
         "grandchallenge.algorithms.models.Job.get_executor",
-        return_value=TestExecutor(),
+        return_value=FixedOutputExecutor(),
     )
 
     ComponentInterfaceValue.objects.all().delete()
@@ -2254,16 +2257,9 @@ def test_parse_singular_job_output(
         time_limit=60,
     )
 
-    class TestExecutor:
-        def get_outputs(self, output_interfaces):
-            return [
-                ComponentInterfaceValueFactory(interface=interface, value=42)
-                for interface in output_interfaces
-            ]
-
     mocker.patch(
         "grandchallenge.algorithms.models.Job.get_executor",
-        return_value=TestExecutor(),
+        return_value=FixedOutputExecutor(),
     )
 
     with django_capture_on_commit_callbacks(execute=True):
@@ -2307,16 +2303,9 @@ def test_parse_singular_job_output_idempotent(
         time_limit=60,
     )
 
-    class TestExecutor:
-        def get_outputs(self, output_interfaces):
-            return [
-                ComponentInterfaceValueFactory(interface=interface, value=42)
-                for interface in output_interfaces
-            ]
-
     mocker.patch(
         "grandchallenge.algorithms.models.Job.get_executor",
-        return_value=TestExecutor(),
+        return_value=FixedOutputExecutor(),
     )
 
     ComponentInterfaceValue.objects.all().delete()
@@ -2393,7 +2382,7 @@ def test_parse_singular_job_output_nonexistent_interface(
 
     job.refresh_from_db()
     assert job.status == Job.FAILURE
-    assert job.error_message == "Output interface with pk=42 does not exist"
+    assert job.error_message == "An unexpected error occurred"
 
 
 @pytest.mark.django_db
@@ -2425,13 +2414,9 @@ def test_parse_singular_job_output_executor_exception(
         time_limit=60,
     )
 
-    class TestExecutor:
-        def get_outputs(self, *_, **__):
-            raise Exception("Test execution that should not be passed to user")
-
     mocker.patch(
         "grandchallenge.algorithms.models.Job.get_executor",
-        return_value=TestExecutor(),
+        return_value=RaisedExceptionExecutor(),
     )
 
     with django_capture_on_commit_callbacks(execute=True):
@@ -2473,15 +2458,9 @@ def test_parse_singular_job_output_executor_component_exception(
         time_limit=60,
     )
 
-    class TestExecutor:
-        def get_outputs(self, *_, **__):
-            raise ComponentException(
-                "Test execution that should be passed to user"
-            )
-
     mocker.patch(
         "grandchallenge.algorithms.models.Job.get_executor",
-        return_value=TestExecutor(),
+        return_value=RaisedComponentExceptionExecutor(),
     )
 
     with django_capture_on_commit_callbacks(execute=True):
@@ -2491,4 +2470,4 @@ def test_parse_singular_job_output_executor_component_exception(
 
     job.refresh_from_db()
     assert job.status == Job.FAILURE
-    assert job.error_message == "Test execution that should be passed to user"
+    assert job.error_message == "Test exception that should be passed to user"

@@ -1117,25 +1117,33 @@ def parse_singular_job_output(
     except ComponentInterface.DoesNotExist:
         job.update_status(
             status=job.FAILURE,
-            error_message=f"Output interface with pk={interface_pk} does not exist",
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+        )
+        task_logger.error(
+            "Could not parse outputs - interface does not exist", exc_info=True
         )
         return
 
     if job.outputs.filter(interface=interface_pk).exists():
-        task_logger.info(
-            f"Output interface with pk={interface_pk} already parsed for job with pk={job_pk}"
+        job.update_status(
+            status=job.FAILURE,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
-        return  # Nothing to do here
+        task_logger.error(
+            "Could not parse outputs - interface already parsed", exc_info=True
+        )
+        return
 
     executor = job.get_executor(backend=backend)
 
     try:
-        outputs = executor.get_outputs(output_interfaces=[interface])
-    except ComponentException as e:
+        val = executor.create_value_for_output(interface=interface)
+        job.outputs.add(val)
+    except ComponentException as error:
         job.update_status(
             status=job.FAILURE,
-            error_message=str(e),
-            detailed_error_message=e.message_details,
+            error_message=str(error),
+            detailed_error_message=error.message_details,
         )
         return
     except Exception:
@@ -1145,8 +1153,6 @@ def parse_singular_job_output(
         )
         task_logger.error("Could not parse outputs", exc_info=True)
         return
-
-    job.outputs.add(*outputs)
 
     if remaining_interface_pks:
         parse_singular_job_output.execute_on_commit(
@@ -2067,9 +2073,9 @@ def parse_endpoint_invocation_outputs(
     orchestrator = invocation.orchestrator
 
     try:
-        outputs = orchestrator.get_outputs(
-            output_interfaces=invocation.algorithm_interface.outputs.all()
-        )
+        for interface in invocation.algorithm_interface.outputs.all():
+            val = orchestrator.create_value_for_output(interface=interface)
+            invocation.outputs.add(val)
     except ComponentException as error:
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
@@ -2083,5 +2089,4 @@ def parse_endpoint_invocation_outputs(
         )
         task_logger.error("Could not parse invocation outputs", exc_info=True)
     else:
-        invocation.outputs.add(*outputs)
         invocation.update_status(status=invocation.StatusChoices.SUCCESS)

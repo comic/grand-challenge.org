@@ -392,21 +392,13 @@ class Executor(ABC):
     @abstractmethod
     def handle_event(self, *, event): ...
 
-    def get_outputs(self, *, output_interfaces):
-        """Create ComponentInterfaceValues from the output interfaces"""
-        outputs = []
-
-        for interface in output_interfaces:
-            if interface.is_image_kind:
-                res = self._create_images_result(interface=interface)
-            elif interface.is_json_kind:
-                res = self._create_json_result(interface=interface)
-            else:
-                res = self._create_file_result(interface=interface)
-
-            outputs.append(res)
-
-        return outputs
+    def create_value_for_output(self, *, interface):
+        if interface.is_image_kind:
+            return self._create_images_result(interface=interface)
+        elif interface.is_json_kind:
+            return self._create_json_result(interface=interface)
+        else:
+            return self._create_file_result(interface=interface)
 
     def deprovision(self):
         self._delete_objects(
