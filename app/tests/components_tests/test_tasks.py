@@ -14,6 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.models import TaskRecord
 from requests import put
 
 from grandchallenge.algorithms.models import (
@@ -56,7 +57,7 @@ from grandchallenge.components.tasks import (
     handle_endpoint_status_event,
     invoke_endpoint,
     parse_endpoint_invocation_outputs,
-    parse_singular_job_output,
+    parse_job_output,
     preload_interactive_algorithms,
     remove_container_image_from_registry,
     remove_inactive_container_images,
@@ -2097,7 +2098,7 @@ class RaisedComponentExceptionExecutor:
 
 
 @pytest.mark.django_db
-def test_parse_singular_job_output(
+def test_parse_job_output(
     settings, django_capture_on_commit_callbacks, mocker
 ):
     settings.LAMBDA_TASKS_EAGER = True
@@ -2131,7 +2132,11 @@ def test_parse_singular_job_output(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        parse_singular_job_output(**job.task_kwargs)
+        for interface in job.output_interfaces.all():
+            parse_job_output.execute_on_commit(
+                **job.task_kwargs,
+                interface_slug=interface.slug,
+            )
 
     job.refresh_from_db()
     assert job.error_message == ""
@@ -2140,7 +2145,7 @@ def test_parse_singular_job_output(
 
 
 @pytest.mark.django_db
-def test_parse_singular_job_output_idempotent(
+def test_parse_job_output_idempotent(
     settings, django_capture_on_commit_callbacks, mocker
 ):
     settings.LAMBDA_TASKS_EAGER = True
@@ -2177,13 +2182,30 @@ def test_parse_singular_job_output_idempotent(
     assert ComponentInterfaceValue.objects.count() == 0
 
     with django_capture_on_commit_callbacks(execute=True):
-        parse_singular_job_output(**job.task_kwargs)
+        for interface in job.output_interfaces.all():
+            parse_job_output.execute_on_commit(
+                **job.task_kwargs,
+                interface_slug=interface.slug,
+            )
+
+    for interface in job.output_interfaces.all():
+        assert TaskRecord.objects.filter(
+            kwargs__interface_slug=interface.slug
+        ).first().result == {"status": f"Value created for {interface.slug}"}
 
     assert ComponentInterfaceValue.objects.count() == 3
 
-    with pytest.raises(RuntimeError, match="Job is not in parsing state"):
-        with django_capture_on_commit_callbacks(execute=True):
-            parse_singular_job_output(**job.task_kwargs)
+    with django_capture_on_commit_callbacks(execute=True):
+        for interface in job.output_interfaces.all():
+            parse_job_output.execute_on_commit(
+                **job.task_kwargs,
+                interface_slug=interface.slug,
+            )
+
+    for interface in job.output_interfaces.all():
+        assert TaskRecord.objects.filter(
+            kwargs__interface_slug=interface.slug
+        ).first().result == {"status": "Job is not set for parsing"}
 
     assert (
         ComponentInterfaceValue.objects.count() == 3
@@ -2196,7 +2218,7 @@ def test_parse_singular_job_output_idempotent(
 
 
 @pytest.mark.django_db
-def test_parse_singular_job_output_incorrect_state(
+def test_parse_job_output_incorrect_state(
     settings, django_capture_on_commit_callbacks
 ):
     settings.LAMBDA_TASKS_EAGER = True
@@ -2211,13 +2233,21 @@ def test_parse_singular_job_output_incorrect_state(
         time_limit=60,
     )
 
-    with pytest.raises(RuntimeError, match="Job is not in parsing state"):
-        with django_capture_on_commit_callbacks(execute=True):
-            parse_singular_job_output(**job.task_kwargs)
+    with django_capture_on_commit_callbacks(execute=True):
+        for interface in job.output_interfaces.all():
+            parse_job_output.execute_on_commit(
+                **job.task_kwargs,
+                interface_slug=interface.slug,
+            )
+
+    for interface in job.output_interfaces.all():
+        assert TaskRecord.objects.get(
+            kwargs__interface_slug=interface.slug
+        ).result == {"status": "Job is not set for parsing"}
 
 
 @pytest.mark.django_db
-def test_parse_singular_job_output_nonexistent_interface(
+def test_parse_job_output_nonexistent_interface(
     settings, django_capture_on_commit_callbacks
 ):
     settings.LAMBDA_TASKS_EAGER = True
@@ -2233,7 +2263,11 @@ def test_parse_singular_job_output_nonexistent_interface(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        parse_singular_job_output(**job.task_kwargs)
+        for interface in job.output_interfaces.all():
+            parse_job_output.execute_on_commit(
+                **job.task_kwargs,
+                interface_slug=interface.slug,
+            )
 
     job.refresh_from_db()
     assert job.status == Job.FAILURE
@@ -2244,7 +2278,7 @@ def test_parse_singular_job_output_nonexistent_interface(
 
 
 @pytest.mark.django_db
-def test_parse_singular_job_output_executor_exception(
+def test_parse_job_output_executor_exception(
     settings, django_capture_on_commit_callbacks, mocker
 ):
     settings.LAMBDA_TASKS_EAGER = True
@@ -2278,7 +2312,11 @@ def test_parse_singular_job_output_executor_exception(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        parse_singular_job_output(**job.task_kwargs)
+        for interface in job.output_interfaces.all():
+            parse_job_output.execute_on_commit(
+                **job.task_kwargs,
+                interface_slug=interface.slug,
+            )
 
     job.refresh_from_db()
     assert job.status == Job.FAILURE
@@ -2286,7 +2324,7 @@ def test_parse_singular_job_output_executor_exception(
 
 
 @pytest.mark.django_db
-def test_parse_singular_job_output_executor_component_exception(
+def test_parse_job_output_executor_component_exception(
     settings, django_capture_on_commit_callbacks, mocker
 ):
     settings.LAMBDA_TASKS_EAGER = True
@@ -2320,7 +2358,11 @@ def test_parse_singular_job_output_executor_component_exception(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        parse_singular_job_output(**job.task_kwargs)
+        for interface in job.output_interfaces.all():
+            parse_job_output.execute_on_commit(
+                **job.task_kwargs,
+                interface_slug=interface.slug,
+            )
 
     job.refresh_from_db()
     assert job.status == Job.FAILURE
