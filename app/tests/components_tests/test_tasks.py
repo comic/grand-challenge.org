@@ -2263,10 +2263,7 @@ def test_parse_singular_job_output(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        parse_singular_job_output(
-            **job.task_kwargs,
-            interface_pks=[int_socket_1.pk, int_socket_2.pk, int_socket_3.pk],
-        )
+        parse_singular_job_output(**job.task_kwargs)
 
     job.refresh_from_db()
     assert job.error_message == ""
@@ -2312,23 +2309,13 @@ def test_parse_singular_job_output_idempotent(
     assert ComponentInterfaceValue.objects.count() == 0
 
     with django_capture_on_commit_callbacks(execute=True):
-        parse_singular_job_output(
-            **job.task_kwargs,
-            interface_pks=[int_socket_1.pk, int_socket_2.pk, int_socket_3.pk],
-        )
+        parse_singular_job_output(**job.task_kwargs)
 
     assert ComponentInterfaceValue.objects.count() == 3
 
     with pytest.raises(RuntimeError, match="Job is not in parsing state"):
         with django_capture_on_commit_callbacks(execute=True):
-            parse_singular_job_output(
-                **job.task_kwargs,
-                interface_pks=[
-                    int_socket_1.pk,
-                    int_socket_2.pk,
-                    int_socket_3.pk,
-                ],
-            )
+            parse_singular_job_output(**job.task_kwargs)
 
     assert (
         ComponentInterfaceValue.objects.count() == 3
@@ -2358,7 +2345,7 @@ def test_parse_singular_job_output_incorrect_state(
 
     with pytest.raises(RuntimeError, match="Job is not in parsing state"):
         with django_capture_on_commit_callbacks(execute=True):
-            parse_singular_job_output(**job.task_kwargs, interface_pks=[42])
+            parse_singular_job_output(**job.task_kwargs)
 
 
 @pytest.mark.django_db
@@ -2378,11 +2365,11 @@ def test_parse_singular_job_output_nonexistent_interface(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        parse_singular_job_output(**job.task_kwargs, interface_pks=[42])
+        parse_singular_job_output(**job.task_kwargs)
 
     job.refresh_from_db()
     assert job.status == Job.FAILURE
-    assert job.error_message == "An unexpected error occurred"
+    assert job.error_message == "Output file 'interface-1' was not produced"
 
 
 @pytest.mark.django_db
@@ -2420,9 +2407,7 @@ def test_parse_singular_job_output_executor_exception(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        parse_singular_job_output(
-            **job.task_kwargs, interface_pks=[int_socket_1.pk]
-        )
+        parse_singular_job_output(**job.task_kwargs)
 
     job.refresh_from_db()
     assert job.status == Job.FAILURE
@@ -2464,9 +2449,7 @@ def test_parse_singular_job_output_executor_component_exception(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        parse_singular_job_output(
-            **job.task_kwargs, interface_pks=[int_socket_1.pk]
-        )
+        parse_singular_job_output(**job.task_kwargs)
 
     job.refresh_from_db()
     assert job.status == Job.FAILURE
