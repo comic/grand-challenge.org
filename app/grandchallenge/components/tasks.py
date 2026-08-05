@@ -1180,6 +1180,7 @@ def check_job_parsing_complete(
     retry_on=(LockNotAcquiredException,),
 )
 def parse_singular_job_output(
+    # TODO 4918 remove this task once deployed and queues cleared
     *,
     job_pk: str | UUID,
     job_app_label: str,
