@@ -1038,10 +1038,16 @@ def handle_event(*, event: dict, backend: str):
         task_logger.error(str(error), exc_info=True)
     else:
         job.update_status(
-            status=job.EXECUTED,
+            status=job.PARSING,
             **get_update_status_kwargs(executor=executor),
         )
-        parse_job_outputs.execute_on_commit(**job.task_kwargs)
+        interface_pks = list(
+            job.output_interfaces.order_by("pk").values_list("pk", flat=True)
+        )
+        parse_singular_job_output.execute_on_commit(
+            **job.task_kwargs,
+            interface_pks=interface_pks,
+        )
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
@@ -1091,10 +1097,13 @@ def parse_singular_job_output(
     backend: str,
     interface_pks: list[int],
 ):
+    from grandchallenge.components.models import ComponentInterface
+
     if not interface_pks:
         raise RuntimeError("No output interfaces to parse")
 
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
+
     with check_lock_acquired():
         job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
 
@@ -1103,10 +1112,9 @@ def parse_singular_job_output(
 
     interface_pk, *remaining_interface_pks = interface_pks
 
-    interface_model = job.output_interfaces.model
     try:
-        interface = interface_model.objects.get(pk=interface_pk)
-    except interface_model.DoesNotExist:
+        interface = ComponentInterface.objects.get(pk=interface_pk)
+    except ComponentInterface.DoesNotExist:
         job.update_status(
             status=job.FAILURE,
             error_message=f"Output interface with pk={interface_pk} does not exist",
