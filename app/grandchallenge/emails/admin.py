@@ -1,11 +1,14 @@
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
+from django.contrib.sites.models import Site
 from django.forms import ModelForm
 
 from grandchallenge.core.widgets import MarkdownEditorAdminWidget
+from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.emails.models import Email, RawEmail
 from grandchallenge.emails.tasks import send_bulk_email
 from grandchallenge.emails.utils import SendActionChoices
+from grandchallenge.profiles.models import EmailSubscriptionTypes
 
 
 def schedule_emails(modeladmin, queryset, request, action):
@@ -34,6 +37,20 @@ def initialize_succeeded_emails(modeladmin, request, queryset):
     )
 
 
+@admin.action(description="Send to me", permissions=["change"])
+def send_to_me(modeladmin, request, queryset):
+    site = Site.objects.get_current()
+
+    for email in queryset:
+        send_standard_email_batch(
+            site=site,
+            recipients=[request.user],
+            subject=email.subject,
+            markdown_message=email.body,
+            subscription_type=EmailSubscriptionTypes.SYSTEM,
+        )
+
+
 class EmailAdminForm(ModelForm):
     class Meta:
         widgets = {"body": MarkdownEditorAdminWidget}
@@ -46,7 +63,7 @@ class EmailAdmin(ModelAdmin):
         "status",
         "sent_at",
     )
-    actions = (*SendActionChoices, initialize_succeeded_emails)
+    actions = (*SendActionChoices, initialize_succeeded_emails, send_to_me)
     form = EmailAdminForm
 
     @admin.action(description="Send to mailing list", permissions=["change"])
