@@ -392,5 +392,5 @@ class EndpointOrchestrator:
         task_logger.error("Endpoint invocation failed")
         raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
 
-    def get_outputs(self, *, output_interfaces):
-        return self._executor.get_outputs(output_interfaces=output_interfaces)
+    def create_value_for_output(self, *, interface):
+        return self._executor.create_value_for_output(interface=interface)

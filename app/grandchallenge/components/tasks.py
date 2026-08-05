@@ -1038,10 +1038,12 @@ def handle_event(*, event: dict, backend: str):
         task_logger.error(str(error), exc_info=True)
     else:
         job.update_status(
-            status=job.EXECUTED,
+            status=job.PARSING,
             **get_update_status_kwargs(executor=executor),
         )
-        parse_job_outputs.execute_on_commit(**job.task_kwargs)
+        parse_singular_job_output.execute_on_commit(
+            **job.task_kwargs,
+        )
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
@@ -1064,19 +1066,7 @@ def parse_job_outputs(
         raise RuntimeError("Job already has outputs")
 
     job.update_status(status=job.PARSING)
-
-    interface_pks = list(
-        job.output_interfaces.order_by("pk").values_list("pk", flat=True)
-    )
-
-    # Kick off the parsing chain
-    parse_singular_job_output.execute_on_commit(
-        job_pk=job_pk,
-        job_app_label=job_app_label,
-        job_model_name=job_model_name,
-        backend=backend,
-        interface_pks=interface_pks,
-    )
+    parse_singular_job_output.execute_on_commit(**job.task_kwargs)
 
 
 @lambda_task(
@@ -1089,67 +1079,54 @@ def parse_singular_job_output(
     job_app_label: str,
     job_model_name: str,
     backend: str,
-    interface_pks: list[int],
+    interface_pks: list[int] = None,  # TODO remove
 ):
-    if not interface_pks:
-        raise RuntimeError("No output interfaces to parse")
-
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
+
     with check_lock_acquired():
         job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
 
     if job.status != job.PARSING:
         raise RuntimeError("Job is not in parsing state")
 
-    interface_pk, *remaining_interface_pks = interface_pks
+    unparsed_interfaces = {*job.output_interfaces.all()}
+    parsed_interfaces = {output.interface for output in job.outputs.all()}
 
-    interface_model = job.output_interfaces.model
-    try:
-        interface = interface_model.objects.get(pk=interface_pk)
-    except interface_model.DoesNotExist:
-        job.update_status(
-            status=job.FAILURE,
-            error_message=f"Output interface with pk={interface_pk} does not exist",
-        )
-        return
+    remaining_interfaces = unparsed_interfaces - parsed_interfaces
 
-    if job.outputs.filter(interface=interface_pk).exists():
-        task_logger.info(
-            f"Output interface with pk={interface_pk} already parsed for job with pk={job_pk}"
-        )
-        return  # Nothing to do here
+    if remaining_interfaces:
+        parsed_interface = remaining_interfaces.pop()
+        executor = job.get_executor(backend=backend)
 
-    executor = job.get_executor(backend=backend)
+        try:
+            val = executor.create_value_for_output(interface=parsed_interface)
+            job.outputs.add(val)
+        except ComponentException as error:
+            job.update_status(
+                status=job.FAILURE,
+                error_message=str(error),
+                detailed_error_message=error.message_details,
+            )
+            return
+        except Exception:
+            job.update_status(
+                status=job.FAILURE,
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            )
+            task_logger.error("Could not parse outputs", exc_info=True)
+            return
+    else:
+        parsed_interface = None
 
-    try:
-        outputs = executor.get_outputs(output_interfaces=[interface])
-    except ComponentException as e:
-        job.update_status(
-            status=job.FAILURE,
-            error_message=str(e),
-            detailed_error_message=e.message_details,
-        )
-        return
-    except Exception:
-        job.update_status(
-            status=job.FAILURE,
-            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
-        )
-        task_logger.error("Could not parse outputs", exc_info=True)
-        return
-
-    job.outputs.add(*outputs)
-
-    if remaining_interface_pks:
-        parse_singular_job_output.execute_on_commit(
-            job_pk=job_pk,
-            job_app_label=job_app_label,
-            job_model_name=job_model_name,
-            backend=backend,
-            interface_pks=remaining_interface_pks,
-        )
+    if remaining_interfaces:
+        parse_singular_job_output.execute_on_commit(**job.task_kwargs)
     else:
         job.update_status(status=job.SUCCESS)
+
+    if parsed_interface:
+        return parsed_interface.slug
+    else:
+        return
 
 
 @lambda_task(retry_on=(RetryStep,))
@@ -2059,9 +2036,9 @@ def parse_endpoint_invocation_outputs(
     orchestrator = invocation.orchestrator
 
     try:
-        outputs = orchestrator.get_outputs(
-            output_interfaces=invocation.algorithm_interface.outputs.all()
-        )
+        for interface in invocation.algorithm_interface.outputs.all():
+            val = orchestrator.create_value_for_output(interface=interface)
+            invocation.outputs.add(val)
     except ComponentException as error:
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
@@ -2075,5 +2052,4 @@ def parse_endpoint_invocation_outputs(
         )
         task_logger.error("Could not parse invocation outputs", exc_info=True)
     else:
-        invocation.outputs.add(*outputs)
         invocation.update_status(status=invocation.StatusChoices.SUCCESS)
