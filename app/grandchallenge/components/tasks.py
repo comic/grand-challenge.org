@@ -1063,7 +1063,9 @@ def parse_job_output(
 
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
 
-    # This task should not lock the instance as it runs in parallel
+    # This task should not lock the instance as it runs in parallel,
+    # therefore the job must remain unmodified in this task. Use
+    # separate tasks for job updates.
     job = model.objects.get(pk=job_pk)
 
     if job.status != job.PARSING:
