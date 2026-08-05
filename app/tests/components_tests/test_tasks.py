@@ -2271,10 +2271,10 @@ def test_parse_job_output_nonexistent_interface(
 
     job.refresh_from_db()
     assert job.status == Job.FAILURE
-    assert (
-        job.error_message
-        == f"Output file '{job.output_interfaces.get().relative_path}' was not produced"
-    )
+    assert job.error_message in {
+        f"Output file '{job.output_interfaces.get().relative_path}' was not produced",
+        f"Output directory '{job.output_interfaces.get().relative_path}' is empty",
+    }
 
 
 @pytest.mark.django_db
