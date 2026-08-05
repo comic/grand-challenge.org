@@ -2369,7 +2369,10 @@ def test_parse_singular_job_output_nonexistent_interface(
 
     job.refresh_from_db()
     assert job.status == Job.FAILURE
-    assert job.error_message == "Output file 'interface-1' was not produced"
+    assert (
+        job.error_message
+        == f"Output file '{job.output_interfaces.get().relative_path}' was not produced"
+    )
 
 
 @pytest.mark.django_db
