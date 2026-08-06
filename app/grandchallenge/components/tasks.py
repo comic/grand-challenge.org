@@ -1046,29 +1046,6 @@ def handle_event(*, event: dict, backend: str):
         )
 
 
-@lambda_task(retry_on=(LockNotAcquiredException,))
-def parse_job_outputs(
-    *,
-    job_pk: str | UUID,
-    job_app_label: str,
-    job_model_name: str,
-    backend: str,
-):
-    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
-
-    with check_lock_acquired():
-        job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
-
-    if job.status != job.EXECUTED:
-        raise RuntimeError("Job is not ready for output parsing")
-
-    if job.outputs.exists():
-        raise RuntimeError("Job already has outputs")
-
-    job.update_status(status=job.PARSING)
-    parse_singular_job_output.execute_on_commit(**job.task_kwargs)
-
-
 @lambda_task(
     queue=LambdaTaskQueueChoices.MEM8G,
     retry_on=(LockNotAcquiredException,),
@@ -1079,7 +1056,6 @@ def parse_singular_job_output(
     job_app_label: str,
     job_model_name: str,
     backend: str,
-    interface_pks: list[int] = None,  # TODO remove
 ):
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
 
