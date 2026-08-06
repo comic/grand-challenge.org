@@ -867,7 +867,9 @@ def provision_job(
     if not job.inputs_complete or job.status not in [job.PENDING, job.RETRY]:
         if job.status == job.CANCELLED:
             # Nothing to do
-            return {"status": f"Skipping due to job status {job.status}"}
+            return {
+                "status": f"Skipping due to job status {job.get_status_display()}"
+            }
         else:
             raise RuntimeError("Job is not ready for provisioning")
 
@@ -921,7 +923,9 @@ def execute_job(
         job.update_status(status=job.EXECUTING)
     else:
         deprovision_job.execute_on_commit(**job.task_kwargs)
-        return {"status": f"Skipping due to job status {job.status}"}
+        return {
+            "status": f"Skipping due to job status {job.get_status_display()}"
+        }
 
     if not job.container.can_execute:
         # TODO matching on this error message is used, perhaps it should be cancelled instead, see #4119
@@ -1070,7 +1074,9 @@ def parse_job_output(
     job = model.objects.get(pk=job_pk)
 
     if job.status != job.PARSING:
-        return {"status": f"Skipping due to job status {job.status}"}
+        return {
+            "status": f"Skipping due to job status {job.get_status_display()}"
+        }
 
     try:
         interface = ComponentInterface.objects.get(slug=interface_slug)
@@ -1162,7 +1168,9 @@ def check_job_parsing_complete(
         job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
 
     if job.status != job.PARSING:
-        return {"status": f"Skipping due to job status {job.status}"}
+        return {
+            "status": f"Skipping due to job status {job.get_status_display()}"
+        }
 
     expected_interfaces = {*job.output_interfaces.all()}
     parsed_interfaces = {output.interface for output in job.outputs.all()}
@@ -1190,7 +1198,9 @@ def retry_task(
     executor = job.get_executor(backend=backend)
 
     if job.status != job.PROVISIONED:
-        return {"status": f"Skipping due to job status {job.status}"}
+        return {
+            "status": f"Skipping due to job status {job.get_status_display()}"
+        }
 
     executor.deprovision()
 
