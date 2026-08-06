@@ -1175,66 +1175,6 @@ def check_job_parsing_complete(
         return {"status": "Parsing complete"}
 
 
-@lambda_task(
-    queue=LambdaTaskQueueChoices.MEM8G,
-    retry_on=(LockNotAcquiredException,),
-)
-def parse_singular_job_output(
-    # TODO 4918 remove this task once deployed and queues cleared
-    *,
-    job_pk: str | UUID,
-    job_app_label: str,
-    job_model_name: str,
-    backend: str,
-):
-    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
-
-    with check_lock_acquired():
-        job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
-
-    if job.status != job.PARSING:
-        raise RuntimeError("Job is not in parsing state")
-
-    unparsed_interfaces = {*job.output_interfaces.all()}
-    parsed_interfaces = {output.interface for output in job.outputs.all()}
-
-    remaining_interfaces = unparsed_interfaces - parsed_interfaces
-
-    if remaining_interfaces:
-        parsed_interface = remaining_interfaces.pop()
-        executor = job.get_executor(backend=backend)
-
-        try:
-            val = executor.create_value_for_output(interface=parsed_interface)
-            job.outputs.add(val)
-        except ComponentException as error:
-            job.update_status(
-                status=job.FAILURE,
-                error_message=str(error),
-                detailed_error_message=error.message_details,
-            )
-            return
-        except Exception:
-            job.update_status(
-                status=job.FAILURE,
-                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
-            )
-            task_logger.error("Could not parse outputs", exc_info=True)
-            return
-    else:
-        parsed_interface = None
-
-    if remaining_interfaces:
-        parse_singular_job_output.execute_on_commit(**job.task_kwargs)
-    else:
-        job.update_status(status=job.SUCCESS)
-
-    if parsed_interface:
-        return parsed_interface.slug
-    else:
-        return
-
-
 @lambda_task(retry_on=(RetryStep,))
 def retry_task(
     *,
