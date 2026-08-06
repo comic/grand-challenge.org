@@ -21,7 +21,6 @@ from sentry_sdk.integrations.logging import ignore_logger
 from config.denylist import USERNAME_DENYLIST
 from config.lambda_tasks import LambdaTaskQueueChoices
 from config.sentry import sentry_before_send
-from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.core.utils import strtobool
 from grandchallenge.core.utils.markdown import BS4Extension
 
@@ -830,7 +829,6 @@ if SENTRY_DSN:
         traces_sample_rate=float(
             os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0")
         ),
-        ignore_errors=[PriorStepFailed],
         before_send=sentry_before_send,
     )
     ignore_logger("django.security.DisallowedHost")
