@@ -30,8 +30,13 @@ class GitHubWebhookMessageAdmin(admin.ModelAdmin):
     )
     list_filter = ("clone_status",)
     search_fields = ("payload", "license_check_result")
+    exclude = ("zipfile",)
     readonly_fields = (
         "payload",
         "clone_status",
-        "zipfile",
+        "zipfile_path",
     )
+
+    @admin.display(description="zipfile")
+    def zipfile_path(self, obj):
+        return obj.zipfile.name or "-"

@@ -42,6 +42,7 @@ class ComponentImageAdmin(admin.ModelAdmin):
         "creator",
         "user_upload",
         "import_status",
+        "image_path",
     )
     list_display = (
         "pk",
@@ -67,6 +68,10 @@ class ComponentImageAdmin(admin.ModelAdmin):
     )
     search_fields = ("pk", "creator__username", "image_sha256")
     actions = (cancel_image_imports,)
+
+    @admin.display(description="image")
+    def image_path(self, obj):
+        return obj.image.name or "-"
 
     @admin.display(ordering="size_in_storage")
     def naturalsize_in_storage(self, obj):
