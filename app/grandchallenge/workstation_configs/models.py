@@ -431,6 +431,12 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
     class Meta(TitleSlugDescriptionModel.Meta, UUIDModel.Meta):
         ordering = ("created", "creator")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["slug"],
+                name="%(app_label)s_%(class)s_unique_slug",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.title} (created by {self.creator})"
@@ -541,6 +547,10 @@ class WindowPreset(TitleSlugDescriptionModel):
                 name="%(app_label)s_%(class)s_width_gt_0",
                 condition=models.Q(width__gt=0) | models.Q(width__isnull=True),
             ),
+            models.UniqueConstraint(
+                fields=["slug"],
+                name="%(app_label)s_%(class)s_unique_slug",
+            ),
         ]
 
     def __str__(self):
@@ -596,6 +606,12 @@ class LookUpTable(TitleSlugDescriptionModel):
 
     class Meta(TitleSlugDescriptionModel.Meta):
         ordering = ("title",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=["slug"],
+                name="%(app_label)s_%(class)s_unique_slug",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.title}"

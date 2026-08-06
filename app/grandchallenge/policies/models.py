@@ -12,6 +12,12 @@ class Policy(TitleSlugDescriptionModel):
 
     class Meta(TitleSlugDescriptionModel.Meta):
         ordering = ("pk",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=["slug"],
+                name="%(app_label)s_%(class)s_unique_slug",
+            ),
+        ]
 
     def get_absolute_url(self):
         return reverse("policies:detail", kwargs={"slug": self.slug})

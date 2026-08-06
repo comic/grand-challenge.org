@@ -416,7 +416,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             ),
             models.UniqueConstraint(
                 fields=["slug"],
-                name="unique_algorithm_slug",
+                name="%(app_label)s_%(class)s_unique_slug",
             ),
         ]
 

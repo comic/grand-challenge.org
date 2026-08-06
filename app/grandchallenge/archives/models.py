@@ -180,6 +180,12 @@ class Archive(
             ),
             ("upload_archive", "Can upload to archive"),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["slug"],
+                name="%(app_label)s_%(class)s_unique_slug",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.title}"
