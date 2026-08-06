@@ -267,7 +267,6 @@ class AlgorithmPermissionRequestAdmin(admin.ModelAdmin):
 @admin.register(AlgorithmModel)
 class AlgorithmModelAdmin(admin.ModelAdmin):
     ordering = ("-created",)
-    exclude = ("model",)
     list_display = (
         "algorithm",
         "created",

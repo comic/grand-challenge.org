@@ -287,7 +287,12 @@ class EvaluationGroundTruthAdmin(admin.ModelAdmin):
         "phase",
         "checksum",
         "size_in_storage",
+        "ground_truth_path",
     )
+
+    @admin.display(description="ground truth")
+    def ground_truth_path(self, obj):
+        return obj.ground_truth.name or "-"
 
 
 @admin.register(PhaseAlgorithmInterface)
