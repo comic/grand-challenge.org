@@ -1041,9 +1041,138 @@ def handle_event(*, event: dict, backend: str):
             status=job.PARSING,
             **get_update_status_kwargs(executor=executor),
         )
-        parse_singular_job_output.execute_on_commit(
+        for interface in job.output_interfaces.all():
+            parse_job_output.execute_on_commit(
+                **job.task_kwargs,
+                interface_slug=interface.slug,
+            )
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.MEM8G,
+)
+def parse_job_output(
+    *,
+    job_pk: str | UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,
+    interface_slug: str,
+):
+    from grandchallenge.components.models import ComponentInterface
+
+    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
+
+    # This task should not lock the instance as it runs in parallel,
+    # therefore the job must remain unmodified in this task. Use
+    # separate tasks for job updates.
+    job = model.objects.get(pk=job_pk)
+
+    if job.status != job.PARSING:
+        return {"status": "Job is not set for parsing"}
+
+    try:
+        interface = ComponentInterface.objects.get(slug=interface_slug)
+    except ComponentInterface.DoesNotExist:
+        mark_job_as_failed.execute_on_commit(
             **job.task_kwargs,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
+        task_logger.error(
+            "Could not parse output: missing interface", exc_info=True
+        )
+        return {"status": f"Unexpected error: {interface_slug} does not exist"}
+    except ComponentInterface.MultipleObjectsReturned:
+        mark_job_as_failed.execute_on_commit(
+            **job.task_kwargs,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+        )
+        task_logger.error(
+            "Could not parse output: interface slug not unique", exc_info=True
+        )
+        return {
+            "status": f"Unexpected error: Multiple interfaces with slug {interface_slug} exist"
+        }
+
+    if job.outputs.filter(interface=interface).exists():
+        task_logger.error("Interface already exists for job")
+        return {"status": f"{interface_slug} already exists for job"}
+
+    executor = job.get_executor(backend=backend)
+
+    try:
+        val = executor.create_value_for_output(interface=interface)
+        job.outputs.add(val)
+    except ComponentException as error:
+        mark_job_as_failed.execute_on_commit(
+            **job.task_kwargs,
+            error_message=str(error),
+            detailed_error_message=error.message_details,
+        )
+        return {"status": f"Handled exception: {error}"}
+    except Exception as error:
+        mark_job_as_failed.execute_on_commit(
+            **job.task_kwargs,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+        )
+        task_logger.error(
+            "Could not parse output: unexpected error", exc_info=True
+        )
+        return {"status": f"Unexpected error: {error}"}
+
+    check_job_parsing_complete.execute_on_commit(**job.task_kwargs)
+
+    return {"status": f"Value created for {interface_slug}"}
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def mark_job_as_failed(
+    *,
+    job_pk: str | UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,  # Keep to be able to use **job.task_kwargs
+    error_message: str,
+    detailed_error_message: str | None = None,
+):
+    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
+
+    with check_lock_acquired():
+        job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
+
+    job.update_status(
+        status=job.FAILURE,
+        error_message=error_message,
+        detailed_error_message=detailed_error_message,
+    )
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def check_job_parsing_complete(
+    *,
+    job_pk: str | UUID,
+    job_app_label: str,
+    job_model_name: str,
+    backend: str,  # Keep to be able to use **job.task_kwargs
+):
+    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
+
+    with check_lock_acquired():
+        job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
+
+    if job.status != job.PARSING:
+        return {"status": "Job is not set for parsing"}
+
+    expected_interfaces = {*job.output_interfaces.all()}
+    parsed_interfaces = {output.interface for output in job.outputs.all()}
+
+    remaining_interfaces = expected_interfaces - parsed_interfaces
+
+    if remaining_interfaces:
+        return {"status": f"{len(remaining_interfaces)} remaining interfaces"}
+    else:
+        job.update_status(status=job.SUCCESS)
+        return {"status": "Parsing complete"}
 
 
 @lambda_task(
@@ -1051,6 +1180,7 @@ def handle_event(*, event: dict, backend: str):
     retry_on=(LockNotAcquiredException,),
 )
 def parse_singular_job_output(
+    # TODO 4918 remove this task once deployed and queues cleared
     *,
     job_pk: str | UUID,
     job_app_label: str,
