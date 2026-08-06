@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="readerstudy",
             constraint=models.UniqueConstraint(
-                fields=("slug",), name="unique_reader_study_slug"
+                fields=("slug",), name="reader_studies_readerstudy_unique_slug"
             ),
         ),
         migrations.AddConstraint(

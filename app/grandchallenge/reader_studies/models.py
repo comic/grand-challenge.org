@@ -484,7 +484,7 @@ class ReaderStudy(
         constraints = [
             models.UniqueConstraint(
                 fields=["slug"],
-                name="unique_reader_study_slug",
+                name="%(app_label)s_%(class)s_unique_slug",
             ),
         ]
 
