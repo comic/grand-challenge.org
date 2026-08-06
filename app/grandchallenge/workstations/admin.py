@@ -168,7 +168,11 @@ class WorkstationImageAdmin(ComponentImageAdmin):
     )
 
 
-admin.site.register(Workstation)
+@admin.register(Workstation)
+class WorkstationAdmin(admin.ModelAdmin):
+    search_fields = ("title", "slug")
+
+
 admin.site.register(WorkstationUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(
     WorkstationGroupObjectPermission, GroupObjectPermissionAdmin

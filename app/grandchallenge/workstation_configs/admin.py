@@ -16,6 +16,7 @@ from grandchallenge.workstation_configs.models import (
 @admin.register(WorkstationConfig)
 class WorkstationConfigAdmin(admin.ModelAdmin):
     readonly_fields = ("creator",)
+    search_fields = ("title", "slug")
 
 
 admin.site.register(
