@@ -28,6 +28,7 @@ def test_lut_color_regex(color, valid):
 
 
 @pytest.mark.parametrize("legacy_lut", LEGACY_LUTS)
+@pytest.mark.django_db
 def test_legacy_lut_conversion(legacy_lut: LegacyLUT):
     lut = LookUpTable(
         color=legacy_lut.lut_color,
@@ -75,6 +76,7 @@ def test_legacy_lut_conversion(legacy_lut: LegacyLUT):
         ),
     ),
 )
+@pytest.mark.django_db
 def test_color_alpha_validation(lut):
     lut.clean_fields()
     with pytest.raises(ValidationError):
