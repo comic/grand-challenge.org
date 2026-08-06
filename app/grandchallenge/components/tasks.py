@@ -867,7 +867,7 @@ def provision_job(
     if not job.inputs_complete or job.status not in [job.PENDING, job.RETRY]:
         if job.status == job.CANCELLED:
             # Nothing to do
-            return
+            return {"status": f"Skipping due to job status {job.status}"}
         else:
             raise RuntimeError("Job is not ready for provisioning")
 
@@ -921,7 +921,7 @@ def execute_job(
         job.update_status(status=job.EXECUTING)
     else:
         deprovision_job.execute_on_commit(**job.task_kwargs)
-        return {"status": f"Job is in unexpected status: {job.status}"}
+        return {"status": f"Skipping due to job status {job.status}"}
 
     if not job.container.can_execute:
         # TODO matching on this error message is used, perhaps it should be cancelled instead, see #4119
@@ -947,12 +947,12 @@ def execute_job(
             status=job.FAILURE,
             error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED,
         )
-    except Exception:
+    except Exception as error:
         job.update_status(
             status=job.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
-        raise
+        task_logger.error(str(error), exc_info=True)
 
 
 def get_update_status_kwargs(*, executor=None):
@@ -1070,7 +1070,7 @@ def parse_job_output(
     job = model.objects.get(pk=job_pk)
 
     if job.status != job.PARSING:
-        return {"status": f"Job is in unexpected status: {job.status}"}
+        return {"status": f"Skipping due to job status {job.status}"}
 
     try:
         interface = ComponentInterface.objects.get(slug=interface_slug)
@@ -1162,7 +1162,7 @@ def check_job_parsing_complete(
         job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
 
     if job.status != job.PARSING:
-        return {"status": f"Job is in unexpected status: {job.status}"}
+        return {"status": f"Skipping due to job status {job.status}"}
 
     expected_interfaces = {*job.output_interfaces.all()}
     parsed_interfaces = {output.interface for output in job.outputs.all()}
@@ -1190,7 +1190,7 @@ def retry_task(
     executor = job.get_executor(backend=backend)
 
     if job.status != job.PROVISIONED:
-        return {"status": f"Job is in unexpected status: {job.status}"}
+        return {"status": f"Skipping due to job status {job.status}"}
 
     executor.deprovision()
 
