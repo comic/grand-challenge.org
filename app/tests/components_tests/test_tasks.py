@@ -2205,7 +2205,7 @@ def test_parse_job_output_idempotent(
     for interface in job.output_interfaces.all():
         assert TaskRecord.objects.filter(
             kwargs__interface_slug=interface.slug
-        ).first().result == {"status": "Job is not set for parsing"}
+        ).first().result == {"status": "Skipping due to job status Succeeded"}
 
     assert (
         ComponentInterfaceValue.objects.count() == 3
@@ -2314,7 +2314,7 @@ def test_parse_job_output_incorrect_state(
     for interface in job.output_interfaces.all():
         assert TaskRecord.objects.get(
             kwargs__interface_slug=interface.slug
-        ).result == {"status": "Job is not set for parsing"}
+        ).result == {"status": "Skipping due to job status Cancelled"}
 
 
 @pytest.mark.django_db

@@ -51,7 +51,6 @@ from grandchallenge.components.emails import (
     send_container_image_not_made_active,
     send_invalid_dockerfile_email,
 )
-from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.exceptions import LockNotAcquiredException
@@ -868,7 +867,9 @@ def provision_job(
     if not job.inputs_complete or job.status not in [job.PENDING, job.RETRY]:
         if job.status == job.CANCELLED:
             # Nothing to do
-            return
+            return {
+                "status": f"Skipping due to job status {job.get_status_display()}"
+            }
         else:
             raise RuntimeError("Job is not ready for provisioning")
 
@@ -922,13 +923,17 @@ def execute_job(
         job.update_status(status=job.EXECUTING)
     else:
         deprovision_job.execute_on_commit(**job.task_kwargs)
-        raise PriorStepFailed("Job is not set to be executed")
+        return {
+            "status": f"Skipping due to job status {job.get_status_display()}"
+        }
 
     if not job.container.can_execute:
         # TODO matching on this error message is used, perhaps it should be cancelled instead, see #4119
-        msg = f"Container Image {job.container.pk} was not ready to be used"
-        job.update_status(status=job.FAILURE, error_message=msg)
-        raise PriorStepFailed(msg)
+        error_message = (
+            f"Container Image {job.container.pk} was not ready to be used"
+        )
+        job.update_status(status=job.FAILURE, error_message=error_message)
+        return {"status": error_message}
 
     try:
         executor.execute()
@@ -946,12 +951,12 @@ def execute_job(
             status=job.FAILURE,
             error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED,
         )
-    except Exception:
+    except Exception as error:
         job.update_status(
             status=job.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
-        raise
+        task_logger.error(str(error), exc_info=True)
 
 
 def get_update_status_kwargs(*, executor=None):
@@ -1069,7 +1074,9 @@ def parse_job_output(
     job = model.objects.get(pk=job_pk)
 
     if job.status != job.PARSING:
-        return {"status": "Job is not set for parsing"}
+        return {
+            "status": f"Skipping due to job status {job.get_status_display()}"
+        }
 
     try:
         interface = ComponentInterface.objects.get(slug=interface_slug)
@@ -1161,7 +1168,9 @@ def check_job_parsing_complete(
         job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
 
     if job.status != job.PARSING:
-        return {"status": "Job is not set for parsing"}
+        return {
+            "status": f"Skipping due to job status {job.get_status_display()}"
+        }
 
     expected_interfaces = {*job.output_interfaces.all()}
     parsed_interfaces = {output.interface for output in job.outputs.all()}
@@ -1189,7 +1198,9 @@ def retry_task(
     executor = job.get_executor(backend=backend)
 
     if job.status != job.PROVISIONED:
-        raise PriorStepFailed("Job is not provisioned")
+        return {
+            "status": f"Skipping due to job status {job.get_status_display()}"
+        }
 
     executor.deprovision()
 
