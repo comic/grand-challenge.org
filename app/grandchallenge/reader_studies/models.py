@@ -481,6 +481,12 @@ class ReaderStudy(
             ("read_readerstudy", "Can read reader study"),
             ("view_leaderboard", "Can view leaderboard"),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["slug"],
+                name="%(app_label)s_%(class)s_unique_slug",
+            ),
+        ]
 
     copy_fields = {
         "workstation",
@@ -1459,6 +1465,14 @@ class ReaderStudyAlgorithm(UUIDModel, TitleSlugDescriptionModel):
         related_name="reader_study_algorithms",
         through="ReaderStudyAlgorithmAlgorithmInterface",
     )
+
+    class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
+        constraints = [
+            models.UniqueConstraint(
+                fields=["slug"],
+                name="%(app_label)s_%(class)s_unique_slug",
+            ),
+        ]
 
     @property
     def algorithm_interfaces_locked(self):

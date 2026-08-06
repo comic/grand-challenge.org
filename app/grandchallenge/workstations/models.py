@@ -102,6 +102,12 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created", "title")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["slug"],
+                name="%(app_label)s_%(class)s_unique_slug",
+            ),
+        ]
 
     @cached_property
     def active_image(self):
