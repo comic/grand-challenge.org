@@ -524,6 +524,12 @@
             <span class="p">(</span><span class="s2">&quot;read_readerstudy&quot;</span><span class="p">,</span> <span class="s2">&quot;Can read reader study&quot;</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">&quot;view_leaderboard&quot;</span><span class="p">,</span> <span class="s2">&quot;Can view leaderboard&quot;</span><span class="p">),</span>
         <span class="p">]</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;slug&quot;</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(app_label)s</span><span class="s2">_</span><span class="si">%(class)s</span><span class="s2">_unique_slug&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
 
     <span class="n">copy_fields</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;workstation&quot;</span><span class="p">,</span>
@@ -1565,6 +1571,14 @@
         <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;reader_study_algorithms&quot;</span><span class="p">,</span>
         <span class="n">through</span><span class="o">=</span><span class="s2">&quot;ReaderStudyAlgorithmAlgorithmInterface&quot;</span><span class="p">,</span>
     <span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;slug&quot;</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(app_label)s</span><span class="s2">_</span><span class="si">%(class)s</span><span class="s2">_unique_slug&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">algorithm_interfaces_locked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
