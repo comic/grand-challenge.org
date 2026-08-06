@@ -15,6 +15,7 @@ from grandchallenge.hanging_protocols.models import (
 @admin.register(HangingProtocol)
 class HangingProtocolAdmin(ModelAdmin):
     readonly_fields = ("creator",)
+    search_fields = ("title", "slug")
 
 
 admin.site.register(

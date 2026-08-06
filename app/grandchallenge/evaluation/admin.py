@@ -56,6 +56,7 @@ class PhaseAdminForm(ModelForm):
 
 class EvaluationSocketInline(admin.TabularInline):
     extra = 1
+    autocomplete_fields = ("socket",)
 
     def get_formset(self, request, obj=None, **kwargs):
         # Enable form validation
@@ -99,7 +100,12 @@ class PhaseAdmin(admin.ModelAdmin):
         "external_evaluation",
         "challenge__short_name",
     )
-    autocomplete_fields = ("archive",)
+    autocomplete_fields = (
+        "archive",
+        "optional_hanging_protocols",
+        "workstation",
+        "workstation_config",
+    )
     readonly_fields = (
         "give_algorithm_editors_job_view_permissions",
         "algorithm_interfaces",
