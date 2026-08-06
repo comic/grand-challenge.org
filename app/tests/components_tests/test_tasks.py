@@ -2218,6 +2218,77 @@ def test_parse_job_output_idempotent(
 
 
 @pytest.mark.django_db
+def test_parse_job_output_idempotent_still_processing(
+    settings, django_capture_on_commit_callbacks, mocker
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+
+    int_socket_0, int_socket_1, int_socket_2 = (
+        ComponentInterfaceFactory.create_batch(
+            3, kind=InterfaceKindChoices.INTEGER
+        )
+    )
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[int_socket_0],
+        outputs=[int_socket_1, int_socket_2],
+    )
+    ai.algorithm.interfaces.add(interface)
+
+    job = AlgorithmJobFactory(
+        algorithm_image=ai,
+        algorithm_interface=interface,
+        status=Job.PARSING,
+        time_limit=60,
+    )
+
+    mocker.patch(
+        "grandchallenge.algorithms.models.Job.get_executor",
+        return_value=FixedOutputExecutor(),
+    )
+
+    ComponentInterfaceValue.objects.all().delete()
+    assert ComponentInterfaceValue.objects.count() == 0
+
+    interface = job.output_interfaces.first()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        parse_job_output.execute_on_commit(
+            **job.task_kwargs,
+            interface_slug=interface.slug,
+        )
+
+    assert TaskRecord.objects.filter(
+        kwargs__interface_slug=interface.slug
+    ).first().result == {"status": f"Value created for {interface.slug}"}
+
+    assert ComponentInterfaceValue.objects.count() == 1
+
+    with django_capture_on_commit_callbacks(execute=True):
+        parse_job_output.execute_on_commit(
+            **job.task_kwargs,
+            interface_slug=interface.slug,
+        )
+
+    assert TaskRecord.objects.filter(
+        kwargs__interface_slug=interface.slug
+    ).first().result == {"status": f"{interface.slug} already exists for job"}
+
+    assert (
+        ComponentInterfaceValue.objects.count() == 1
+    )  # Still only created 1 outputs
+
+    job.refresh_from_db()
+    assert job.error_message == ""
+    assert job.status == Job.PARSING
+    assert job.outputs.count() == 1
+
+
+@pytest.mark.django_db
 def test_parse_job_output_incorrect_state(
     settings, django_capture_on_commit_callbacks
 ):
