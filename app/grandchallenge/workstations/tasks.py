@@ -1,9 +1,11 @@
 from datetime import timedelta
 
 from django.conf import settings
-from django.db.models import Q
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
+
+from grandchallenge.components.backends.amazon_ecs import ECSTaskOrchestrator
 
 
 @lambda_task
@@ -18,26 +20,29 @@ def consolidate_unclaimed_sessions():
     if workstation_image is None:
         return {"n_sessions_stopped": 0, "n_sessions_started": 0}
 
-    sessions_to_stop = list(
+    unclaimed_sessions = (
         Session.objects.active()
         .select_for_update(skip_locked=True)
         .filter(claimed_at=None)
-        .filter(
-            Q(
-                created__lt=now()
-                - timedelta(
-                    hours=settings.WORKSTATIONS_MAXIMUM_UNCLAIMED_SESSION_HOURS
-                )
-            )
-            | ~Q(workstation_image=workstation_image)
-        )
     )
 
-    expiring_pks = {session.pk for session in sessions_to_stop}
+    expiring_pks = set()
 
-    for session in sessions_to_stop:
-        session.status = Session.EXPIRED
-        session.save()
+    for session in unclaimed_sessions:
+        task_expired = session.created < now() - timedelta(
+            hours=settings.WORKSTATIONS_MAXIMUM_UNCLAIMED_SESSION_HOURS
+        )
+
+        task_uses_old_image = session.workstation_image != workstation_image
+
+        if (
+            task_expired
+            or task_uses_old_image
+            or _is_session_stopped_on_ecs(session=session)
+        ):
+            expiring_pks.add(session.pk)
+            session.status = Session.EXPIRED
+            session.save()
 
     n_sessions_started = 0
 
@@ -78,6 +83,31 @@ def consolidate_unclaimed_sessions():
             n_sessions_started += 1
 
     return {
-        "n_sessions_stopped": len(sessions_to_stop),
+        "n_sessions_stopped": len(expiring_pks),
         "n_sessions_started": n_sessions_started,
     }
+
+
+def _is_session_stopped_on_ecs(*, session):
+    if session.task_arn:
+        orchestrator = ECSTaskOrchestrator(**session.orchestrator_kwargs)
+
+        try:
+            task_description = orchestrator.get_task_description(
+                task_arn=session.task_arn
+            )
+        except ObjectDoesNotExist:
+            # The task_arn was created but no longer exists, so must have stopped
+            return True
+
+        # Status options from https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-lifecycle-explanation.html
+        return task_description["lastStatus"] in {
+            "DEACTIVATING",
+            "STOPPING",
+            "DEPROVISIONING",
+            "STOPPED",
+            "DELETED",
+        }
+    else:
+        # No task_arn, so nothing could have stopped
+        return False
