@@ -111,7 +111,7 @@ class ECSTaskOrchestrator:
         # so add a small delay here to save waiting for the longer Delay
         time.sleep(settings.COMPONENTS_SERVICE_WAITER_INITIAL_DELAY_SECONDS)
 
-        task_description = self._get_task_description(task_arn=task_arn)
+        task_description = self.get_task_description(task_arn=task_arn)
 
         if task_description["lastStatus"] == "RUNNING":
             return task_description
@@ -122,9 +122,9 @@ class ECSTaskOrchestrator:
                 tasks=[task_arn],
                 WaiterConfig={"Delay": 5, "MaxAttempts": 36},  # 3 minutes
             )
-            return self._get_task_description(task_arn=task_arn)
+            return self.get_task_description(task_arn=task_arn)
 
-    def _get_task_description(self, *, task_arn):
+    def get_task_description(self, *, task_arn):
         return get(
             self._ecs_client.describe_tasks(
                 cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
@@ -258,7 +258,7 @@ class ECSTaskOrchestrator:
     def stop(self, *, task_arn):
         # Fetch the task description before stopping so that we have
         # the task definition info as this gets deleted after some time
-        task_description = self._get_task_description(task_arn=task_arn)
+        task_description = self.get_task_description(task_arn=task_arn)
 
         self._ecs_client.stop_task(
             cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME, task=task_arn
