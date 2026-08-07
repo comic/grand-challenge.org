@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from functools import reduce
 from operator import or_
@@ -7,6 +8,8 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.views.generic import ListView
+
+logger = logging.getLogger(__name__)
 
 
 class PaginatedTableListView(ListView):
@@ -44,16 +47,22 @@ class PaginatedTableListView(ListView):
 
     def get_order_by(self, *, column_index, direction):
         try:
-            order_by = self.columns[int(column_index)].sort_field
+            sort_column = self.columns[int(column_index)]
         except IndexError:
             return None
 
-        prefix = "-" if direction == "desc" else ""
+        sort_field = sort_column.sort_field
 
-        if isinstance(order_by, str):
-            return (f"{prefix}{order_by}",)
+        if sort_field:
+            prefix = "-" if direction == "desc" else ""
+
+            if isinstance(sort_field, str):
+                return (f"{prefix}{sort_field}",)
+            else:
+                return (f"{prefix}{field}" for field in sort_field[::-1])
         else:
-            return (f"{prefix}{field}" for field in order_by[::-1])
+            logger.error(f"Column {sort_column} is not sortable")
+            return None
 
     def draw_response(self, *, request):
         start = int(request.POST.get("start", 0))
