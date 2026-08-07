@@ -886,7 +886,7 @@ def provision_job(
             error_message=str(error),
             detailed_error_message=error.message_details,
         )
-        return {"status": {"status": f"Handled exception: {error}"}}
+        return {"status": f"Handled exception: {error}"}
     except Exception as error:
         job.update_status(
             status=job.FAILURE,
@@ -949,7 +949,7 @@ def execute_job(
             error_message=str(error),
             detailed_error_message=error.message_details,
         )
-        return {"status": {"status": f"Handled exception: {error}"}}
+        return {"status": f"Handled exception: {error}"}
     except SoftTimeLimitExceeded:
         job.update_status(
             status=job.FAILURE,
@@ -1030,13 +1030,13 @@ def handle_event(*, event: dict, backend: str):
         job.update_status(
             status=job.CANCELLED, **get_update_status_kwargs(executor=executor)
         )
-        return {"status": {"status": f"Job was cancelled: {error}"}}
+        return {"status": f"Job was cancelled: {error}"}
     except RetryStep:
         raise
     except RetryTask as error:
         job.update_status(status=job.PROVISIONED)
         retry_task.execute_on_commit(**job.task_kwargs)
-        return {"status": {"status": f"Retrying task: {error}"}}
+        return {"status": f"Retrying task: {error}"}
     except ComponentException as error:
         job.update_status(
             status=job.FAILURE,
@@ -1044,7 +1044,7 @@ def handle_event(*, event: dict, backend: str):
             detailed_error_message=error.message_details,
             **get_update_status_kwargs(executor=executor),
         )
-        return {"status": {"status": f"Handled exception: {error}"}}
+        return {"status": f"Handled exception: {error}"}
     except Exception as error:
         job.update_status(
             status=job.FAILURE,
