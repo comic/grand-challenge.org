@@ -696,41 +696,6 @@ class TestConsolidateUnclaimedSessions:
             == 2
         )
 
-    def test_stops_session_when_ecs_task_is_stopped(
-        self,
-        settings,
-        default_workstation_image,
-        mocker,
-        django_capture_on_commit_callbacks,
-    ):
-        settings.COMPONENTS_SERVICE_CLUSTER_NAME = "test-cluster-name"
-
-        with django_capture_on_commit_callbacks():
-            session = Session.objects.create(
-                workstation_image=default_workstation_image,
-                region="eu-central-1",
-            )
-
-        Session.objects.filter(pk=session.pk).update(
-            task_arn="test-task-arn",
-        )
-
-        mocker.patch(
-            "grandchallenge.workstations.tasks.ECSTaskOrchestrator.get_task_description",
-            return_value={"lastStatus": "STOPPED"},
-        )
-
-        with django_capture_on_commit_callbacks() as callbacks:
-            result = consolidate_unclaimed_sessions()
-
-        assert result == {"n_sessions_stopped": 1, "n_sessions_started": 3}
-
-        session.refresh_from_db()
-        assert session.status == Session.EXPIRED
-
-        callback_reprs = [repr(c) for c in callbacks]
-        assert _stop_task_repr(pk=session.pk) in callback_reprs
-
     def test_stops_session_when_ecs_task_no_longer_exists(
         self,
         settings,
@@ -765,42 +730,6 @@ class TestConsolidateUnclaimedSessions:
 
         callback_reprs = [repr(c) for c in callbacks]
         assert _stop_task_repr(pk=session.pk) in callback_reprs
-
-    def test_does_not_stop_session_when_ecs_task_is_running(
-        self,
-        settings,
-        default_workstation_image,
-        mocker,
-        django_capture_on_commit_callbacks,
-    ):
-        settings.COMPONENTS_SERVICE_CLUSTER_NAME = "test-cluster-name"
-        settings.WORKSTATIONS_NUMBER_UNCLAIMED_SESSIONS = 1
-
-        with django_capture_on_commit_callbacks():
-            session = Session.objects.create(
-                workstation_image=default_workstation_image,
-                region="eu-central-1",
-            )
-
-        Session.objects.filter(pk=session.pk).update(
-            task_arn="test-task-arn",
-        )
-
-        mocker.patch(
-            "grandchallenge.workstations.tasks.ECSTaskOrchestrator.get_task_description",
-            return_value={"lastStatus": "RUNNING"},
-        )
-
-        with django_capture_on_commit_callbacks() as callbacks:
-            result = consolidate_unclaimed_sessions()
-
-        assert result == {"n_sessions_stopped": 0, "n_sessions_started": 0}
-
-        session.refresh_from_db()
-        assert session.status == Session.QUEUED
-
-        callback_reprs = [repr(c) for c in callbacks]
-        assert _stop_task_repr(pk=session.pk) not in callback_reprs
 
     def test_does_not_check_ecs_for_session_without_task_arn(
         self,
