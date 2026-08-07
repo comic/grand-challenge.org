@@ -1140,7 +1140,7 @@ def mark_job_as_failed(
     job_model_name: str,
     backend: str,  # Keep to be able to use **job.task_kwargs
     error_message: str,
-    detailed_error_message: str | None = None,
+    detailed_error_message: dict | None = None,
 ):
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
 
