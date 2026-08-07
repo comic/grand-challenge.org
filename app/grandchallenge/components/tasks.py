@@ -880,21 +880,24 @@ def provision_job(
             ).all(),
             input_prefixes=job.input_prefixes,
         )
-    except ComponentException as e:
+    except ComponentException as error:
         job.update_status(
             status=job.FAILURE,
-            error_message=str(e),
-            detailed_error_message=e.message_details,
+            error_message=str(error),
+            detailed_error_message=error.message_details,
         )
-    except Exception:
+        return {"status": {"status": f"Handled exception: {error}"}}
+    except Exception as error:
         job.update_status(
             status=job.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
-        task_logger.error("Could not provision job", exc_info=True)
+        task_logger.error(str(error), exc_info=True)
+        return {"status": f"Unexpected error: {error}"}
     else:
         job.update_status(status=job.PROVISIONED)
         execute_job.execute_on_commit(**job.task_kwargs)
+        return {"status": "Job provisioned"}
 
 
 @lambda_task(retry_on=(RetryStep,), retry_delay=120)
@@ -940,23 +943,28 @@ def execute_job(
     except RetryStep:
         job.update_status(status=job.PROVISIONED)
         raise
-    except ComponentException as e:
+    except ComponentException as error:
         job.update_status(
             status=job.FAILURE,
-            error_message=str(e),
-            detailed_error_message=e.message_details,
+            error_message=str(error),
+            detailed_error_message=error.message_details,
         )
+        return {"status": {"status": f"Handled exception: {error}"}}
     except SoftTimeLimitExceeded:
         job.update_status(
             status=job.FAILURE,
             error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED,
         )
+        return {"status": SystemErrorMessages.TIME_LIMIT_EXCEEDED}
     except Exception as error:
         job.update_status(
             status=job.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
         task_logger.error(str(error), exc_info=True)
+        return {"status": f"Unexpected error: {error}"}
+    else:
+        return {"status": "Job set for execution"}
 
 
 def get_update_status_kwargs(*, executor=None):
@@ -1002,8 +1010,9 @@ def handle_event(*, event: dict, backend: str):
     executor = job.get_executor(backend=backend)
 
     if job.status != job.EXECUTING:
-        # Nothing to do
-        return
+        return {
+            "status": f"Skipping due to job status {job.get_status_display()}"
+        }
 
     if hasattr(job, "algorithm_image"):
         algorithm_image_pk = job.algorithm_image_id
@@ -1017,23 +1026,25 @@ def handle_event(*, event: dict, backend: str):
 
     try:
         executor.handle_event(event=event)
-    except TaskCancelled:
+    except TaskCancelled as error:
         job.update_status(
             status=job.CANCELLED, **get_update_status_kwargs(executor=executor)
         )
-        return
+        return {"status": {"status": f"Job was cancelled: {error}"}}
     except RetryStep:
         raise
-    except RetryTask:
+    except RetryTask as error:
         job.update_status(status=job.PROVISIONED)
         retry_task.execute_on_commit(**job.task_kwargs)
-    except ComponentException as e:
+        return {"status": {"status": f"Retrying task: {error}"}}
+    except ComponentException as error:
         job.update_status(
             status=job.FAILURE,
-            error_message=str(e),
-            detailed_error_message=e.message_details,
+            error_message=str(error),
+            detailed_error_message=error.message_details,
             **get_update_status_kwargs(executor=executor),
         )
+        return {"status": {"status": f"Handled exception: {error}"}}
     except Exception as error:
         job.update_status(
             status=job.FAILURE,
@@ -1041,6 +1052,7 @@ def handle_event(*, event: dict, backend: str):
             **get_update_status_kwargs(executor=executor),
         )
         task_logger.error(str(error), exc_info=True)
+        return {"status": f"Unexpected error: {error}"}
     else:
         job.update_status(
             status=job.PARSING,
@@ -1051,6 +1063,7 @@ def handle_event(*, event: dict, backend: str):
                 **job.task_kwargs,
                 interface_slug=interface.slug,
             )
+        return {"status": "Successful job handled"}
 
 
 @lambda_task(
@@ -1122,9 +1135,7 @@ def parse_job_output(
             **job.task_kwargs,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
-        task_logger.error(
-            "Could not parse output: unexpected error", exc_info=True
-        )
+        task_logger.error(str(error), exc_info=True)
         return {"status": f"Unexpected error: {error}"}
 
     check_job_parsing_complete.execute_on_commit(**job.task_kwargs)
@@ -1147,11 +1158,18 @@ def mark_job_as_failed(
     with check_lock_acquired():
         job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
 
+    if job.status == job.FAILURE:
+        return {
+            "status": f"Skipping due to job status {job.get_status_display()}"
+        }
+
     job.update_status(
         status=job.FAILURE,
         error_message=error_message,
         detailed_error_message=detailed_error_message,
     )
+
+    return {"status": "Job marked as failed"}
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
