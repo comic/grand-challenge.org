@@ -1156,7 +1156,9 @@ def mark_job_as_failed(
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
 
     with check_lock_acquired():
-        job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
+        job = model.objects.select_for_update(nowait=True, no_key=True).get(
+            pk=job_pk
+        )
 
     if job.status == job.FAILURE:
         return {
@@ -1183,7 +1185,9 @@ def check_job_parsing_complete(
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
 
     with check_lock_acquired():
-        job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
+        job = model.objects.select_for_update(nowait=True, no_key=True).get(
+            pk=job_pk
+        )
 
     if job.status != job.PARSING:
         return {
