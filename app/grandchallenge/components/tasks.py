@@ -1003,7 +1003,7 @@ def handle_event(*, event: dict, backend: str):
     )
 
     with check_lock_acquired():
-        job = model.objects.select_for_update(nowait=True).get(
+        job = model.objects.select_for_update(nowait=True, no_key=True).get(
             pk=job_params.pk, attempt=job_params.attempt
         )
 
