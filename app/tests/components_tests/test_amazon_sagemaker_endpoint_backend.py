@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 from botocore.stub import Stubber
 
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
-    EndpointOrchestrator,
+    AmazonSageMakerEndpointOrchestrator,
 )
 from grandchallenge.components.backends.base import (
     InferenceResult,
@@ -389,7 +389,7 @@ def test_endpoint_orchestrator_deprovision(mocker):
 
     mock_deprovision_methods = [
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             method_name,
         )
         for method_name in deprovision_endpoint_method_names
@@ -412,7 +412,7 @@ def test_endpoint_orchestrator_deprovision_errors(mocker, method_with_error):
         else:
             kwargs = {}
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             method_name,
             **kwargs,
         )
@@ -427,7 +427,7 @@ def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
 
     mock_deprovision_methods = [
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             "delete_endpoint",
             side_effect=ClientError(
                 {
@@ -440,7 +440,7 @@ def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
             ),
         ),
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             "delete_endpoint_config",
             side_effect=ClientError(
                 {
@@ -453,7 +453,7 @@ def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
             ),
         ),
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             "delete_sagemaker_model",
             side_effect=ClientError(
                 {
@@ -466,7 +466,7 @@ def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
             ),
         ),
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             "deprovision_auxiliary_data",
         ),
     ]
@@ -634,9 +634,13 @@ def test_invocation_invoke_endpoint(settings):
 def test_get_invocation_params_match(settings):
     pk = uuid4()
     event = {"inferenceId": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{pk}"}
-    inference_id = EndpointOrchestrator.get_inference_id(event=event)
-    invocation_params = EndpointOrchestrator.get_invocation_params(
-        inference_id=inference_id
+    inference_id = AmazonSageMakerEndpointOrchestrator.get_inference_id(
+        event=event
+    )
+    invocation_params = (
+        AmazonSageMakerEndpointOrchestrator.get_invocation_params(
+            inference_id=inference_id
+        )
     )
 
     assert invocation_params.pk == str(pk)

@@ -61,7 +61,7 @@ class AmazonSageMakerEndpointExecutor(AmazonSageMakerTrainingExecutor):
             return super().runtime_setup_result_key
 
 
-class EndpointOrchestrator:
+class AmazonSageMakerEndpointOrchestrator:
     def __init__(
         self,
         endpoint_name,
