@@ -82,10 +82,12 @@ class VerificationAdmin(admin.ModelAdmin):
         return linebreaksbr("\n".join(find_school_names(obj.email)))
 
     def user_sets(self, obj):
-        users = set()
-        comments = []
+        verification_user_sets = []
 
         for vus in obj.user.verificationuserset_set.all():
+            users = set()
+            comments = []
+
             if vus.is_false_positive:
                 comments.append("False Positive VUS.")
 
@@ -96,9 +98,20 @@ class VerificationAdmin(admin.ModelAdmin):
                 if user != obj.user:
                     users.add(user)
 
+            verification_user_sets.append(
+                {
+                    "pk": vus.pk,
+                    "url": vus.get_absolute_url(),
+                    "users": users,
+                    "comments": comments,
+                }
+            )
+
         return render_to_string(
             "verifications/partials/verificationuserset_related_users_admin.html",
-            context={"users": users, "comments": comments},
+            context={
+                "verification_user_sets": verification_user_sets,
+            },
         )
 
     def user_info(self, instance):
