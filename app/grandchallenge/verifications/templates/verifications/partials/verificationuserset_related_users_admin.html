@@ -1,22 +1,26 @@
-<ul>
-    {% for user in users %}
-        <li>
-            {% if not user.is_active %}<s>{% endif %}
-            {% if user.verification %}
-                {% if user.verification.is_verified == True %}
-                    ✅
-                {% elif user.verification.is_verified == False %}
-                    ❌
-                {% else %}
-                    ?
+{% for vus in verification_user_sets %}
+<div>
+    <a href="{{ vus.url }}" target="_blank" rel="noopener noreferrer">VUS {{ vus.pk }}</a>
+    <ul>
+        {% for user in vus.users %}
+            <li>
+                {% if not user.is_active %}<s>{% endif %}
+                {% if user.verification %}
+                    {% if user.verification.is_verified == True %}
+                        ✅
+                    {% elif user.verification.is_verified == False %}
+                        ❌
+                    {% else %}
+                        ?
+                    {% endif %}
                 {% endif %}
-            {% endif %}
-            {{ user.username }}
-            {% if not user.is_active %}</s>{% endif %}
-        </li>
+                {{ user.username }}
+                {% if not user.is_active %}</s>{% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+    {% for comment in vus.comments %}
+        <p>{{ comment }}</p>
     {% endfor %}
-</ul>
-
-{% for comment in comments %}
-    <p>{{ comment }}</p>
+</div>
 {% endfor %}
