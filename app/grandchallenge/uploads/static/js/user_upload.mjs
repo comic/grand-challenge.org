@@ -59,7 +59,7 @@ import { DicomDeidentifierPlugin } from "./dicom_deidentification.mjs";
             getChunkSize: () => 20 * 1024 * 1024,
             createMultipartUpload: createMultipartUpload,
             listParts: listParts,
-            prepareUploadParts: prepareUploadParts,
+            prepareUploadParts: (...args) => prepareUploadParts(uppy, ...args),
             abortMultipartUpload: abortMultipartUpload,
             completeMultipartUpload: completeMultipartUpload,
         });
@@ -171,9 +171,15 @@ import { DicomDeidentifierPlugin } from "./dicom_deidentification.mjs";
             .then(upload => upload.parts);
     }
 
-    class FetchError extends Error {}
+    class FetchError extends Error {
+        constructor(status, detail) {
+            super(status.toString());
+            this.status = status;
+            this.detail = detail;
+        }
+    }
 
-    function prepareUploadParts(file, { uploadId, key, partNumbers }) {
+    function prepareUploadParts(uppy, file, { uploadId, key, partNumbers }) {
         const postParams = getPOSTParams();
         const uploadPK = key.split("/")[2];
 
@@ -196,21 +202,24 @@ import { DicomDeidentifierPlugin } from "./dicom_deidentification.mjs";
                     return response.json();
                 }
                 if (response.status === 403) {
-                    response.json().then(err => window.alert(err.detail));
+                    return response.json().then(err => {
+                        throw new FetchError(response.status, err.detail);
+                    });
                 }
-                throw new FetchError(response.status.toString());
+                throw new FetchError(response.status);
             })
             .then(upload => ({ presignedUrls: upload.presigned_urls }))
             .catch(e => {
-                console.error(e);
+                if (e instanceof FetchError && e.status === 403) {
+                    // Non-retryable, inform the user and cancel the upload.
+                    window.alert(e.detail);
+                    uppy.cancelAll();
+                    // Never settle — cancelAll handles cleanup.
+                    return new Promise(() => {});
+                }
                 if (e instanceof FetchError || e.name === "TypeError") {
-                    // Catches FetchError defined above or TypeError (= network error thrown
-                    // by fetch) and makes uppy retry. Will not catch SyntaxError caused by
-                    // invalid JSON.
-                    const status =
-                        e instanceof FetchError
-                            ? Number.parseInt(e.message)
-                            : 0;
+                    // Retryable: FetchError (non-403) or network error.
+                    const status = e instanceof FetchError ? e.status : 0;
                     return Promise.reject({ source: { status: status } });
                 }
                 throw e;
