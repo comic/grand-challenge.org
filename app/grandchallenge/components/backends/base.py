@@ -958,7 +958,14 @@ class Executor(ABC):
                     ],
                 )
             except CalledProcessError as error:
-                if error.returncode == 137:
+                too_big_messages = {
+                    "std::bad_alloc",
+                    "No space left on device",
+                }
+
+                if error.returncode == 137 or any(
+                    message in error.stderr for message in too_big_messages
+                ):
                     raise ComponentException(
                         "The output image was too large to process, "
                         "please try again with smaller images"
