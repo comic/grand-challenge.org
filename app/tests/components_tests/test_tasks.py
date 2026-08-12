@@ -1456,10 +1456,13 @@ def test_remove_container_image_from_registry(
 
 
 @pytest.mark.django_db
-def test_algorithm_image_protected_from_deletion():
+def test_algorithm_image_protected_from_deletion(mocker):
     algorithm_image = AlgorithmImageFactory()
     job = AlgorithmJobFactory(
         algorithm_image=algorithm_image, status=Job.SUCCESS, time_limit=60
+    )
+    mock_remove_tag_from_registry = mocker.patch(
+        "grandchallenge.components.tasks.remove_tag_from_registry"
     )
 
     delete_container_image(
@@ -1470,6 +1473,13 @@ def test_algorithm_image_protected_from_deletion():
 
     algorithm_image.refresh_from_db()
     assert algorithm_image.is_removed is False
+    assert mock_remove_tag_from_registry.call_count == 2
+    mock_remove_tag_from_registry.assert_has_calls(
+        [
+            call(repo_tag=algorithm_image.shimmed_repo_tag),
+            call(repo_tag=algorithm_image.original_repo_tag),
+        ]
+    )
 
     job.status = Job.FAILURE
     job.save()
@@ -1482,13 +1492,25 @@ def test_algorithm_image_protected_from_deletion():
 
     algorithm_image.refresh_from_db()
     assert algorithm_image.is_removed is True
+    assert mock_remove_tag_from_registry.call_count == 4
+    mock_remove_tag_from_registry.assert_has_calls(
+        [
+            call(repo_tag=algorithm_image.shimmed_repo_tag),
+            call(repo_tag=algorithm_image.original_repo_tag),
+            call(repo_tag=algorithm_image.shimmed_repo_tag),
+            call(repo_tag=algorithm_image.original_repo_tag),
+        ]
+    )
 
 
 @pytest.mark.django_db
-def test_method_protected_from_deletion():
+def test_method_protected_from_deletion(mocker):
     method = MethodFactory()
     evaluation = EvaluationFactory(
         method=method, status=Job.SUCCESS, time_limit=60
+    )
+    mock_remove_tag_from_registry = mocker.patch(
+        "grandchallenge.components.tasks.remove_tag_from_registry"
     )
 
     delete_container_image(
@@ -1499,6 +1521,13 @@ def test_method_protected_from_deletion():
 
     method.refresh_from_db()
     assert method.is_removed is False
+    assert mock_remove_tag_from_registry.call_count == 2
+    mock_remove_tag_from_registry.assert_has_calls(
+        [
+            call(repo_tag=method.shimmed_repo_tag),
+            call(repo_tag=method.original_repo_tag),
+        ]
+    )
 
     evaluation.status = Job.FAILURE
     evaluation.save()
@@ -1511,11 +1540,23 @@ def test_method_protected_from_deletion():
 
     method.refresh_from_db()
     assert method.is_removed is True
+    assert mock_remove_tag_from_registry.call_count == 4
+    mock_remove_tag_from_registry.assert_has_calls(
+        [
+            call(repo_tag=method.shimmed_repo_tag),
+            call(repo_tag=method.original_repo_tag),
+            call(repo_tag=method.shimmed_repo_tag),
+            call(repo_tag=method.original_repo_tag),
+        ]
+    )
 
 
 @pytest.mark.django_db
-def test_workstation_image_protected_from_deletion():
+def test_workstation_image_protected_from_deletion(mocker):
     workstation = WorkstationImageFactory()
+    mock_remove_tag_from_registry = mocker.patch(
+        "grandchallenge.components.tasks.remove_tag_from_registry"
+    )
 
     delete_container_image(
         pk=workstation.pk,
@@ -1525,6 +1566,13 @@ def test_workstation_image_protected_from_deletion():
 
     workstation.refresh_from_db()
     assert workstation.is_removed is False
+    assert mock_remove_tag_from_registry.call_count == 2
+    mock_remove_tag_from_registry.assert_has_calls(
+        [
+            call(repo_tag=workstation.shimmed_repo_tag),
+            call(repo_tag=workstation.original_repo_tag),
+        ]
+    )
 
     WorkstationImage.objects.filter(pk=workstation.pk).update(
         created=now() - relativedelta(months=13)
@@ -1538,6 +1586,15 @@ def test_workstation_image_protected_from_deletion():
 
     workstation.refresh_from_db()
     assert workstation.is_removed is True
+    assert mock_remove_tag_from_registry.call_count == 4
+    mock_remove_tag_from_registry.assert_has_calls(
+        [
+            call(repo_tag=workstation.shimmed_repo_tag),
+            call(repo_tag=workstation.original_repo_tag),
+            call(repo_tag=workstation.shimmed_repo_tag),
+            call(repo_tag=workstation.original_repo_tag),
+        ]
+    )
 
 
 start_endpoint_method_names = [
