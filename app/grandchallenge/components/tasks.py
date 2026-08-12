@@ -13,6 +13,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from uuid import UUID
 
 import boto3
+import botocore
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
@@ -353,7 +354,7 @@ def delete_old_unsuccessful_container_images():
             )
 
 
-@lambda_task
+@lambda_task(retry_on=(RetryStep,), retry_delay=60)
 def remove_container_image_from_registry(
     *, pk: str | UUID, app_label: str, model_name: str
 ):
@@ -399,17 +400,17 @@ def remove_container_image_from_registry(
         # Nothing to do
         return
 
-    if instance.latest_shimmed_version:
+    try:
         remove_tag_from_registry(repo_tag=instance.shimmed_repo_tag)
-        instance.latest_shimmed_version = ""
-        instance.is_desired_version = False
-        instance.save()
-
-    if instance.is_in_registry:
         remove_tag_from_registry(repo_tag=instance.original_repo_tag)
-        instance.is_in_registry = False
-        instance.is_desired_version = False
-        instance.save()
+    except botocore.exceptions.ClientError as error:
+        if error.response["Error"]["Code"] == "ThrottlingException":
+            raise RetryStep("Request throttled") from error
+
+    instance.latest_shimmed_version = ""
+    instance.is_in_registry = False
+    instance.is_desired_version = False
+    instance.save()
 
 
 @lambda_task
