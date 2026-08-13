@@ -375,7 +375,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         # Reserve 1 GB for the system
         return (self._instance_type.memory - 1) * 1024
 
-    def _set_duration(self, *, event):
+    def _set_utilization_duration(self, *, event):
         try:
             started = ms_timestamp_to_datetime(
                 self._get_start_time(event=event)
