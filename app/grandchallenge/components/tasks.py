@@ -1863,11 +1863,13 @@ def start_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def handle_endpoint_status_event(*, event: dict):
     from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
     )
 
-    endpoint_name = EndpointOrchestrator.get_endpoint_name(event=event)
-    params = EndpointOrchestrator.get_endpoint_params(
+    endpoint_name = AmazonSageMakerEndpointOrchestrator.get_endpoint_name(
+        event=event
+    )
+    params = AmazonSageMakerEndpointOrchestrator.get_endpoint_params(
         endpoint_name=endpoint_name
     )
 
@@ -2026,7 +2028,9 @@ def invoke_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     orchestrator = invocation.orchestrator
 
     if not invocation.endpoint.is_linked_to_reader_study:
-        invocation.endpoint.keep_alive(duration=orchestrator.time_limit)
+        invocation.endpoint.keep_alive(
+            duration=orchestrator.invocation_time_limit
+        )
 
     try:
         orchestrator.invoke_endpoint(inference_id=invocation.inference_id)
@@ -2045,12 +2049,16 @@ def invoke_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def handle_endpoint_invocation_event(*, event: dict):
     from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
     )
 
-    inference_id = EndpointOrchestrator.get_inference_id(event=event)
-    invocation_params = EndpointOrchestrator.get_invocation_params(
-        inference_id=inference_id
+    inference_id = AmazonSageMakerEndpointOrchestrator.get_inference_id(
+        event=event
+    )
+    invocation_params = (
+        AmazonSageMakerEndpointOrchestrator.get_invocation_params(
+            inference_id=inference_id
+        )
     )
 
     model = apps.get_model(

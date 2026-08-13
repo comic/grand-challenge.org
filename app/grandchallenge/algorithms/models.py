@@ -29,7 +29,7 @@ from grandchallenge.algorithms.tasks import update_algorithm_average_duration
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
-    EndpointOrchestrator,
+    AmazonSageMakerEndpointOrchestrator,
 )
 from grandchallenge.components.backends.base import (
     duration_to_euro_millicents,
@@ -1742,7 +1742,7 @@ class Endpoint(FieldChangeMixin, UUIDModel):
 
     @property
     def orchestrator(self):
-        return EndpointOrchestrator(**self.orchestrator_kwargs)
+        return AmazonSageMakerEndpointOrchestrator(**self.orchestrator_kwargs)
 
     @property
     def is_linked_to_reader_study(self):
@@ -1982,7 +1982,7 @@ class Invocation(CIVForObjectMixin, UUIDModel):
 
     @property
     def orchestrator(self):
-        return EndpointOrchestrator(**self.orchestrator_kwargs)
+        return AmazonSageMakerEndpointOrchestrator(**self.orchestrator_kwargs)
 
     @property
     def is_editable(self):

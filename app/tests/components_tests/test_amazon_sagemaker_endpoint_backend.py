@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 from botocore.stub import Stubber
 
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
-    EndpointOrchestrator,
+    AmazonSageMakerEndpointOrchestrator,
 )
 from grandchallenge.components.backends.base import (
     InferenceResult,
@@ -33,17 +33,6 @@ class TestEndpointOrchestratorProperties:
 
         assert orchestrator._algorithm_model_key == (
             f"/auxiliary-data/algorithms/endpoint/{endpoint.pk}/algorithm-model.tar.gz"
-        )
-
-    def test_algorithm_model_s3_uri(self, settings):
-        settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = (
-            "algorithm-endpoints-input"
-        )
-        endpoint = EndpointFactory.build()
-        orchestrator = endpoint.orchestrator
-
-        assert orchestrator._algorithm_model_s3_uri == (
-            f"s3://algorithm-endpoints-input//auxiliary-data/algorithms/endpoint/{endpoint.pk}/algorithm-model.tar.gz"
         )
 
     def test_output_s3_uri(self, settings):
@@ -138,14 +127,8 @@ class TestEndpointOrchestratorProperties:
         endpoint = EndpointFactory.build()
         orchestrator = endpoint.orchestrator
 
-        assert (
-            orchestrator._executor._input_bucket_name
-            == "algorithm-endpoints-input"
-        )
-        assert (
-            orchestrator._executor._output_bucket_name
-            == "algorithm-endpoints-output"
-        )
+        assert orchestrator._input_bucket_name == "algorithm-endpoints-input"
+        assert orchestrator._output_bucket_name == "algorithm-endpoints-output"
 
     def test_runtime_setup_result_key(self):
         endpoint = EndpointFactory.build()
@@ -170,9 +153,6 @@ class TestEndpointOrchestratorProperties:
 
 
 def test_endpoint_provision_auxiliary_data(settings):
-    settings.PROTECTED_S3_STORAGE_KWARGS = {
-        "bucket_name": "from_protected_storage"
-    }
     settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = "to_endpoint_input"
     endpoint = EndpointFactory.build()
     orchestrator = endpoint.orchestrator
@@ -182,7 +162,7 @@ def test_endpoint_provision_auxiliary_data(settings):
             method="head_object",
             service_response={"ContentLength": 3},
             expected_params={
-                "Bucket": "from_protected_storage",
+                "Bucket": "grand-challenge-protected",
                 "Key": str(endpoint.algorithm_model.model),
             },
         )
@@ -191,7 +171,7 @@ def test_endpoint_provision_auxiliary_data(settings):
             service_response={},
             expected_params={
                 "CopySource": {
-                    "Bucket": "from_protected_storage",
+                    "Bucket": "grand-challenge-protected",
                     "Key": str(endpoint.algorithm_model.model),
                 },
                 "Bucket": "to_endpoint_input",
@@ -389,7 +369,7 @@ def test_endpoint_orchestrator_deprovision(mocker):
 
     mock_deprovision_methods = [
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             method_name,
         )
         for method_name in deprovision_endpoint_method_names
@@ -412,7 +392,7 @@ def test_endpoint_orchestrator_deprovision_errors(mocker, method_with_error):
         else:
             kwargs = {}
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             method_name,
             **kwargs,
         )
@@ -427,7 +407,7 @@ def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
 
     mock_deprovision_methods = [
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             "delete_endpoint",
             side_effect=ClientError(
                 {
@@ -440,7 +420,7 @@ def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
             ),
         ),
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             "delete_endpoint_config",
             side_effect=ClientError(
                 {
@@ -453,7 +433,7 @@ def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
             ),
         ),
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             "delete_sagemaker_model",
             side_effect=ClientError(
                 {
@@ -466,7 +446,7 @@ def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
             ),
         ),
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             "deprovision_auxiliary_data",
         ),
     ]
@@ -481,7 +461,7 @@ def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
 def test_endpoint_orchestrator_auxiliary_data_tasks_empty():
     orchestrator = InvocationFactory.build().orchestrator
 
-    assert orchestrator._executor._auxiliary_data_provisioning_tasks == []
+    assert orchestrator._auxiliary_data_provisioning_tasks == []
 
 
 @pytest.mark.django_db
@@ -553,7 +533,7 @@ def test_endpoint_orchestrator_provision_invocation_input_data_tasks(
         "timeout": "PT42S",
     }
 
-    mock_provision = mocker.patch.object(orchestrator._executor, "_provision")
+    mock_provision = mocker.patch.object(orchestrator, "_provision")
 
     orchestrator.provision_invocation_input_data(input_civs=[civ])
 
@@ -634,9 +614,13 @@ def test_invocation_invoke_endpoint(settings):
 def test_get_invocation_params_match(settings):
     pk = uuid4()
     event = {"inferenceId": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{pk}"}
-    inference_id = EndpointOrchestrator.get_inference_id(event=event)
-    invocation_params = EndpointOrchestrator.get_invocation_params(
-        inference_id=inference_id
+    inference_id = AmazonSageMakerEndpointOrchestrator.get_inference_id(
+        event=event
+    )
+    invocation_params = (
+        AmazonSageMakerEndpointOrchestrator.get_invocation_params(
+            inference_id=inference_id
+        )
     )
 
     assert invocation_params.pk == str(pk)
@@ -689,7 +673,7 @@ def test_handle_completed_invocation(settings):
     orchestrator._s3_client.upload_fileobj(
         Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
-        Key=orchestrator._executor._inference_result_key,
+        Key=orchestrator._inference_result_key,
         ExtraArgs={
             "Metadata": {"signature_hmac_sha256": signature},
         },

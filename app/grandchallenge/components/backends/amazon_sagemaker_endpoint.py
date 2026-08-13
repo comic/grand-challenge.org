@@ -12,9 +12,6 @@ from lambda_tasks.logging import task_logger
 from grandchallenge.components.backends.amazon_sagemaker_training import (
     AmazonSageMakerTrainingExecutor,
 )
-from grandchallenge.components.backends.base import (
-    list_and_delete_objects_from_prefix,
-)
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.backends.utils import UUID4_REGEX
 from grandchallenge.core.error_messages import SystemErrorMessages
@@ -28,19 +25,51 @@ class ObjectParams(NamedTuple):
     pk: UUID
 
 
-# TODO: refactor EndpointOrchestrator, AmazonSageMakerEndpointExecutor,
-#  AmazonSageMakerTrainingExecutor and AmazonSageMakerBaseExecutor to simplify
-class AmazonSageMakerEndpointExecutor(AmazonSageMakerTrainingExecutor):
+class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerTrainingExecutor):
     def __init__(
-        self, *args, endpoint_name, runtime_setup_result_key=None, **kwargs
+        self,
+        endpoint_name,
+        job_id,
+        exec_image_repo_tag,
+        requires_gpu_type,
+        memory_limit,
+        api_method,
+        signing_key,
+        time_limit=settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION,
+        algorithm_model=None,
+        runtime_setup_result_key=None,
     ):
-        super().__init__(*args, **kwargs)
-        self.__endpoint_name = endpoint_name
+        super().__init__(
+            job_id=job_id,
+            exec_image_repo_tag=exec_image_repo_tag,
+            memory_limit=memory_limit,
+            time_limit=time_limit,
+            requires_gpu_type=requires_gpu_type,
+            use_warm_pool=False,
+            signing_key=signing_key,
+            api_method=api_method,
+            algorithm_model=algorithm_model,
+            input_bucket_name=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
+            output_bucket_name=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
+            use_task_list=False,
+        )
+        self._endpoint_name = endpoint_name
+
+        self.__sagemaker_runtime_client = None
         self.__runtime_setup_result_key = runtime_setup_result_key
 
     @property
+    def _sagemaker_runtime_client(self):
+        if self.__sagemaker_runtime_client is None:
+            self.__sagemaker_runtime_client = boto3.client(
+                "sagemaker-runtime",
+                region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
+            )
+        return self.__sagemaker_runtime_client
+
+    @property
     def _sagemaker_job_name(self):
-        return self.__endpoint_name
+        return self._endpoint_name
 
     def _get_start_time(self, *, event):
         return int(
@@ -60,113 +89,17 @@ class AmazonSageMakerEndpointExecutor(AmazonSageMakerTrainingExecutor):
         else:
             return super().runtime_setup_result_key
 
-
-class EndpointOrchestrator:
-    def __init__(
-        self,
-        endpoint_name,
-        job_id,
-        exec_image_repo_tag,
-        requires_gpu_type,
-        memory_limit,
-        api_method,
-        signing_key,
-        time_limit=settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION,
-        algorithm_model=None,
-        runtime_setup_result_key=None,
-    ):
-        self._executor = AmazonSageMakerEndpointExecutor(
-            job_id=job_id,
-            exec_image_repo_tag=exec_image_repo_tag,
-            memory_limit=memory_limit,
-            time_limit=time_limit,
-            requires_gpu_type=requires_gpu_type,
-            use_warm_pool=False,
-            signing_key=signing_key,
-            api_method=api_method,
-            algorithm_model=None,
-            input_bucket_name=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
-            output_bucket_name=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
-            use_task_list=False,
-            endpoint_name=endpoint_name,
-            runtime_setup_result_key=runtime_setup_result_key,
-        )
-        self._endpoint_name = endpoint_name
-        self._exec_image_repo_tag = exec_image_repo_tag
-        self._algorithm_model = algorithm_model
-
-        self.__sagemaker_runtime_client = None
-
-    @property
-    def _s3_client(self):
-        return self._executor._s3_client
-
-    @property
-    def _sagemaker_client(self):
-        return self._executor._sagemaker_client
-
-    @property
-    def _sagemaker_runtime_client(self):
-        if self.__sagemaker_runtime_client is None:
-            self.__sagemaker_runtime_client = boto3.client(
-                "sagemaker-runtime",
-                region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
-            )
-        return self.__sagemaker_runtime_client
-
-    @property
-    def _auxiliary_data_prefix(self):
-        return self._executor._auxiliary_data_prefix
-
-    @property
-    def _io_prefix(self):
-        return self._executor._io_prefix
-
-    @property
-    def _algorithm_model_key(self):
-        return self._executor._algorithm_model_key
-
-    @property
-    def _algorithm_model_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}/{self._algorithm_model_key}"
-
     @property
     def _output_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME}/{self._io_prefix}/successes"
+        return f"s3://{self._output_bucket_name}/{self._io_prefix}/successes"
 
     @property
     def _failure_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME}/{self._io_prefix}/failures"
-
-    @property
-    def _invocation_key(self):
-        return self._executor._invocation_key
+        return f"s3://{self._output_bucket_name}/{self._io_prefix}/failures"
 
     @property
     def _invocation_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}/{self._invocation_key}"
-
-    @property
-    def invocation_environment(self):
-        env = self._executor.invocation_environment
-
-        if self._algorithm_model:
-            env["GRAND_CHALLENGE_COMPONENT_MODEL"] = (
-                self._algorithm_model_s3_uri
-            )
-        return env
-
-    @property
-    def _instance_type(self):
-        return self._executor._instance_type
-
-    @property
-    def invoke_duration(self):
-        return self._executor.invoke_duration
-
-    @property
-    def usd_cents_per_hour(self):
-        return self._executor.usd_cents_per_hour
+        return f"s3://{self._input_bucket_name}/{self._invocation_key}"
 
     @property
     def _required_volume_size_gb(self):
@@ -178,31 +111,31 @@ class EndpointOrchestrator:
             return 30
 
     @property
-    def time_limit(self):
-        # Add buffer time to upload invocation result
-        return self._executor._time_limit + timedelta(seconds=10)
+    def invocation_time_limit(self):
+        # Add buffer time to upload invocation result.
+        return self._time_limit + timedelta(seconds=10)
 
     @property
-    def runtime_setup_result_key(self):
-        return self._executor.runtime_setup_result_key
+    def _auxiliary_data_provisioning_tasks(self):
+        # Auxiliary data is handled separately. Return an empty list to remove
+        # these from the list of provisioning tasks. That list is used during
+        # provisioning for an invocation.
+        return []
 
     def provision_auxiliary_data(self):
         if self._algorithm_model:
             self._s3_client.copy(
                 CopySource={
-                    "Bucket": settings.PROTECTED_S3_STORAGE_KWARGS[
-                        "bucket_name"
-                    ],
-                    "Key": str(self._algorithm_model),
+                    "Bucket": self._algorithm_model.storage.bucket.name,
+                    "Key": self._algorithm_model.name,
                 },
-                Bucket=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
+                Bucket=self._input_bucket_name,
                 Key=self._algorithm_model_key,
             )
 
     def deprovision_auxiliary_data(self):
-        list_and_delete_objects_from_prefix(
-            s3_client=self._s3_client,
-            bucket=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
+        self._delete_objects(
+            bucket=self._input_bucket_name,
             prefix=self._auxiliary_data_prefix,
         )
 
@@ -329,7 +262,7 @@ class EndpointOrchestrator:
             raise ValueError("Invalid endpoint status")
 
     def provision_invocation_input_data(self, *, input_civs):
-        self._executor.provision(input_civs=input_civs, input_prefixes={})
+        super().provision(input_civs=input_civs, input_prefixes={})
 
     def invoke_endpoint(self, *, inference_id):
         self._sagemaker_runtime_client.invoke_endpoint_async(
@@ -337,7 +270,9 @@ class EndpointOrchestrator:
             ContentType="application/json",
             InputLocation=self._invocation_s3_uri,
             InferenceId=inference_id,
-            InvocationTimeoutSeconds=int(self.time_limit.total_seconds()),
+            InvocationTimeoutSeconds=int(
+                self.invocation_time_limit.total_seconds()
+            ),
         )
 
     @staticmethod
@@ -378,7 +313,7 @@ class EndpointOrchestrator:
             raise ValueError("Invalid invocation status")
 
     def _handle_completed_invocation(self):
-        self._executor._handle_completed_job()
+        super()._handle_completed_job()
 
     def _handle_expired_invocation(self, *, event):
         # Requires investigation
@@ -391,6 +326,3 @@ class EndpointOrchestrator:
         task_logger.info(event)
         task_logger.error("Endpoint invocation failed")
         raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
-
-    def create_value_for_output(self, *, interface):
-        return self._executor.create_value_for_output(interface=interface)

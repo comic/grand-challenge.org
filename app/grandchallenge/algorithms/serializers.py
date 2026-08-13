@@ -525,7 +525,7 @@ class InvocationPostSerializer(serializers.ModelSerializer):
 
         if not invocation.endpoint.is_linked_to_reader_study:
             invocation.endpoint.keep_alive(
-                duration=invocation.orchestrator.time_limit
+                duration=invocation.orchestrator.invocation_time_limit
             )
 
         return invocation

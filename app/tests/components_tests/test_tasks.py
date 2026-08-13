@@ -30,7 +30,7 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
 )
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
-    EndpointOrchestrator,
+    AmazonSageMakerEndpointOrchestrator,
 )
 from grandchallenge.components.backends.base import (
     InferenceResult,
@@ -1610,7 +1610,7 @@ def test_start_endpoint(mocker):
     endpoint = EndpointFactory()
     mock_start_methods = [
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             method_name,
         )
         for method_name in start_endpoint_method_names
@@ -1631,7 +1631,7 @@ def test_start_endpoint_wrong_state_raises(mocker):
     endpoint = EndpointFactory(status=EndpointStatusChoices.RUNNING)
     mock_start_methods = [
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             method_name,
         )
         for method_name in start_endpoint_method_names
@@ -1657,12 +1657,12 @@ def test_start_endpoint_failure(mocker, method_with_error):
         else:
             kwargs = {}
         mocker.patch.object(
-            EndpointOrchestrator,
+            AmazonSageMakerEndpointOrchestrator,
             method_name,
             **kwargs,
         )
     mock_deprovision_method = mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "deprovision",
     )
 
@@ -1678,12 +1678,12 @@ def test_start_endpoint_failure(mocker, method_with_error):
 def test_start_endpoint_deprovision_failure_raises(mocker):
     endpoint = EndpointFactory()
     mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         start_endpoint_method_names[0],
         side_effect=Exception,
     )
     mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "deprovision",
         side_effect=Exception("error during deprovision"),
     )
@@ -1702,7 +1702,7 @@ def test_start_endpoint_deprovision_failure_raises(mocker):
 def test_stop_endpoint(mocker):
     endpoint = EndpointFactory()
     mock_deprovision_method = mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "deprovision",
     )
 
@@ -1719,7 +1719,7 @@ def test_stop_endpoint(mocker):
 def test_stop_endpoint_deprovision_failure_raises(mocker):
     endpoint = EndpointFactory()
     mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "deprovision",
         side_effect=Exception("error during deprovision"),
     )
@@ -1764,7 +1764,7 @@ def test_stop_endpoint_cancels_active_invocations(
         InvocationFactory.create(endpoint=endpoint, status=status)
         InvocationFactory.create(status=status)
     mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "deprovision",
     )
 
@@ -1793,7 +1793,7 @@ def test_stop_expired_endpoints(
         maximum_duration=timedelta(seconds=0),
     )
     mock_deprovision = mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "deprovision",
     )
 
@@ -1832,7 +1832,7 @@ def test_handle_endpoint_status_failed_events(settings, mocker):
         "EndpointStatus": "FAILED",
     }
     mock_deprovision = mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "deprovision",
     )
 
@@ -1854,7 +1854,7 @@ def test_handle_endpoint_status_invalid_events(settings, mocker):
         "EndpointStatus": "some invalid status",
     }
     mock_deprovision = mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "deprovision",
     )
 
@@ -1877,7 +1877,7 @@ def test_handle_endpoint_status_wrong_state_ignored(mocker, settings, status):
         "EndpointName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{endpoint.pk}",
     }
     mock_handle_status_event = mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "handle_status_event",
     )
 
@@ -1937,7 +1937,7 @@ def test_handle_endpoint_invocation_completed_event(settings):
     orchestrator._s3_client.upload_fileobj(
         Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
-        Key=orchestrator._executor._inference_result_key,
+        Key=orchestrator._inference_result_key,
         ExtraArgs={
             "Metadata": {"signature_hmac_sha256": signature},
         },
@@ -2005,7 +2005,7 @@ def test_handle_endpoint_invocation_wrong_state_ignored(
         "inferenceId": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{invocation.pk}",
     }
     mock_handle_event = mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "handle_event",
     )
 
@@ -2051,7 +2051,7 @@ def test_parse_endpoint_invocation_outputs_failure(mocker):
         status=InvocationStatusChoices.EXECUTED,
     )
     mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "create_value_for_output",
         side_effect=Exception,
     )
@@ -2074,7 +2074,7 @@ def test_parse_endpoint_invocation_outputs_failure(mocker):
 def test_parse_endpoint_invocation_outputs_wrong_state_raises(mocker, status):
     invocation = InvocationFactory(status=status)
     mock_create_value_for_output = mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "create_value_for_output",
     )
 
@@ -2093,7 +2093,7 @@ def test_parse_endpoint_invocation_outputs_wrong_state_raises(mocker, status):
 def test_parse_endpoint_invocation_outputs_cancelled_skipped(mocker):
     invocation = InvocationFactory(status=InvocationStatusChoices.CANCELLED)
     mock_create_value_for_output = mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "create_value_for_output",
     )
 

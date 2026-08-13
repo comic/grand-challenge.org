@@ -7,7 +7,7 @@ from django.db.models import ProtectedError
 
 from grandchallenge.algorithms.models import EndpointStatusChoices
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
-    EndpointOrchestrator,
+    AmazonSageMakerEndpointOrchestrator,
 )
 from grandchallenge.components.tasks import stop_service
 from grandchallenge.workstations.models import Session, Workstation
@@ -324,7 +324,7 @@ def test_session_stopped_schedules_stop_for_correct_endpoints(
     other_endpoint = EndpointFactory()
 
     mocker.patch.object(
-        EndpointOrchestrator,
+        AmazonSageMakerEndpointOrchestrator,
         "deprovision",
     )
 
