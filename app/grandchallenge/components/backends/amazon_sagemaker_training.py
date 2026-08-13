@@ -67,9 +67,6 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
     def _get_end_time(self, *, event):
         return event.get("TrainingEndTime")
 
-    def _get_instance_name(self, *, event):
-        return event["ResourceConfig"]["InstanceType"]
-
     def _create_job_boto(self):
         self._sagemaker_client.create_training_job(
             TrainingJobName=self._sagemaker_job_name,
