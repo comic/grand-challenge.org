@@ -48,14 +48,12 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerTrainingExecutor):
             use_warm_pool=False,
             signing_key=signing_key,
             api_method=api_method,
-            algorithm_model=None,
+            algorithm_model=algorithm_model,
             input_bucket_name=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
             output_bucket_name=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
             use_task_list=False,
         )
         self._endpoint_name = endpoint_name
-        self._exec_image_repo_tag = exec_image_repo_tag
-        self._algorithm_model = algorithm_model
 
         self.__sagemaker_runtime_client = None
         self.__runtime_setup_result_key = runtime_setup_result_key
