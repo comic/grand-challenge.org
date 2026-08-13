@@ -12,9 +12,6 @@ from lambda_tasks.logging import task_logger
 from grandchallenge.components.backends.amazon_sagemaker_training import (
     AmazonSageMakerTrainingExecutor,
 )
-from grandchallenge.components.backends.base import (
-    list_and_delete_objects_from_prefix,
-)
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.backends.utils import UUID4_REGEX
 from grandchallenge.core.error_messages import SystemErrorMessages
@@ -145,19 +142,16 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerTrainingExecutor):
         if self._algorithm_model:
             self._s3_client.copy(
                 CopySource={
-                    "Bucket": settings.PROTECTED_S3_STORAGE_KWARGS[
-                        "bucket_name"
-                    ],
-                    "Key": str(self._algorithm_model),
+                    "Bucket": self._algorithm_model.storage.bucket.name,
+                    "Key": self._algorithm_model.name,
                 },
-                Bucket=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
+                Bucket=self._input_bucket_name,
                 Key=self._algorithm_model_key,
             )
 
     def deprovision_auxiliary_data(self):
-        list_and_delete_objects_from_prefix(
-            s3_client=self._s3_client,
-            bucket=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
+        self._delete_objects(
+            bucket=self._input_bucket_name,
             prefix=self._auxiliary_data_prefix,
         )
 
