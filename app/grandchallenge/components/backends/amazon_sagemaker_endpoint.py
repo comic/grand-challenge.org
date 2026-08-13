@@ -132,7 +132,7 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerTrainingExecutor):
     @property
     def time_limit(self):
         # Add buffer time to upload invocation result
-        return super()._time_limit + timedelta(seconds=10)
+        return self._time_limit + timedelta(seconds=10)
 
     def provision_auxiliary_data(self):
         if self._algorithm_model:
