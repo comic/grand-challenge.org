@@ -92,10 +92,6 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerTrainingExecutor):
             return super().runtime_setup_result_key
 
     @property
-    def _algorithm_model_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}/{self._algorithm_model_key}"
-
-    @property
     def _output_s3_uri(self):
         return f"s3://{settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME}/{self._io_prefix}/successes"
 
@@ -106,16 +102,6 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerTrainingExecutor):
     @property
     def _invocation_s3_uri(self):
         return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}/{self._invocation_key}"
-
-    @property
-    def invocation_environment(self):
-        env = super().invocation_environment
-
-        if self._algorithm_model:
-            env["GRAND_CHALLENGE_COMPONENT_MODEL"] = (
-                self._algorithm_model_s3_uri
-            )
-        return env
 
     @property
     def _required_volume_size_gb(self):

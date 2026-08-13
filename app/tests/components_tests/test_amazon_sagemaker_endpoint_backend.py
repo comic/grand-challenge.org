@@ -35,17 +35,6 @@ class TestEndpointOrchestratorProperties:
             f"/auxiliary-data/algorithms/endpoint/{endpoint.pk}/algorithm-model.tar.gz"
         )
 
-    def test_algorithm_model_s3_uri(self, settings):
-        settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = (
-            "algorithm-endpoints-input"
-        )
-        endpoint = EndpointFactory.build()
-        orchestrator = endpoint.orchestrator
-
-        assert orchestrator._algorithm_model_s3_uri == (
-            f"s3://algorithm-endpoints-input//auxiliary-data/algorithms/endpoint/{endpoint.pk}/algorithm-model.tar.gz"
-        )
-
     def test_output_s3_uri(self, settings):
         settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME = (
             "algorithm-endpoints-output"
