@@ -414,15 +414,6 @@ class Executor(ABC):
             prefix=self._auxiliary_data_prefix,
         )
 
-    @staticmethod
-    @abstractmethod
-    def get_job_name(*, event):
-        pass
-
-    @staticmethod
-    @abstractmethod
-    def get_job_params(*, job_name): ...
-
     @property
     @abstractmethod
     def utilization_duration(self): ...
@@ -442,10 +433,6 @@ class Executor(ABC):
     @property
     @abstractmethod
     def external_admin_url(self): ...
-
-    @property
-    @abstractmethod
-    def warm_pool_retained_billable_time_in_seconds(self): ...
 
     @property
     def invocation_environment(self):

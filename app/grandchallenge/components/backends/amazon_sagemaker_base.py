@@ -292,23 +292,11 @@ INSTANCE_OPTIONS = [
 
 class AmazonSageMakerBaseExecutor(Executor, ABC):
     @abstractmethod
-    def _get_job_status(self, *, event):
-        pass
-
-    @abstractmethod
     def _get_start_time(self, *, event):
         pass
 
     @abstractmethod
     def _get_end_time(self, *, event):
-        pass
-
-    @abstractmethod
-    def _create_job_boto(self):
-        pass
-
-    @abstractmethod
-    def _stop_job_boto(self):
         pass
 
     def __init__(self, *args, **kwargs):
@@ -397,7 +385,3 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         except TypeError:
             logger.warning("Invalid start or end time, duration undetermined")
             self.__utilization_duration = None
-
-    @abstractmethod
-    def _handle_stopped_job(self, *, event):
-        pass
