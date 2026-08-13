@@ -138,14 +138,8 @@ class TestEndpointOrchestratorProperties:
         endpoint = EndpointFactory.build()
         orchestrator = endpoint.orchestrator
 
-        assert (
-            orchestrator._executor._input_bucket_name
-            == "algorithm-endpoints-input"
-        )
-        assert (
-            orchestrator._executor._output_bucket_name
-            == "algorithm-endpoints-output"
-        )
+        assert orchestrator._input_bucket_name == "algorithm-endpoints-input"
+        assert orchestrator._output_bucket_name == "algorithm-endpoints-output"
 
     def test_runtime_setup_result_key(self):
         endpoint = EndpointFactory.build()
@@ -481,7 +475,7 @@ def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
 def test_endpoint_orchestrator_auxiliary_data_tasks_empty():
     orchestrator = InvocationFactory.build().orchestrator
 
-    assert orchestrator._executor._auxiliary_data_provisioning_tasks == []
+    assert orchestrator._auxiliary_data_provisioning_tasks == []
 
 
 @pytest.mark.django_db
@@ -553,7 +547,7 @@ def test_endpoint_orchestrator_provision_invocation_input_data_tasks(
         "timeout": "PT42S",
     }
 
-    mock_provision = mocker.patch.object(orchestrator._executor, "_provision")
+    mock_provision = mocker.patch.object(orchestrator, "_provision")
 
     orchestrator.provision_invocation_input_data(input_civs=[civ])
 
@@ -693,7 +687,7 @@ def test_handle_completed_invocation(settings):
     orchestrator._s3_client.upload_fileobj(
         Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
-        Key=orchestrator._executor._inference_result_key,
+        Key=orchestrator._inference_result_key,
         ExtraArgs={
             "Metadata": {"signature_hmac_sha256": signature},
         },

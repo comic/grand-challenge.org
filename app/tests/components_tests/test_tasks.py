@@ -1937,7 +1937,7 @@ def test_handle_endpoint_invocation_completed_event(settings):
     orchestrator._s3_client.upload_fileobj(
         Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
-        Key=orchestrator._executor._inference_result_key,
+        Key=orchestrator._inference_result_key,
         ExtraArgs={
             "Metadata": {"signature_hmac_sha256": signature},
         },
