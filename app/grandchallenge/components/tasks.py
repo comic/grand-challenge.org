@@ -2028,7 +2028,9 @@ def invoke_endpoint(*, pk: str | UUID, app_label: str, model_name: str):
     orchestrator = invocation.orchestrator
 
     if not invocation.endpoint.is_linked_to_reader_study:
-        invocation.endpoint.keep_alive(duration=orchestrator.time_limit)
+        invocation.endpoint.keep_alive(
+            duration=orchestrator.invocation_time_limit
+        )
 
     try:
         orchestrator.invoke_endpoint(inference_id=invocation.inference_id)

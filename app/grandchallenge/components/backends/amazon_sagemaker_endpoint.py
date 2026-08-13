@@ -130,8 +130,8 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerTrainingExecutor):
             return 30
 
     @property
-    def time_limit(self):
-        # Add buffer time to upload invocation result
+    def invocation_time_limit(self):
+        # Add buffer time to upload invocation result.
         return self._time_limit + timedelta(seconds=10)
 
     @property
@@ -292,7 +292,9 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerTrainingExecutor):
             ContentType="application/json",
             InputLocation=self._invocation_s3_uri,
             InferenceId=inference_id,
-            InvocationTimeoutSeconds=int(self.time_limit.total_seconds()),
+            InvocationTimeoutSeconds=int(
+                self.invocation_time_limit.total_seconds()
+            ),
         )
 
     @staticmethod
