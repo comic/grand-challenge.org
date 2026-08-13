@@ -529,7 +529,7 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
     def handle_event(self, *, event):
         job_status = self._get_job_status(event=event)
 
-        self._set_duration(event=event)
+        self._set_utilization_duration(event=event)
 
         if job_status == "Completed":
             self._handle_completed_job()
