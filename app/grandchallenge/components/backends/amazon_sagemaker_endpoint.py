@@ -7,10 +7,11 @@ from uuid import UUID
 import boto3
 from botocore.exceptions import ClientError
 from django.conf import settings
+from django.utils.html import format_html
 from lambda_tasks.logging import task_logger
 
-from grandchallenge.components.backends.amazon_sagemaker_training import (
-    AmazonSageMakerTrainingExecutor,
+from grandchallenge.components.backends.amazon_sagemaker_base import (
+    AmazonSageMakerBaseExecutor,
 )
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.backends.utils import UUID4_REGEX
@@ -25,7 +26,7 @@ class ObjectParams(NamedTuple):
     pk: UUID
 
 
-class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerTrainingExecutor):
+class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
     def __init__(
         self,
         endpoint_name,
@@ -68,8 +69,13 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerTrainingExecutor):
         return self.__sagemaker_runtime_client
 
     @property
-    def _sagemaker_job_name(self):
-        return self._endpoint_name
+    def external_admin_url(self):
+        return format_html(
+            "https://{region}.console.aws.amazon.com/sagemaker/home#/endpoints/{endpoint_name}",
+            job_name=self._endpoint_name,
+            region=settings.COMPONENTS_AMAZON_ECR_REGION
+            or settings.AWS_DEFAULT_REGION,
+        )
 
     def _get_start_time(self, *, event):
         return int(
@@ -121,6 +127,9 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerTrainingExecutor):
         # these from the list of provisioning tasks. That list is used during
         # provisioning for an invocation.
         return []
+
+    def execute(self):
+        raise NotImplementedError
 
     def provision_auxiliary_data(self):
         if self._algorithm_model:
