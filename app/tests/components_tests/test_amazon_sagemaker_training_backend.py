@@ -12,13 +12,11 @@ from dateutil.tz import tzlocal
 from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
-from grandchallenge.components.backends.amazon_sagemaker_base import (
+from grandchallenge.components.backends.amazon_sagemaker_training import (
+    AmazonSageMakerTrainingExecutor,
     AmazonSageMakerTrainingLogsService,
     ParsedLog,
     SourceChoices,
-)
-from grandchallenge.components.backends.amazon_sagemaker_training import (
-    AmazonSageMakerTrainingExecutor,
 )
 from grandchallenge.components.backends.base import (
     InferenceResult,
