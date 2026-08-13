@@ -134,6 +134,13 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerTrainingExecutor):
         # Add buffer time to upload invocation result
         return self._time_limit + timedelta(seconds=10)
 
+    @property
+    def _auxiliary_data_provisioning_tasks(self):
+        # Auxiliary data is handled separately. Return an empty list to remove
+        # these from the list of provisioning tasks. That list is used during
+        # provisioning for an invocation.
+        return []
+
     def provision_auxiliary_data(self):
         if self._algorithm_model:
             self._s3_client.copy(
