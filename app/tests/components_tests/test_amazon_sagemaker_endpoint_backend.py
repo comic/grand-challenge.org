@@ -153,9 +153,6 @@ class TestEndpointOrchestratorProperties:
 
 
 def test_endpoint_provision_auxiliary_data(settings):
-    settings.PROTECTED_S3_STORAGE_KWARGS = {
-        "bucket_name": "from_protected_storage"
-    }
     settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = "to_endpoint_input"
     endpoint = EndpointFactory.build()
     orchestrator = endpoint.orchestrator
@@ -165,7 +162,7 @@ def test_endpoint_provision_auxiliary_data(settings):
             method="head_object",
             service_response={"ContentLength": 3},
             expected_params={
-                "Bucket": "from_protected_storage",
+                "Bucket": "grand-challenge-protected",
                 "Key": str(endpoint.algorithm_model.model),
             },
         )
@@ -174,7 +171,7 @@ def test_endpoint_provision_auxiliary_data(settings):
             service_response={},
             expected_params={
                 "CopySource": {
-                    "Bucket": "from_protected_storage",
+                    "Bucket": "grand-challenge-protected",
                     "Key": str(endpoint.algorithm_model.model),
                 },
                 "Bucket": "to_endpoint_input",
