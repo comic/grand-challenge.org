@@ -269,7 +269,7 @@ def test_invocation_json(settings):
     ]
 
 
-def test_set_duration():
+def test_set_utilization_duration():
     executor = AmazonSageMakerTrainingExecutor(
         job_id="algorithms-job-0",
         exec_image_repo_tag="",
@@ -283,7 +283,7 @@ def test_set_duration():
 
     assert executor.utilization_duration is None
 
-    executor._set_duration(
+    executor._set_utilization_duration(
         event={
             "CreationTime": 1654683838000,
             "TrainingStartTime": 1654684027000,
