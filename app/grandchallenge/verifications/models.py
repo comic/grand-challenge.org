@@ -60,6 +60,16 @@ class Verification(FieldChangeMixin, models.Model):
                     "please provide your work, corporate or institutional email."
                 )
 
+            site_domain = settings.SESSION_COOKIE_DOMAIN.lstrip(".")
+            email_domain = self.email.split("@")[1].lower()
+            if email_domain == site_domain or email_domain.endswith(
+                f".{site_domain}"
+            ):
+                raise ValidationError(
+                    "Email addresses on the site domain cannot be used "
+                    "for verification."
+                )
+
             if (
                 get_user_model()
                 .objects.filter(email__iexact=self.email)
