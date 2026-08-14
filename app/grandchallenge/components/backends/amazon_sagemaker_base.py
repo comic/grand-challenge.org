@@ -1,27 +1,14 @@
 import logging
-import re
 from abc import ABC, abstractmethod
 from typing import NamedTuple
 
 import boto3
-import botocore
 from django.conf import settings
-from django.db.models import TextChoices
 from django.utils.functional import cached_property
 
-from grandchallenge.components.backends.base import Executor, JobParams
-from grandchallenge.components.backends.exceptions import (
-    ComponentException,
-    RetryStep,
-    RetryTask,
-    UncleanExit,
-)
-from grandchallenge.components.backends.utils import (
-    UUID4_REGEX,
-    ms_timestamp_to_datetime,
-)
+from grandchallenge.components.backends.base import Executor
+from grandchallenge.components.backends.utils import ms_timestamp_to_datetime
 from grandchallenge.components.schemas import GPUTypeChoices
-from grandchallenge.core.error_messages import SystemErrorMessages
 
 logger = logging.getLogger(__name__)
 
@@ -303,13 +290,6 @@ INSTANCE_OPTIONS = [
 ]
 
 
-class ModelChoices(TextChoices):
-    # The values must be short
-    # The labels must be in the form "<app_label>-<model_name>"
-    ALGORITHMS_JOB = "A", "algorithms-job"
-    EVALUATION_EVALUATION = "E", "evaluation-evaluation"
-
-
 class AmazonSageMakerBaseExecutor(Executor, ABC):
     @abstractmethod
     def _get_job_status(self, *, event):
@@ -344,28 +324,6 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         self.__logs_client = None
         self.__cloudwatch_client = None
 
-    @staticmethod
-    def get_job_params(*, job_name):
-        prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
-        model_regex = r"|".join(ModelChoices.values)
-        pattern = rf"^{prefix_regex}\-(?P<job_model>{model_regex})\-(?P<job_pk>{UUID4_REGEX})\-(?P<attempt>\d{{2}})$"
-
-        result = re.match(pattern, job_name)
-
-        if result is None:
-            raise ValueError("Invalid job name")
-        else:
-            job_model = ModelChoices(result.group("job_model")).label
-            job_app_label, job_model_name = job_model.split("-")
-            job_pk = result.group("job_pk")
-            attempt = int(result.group("attempt"))
-            return JobParams(
-                app_label=job_app_label,
-                model_name=job_model_name,
-                pk=job_pk,
-                attempt=attempt,
-            )
-
     @property
     def _sagemaker_client(self):
         if self.__sagemaker_client is None:
@@ -395,16 +353,6 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     @property
     def utilization_duration(self):
         return self.__utilization_duration
-
-    @property
-    def _sagemaker_job_name(self):
-        # SageMaker requires job names to be less than 63 chars
-        job_name = f"{settings.COMPONENTS_REGISTRY_PREFIX}-{self._job_id}"
-
-        for value, label in ModelChoices.choices:
-            job_name = job_name.replace(label, value)
-
-        return job_name
 
     @cached_property
     def _instance_type(self):
@@ -443,74 +391,6 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         # Reserve 1 GB for the system
         return (self._instance_type.memory - 1) * 1024
 
-    @property
-    def _required_volume_size_gb(self):
-        required_gb = super()._required_volume_size_gb
-
-        if self._instance_type.nvme_volume_size:
-            if required_gb > self._instance_type.nvme_volume_size:
-                logger.error(
-                    f"Job {self._job_id} likely needs {required_gb} GB but "
-                    f"instance only has {self._instance_type.nvme_volume_size} GB. "
-                    "Attempting to run the job anyway."
-                )
-            # Always request the nvme size for instances that offer it
-            # This setting has no practical effect as the instances
-            # do not get an EBS volume, but allows the instance
-            # to be reused in a warm pool as it is included in
-            # SageMakers warm pool reuse logic
-            return self._instance_type.nvme_volume_size
-        else:
-            if required_gb > settings.COMPONENTS_EBS_VOLUME_SIZE_LIMIT_GB:
-                logger.error(
-                    f"Job {self._job_id} likely needs {required_gb} GB but "
-                    f"instance is limited to {settings.COMPONENTS_EBS_VOLUME_SIZE_LIMIT_GB} GB due to EBS limits. "
-                    "Attempting to run the job anyway."
-                )
-                return settings.COMPONENTS_EBS_VOLUME_SIZE_LIMIT_GB
-            else:
-                return required_gb
-
-    def execute(self):
-        self._create_sagemaker_job()
-
-    def handle_event(self, *, event):
-        job_status = self._get_job_status(event=event)
-
-        self._set_duration(event=event)
-
-        if job_status == "Completed":
-            self._handle_completed_job()
-        elif job_status == "Stopped":
-            self._handle_stopped_job(event=event)
-        elif job_status == "Failed":
-            self._handle_failed_job(event=event)
-        else:
-            raise ValueError("Invalid job status")
-
-    def deprovision(self):
-        self._stop_running_jobs()
-
-        super().deprovision()
-
-        self._delete_objects(
-            bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
-            prefix=self._invocation_prefix,
-        )
-
-    def _create_sagemaker_job(self):
-        try:
-            self._create_job_boto()
-        except (
-            self._sagemaker_client.exceptions.ResourceLimitExceeded
-        ) as error:
-            raise RetryStep("Capacity Limit Exceeded") from error
-        except botocore.exceptions.ClientError as error:
-            if error.response["Error"]["Code"] == "ThrottlingException":
-                raise RetryStep("Request throttled") from error
-            else:
-                raise error
-
     def _set_duration(self, *, event):
         try:
             started = ms_timestamp_to_datetime(
@@ -525,74 +405,3 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     @abstractmethod
     def _handle_stopped_job(self, *, event):
         pass
-
-    def _handle_failed_job(self, *, event):
-        failure_reason = event.get("FailureReason")
-
-        if failure_reason == (
-            "CapacityError: Unable to provision requested ML compute capacity. "
-            "Please retry using a different ML instance type."
-        ):
-            raise RetryTask("No current capacity for the chosen instance type")
-
-        if failure_reason == (
-            "InternalServerError: We encountered an internal error. "
-            "Please try again."
-        ):
-            if (
-                self.get_job_params(
-                    job_name=self.get_job_name(event=event)
-                ).attempt
-                < 1
-            ):
-                raise RetryTask("Retrying due to internal server error")
-            else:
-                raise ComponentException("Container image would not start")
-        elif failure_reason in (
-            "ClientError: Please use an instance type with more memory, "
-            "or reduce the size of job data processed on an instance.",
-            "ClientError: Artifact upload failed:ClientError: "
-            "Out of Memory. Please use a larger instance",
-        ):
-            try:
-                users_process_exit_code = (
-                    self._get_inference_result().return_code
-                )
-            except UncleanExit:
-                users_process_exit_code = None
-
-            if users_process_exit_code not in (-9, 1, 137):
-                # Requires investigation
-                logger.error(f"SageMaker OOM {users_process_exit_code=}")
-
-            raise ComponentException(SystemErrorMessages.MEMORY_LIMIT_EXCEEDED)
-        else:
-            # Requires investigation
-            logger.error(f"SageMaker Job failed: {failure_reason}")
-
-            raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
-
-    def _stop_running_jobs(self):
-        try:
-            self._stop_job_boto()
-        except botocore.exceptions.ClientError as error:
-            okay_error_messages = {
-                # Unstoppable job:
-                "The request was rejected because the transform job is in status",
-                "The request was rejected because the training job is in status",
-                # Job was never created:
-                "Could not find job to update with name",
-                "Requested resource not found",
-            }
-
-            if error.response["Error"]["Code"] == "ThrottlingException":
-                raise RetryStep("Request throttled") from error
-            elif error.response["Error"][
-                "Code"
-            ] == "ValidationException" and any(
-                okay_message in error.response["Error"]["Message"]
-                for okay_message in okay_error_messages
-            ):
-                logger.info(f"The job could not be stopped: {error}")
-            else:
-                raise error
