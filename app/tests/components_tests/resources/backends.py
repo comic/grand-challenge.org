@@ -10,7 +10,7 @@ from dateutil.parser import parse
 from django.conf import settings
 from django.utils.timezone import now
 
-from grandchallenge.components.backends.amazon_sagemaker_base import (
+from grandchallenge.components.backends.amazon_sagemaker_training import (
     ModelChoices,
 )
 from grandchallenge.components.backends.base import (
