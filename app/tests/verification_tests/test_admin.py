@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth import get_user_model
 
 from grandchallenge.core.models import RequestBase
 from grandchallenge.core.utils.access_requests import (
@@ -139,3 +140,83 @@ def test_verify_users_and_accept_pending_requests(
     pr.refresh_from_db()
 
     assert pr.status == expected_request_status_with_verification
+
+
+@pytest.mark.django_db
+def test_create_manual_verification_admin_action(settings):
+    """Admin action creates a verification using the user's current email."""
+    from grandchallenge.profiles.admin import create_manual_verification
+    from grandchallenge.verifications.models import Verification
+
+    user = UserFactory(email="user@example.org")
+
+    create_manual_verification(
+        None,
+        None,
+        get_user_model().objects.filter(pk=user.pk),
+    )
+
+    verification = Verification.objects.get(user=user)
+    assert verification.email == "user@example.org"
+    assert verification.email_is_verified is True
+    assert verification.is_verified is False
+    assert verification.verified_at is None
+
+
+@pytest.mark.django_db
+def test_create_manual_verification_skips_existing(settings):
+    """Admin action skips users who already have a verification."""
+    from grandchallenge.profiles.admin import create_manual_verification
+    from grandchallenge.verifications.models import Verification
+
+    user = UserFactory(email="user@example.org")
+    VerificationFactory(user=user, email="old@example.org")
+
+    create_manual_verification(
+        None,
+        None,
+        get_user_model().objects.filter(pk=user.pk),
+    )
+
+    # Should not have changed the existing verification
+    verification = Verification.objects.get(user=user)
+    assert verification.email == "old@example.org"
+
+
+@pytest.mark.django_db
+def test_create_manual_verification_allows_site_domain(settings):
+    """Manual verification bypasses the site domain restriction."""
+    from grandchallenge.profiles.admin import create_manual_verification
+    from grandchallenge.verifications.models import Verification
+
+    site_domain = settings.SESSION_COOKIE_DOMAIN.lstrip(".")
+    user = UserFactory(email=f"admin@{site_domain}")
+
+    create_manual_verification(
+        None,
+        None,
+        get_user_model().objects.filter(pk=user.pk),
+    )
+
+    verification = Verification.objects.get(user=user)
+    assert verification.email == f"admin@{site_domain}"
+    assert verification.is_verified is False
+
+
+@pytest.mark.django_db
+def test_create_manual_verification_allows_free_email(settings):
+    """Manual verification bypasses the is_free restriction."""
+    from grandchallenge.profiles.admin import create_manual_verification
+    from grandchallenge.verifications.models import Verification
+
+    user = UserFactory(email="user@gmail.com")
+
+    create_manual_verification(
+        None,
+        None,
+        get_user_model().objects.filter(pk=user.pk),
+    )
+
+    verification = Verification.objects.get(user=user)
+    assert verification.email == "user@gmail.com"
+    assert verification.is_verified is False

@@ -14,6 +14,7 @@ from grandchallenge.profiles.models import (
     UserProfileUserObjectPermission,
 )
 from grandchallenge.profiles.tasks import deactivate_user
+from grandchallenge.verifications.models import Verification
 
 
 class UserProfileInline(admin.StackedInline):
@@ -29,6 +30,18 @@ class UserProfileInline(admin.StackedInline):
 def deactivate_users(modeladmin, request, queryset):
     for user in queryset.filter(is_active=True):
         deactivate_user.execute_on_commit(user_pk=user.pk)
+
+
+@admin.action(
+    description="Create manual verification using current email",
+    permissions=("change",),
+)
+def create_manual_verification(modeladmin, request, queryset):
+    for user in queryset.exclude(verification__isnull=False):
+        Verification.objects.create(
+            user=user,
+            email=user.email,
+        )
 
 
 class UserProfileAdmin(UserAdmin):
@@ -54,7 +67,7 @@ class UserProfileAdmin(UserAdmin):
         "user_profile__notification_email_choice",
         "user_profile__country",
     )
-    actions = (deactivate_users,)
+    actions = (deactivate_users, create_manual_verification)
 
     @admin.display(boolean=True, description="User has 2FA enabled")
     def has_2fa_enabled(self, obj):

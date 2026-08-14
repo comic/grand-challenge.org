@@ -1,5 +1,6 @@
 import pytest
 from django.core import mail
+from django.core.exceptions import ValidationError
 
 from grandchallenge.core.models import RequestBase
 from grandchallenge.core.utils.access_requests import (
@@ -119,3 +120,31 @@ def test_accepting_pending_permission_requests_on_verification(
 
     assert pr_manual.status == RequestBase.PENDING
     assert pr.status == expected_request_status_with_verification
+
+
+@pytest.mark.django_db
+def test_verification_disallowed_for_site_domain_email(settings):
+    """Emails on the site domain cannot be used for verification."""
+    settings.SESSION_COOKIE_DOMAIN = ".example.com"
+    site_domain = "example.com"
+    user = UserFactory()
+
+    from grandchallenge.verifications.models import Verification
+
+    verification = Verification(user=user, email=f"test@{site_domain}")
+    with pytest.raises(ValidationError, match="site domain"):
+        verification.clean()
+
+
+@pytest.mark.django_db
+def test_verification_disallowed_for_site_subdomain_email(settings):
+    """Emails on subdomains of the site domain are also disallowed."""
+    settings.SESSION_COOKIE_DOMAIN = ".example.com"
+    site_domain = "example.com"
+    user = UserFactory()
+
+    from grandchallenge.verifications.models import Verification
+
+    verification = Verification(user=user, email=f"test@sub.{site_domain}")
+    with pytest.raises(ValidationError, match="site domain"):
+        verification.clean()
