@@ -722,7 +722,7 @@ class TestJobLogsDetailPermissions:
         mock_service.execution_history = []
         mock_service.get_task_logs.return_value = []
         mocker.patch(
-            "grandchallenge.components.backends.amazon_sagemaker_base.AmazonSageMakerTrainingLogsService",
+            "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingLogsService",
             return_value=mock_service,
         )
 
