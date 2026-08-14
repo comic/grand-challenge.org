@@ -364,6 +364,11 @@ class AmazonSageMakerTrainingLogsService:
 
 
 class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.__utilization_duration = None
+
     @property
     def _training_output_prefix(self):
         return safe_join("/training-outputs", *self.job_path_parts)
@@ -376,6 +381,10 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
             region=settings.COMPONENTS_AMAZON_ECR_REGION
             or settings.AWS_DEFAULT_REGION,
         )
+
+    @property
+    def utilization_duration(self):
+        return self.__utilization_duration
 
     @property
     def warm_pool_retained_billable_time_in_seconds(self):
@@ -475,6 +484,17 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
 
     def _get_end_time(self, *, event):
         return event.get("TrainingEndTime")
+
+    def _set_utilization_duration(self, *, event):
+        try:
+            started = ms_timestamp_to_datetime(
+                self._get_start_time(event=event)
+            )
+            stopped = ms_timestamp_to_datetime(self._get_end_time(event=event))
+            self.__utilization_duration = stopped - started
+        except TypeError:
+            logger.warning("Invalid start or end time, duration undetermined")
+            self.__utilization_duration = None
 
     def _create_job_boto(self):
         self._sagemaker_client.create_training_job(
