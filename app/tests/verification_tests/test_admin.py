@@ -1,4 +1,5 @@
 import pytest
+from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 
 from grandchallenge.core.models import RequestBase
@@ -149,6 +150,9 @@ def test_create_manual_verification_admin_action(settings):
     from grandchallenge.verifications.models import Verification
 
     user = UserFactory(email="user@example.org")
+    EmailAddress.objects.create(
+        user=user, email="user@example.org", verified=True
+    )
 
     create_manual_verification(
         None,
@@ -159,7 +163,7 @@ def test_create_manual_verification_admin_action(settings):
     verification = Verification.objects.get(user=user)
     assert verification.email == "user@example.org"
     assert verification.email_is_verified is True
-    assert verification.is_verified is False
+    assert verification.is_verified is None
     assert verification.verified_at is None
 
 
@@ -200,7 +204,7 @@ def test_create_manual_verification_allows_site_domain(settings):
 
     verification = Verification.objects.get(user=user)
     assert verification.email == f"admin@{site_domain}"
-    assert verification.is_verified is False
+    assert verification.is_verified is None
 
 
 @pytest.mark.django_db
@@ -219,4 +223,4 @@ def test_create_manual_verification_allows_free_email(settings):
 
     verification = Verification.objects.get(user=user)
     assert verification.email == "user@gmail.com"
-    assert verification.is_verified is False
+    assert verification.is_verified is None
