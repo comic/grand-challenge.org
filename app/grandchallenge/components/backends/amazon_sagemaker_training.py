@@ -370,7 +370,7 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.__utilization_duration = None
+        self._utilization_duration = None
 
     @property
     def _training_output_prefix(self):
@@ -387,7 +387,7 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
 
     @property
     def utilization_duration(self):
-        return self.__utilization_duration
+        return self._utilization_duration
 
     @property
     def compute_cost_euro_millicents(self):
@@ -505,10 +505,10 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
                 self._get_start_time(event=event)
             )
             stopped = ms_timestamp_to_datetime(self._get_end_time(event=event))
-            self.__utilization_duration = stopped - started
+            self._utilization_duration = stopped - started
         except TypeError:
             logger.warning("Invalid start or end time, duration undetermined")
-            self.__utilization_duration = None
+            self._utilization_duration = None
 
     def _create_job_boto(self):
         self._sagemaker_client.create_training_job(
