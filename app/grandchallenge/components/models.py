@@ -1966,7 +1966,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
 
     @cached_property
     def amazon_sagemaker_training_logs(self):
-        from grandchallenge.components.backends.amazon_sagemaker_base import (
+        from grandchallenge.components.backends.amazon_sagemaker_training import (
             AmazonSageMakerTrainingLogsService,
             LogStreamNotFound,
         )
