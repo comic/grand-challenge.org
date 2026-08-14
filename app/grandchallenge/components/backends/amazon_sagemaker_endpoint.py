@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import NamedTuple
 from uuid import UUID
 
@@ -77,16 +77,15 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
             or settings.AWS_DEFAULT_REGION,
         )
 
-    def _get_start_time(self, *, event):
-        return int(
-            datetime.fromisoformat(event.get("receivedTime")).timestamp()
-            * 1000
-        )
+    @property
+    def utilization_duration(self):
+        # The duration is tracked on the Endpoint model.
+        raise NotImplementedError
 
-    def _get_end_time(self, *, event):
-        return int(
-            datetime.fromisoformat(event.get("eventTime")).timestamp() * 1000
-        )
+    @property
+    def compute_cost_euro_millicents(self):
+        # The cost is calculated on the Endpoint model.
+        raise NotImplementedError
 
     @property
     def runtime_setup_result_key(self):

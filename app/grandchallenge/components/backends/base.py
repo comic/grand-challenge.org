@@ -419,6 +419,10 @@ class Executor(ABC):
     def utilization_duration(self): ...
 
     @property
+    @abstractmethod
+    def compute_cost_euro_millicents(self): ...
+
+    @property
     def exec_duration(self):
         return self._exec_duration
 
@@ -466,17 +470,6 @@ class Executor(ABC):
     @property
     def _max_memory_mb(self):
         return self._memory_limit * 1024
-
-    @property
-    def compute_cost_euro_millicents(self):
-        utilization_duration = self.utilization_duration
-        if utilization_duration is None:
-            return None
-        else:
-            return duration_to_euro_millicents(
-                duration=utilization_duration,
-                usd_cents_per_hour=self.usd_cents_per_hour,
-            )
 
     @property
     def job_path_parts(self):

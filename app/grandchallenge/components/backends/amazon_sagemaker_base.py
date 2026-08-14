@@ -1,5 +1,5 @@
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import NamedTuple
 
 import boto3
@@ -7,7 +7,6 @@ from django.conf import settings
 from django.utils.functional import cached_property
 
 from grandchallenge.components.backends.base import Executor
-from grandchallenge.components.backends.utils import ms_timestamp_to_datetime
 from grandchallenge.components.schemas import GPUTypeChoices
 
 logger = logging.getLogger(__name__)
@@ -291,18 +290,8 @@ INSTANCE_OPTIONS = [
 
 
 class AmazonSageMakerBaseExecutor(Executor, ABC):
-    @abstractmethod
-    def _get_start_time(self, *, event):
-        pass
-
-    @abstractmethod
-    def _get_end_time(self, *, event):
-        pass
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.__utilization_duration = None
 
         self.__sagemaker_client = None
         self.__logs_client = None
@@ -333,10 +322,6 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                 region_name=settings.COMPONENTS_AMAZON_ECR_REGION,
             )
         return self.__cloudwatch_client
-
-    @property
-    def utilization_duration(self):
-        return self.__utilization_duration
 
     @cached_property
     def _instance_type(self):
@@ -374,14 +359,3 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     def _max_memory_mb(self):
         # Reserve 1 GB for the system
         return (self._instance_type.memory - 1) * 1024
-
-    def _set_utilization_duration(self, *, event):
-        try:
-            started = ms_timestamp_to_datetime(
-                self._get_start_time(event=event)
-            )
-            stopped = ms_timestamp_to_datetime(self._get_end_time(event=event))
-            self.__utilization_duration = stopped - started
-        except TypeError:
-            logger.warning("Invalid start or end time, duration undetermined")
-            self.__utilization_duration = None
