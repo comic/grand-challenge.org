@@ -18,6 +18,7 @@ from grandchallenge.components.backends.base import (
     InferenceResult,
     JobParams,
     RuntimeSetupResult,
+    duration_to_euro_millicents,
 )
 from grandchallenge.components.backends.utils import UUID4_REGEX
 from grandchallenge.components.tasks import handle_event
@@ -185,6 +186,17 @@ class IOCopyExecutor(Executor):
     @property
     def utilization_duration(self):
         return now() - self.__start_time
+
+    @property
+    def compute_cost_euro_millicents(self):
+        utilization_duration = self.utilization_duration
+        if utilization_duration is None:
+            return None
+        else:
+            return duration_to_euro_millicents(
+                duration=utilization_duration,
+                usd_cents_per_hour=self.usd_cents_per_hour,
+            )
 
     @property
     def usd_cents_per_hour(self):

@@ -79,10 +79,12 @@ class AmazonSageMakerEndpointOrchestrator(AmazonSageMakerBaseExecutor):
 
     @property
     def utilization_duration(self):
+        # The duration is tracked on the Endpoint model.
         raise NotImplementedError
 
     @property
     def compute_cost_euro_millicents(self):
+        # The cost is calculated on the Endpoint model.
         raise NotImplementedError
 
     @property

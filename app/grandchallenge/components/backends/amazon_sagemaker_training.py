@@ -20,7 +20,10 @@ from grandchallenge.components.backends.amazon_sagemaker_base import (
     INSTANCE_OPTIONS,
     AmazonSageMakerBaseExecutor,
 )
-from grandchallenge.components.backends.base import JobParams
+from grandchallenge.components.backends.base import (
+    JobParams,
+    duration_to_euro_millicents,
+)
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     RetryStep,
@@ -385,6 +388,17 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
     @property
     def utilization_duration(self):
         return self.__utilization_duration
+
+    @property
+    def compute_cost_euro_millicents(self):
+        utilization_duration = self.utilization_duration
+        if utilization_duration is None:
+            return None
+        else:
+            return duration_to_euro_millicents(
+                duration=utilization_duration,
+                usd_cents_per_hour=self.usd_cents_per_hour,
+            )
 
     @property
     def warm_pool_retained_billable_time_in_seconds(self):

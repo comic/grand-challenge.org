@@ -27,6 +27,10 @@ class UtilizationExecutor(Executor):
     def utilization_duration(self):
         raise NotImplementedError
 
+    @property
+    def compute_cost_euro_millicents(self):
+        raise NotImplementedError
+
     def execute(self):
         raise NotImplementedError
 
