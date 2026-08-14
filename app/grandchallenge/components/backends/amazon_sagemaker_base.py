@@ -304,10 +304,6 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         pass
 
     @abstractmethod
-    def _get_instance_name(self, *, event):
-        pass
-
-    @abstractmethod
     def _create_job_boto(self):
         pass
 
