@@ -699,7 +699,7 @@ def test_api_patch_upload_with_too_many_preprocessing(client, settings):
     assert response.status_code == 400
     assert (
         "You currently have 1 active image post processing tasks. Please wait for them to complete before trying again."
-        in response.json()["values"][0]["non_field_errors"]
+        in response.json()["values"]["0"]["non_field_errors"]
     )
 
     task.status = PostProcessImageTaskStatusChoices.COMPLETED
