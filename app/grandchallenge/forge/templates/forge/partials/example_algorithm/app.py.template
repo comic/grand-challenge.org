@@ -100,7 +100,27 @@ async def invoke():
 
 
 if __name__ == "__main__":
-    # Grand Challenge expects the server on port 4743 — do not change this.
+    # Set logging config to direct logs of level INFO to stdout and WARNING and above to stderr.
     log_config = LOGGING_CONFIG.copy()
+    log_config["filters"] = {
+        "info_only": {
+            "()": "__main__.MaxLevelFilter",
+            "max_level": logging.INFO,
+        }
+    }
+    log_config["handlers"]["default"]["filters"] = ["info_only"]
     log_config["handlers"]["default"]["stream"] = "ext://sys.stdout"
+    log_config["handlers"]["error"] = {
+        "class": "logging.StreamHandler",
+        "formatter": "default",
+        "stream": "ext://sys.stderr",
+        "level": "WARNING",
+    }
+    log_config["loggers"]["uvicorn.error"] = {
+        "handlers": ["default", "error"],
+        "level": "INFO",
+        "propagate": False,
+    }
+
+    # Grand Challenge expects the server on port 4743 — do not change this.
     uvicorn.run(app, host="0.0.0.0", port=4743, log_config=log_config)
