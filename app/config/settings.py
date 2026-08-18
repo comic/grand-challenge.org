@@ -1244,6 +1244,7 @@ DISALLOWED_EMAIL_DOMAINS = {
     "zorrag.com",
     "sis.hust.edu.vn",
     "st.neu.edu.vn",
+    "longkongai.cn",
     *blocklist,
 }
 
