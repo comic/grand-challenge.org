@@ -17,7 +17,7 @@ def clean(html: str, *, no_tags=False):
     """Clean the html with bleach."""
     if no_tags:
         allowed_tags = frozenset()
-        allowed_attributes = frozenset()
+        allowed_attributes = {}
         allowed_css_properties = frozenset()
         allow_rules = {}
     else:
