@@ -14,7 +14,7 @@ register = template.Library()
 
 @register.filter
 def clean(html: str, *, no_tags=False):
-    """Clean the html with bleach."""
+    """Sanitizes untrusted html"""
     if no_tags:
         allowed_tags = frozenset()
         allowed_attributes = {}
