@@ -677,67 +677,6 @@ ACTSTREAM_SETTINGS = {
     "USE_JSONFIELD": True,
 }
 
-##############################################################################
-#
-# bleach
-#
-##############################################################################
-
-# Settings for allowed HTML
-BLEACH_ALLOWED_TAGS = [
-    "a",
-    "abbr",
-    "acronym",
-    "b",
-    "blockquote",
-    "br",
-    "code",
-    "col",
-    "del",
-    "div",
-    "em",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "h6",
-    "hr",
-    "i",
-    "img",
-    "li",
-    "ol",
-    "p",
-    "pre",
-    "span",
-    "strike",
-    "strong",
-    "sub",
-    "table",
-    "tbody",
-    "thead",
-    "td",
-    "th",
-    "tr",
-    "u",
-    "ul",
-    "video",
-]
-BLEACH_ALLOWED_ATTRIBUTES = {
-    "*": ["class", "data-toggle", "id", "style", "role"],
-    "a": ["href", "title", "target", "rel", "data-target"],
-    "abbr": ["title"],
-    "acronym": ["title"],
-    "img": ["height", "src", "width"],
-    # For bootstrap tables: https://getbootstrap.com/docs/4.3/content/tables/
-    "th": ["scope", "colspan"],
-    "td": ["colspan"],
-    "video": ["src", "loop", "controls", "poster"],
-}
-BLEACH_ALLOWED_STYLES = ["height", "width"]
-BLEACH_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
-BLEACH_STRIP = strtobool(os.environ.get("BLEACH_STRIP", "True"))
-
 # The markdown processor
 MARKDOWNX_MEDIA_PATH = now().strftime("i/%Y/%m/%d/")
 MARKDOWNX_MARKDOWN_EXTENSIONS = [

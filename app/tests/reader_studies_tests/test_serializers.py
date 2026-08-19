@@ -79,7 +79,7 @@ def test_markdown_is_scrubbed(client, markdown_field, rendered_field):
     rendered_text = response.json()[rendered_field]
     assert (
         rendered_text
-        == "<h1>Here come some naughty strings</h1>\n<p><a>Click me</a>alert('XSS')</p>"
+        == "<h1>Here come some naughty strings</h1>\n<p><a>Click me</a></p>"
     )
 
 
@@ -95,7 +95,7 @@ def test_reader_study_title_tags_scrubbed(client):
     assert response.status_code == 200
 
     rendered_text = response.json()["title_safe"]
-    assert rendered_text == "No tags allowedalert('XSS')"
+    assert rendered_text == "No tags allowed"
 
 
 @pytest.mark.django_db
@@ -110,7 +110,7 @@ def test_display_set_title_tags_scrubbed(client):
     assert response.status_code == 200
 
     rendered_text = response.json()["title_safe"]
-    assert rendered_text == "No tags allowedalert('XSS')"
+    assert rendered_text == "No tags allowed"
 
 
 @pytest.mark.django_db
@@ -140,11 +140,11 @@ def test_display_view_content_scrubbed(client):
     rendered = response.json()
     assert (
         rendered["description"]
-        == "<p><b>My Help Text</b>naughty</p><p><b>Another Help Text</b>naughty</p>"
+        == "<p><b>My Help Text</b></p><p><b>Another Help Text</b></p>"
     )
     assert rendered["descriptions_map_safe"] == {
-        image.name: "<p><b>My Help Text</b>naughty</p>",
-        image2.name: "<p><b>Another Help Text</b>naughty</p>",
+        image.name: "<p><b>My Help Text</b></p>",
+        image2.name: "<p><b>Another Help Text</b></p>",
     }
 
 
@@ -167,7 +167,7 @@ def test_question_tags_scrubbed(client, field_name):
     assert response.status_code == 200
 
     rendered_text = response.json()[f"{field_name}_safe"]
-    assert rendered_text == "No tags allowedalert('XSS')"
+    assert rendered_text == "No tags allowed"
 
 
 @pytest.mark.django_db
@@ -182,4 +182,4 @@ def test_help_text_scrubbed(client):
     assert response.status_code == 200
 
     rendered_text = response.json()["help_text_safe"]
-    assert rendered_text == "<b>some tags allowed</b>alert('XSS')"
+    assert rendered_text == "<b>some tags allowed</b>"

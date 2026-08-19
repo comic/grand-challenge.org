@@ -1015,13 +1015,10 @@ class TestSubmissionFormOptions:
             user=UserFactory(),
             phase=PhaseFactory(
                 supplementary_url_choice=Phase.OPTIONAL,
-                supplementary_url_help_text="<script>TEST</script>",
+                supplementary_url_help_text="Keep<script>TEST</script>",
             ),
         )
-        assert (
-            form.fields["supplementary_url"].help_text
-            == "&lt;script&gt;TEST&lt;/script&gt;"
-        )
+        assert form.fields["supplementary_url"].help_text == "Keep"
 
 
 def test_algorithm_for_phase_form():

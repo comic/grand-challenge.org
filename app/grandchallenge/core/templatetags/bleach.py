@@ -2,7 +2,7 @@ from django import template
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.safestring import SafeString
-from justhtml import JustHTML
+from justhtml import JustHTML, SanitizationPolicy, UrlPolicy, UrlRule
 from markdown import markdown as render_markdown
 from markdown.extensions.toc import TocExtension
 
@@ -15,23 +15,90 @@ register = template.Library()
 @register.filter
 def clean(html: str, *, no_tags=False):
     """Clean the html with bleach."""
-    # if no_tags:
-    #     tags = []
-    # else:
-    #     tags = settings.BLEACH_ALLOWED_TAGS
+    if no_tags:
+        allowed_tags = frozenset()
+        allowed_attributes = frozenset()
+        allowed_css_properties = frozenset()
+        allow_rules = {}
+    else:
+        allowed_tags = frozenset(
+            {
+                "a",
+                "abbr",
+                "acronym",
+                "b",
+                "blockquote",
+                "br",
+                "code",
+                "col",
+                "del",
+                "div",
+                "em",
+                "h1",
+                "h2",
+                "h3",
+                "h4",
+                "h5",
+                "h6",
+                "hr",
+                "i",
+                "img",
+                "li",
+                "ol",
+                "p",
+                "pre",
+                "span",
+                "strike",
+                "strong",
+                "sub",
+                "table",
+                "tbody",
+                "thead",
+                "td",
+                "th",
+                "tr",
+                "u",
+                "ul",
+                "video",
+            }
+        )
 
-    # cleaned_html = bleach.clean(
-    #     html,
-    #     tags=tags,
-    #     attributes=settings.BLEACH_ALLOWED_ATTRIBUTES,
-    #     css_sanitizer=CSSSanitizer(
-    #         allowed_css_properties=settings.BLEACH_ALLOWED_STYLES
-    #     ),
-    #     protocols=settings.BLEACH_ALLOWED_PROTOCOLS,
-    #     strip=settings.BLEACH_STRIP,
-    # )
+        allowed_attributes = {
+            "*": ["class", "data-toggle", "id", "style", "role"],
+            "a": ["href", "title", "target", "rel", "data-target"],
+            "abbr": ["title"],
+            "acronym": ["title"],
+            "img": ["height", "src", "width"],
+            # For bootstrap tables: https://getbootstrap.com/docs/4.3/content/tables/
+            "th": ["scope", "colspan"],
+            "td": ["colspan"],
+            "video": ["src", "loop", "controls", "poster"],
+        }
 
-    cleaned_html = JustHTML(html).to_html()
+        allowed_css_properties = frozenset({"height", "width"})
+
+        allow_rules = {
+            key: UrlRule(
+                allowed_schemes=frozenset({"http", "https", "mailto"})
+            )
+            for key in {
+                ("a", "href"),
+                ("img", "src"),
+                ("video", "src"),
+                ("video", "poster"),
+            }
+        }
+
+    policy = SanitizationPolicy(
+        allowed_tags=allowed_tags,
+        allowed_attributes=allowed_attributes,
+        allowed_css_properties=allowed_css_properties,
+        url_policy=UrlPolicy(allow_rules=allow_rules),
+    )
+
+    cleaned_html = JustHTML(html=html, fragment=True, policy=policy).to_html(
+        pretty=False
+    )
 
     from django.utils.safestring import (  # noqa I251: we're sure that the strings are safe here as they have been cleaned
         mark_safe,
