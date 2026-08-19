@@ -15,7 +15,6 @@ dependencies = [
     "gunicorn",
     "uvicorn[standard]",
     "django-select2",
-    "bleach[css]",
     "jsonschema",
     "django-autocomplete-light",
     "django-storages[s3]>=1.14.2",
@@ -62,6 +61,7 @@ dependencies = [
     "panimg-models",
     "psutil",
     "django-lambda-tasks",
+    "justhtml",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"

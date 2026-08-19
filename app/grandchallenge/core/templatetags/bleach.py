@@ -1,9 +1,8 @@
-import bleach
-from bleach.css_sanitizer import CSSSanitizer
 from django import template
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.safestring import SafeString
+from justhtml import JustHTML
 from markdown import markdown as render_markdown
 from markdown.extensions.toc import TocExtension
 
@@ -16,21 +15,23 @@ register = template.Library()
 @register.filter
 def clean(html: str, *, no_tags=False):
     """Clean the html with bleach."""
-    if no_tags:
-        tags = []
-    else:
-        tags = settings.BLEACH_ALLOWED_TAGS
+    # if no_tags:
+    #     tags = []
+    # else:
+    #     tags = settings.BLEACH_ALLOWED_TAGS
 
-    cleaned_html = bleach.clean(
-        html,
-        tags=tags,
-        attributes=settings.BLEACH_ALLOWED_ATTRIBUTES,
-        css_sanitizer=CSSSanitizer(
-            allowed_css_properties=settings.BLEACH_ALLOWED_STYLES
-        ),
-        protocols=settings.BLEACH_ALLOWED_PROTOCOLS,
-        strip=settings.BLEACH_STRIP,
-    )
+    # cleaned_html = bleach.clean(
+    #     html,
+    #     tags=tags,
+    #     attributes=settings.BLEACH_ALLOWED_ATTRIBUTES,
+    #     css_sanitizer=CSSSanitizer(
+    #         allowed_css_properties=settings.BLEACH_ALLOWED_STYLES
+    #     ),
+    #     protocols=settings.BLEACH_ALLOWED_PROTOCOLS,
+    #     strip=settings.BLEACH_STRIP,
+    # )
+
+    cleaned_html = JustHTML(html).to_html()
 
     from django.utils.safestring import (  # noqa I251: we're sure that the strings are safe here as they have been cleaned
         mark_safe,
