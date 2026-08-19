@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:73c5b1e8d431b7256fcff291527e49657a54ff44db0224b1626027b5e4c2c952",
+  "content_hash": "sha256:ec20a47f8ced93424d25d4bb87e6fb5fdd8915c88d6cabe25e55806a5d2cce73",
   "dependencies": [
     {
       "name": "@diagnijmegen/rse-grand-challenge-dicom-de-id-procedure",
@@ -536,24 +536,24 @@
     },
     {
       "name": "dcmjs",
-      "version": "0.43.0",
+      "version": "0.52.0",
       "provider": "unpkg",
       "assets": [
         {
           "name": "build/dcmjs.js",
-          "sri": "sha256-mRqCqFSNl4jZJKl28DXBs1EFG9PExZSN6QqwC+SGtQw="
+          "sri": "sha256-7mCq9Z9QqVZbZngFNyfa5ydbv1INnyppbb93HtA1QZA="
         },
         {
           "name": "build/dcmjs.js.map",
-          "sri": "sha256-z6uj86izD6m4xSAWTxKKwzBqB2exPTc9JXyMbFFNP5I="
+          "sri": "sha256-O4l2d0N8xY4KLo8dU36kWAtAGZRGHS1Xog/ofVDVyOw="
         },
         {
           "name": "build/dcmjs.min.js",
-          "sri": "sha256-3Am7II2X2N/cnT5u6Ugh6zlC0OCP08PT9hnpG4KpIfk="
+          "sri": "sha256-HMifLy5m3z5+y9QY648fhlHuYnC5lAJsygqeWstuQmI="
         },
         {
           "name": "build/dcmjs.min.js.map",
-          "sri": "sha256-YmVGtoK2bs7l3bm0JKCMpdoZySLz+M8LC17ZgHcXTw0="
+          "sri": "sha256-VhALeQnhoK2cIZLOXjr/6ngkrw50TgqgfafDc8Su7EQ="
         }
       ],
       "maps": []
