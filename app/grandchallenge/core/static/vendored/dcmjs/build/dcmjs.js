@@ -372,7 +372,7 @@
 			    defaultLogger['default'] = defaultLogger;
 
 			    return defaultLogger;
-			})); 
+			}));
 		} (loglevel$1));
 		return loglevel$1.exports;
 	}
@@ -21096,7 +21096,7 @@
 			  return false;
 			}
 
-			module.exports = cloneDeep; 
+			module.exports = cloneDeep;
 		} (lodash_clonedeep, lodash_clonedeep.exports));
 		return lodash_clonedeep.exports;
 	}
