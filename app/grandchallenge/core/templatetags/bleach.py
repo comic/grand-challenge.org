@@ -3,6 +3,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.safestring import SafeString
 from justhtml import JustHTML, SanitizationPolicy, UrlPolicy, UrlRule
+from justhtml.transforms import EditAttrs
 from markdown import markdown as render_markdown
 from markdown.extensions.toc import TocExtension
 
@@ -96,15 +97,33 @@ def clean(html: str, *, no_tags=False):
         url_policy=UrlPolicy(allow_rules=allow_rules),
     )
 
-    cleaned_html = JustHTML(html=html, fragment=True, policy=policy).to_html(
-        pretty=False
-    )
+    cleaned_html = JustHTML(
+        html=html,
+        fragment=True,
+        policy=policy,
+        transforms=[
+            EditAttrs("a[target=_blank]", _add_noopener_to_blank_target),
+        ],
+    ).to_html(pretty=False)
 
     from django.utils.safestring import (  # noqa I251: we're sure that the strings are safe here as they have been cleaned
         mark_safe,
     )
 
     return mark_safe(cleaned_html)
+
+
+def _add_noopener_to_blank_target(node):
+    attrs = dict(node.attrs) if node.attrs else {}
+    rel = attrs.get("rel", "")
+    tokens = rel.split() if rel else []
+
+    if "noopener" not in tokens:
+        tokens.append("noopener")
+        attrs["rel"] = " ".join(tokens)
+        return attrs
+    else:
+        return None
 
 
 @register.filter
