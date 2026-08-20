@@ -1,6 +1,5 @@
 from typing import NamedTuple
 
-from bleach import clean
 from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, ButtonHolder, Layout, Submit
@@ -39,6 +38,7 @@ from grandchallenge.core.forms import (
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import filter_by_permission
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,

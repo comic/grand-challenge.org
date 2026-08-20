@@ -375,9 +375,7 @@ def test_description_is_scrubbed(client):
 
     assert response.status_code == 200
     # Case should be indexed with the api url
-    assert (
-        response.json()["description"] == "<p><b>My Help Text</b>naughty</p>"
-    )
+    assert response.json()["description"] == "<p><b>My Help Text</b></p>"
 
 
 @pytest.mark.django_db
