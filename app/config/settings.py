@@ -678,32 +678,11 @@ ACTSTREAM_SETTINGS = {
 
 # The markdown processor
 MARKDOWNX_MEDIA_PATH = now().strftime("i/%Y/%m/%d/")
-MARKDOWNX_MARKDOWN_EXTENSIONS = [
-    "markdown.extensions.attr_list",
-    "markdown.extensions.codehilite",
-    "markdown.extensions.fenced_code",
-    "markdown.extensions.md_in_html",
-    "markdown.extensions.sane_lists",
-    "markdown.extensions.tables",
-    "pymdownx.betterem",
-    "pymdownx.magiclink",
-    "pymdownx.tasklist",
-    "pymdownx.tilde",
-]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
     "grandchallenge.core.templatetags.bleach.md2html"
 )
-MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {
-    "markdown.extensions.codehilite": {
-        "wrapcode": False,
-    }
-}
 MARKDOWNX_IMAGE_MAX_SIZE = {"size": (2000, 0), "quality": 90}
 MARKDOWNX_EDITOR_RESIZABLE = "False"
-
-HAYSTACK_CONNECTIONS = {
-    "default": {"ENGINE": "haystack.backends.simple_backend.SimpleEngine"}
-}
 
 FORUMS_MIN_ACCOUNT_AGE_DAYS = int(
     os.environ.get("FORUMS_MIN_ACCOUNT_AGE_DAYS", "2")

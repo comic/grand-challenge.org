@@ -1,5 +1,4 @@
 from django import template
-from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.safestring import SafeString
 from justhtml import JustHTML, SanitizationPolicy, UrlPolicy, UrlRule
@@ -7,7 +6,6 @@ from justhtml.transforms import EditAttrs
 from markdown import markdown as render_markdown
 from markdown.extensions.toc import TocExtension
 
-from grandchallenge.core.utils.markdown import LinkBlankTargetExtension
 from grandchallenge.core.utils.tag_substitutions import TagSubstitution
 
 register = template.Library()
@@ -77,7 +75,7 @@ CLEAN_ALLOW_RULES = {
 
 
 @register.filter
-def clean(html: str, *, no_tags=False):
+def clean(html: str, *, no_tags=False, link_blank_target=False):
     """Sanitizes untrusted html"""
     if no_tags:
         allowed_tags = frozenset()
@@ -89,6 +87,11 @@ def clean(html: str, *, no_tags=False):
         allowed_attributes = CLEAN_ALLOWED_ATTRIBUTES
         allowed_css_properties = CLEAN_ALLOWED_CSS_PROPERTIES
         allow_rules = CLEAN_ALLOW_RULES
+
+    if link_blank_target:
+        blank_link_selector = "a"
+    else:
+        blank_link_selector = "a[target=_blank]"
 
     policy = SanitizationPolicy(
         allowed_tags=allowed_tags,
@@ -102,7 +105,7 @@ def clean(html: str, *, no_tags=False):
         fragment=True,
         policy=policy,
         transforms=[
-            EditAttrs("a[target=_blank]", _add_noopener_to_blank_target),
+            EditAttrs(blank_link_selector, _enforce_blank_link),
             EditAttrs("img", EnsureClasses(["img-fluid"])),
             EditAttrs("blockquote", EnsureClasses(["blockquote"])),
             EditAttrs(
@@ -121,17 +124,17 @@ def clean(html: str, *, no_tags=False):
     return mark_safe(cleaned_html)
 
 
-def _add_noopener_to_blank_target(node):
+def _enforce_blank_link(node):
     attrs = dict(node.attrs) if node.attrs else {}
     rel = attrs.get("rel", "")
     tokens = rel.split() if rel else []
 
     if "noopener" not in tokens:
         tokens.append("noopener")
-        attrs["rel"] = " ".join(tokens)
-        return attrs
-    else:
-        return None
+
+    attrs["rel"] = " ".join(tokens)
+    attrs["target"] = "_blank"
+    return attrs
 
 
 class EnsureClasses:
@@ -183,10 +186,23 @@ def md2html(
 ):
     """Convert markdown to clean html"""
 
-    extensions = [*settings.MARKDOWNX_MARKDOWN_EXTENSIONS]
-
-    if link_blank_target:
-        extensions.append(LinkBlankTargetExtension())
+    extensions = [
+        "markdown.extensions.attr_list",
+        "markdown.extensions.codehilite",
+        "markdown.extensions.fenced_code",
+        "markdown.extensions.md_in_html",
+        "markdown.extensions.sane_lists",
+        "markdown.extensions.tables",
+        "pymdownx.betterem",
+        "pymdownx.magiclink",
+        "pymdownx.tasklist",
+        "pymdownx.tilde",
+    ]
+    extension_configs = {
+        "markdown.extensions.codehilite": {
+            "wrapcode": False,
+        }
+    }
 
     if create_permalink_for_headers:
         extensions.append(
@@ -199,11 +215,11 @@ def md2html(
     html = render_markdown(
         text=markdown or "",
         extensions=extensions,
-        extension_configs=settings.MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS,
+        extension_configs=extension_configs,
         tab_length=2,
     )
 
-    cleaned_html = clean(html=html)
+    cleaned_html = clean(html=html, link_blank_target=link_blank_target)
 
     post_processors = []
 
