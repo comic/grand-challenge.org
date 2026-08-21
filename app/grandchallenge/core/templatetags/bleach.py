@@ -159,7 +159,7 @@ def md2html(
         tab_length=2,
     )
 
-    cleaned_html = clean(html)
+    cleaned_html = clean(html=html)
 
     post_processors = [*settings.MARKDOWN_POST_PROCESSORS]
 

@@ -127,3 +127,16 @@ def test_next_previous_properties_is_faq():
         faq_pages[0].next
     with pytest.raises(NotImplementedError):
         faq_pages[0].previous
+
+
+@pytest.mark.django_db
+def test_content_plain():
+    page = DocPageFactory()
+
+    page.content = "# This page **contains** markdown\n\n[link](https://example.org)\n\n[youtube QCYYhkTlnhQ]"
+    page.save()
+
+    page.refresh_from_db()
+    assert (
+        page.content_plain == "This page contains markdown\nlink\n\n    \n\n"
+    )

@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.exceptions import ObjectDoesNotExist
@@ -9,7 +8,7 @@ from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django_extensions.db.fields import AutoSlugField
 
-from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.core.templatetags.bleach import clean, md2html
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -93,10 +92,10 @@ class DocPage(models.Model):
         )
 
     def update_content_plain(self):
-        self.content_plain = BeautifulSoup(
+        self.content_plain = clean(
             md2html(self.content, create_permalink_for_headers=False),
-            "html.parser",
-        ).get_text()
+            no_tags=True,
+        )
 
     def position(self, position):
         if position:
