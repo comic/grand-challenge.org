@@ -2,7 +2,6 @@ version = 1
 revision = 3
 requires-python = "==3.13.*"
 
-
 [[package]]
 name = "aioboto3"
 version = "15.5.0"
@@ -1041,7 +1040,6 @@ source = { virtual = "." }
 dependencies = [
     { name = "aioboto3" },
     { name = "aws-xray-sdk" },
-    { name = "beautifulsoup4" },
     { name = "black" },
     { name = "boto3" },
     { name = "cachetools" },
@@ -1127,7 +1125,6 @@ dev = [
 requires-dist = [
     { name = "aioboto3" },
     { name = "aws-xray-sdk" },
-    { name = "beautifulsoup4" },
     { name = "black" },
     { name = "boto3", specifier = ">1.18.8" },
     { name = "cachetools" },
