@@ -692,7 +692,6 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "pymdownx.tilde",
     BS4Extension(),
 ]
-MARKDOWN_POST_PROCESSORS = []
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
     "grandchallenge.core.templatetags.bleach.md2html"
 )

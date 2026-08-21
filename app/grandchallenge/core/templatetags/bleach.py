@@ -161,7 +161,7 @@ def md2html(
 
     cleaned_html = clean(html=html)
 
-    post_processors = [*settings.MARKDOWN_POST_PROCESSORS]
+    post_processors = []
 
     if process_youtube_tags:
         post_processors.append(YOUTUBE_TAG_SUBSTITUTION)
