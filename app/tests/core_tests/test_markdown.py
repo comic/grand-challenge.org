@@ -1,7 +1,6 @@
 import textwrap
 
 import pytest
-from markdown import markdown
 
 from grandchallenge.core.templatetags.bleach import clean, md2html
 
@@ -28,7 +27,7 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
             ),
             textwrap.dedent(
                 """\
-                <p><img class="img-fluid" src="test.png"></p>
+                <p><img src="test.png" class="img-fluid"></p>
                 <blockquote class="blockquote">
                 <p>Quote Me</p>
                 </blockquote>
@@ -121,8 +120,8 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
             ),
             textwrap.dedent(
                 """\
-                <p><img class="img-fluid" src="test.png"></p>
-                <p><img class="img-fluid" src="test-no-class.png"></p>
+                <p><img src="test.png" class="img-fluid"></p>
+                <p><img src="test-no-class.png" class="img-fluid"></p>
                 <p><img class="img-fluid" src="test-empty-class.png"></p>
                 <p><img class="ml-3 img-fluid" src="test-existing-class.png"></p>
                 <blockquote class="blockquote">
@@ -134,6 +133,7 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 <blockquote class="ml-3 blockquote">
                 <p>Quote Me Existing Class</p>
                 </blockquote>
+
                 <table class="table table-hover table-borderless">
                 <thead class="thead-light">
                 <tr>
@@ -164,6 +164,7 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 <tbody>
                 </tbody>
                 </table>
+
                 <table class="ml-3 table table-hover table-borderless">
                 <thead class="ml-3 thead-light">
                 <tr>
@@ -173,11 +174,14 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
                 <tbody>
                 </tbody>
                 </table>
+
                 <div class="codehilite"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_function</span><span class="p">():</span>
                     <span class="k">pass</span>
                 </pre></div>
+
                 <div><pre><code class="codehilite">no class</code></pre></div>
                 <div class="ml-3"><pre><code class="ml-3 codehilite">existing class</code></pre></div>
+
                 <p><del>Delete me</del></p>
                 <p>CH<sub>3</sub>CH<sub>2</sub>OH
                 text<sub>a subscript</sub></p>
@@ -193,7 +197,7 @@ from grandchallenge.core.templatetags.bleach import clean, md2html
         ),
         (
             "[![](http://s3.localhost:8333/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)",
-            '<p><a href="https://google.com"><img class="img-fluid" src="http://s3.localhost:8333/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg"></a></p>',
+            '<p><a href="https://google.com"><img src="http://s3.localhost:8333/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg" class="img-fluid"></a></p>',
         ),
     ),
 )
@@ -236,12 +240,8 @@ def test_markdown_rendering(markdown_with_html, expected_output):
         ),
     ],
 )
-def test_extend_html_tag_classes(html, expected_output, settings):
-    output = markdown(
-        text=html,
-        extensions=settings.MARKDOWNX_MARKDOWN_EXTENSIONS,
-        extension_configs=settings.MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS,
-    )
+def test_extend_html_tag_classes(html, expected_output):
+    output = md2html(markdown=html)
 
     assert output == expected_output
 

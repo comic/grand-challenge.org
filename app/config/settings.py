@@ -22,7 +22,6 @@ from config.denylist import USERNAME_DENYLIST
 from config.lambda_tasks import LambdaTaskQueueChoices
 from config.sentry import sentry_before_send
 from grandchallenge.core.utils import strtobool
-from grandchallenge.core.utils.markdown import BS4Extension
 
 MEGABYTE = 1024 * 1024
 GIGABYTE = 1024 * MEGABYTE
@@ -690,7 +689,6 @@ MARKDOWNX_MARKDOWN_EXTENSIONS = [
     "pymdownx.magiclink",
     "pymdownx.tasklist",
     "pymdownx.tilde",
-    BS4Extension(),
 ]
 MARKDOWNX_MARKDOWNIFY_FUNCTION = (
     "grandchallenge.core.templatetags.bleach.md2html"

@@ -103,6 +103,14 @@ def clean(html: str, *, no_tags=False):
         policy=policy,
         transforms=[
             EditAttrs("a[target=_blank]", _add_noopener_to_blank_target),
+            EditAttrs("img", EnsureClasses(["img-fluid"])),
+            EditAttrs("blockquote", EnsureClasses(["blockquote"])),
+            EditAttrs(
+                "table",
+                EnsureClasses(["table", "table-hover", "table-borderless"]),
+            ),
+            EditAttrs("thead", EnsureClasses(["thead-light"])),
+            EditAttrs("code", EnsureClasses(["codehilite"])),
         ],
     ).to_html(pretty=False)
 
@@ -124,6 +132,23 @@ def _add_noopener_to_blank_target(node):
         return attrs
     else:
         return None
+
+
+class EnsureClasses:
+    def __init__(self, ensure_classes):
+        self._ensure_classes = ensure_classes
+
+    def __call__(self, node):
+        attrs = dict(node.attrs) if node.attrs else {}
+        klas = attrs.get("class", "")
+        classes = klas.split() if klas else []
+
+        for ensure_class in self._ensure_classes:
+            if ensure_class not in classes:
+                classes.append(ensure_class)
+
+        attrs["class"] = " ".join(classes)
+        return attrs
 
 
 @register.filter
