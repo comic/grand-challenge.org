@@ -47,7 +47,6 @@ dependencies = [
     "django-csp",
     "psycopg[c]>3.1.8",
     "pyjwt",
-    "beautifulsoup4",
     "pymdown-extensions",
     "cachetools",
     "grand-challenge-dicom-de-identifier",

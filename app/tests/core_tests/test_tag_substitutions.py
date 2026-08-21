@@ -162,17 +162,18 @@ def test_youtube_tag(input_html, expected_html):
     assert output_html == expected_html
 
 
-def test_md2html_raises_error_with_unclean_tags(settings):
+def test_md2html_raises_error_with_unclean_tags(mocker):
     # There may be an assumption by consumers that md2html is safe to use
-    settings.MARKDOWN_POST_PROCESSORS = [
-        TagSubstitution(tag_name="unsafe", replacement="notsafe")
-    ]
+    mocker.patch(
+        "grandchallenge.core.templatetags.bleach.YOUTUBE_TAG_SUBSTITUTION",
+        new=TagSubstitution(tag_name="unsafe", replacement="notsafe"),
+    )
 
     # Not using the unsafe tag, we're good
-    assert md2html("[safe]")
+    assert md2html("[safe]", process_youtube_tags=True)
 
     with pytest.raises(RuntimeError) as error:
-        md2html("[unsafe]")
+        md2html("[unsafe]", process_youtube_tags=True)
 
     assert (
         str(error.value) == "Markdown rendering failed to produce a SafeString"

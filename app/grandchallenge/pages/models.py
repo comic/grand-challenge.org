@@ -1,6 +1,5 @@
 import difflib
 
-from bs4 import BeautifulSoup
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import mail_managers
 from django.db import models
@@ -14,7 +13,7 @@ from grandchallenge.core.guardian import (
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import FieldChangeMixin
-from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.core.templatetags.bleach import clean, md2html
 from grandchallenge.core.utils.query import index
 from grandchallenge.subdomains.utils import reverse
 
@@ -192,12 +191,7 @@ class Page(FieldChangeMixin, models.Model):
 
     @staticmethod
     def get_visible_text(html):
-        return (
-            BeautifulSoup(html, "html.parser")
-            .get_text(separator="\n")
-            .strip()
-            .splitlines()
-        )
+        return clean(html=html, no_tags=True).strip().splitlines()
 
     def handle_changed_content_for_inactive_challenge(self):
         old_content = self.get_visible_text(

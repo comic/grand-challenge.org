@@ -12,6 +12,69 @@ from grandchallenge.core.utils.tag_substitutions import TagSubstitution
 
 register = template.Library()
 
+CLEAN_ALLOWED_TAGS = frozenset(
+    {
+        "a",
+        "abbr",
+        "acronym",
+        "b",
+        "blockquote",
+        "br",
+        "code",
+        "col",
+        "del",
+        "div",
+        "em",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "hr",
+        "i",
+        "img",
+        "li",
+        "ol",
+        "p",
+        "pre",
+        "span",
+        "strike",
+        "strong",
+        "sub",
+        "table",
+        "tbody",
+        "thead",
+        "td",
+        "th",
+        "tr",
+        "u",
+        "ul",
+        "video",
+    }
+)
+CLEAN_ALLOWED_ATTRIBUTES = {
+    "*": ["class", "data-toggle", "id", "style", "role"],
+    "a": ["href", "title", "target", "rel", "data-target"],
+    "abbr": ["title"],
+    "acronym": ["title"],
+    "img": ["height", "src", "width"],
+    # For bootstrap tables: https://getbootstrap.com/docs/4.3/content/tables/
+    "th": ["scope", "colspan"],
+    "td": ["colspan"],
+    "video": ["src", "loop", "controls", "poster"],
+}
+CLEAN_ALLOWED_CSS_PROPERTIES = frozenset({"height", "width"})
+CLEAN_ALLOW_RULES = {
+    key: UrlRule(allowed_schemes=frozenset({"http", "https", "mailto"}))
+    for key in {
+        ("a", "href"),
+        ("img", "src"),
+        ("video", "src"),
+        ("video", "poster"),
+    }
+}
+
 
 @register.filter
 def clean(html: str, *, no_tags=False):
@@ -22,73 +85,10 @@ def clean(html: str, *, no_tags=False):
         allowed_css_properties = frozenset()
         allow_rules = {}
     else:
-        allowed_tags = frozenset(
-            {
-                "a",
-                "abbr",
-                "acronym",
-                "b",
-                "blockquote",
-                "br",
-                "code",
-                "col",
-                "del",
-                "div",
-                "em",
-                "h1",
-                "h2",
-                "h3",
-                "h4",
-                "h5",
-                "h6",
-                "hr",
-                "i",
-                "img",
-                "li",
-                "ol",
-                "p",
-                "pre",
-                "span",
-                "strike",
-                "strong",
-                "sub",
-                "table",
-                "tbody",
-                "thead",
-                "td",
-                "th",
-                "tr",
-                "u",
-                "ul",
-                "video",
-            }
-        )
-
-        allowed_attributes = {
-            "*": ["class", "data-toggle", "id", "style", "role"],
-            "a": ["href", "title", "target", "rel", "data-target"],
-            "abbr": ["title"],
-            "acronym": ["title"],
-            "img": ["height", "src", "width"],
-            # For bootstrap tables: https://getbootstrap.com/docs/4.3/content/tables/
-            "th": ["scope", "colspan"],
-            "td": ["colspan"],
-            "video": ["src", "loop", "controls", "poster"],
-        }
-
-        allowed_css_properties = frozenset({"height", "width"})
-
-        allow_rules = {
-            key: UrlRule(
-                allowed_schemes=frozenset({"http", "https", "mailto"})
-            )
-            for key in {
-                ("a", "href"),
-                ("img", "src"),
-                ("video", "src"),
-                ("video", "poster"),
-            }
-        }
+        allowed_tags = CLEAN_ALLOWED_TAGS
+        allowed_attributes = CLEAN_ALLOWED_ATTRIBUTES
+        allowed_css_properties = CLEAN_ALLOWED_CSS_PROPERTIES
+        allow_rules = CLEAN_ALLOW_RULES
 
     policy = SanitizationPolicy(
         allowed_tags=allowed_tags,
@@ -103,6 +103,14 @@ def clean(html: str, *, no_tags=False):
         policy=policy,
         transforms=[
             EditAttrs("a[target=_blank]", _add_noopener_to_blank_target),
+            EditAttrs("img", EnsureClasses(["img-fluid"])),
+            EditAttrs("blockquote", EnsureClasses(["blockquote"])),
+            EditAttrs(
+                "table",
+                EnsureClasses(["table", "table-hover", "table-borderless"]),
+            ),
+            EditAttrs("thead", EnsureClasses(["thead-light"])),
+            EditAttrs("code", EnsureClasses(["codehilite"])),
         ],
     ).to_html(pretty=False)
 
@@ -124,6 +132,23 @@ def _add_noopener_to_blank_target(node):
         return attrs
     else:
         return None
+
+
+class EnsureClasses:
+    def __init__(self, ensure_classes):
+        self._ensure_classes = ensure_classes
+
+    def __call__(self, node):
+        attrs = dict(node.attrs) if node.attrs else {}
+        klas = attrs.get("class", "")
+        classes = klas.split() if klas else []
+
+        for ensure_class in self._ensure_classes:
+            if ensure_class not in classes:
+                classes.append(ensure_class)
+
+        attrs["class"] = " ".join(classes)
+        return attrs
 
 
 @register.filter
@@ -178,9 +203,9 @@ def md2html(
         tab_length=2,
     )
 
-    cleaned_html = clean(html)
+    cleaned_html = clean(html=html)
 
-    post_processors = [*settings.MARKDOWN_POST_PROCESSORS]
+    post_processors = []
 
     if process_youtube_tags:
         post_processors.append(YOUTUBE_TAG_SUBSTITUTION)
