@@ -79,7 +79,7 @@ def test_markdown_is_scrubbed(client, markdown_field, rendered_field):
     rendered_text = response.json()[rendered_field]
     assert (
         rendered_text
-        == "<h1>Here come some naughty strings</h1>\n<p><a>Click me</a></p>"
+        == '<h1>Here come some naughty strings</h1>\n<p><a rel="noopener" target="_blank">Click me</a></p>'
     )
 
 

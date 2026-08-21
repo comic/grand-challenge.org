@@ -268,5 +268,31 @@ def test_extend_html_tag_classes(html, expected_output):
     ],
 )
 def test_clean_adds_noopener_to_blank_target_links(html, expected):
-    result = clean(html=html)
+    result = clean(html=html, link_blank_target=False)
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    "html,expected",
+    [
+        (
+            '<a href="https://example.com" target="_blank">link</a>',
+            '<a href="https://example.com" target="_blank" rel="noopener">link</a>',
+        ),
+        (
+            '<a href="https://example.com" target="_blank" rel="noopener">link</a>',
+            '<a href="https://example.com" target="_blank" rel="noopener">link</a>',
+        ),
+        (
+            '<a href="https://example.com" target="_blank" rel="nofollow">link</a>',
+            '<a href="https://example.com" target="_blank" rel="nofollow noopener">link</a>',
+        ),
+        (
+            '<a href="https://example.com">link</a>',
+            '<a href="https://example.com" rel="noopener" target="_blank">link</a>',
+        ),
+    ],
+)
+def test_clean_adds_blank_target_links(html, expected):
+    result = clean(html=html, link_blank_target=True)
     assert result == expected
