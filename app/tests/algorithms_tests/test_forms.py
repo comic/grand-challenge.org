@@ -3,10 +3,10 @@ from pathlib import Path
 
 import pytest
 from actstream.actions import is_following
-from bs4 import BeautifulSoup
 from django.core.validators import MaxValueValidator, MinValueValidator
 from factory.django import ImageField
 from guardian.shortcuts import assign_perm
+from justhtml import JustHTML
 
 from grandchallenge.algorithms.forms import (
     AlgorithmAlgorithmInterfaceDeleteForm,
@@ -449,30 +449,30 @@ def test_create_job_input_field_required_validation(client, socket_kwargs):
 
 def extract_form_data_from_response(response):
     html = response.content.decode()
-    soup = BeautifulSoup(html, "html.parser")
+    doc = JustHTML(html)
 
     data = {}
-    for tag in soup.find_all(["input", "select", "textarea"]):
-        name = tag.get("name")
+    for tag in doc.query("input, select, textarea"):
+        name = tag.attrs.get("name")
         if not name:
             continue
 
         if tag.name == "input":
-            if tag.get("type") in ["checkbox", "radio"]:
-                if tag.has_attr("checked"):
-                    data[name] = tag.get("value", "on")
+            if tag.attrs.get("type") in ["checkbox", "radio"]:
+                if "checked" in tag.attrs:
+                    data[name] = tag.attrs.get("value", "on")
             else:
-                data[name] = tag.get("value", "")
+                data[name] = tag.attrs.get("value", "")
         elif tag.name == "select":
-            selected = tag.find("option", selected=True)
+            selected = tag.query_one("option[selected]")
             if selected:
-                data[name] = selected.get("value")
+                data[name] = selected.attrs.get("value")
             else:
-                first = tag.find("option")
+                first = tag.query_one("option")
                 if first:
-                    data[name] = first.get("value")
+                    data[name] = first.attrs.get("value")
         elif tag.name == "textarea":
-            data[name] = tag.text
+            data[name] = tag.to_text()
 
     return data
 
