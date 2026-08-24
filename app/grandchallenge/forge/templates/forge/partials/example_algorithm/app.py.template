@@ -38,6 +38,7 @@ Any implementation will do — FastAPI is used here as an example. The only
 requirements are the two endpoints and the LABEL in the Dockerfile.
 
 """
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Response, status
@@ -99,8 +100,40 @@ async def invoke():
     return Response(status_code=status.HTTP_201_CREATED)
 
 
+class MaxLevelFilter(logging.Filter):
+    def __init__(self, max_level):
+        super().__init__()
+        self.max_level = max_level
+
+    def filter(self, record):
+        return record.levelno <= self.max_level
+
+
+def _get_log_config():
+    # Set logging config to direct logs of level INFO to stdout and WARNING and above to stderr.
+    log_config = LOGGING_CONFIG.copy()
+    log_config["filters"] = {
+        "info_only": {
+            "()": "__main__.MaxLevelFilter",
+            "max_level": logging.INFO,
+        }
+    }
+    log_config["handlers"]["default"]["filters"] = ["info_only"]
+    log_config["handlers"]["default"]["stream"] = "ext://sys.stdout"
+    log_config["handlers"]["error"] = {
+        "class": "logging.StreamHandler",
+        "formatter": "default",
+        "stream": "ext://sys.stderr",
+        "level": "WARNING",
+    }
+    log_config["loggers"]["uvicorn.error"] = {
+        "handlers": ["default", "error"],
+        "level": "INFO",
+        "propagate": False,
+    }
+    return log_config
+
+
 if __name__ == "__main__":
     # Grand Challenge expects the server on port 4743 — do not change this.
-    log_config = LOGGING_CONFIG.copy()
-    log_config["handlers"]["default"]["stream"] = "ext://sys.stdout"
-    uvicorn.run(app, host="0.0.0.0", port=4743, log_config=log_config)
+    uvicorn.run(app, host="0.0.0.0", port=4743, log_config=_get_log_config())
