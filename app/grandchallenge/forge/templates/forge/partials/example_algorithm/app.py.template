@@ -38,6 +38,7 @@ Any implementation will do — FastAPI is used here as an example. The only
 requirements are the two endpoints and the LABEL in the Dockerfile.
 
 """
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Response, status
@@ -97,6 +98,15 @@ async def invoke():
     """
     inference.run(MODEL)
     return Response(status_code=status.HTTP_201_CREATED)
+
+
+class MaxLevelFilter(logging.Filter):
+    def __init__(self, max_level):
+        super().__init__()
+        self.max_level = max_level
+
+    def filter(self, record):
+        return record.levelno <= self.max_level
 
 
 if __name__ == "__main__":
