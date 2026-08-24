@@ -109,7 +109,7 @@ class MaxLevelFilter(logging.Filter):
         return record.levelno <= self.max_level
 
 
-if __name__ == "__main__":
+def _get_log_config():
     # Set logging config to direct logs of level INFO to stdout and WARNING and above to stderr.
     log_config = LOGGING_CONFIG.copy()
     log_config["filters"] = {
@@ -131,6 +131,9 @@ if __name__ == "__main__":
         "level": "INFO",
         "propagate": False,
     }
+    return log_config
 
+
+if __name__ == "__main__":
     # Grand Challenge expects the server on port 4743 — do not change this.
-    uvicorn.run(app, host="0.0.0.0", port=4743, log_config=log_config)
+    uvicorn.run(app, host="0.0.0.0", port=4743, log_config=_get_log_config())
