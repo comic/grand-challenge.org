@@ -9,3 +9,6 @@
 # owner(s) will be requested for a review.
 *.js    @HarmvZ
 *.mjs   @HarmvZ
+
+# Owners of specific Django applications
+/app/grandchallenge/verifications    @koopmant
