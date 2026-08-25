@@ -1,10 +1,8 @@
-import os
-from contextlib import contextmanager
-from pathlib import Path
+import hashlib
+import secrets
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.files.base import ContentFile
 from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import (
@@ -24,6 +22,7 @@ from grandchallenge.evaluation.models import Method, Phase
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import Invoice
 from grandchallenge.workstations.models import Workstation
+from scripts.development_fixtures import _uploaded_image_file
 
 
 def run():
@@ -140,10 +139,15 @@ def _create_challenge(
     p.submissions_limit_per_user_per_period = 10
     p.save()
 
-    m = Method(creator=creator, phase=p)
-
-    with _gc_demo_algorithm() as container:
-        m.image.save("algorithm_io.tar", container)
+    Method.objects.create(
+        creator=creator,
+        phase=p,
+        image_sha256=_get_random_sha256(),
+        import_status=Method.ImportStatusChoices.COMPLETED,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
 
     return c
 
@@ -159,31 +163,16 @@ def _create_algorithm(*, creator, inputs, outputs, suffix):
     algorithm.interfaces.set([interface])
     algorithm.add_editor(creator)
 
-    algorithm_image = AlgorithmImage(creator=creator, algorithm=algorithm)
-
-    with _gc_demo_algorithm() as container:
-        algorithm_image.image.save("algorithm_io.tar", container)
-
-
-@contextmanager
-def _gc_demo_algorithm():
-    yield from _uploaded_file(
-        path=settings.SITE_ROOT
-        / "tests"
-        / "resources"
-        / "containers"
-        / "invoke"
-        / "invoke.tar.gz"
+    AlgorithmImage.objects.create(
+        creator=creator,
+        algorithm=algorithm,
+        image_sha256=_get_random_sha256(),
+        import_status=AlgorithmImage.ImportStatusChoices.COMPLETED,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
     )
 
 
-@contextmanager
-def _uploaded_image_file():
-    path = Path(__file__).parent / "image10x10x10.mha"
-    yield from _uploaded_file(path=path)
-
-
-def _uploaded_file(*, path):
-    with open(os.path.join(settings.SITE_ROOT, path), "rb") as f:
-        with ContentFile(f.read()) as content:
-            yield content
+def _get_random_sha256():
+    return f"sha256:{hashlib.sha256(secrets.token_bytes(32)).hexdigest()}"

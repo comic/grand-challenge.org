@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
-from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -13,7 +12,7 @@ from grandchallenge.components.models import (
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.modalities.models import ImagingModality
-from scripts.algorithm_evaluation_fixtures import _uploaded_image_file
+from scripts.development_fixtures import _create_image
 
 
 def run():
@@ -206,23 +205,6 @@ def _create_civ_rich_algorithm_job(creator, interfaces):
             }
         ),
     )
-
-
-image_counter = 0
-
-
-def _create_image(**kwargs):
-    global image_counter
-
-    im = Image.objects.create(**kwargs)
-    im_file = ImageFile.objects.create(image=im)
-
-    with _uploaded_image_file() as f:
-        im_file.file.save(f"test_image_{image_counter}.mha", f)
-        image_counter += 1
-        im_file.save()
-
-    return im
 
 
 def _create_file_ci_instance(interface, name, content):

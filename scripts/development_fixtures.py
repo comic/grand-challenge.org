@@ -1,8 +1,11 @@
 import base64
 import itertools
 import logging
+import os
 import random
+from contextlib import contextmanager
 from datetime import timedelta
+from pathlib import Path
 
 from allauth.account.models import EmailAddress
 from django.conf import settings
@@ -25,6 +28,7 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.anatomy.models import BodyRegion, BodyStructure
 from grandchallenge.archives.models import Archive, ArchiveItem
+from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.challenges.models import Challenge, ChallengeSeries
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -59,8 +63,6 @@ from grandchallenge.workstations.models import (
     Workstation,
     WorkstationImage,
 )
-from scripts.algorithm_evaluation_fixtures import _gc_demo_algorithm
-from scripts.component_interface_value_fixtures import _create_image
 
 logger = logging.getLogger(__name__)
 
@@ -555,3 +557,44 @@ def _create_user_tokens(users):
         out += f"\t{user} token is: {token}\n"
     out += f"{'*' * 80}\n"
     logger.debug(out)
+
+
+@contextmanager
+def _gc_demo_algorithm():
+    yield from _uploaded_file(
+        path=settings.SITE_ROOT
+        / "tests"
+        / "resources"
+        / "containers"
+        / "invoke"
+        / "invoke.tar.gz"
+    )
+
+
+def _uploaded_file(*, path):
+    with open(os.path.join(settings.SITE_ROOT, path), "rb") as f:
+        with ContentFile(f.read()) as content:
+            yield content
+
+
+@contextmanager
+def _uploaded_image_file():
+    path = Path(__file__).parent / "image10x10x10.mha"
+    yield from _uploaded_file(path=path)
+
+
+image_counter = 0
+
+
+def _create_image(**kwargs):
+    global image_counter
+
+    im = Image.objects.create(**kwargs)
+    im_file = ImageFile.objects.create(image=im)
+
+    with _uploaded_image_file() as f:
+        im_file.file.save(f"test_image_{image_counter}.mha", f)
+        image_counter += 1
+        im_file.save()
+
+    return im
