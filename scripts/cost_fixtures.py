@@ -26,7 +26,7 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.workstations.models import Workstation
-from scripts.algorithm_evaluation_fixtures import (
+from scripts.development_fixtures import (
     _gc_demo_algorithm,
     _uploaded_image_file,
 )
