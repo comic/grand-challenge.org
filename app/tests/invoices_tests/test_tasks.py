@@ -412,7 +412,7 @@ def test_challenge_invoice_issued_notification_emails_on_create(
 
 
 @pytest.mark.django_db
-def test_challenge_invoice_paid_notification_emails_on_save(
+def test_prepaid_invoice_paid_notification_emails_on_save(
     settings,
     django_capture_on_commit_callbacks,
 ):

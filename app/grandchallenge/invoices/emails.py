@@ -96,13 +96,13 @@ def send_challenge_invoice_issued_notification(invoice):
     )
 
 
-def send_challenge_invoice_paid_notification(invoice):
+def send_prepaid_invoice_paid_notification(invoice):
     subject = format_html(
         "[{challenge_name}] Invoice Payment Received",
         challenge_name=invoice.challenge.short_name,
     )
     message = render_to_string(
-        "invoices/partials/challenge_invoice_paid_notification_email.md",
+        "invoices/partials/challenge_prepaid_invoice_paid_notification_email.md",
         context={
             "invoice": invoice,
         },

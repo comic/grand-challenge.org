@@ -31,7 +31,7 @@ from grandchallenge.core.guardian import (
 from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.invoices.tasks import (
     send_challenge_invoice_issued_notification_emails,
-    send_challenge_invoice_paid_notification_emails,
+    send_prepaid_invoice_paid_notification_emails,
 )
 
 
@@ -636,7 +636,7 @@ class Invoice(models.Model, FieldChangeMixin):
             and self.has_changed("payment_status")
             and self.payment_status == PaymentStatusChoices.PAID
         ):
-            send_challenge_invoice_paid_notification_emails.execute_on_commit(
+            send_prepaid_invoice_paid_notification_emails.execute_on_commit(
                 pk=self.pk
             )
 
