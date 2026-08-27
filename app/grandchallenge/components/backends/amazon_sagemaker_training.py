@@ -246,9 +246,9 @@ class AmazonSageMakerTrainingLogsService:
             # Prepend the new events as we are working backwards with
             # nextBackwardToken and startFromHead = False
             log_events = response["events"] + log_events
-            new_token = response["nextBackwardToken"]
+            new_token = response.get("nextBackwardToken")
 
-            if new_token == next_token:
+            if not new_token or new_token == next_token:
                 break
             else:
                 next_token = new_token
