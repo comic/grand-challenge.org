@@ -96,6 +96,28 @@ def send_challenge_invoice_issued_notification(invoice):
     )
 
 
+def send_challenge_invoice_paid_notification(invoice):
+    subject = format_html(
+        "[{challenge_name}] Invoice Payment Received",
+        challenge_name=invoice.challenge.short_name,
+    )
+    message = render_to_string(
+        "invoices/partials/challenge_invoice_paid_notification_email.md",
+        context={
+            "invoice": invoice,
+        },
+    )
+    recipients = get_challenge_invoice_recipients(invoice)
+
+    send_standard_email_batch(
+        site=Site.objects.get_current(),
+        subject=subject,
+        markdown_message=message,
+        recipients=recipients,
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
+    )
+
+
 def send_postpaid_invoice_follow_up_date_approaching_email(invoice):
     subject = format_html(
         "[{challenge_name}] Post-paid invoice date approaching",

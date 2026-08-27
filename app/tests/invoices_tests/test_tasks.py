@@ -412,6 +412,62 @@ def test_challenge_invoice_issued_notification_emails_on_create(
 
 
 @pytest.mark.django_db
+def test_challenge_invoice_paid_notification_emails_on_save(
+    settings,
+    django_capture_on_commit_callbacks,
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    challenge = ChallengeFactory()
+    challenge_admin = challenge.creator
+
+    contact_email = "contact_person@example.com"
+
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=5,
+        payment_type=Invoice.PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.ISSUED,
+        issued_on=datetime(2025, 2, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC")),
+        contact_email=contact_email,
+        contact_name="John Doe",
+    )
+
+    # Clear outbox from the ISSUED notification sent on create
+    mail.outbox.clear()
+
+    invoice.payment_status = Invoice.PaymentStatusChoices.PAID
+    invoice.paid_on = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+
+    with django_capture_on_commit_callbacks(execute=True):
+        invoice.save()
+
+    expected_subject = "[{challenge_name}] Invoice Payment Received".format(
+        challenge_name=challenge.short_name,
+    )
+
+    expected_body = (
+        "we have received payment for an invoice "
+        "for your challenge {challenge_name}".format(
+            challenge_name=challenge.short_name,
+        )
+    )
+
+    organizer_mail = next(
+        m for m in mail.outbox if challenge_admin.email in m.to
+    )
+    assert expected_subject in organizer_mail.subject
+    assert expected_body in organizer_mail.body
+
+    contact_person_mail = next(m for m in mail.outbox if contact_email in m.to)
+    assert expected_subject in contact_person_mail.subject
+    assert "Dear John Doe" in contact_person_mail.body
+    assert expected_body in contact_person_mail.body
+
+
+@pytest.mark.django_db
 def test_send_open_invoices_email(settings):
     staff_user = UserFactory(is_staff=True)
     settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
