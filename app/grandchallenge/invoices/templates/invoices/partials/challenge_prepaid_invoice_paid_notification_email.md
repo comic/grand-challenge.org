@@ -1,4 +1,4 @@
-We are pleased to let you know that we have received payment for an invoice for your challenge {{
+We are pleased to let you know that we have received payment for a prepaid invoice for your challenge {{
 invoice.challenge.short_name }}.
 
 **Invoice details:**

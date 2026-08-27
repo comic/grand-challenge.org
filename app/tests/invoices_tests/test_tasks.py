@@ -448,23 +448,23 @@ def test_prepaid_invoice_paid_notification_emails_on_save(
         challenge_name=challenge.short_name,
     )
 
-    expected_body = (
-        "we have received payment for an invoice "
-        "for your challenge {challenge_name}".format(
-            challenge_name=challenge.short_name,
-        )
-    )
-
     organizer_mail = next(
         m for m in mail.outbox if challenge_admin.email in m.to
     )
     assert expected_subject in organizer_mail.subject
-    assert expected_body in organizer_mail.body
+    assert "we have received payment" in organizer_mail.body
+    assert challenge.short_name in organizer_mail.body
+    assert "Compute capacity reservation: 10 Euro" in organizer_mail.body
+    assert "Storage capacity reservation: 5 Euro" in organizer_mail.body
+    assert (
+        "a compute budget of 10 Euro has become available"
+        in organizer_mail.body
+    )
 
     contact_person_mail = next(m for m in mail.outbox if contact_email in m.to)
     assert expected_subject in contact_person_mail.subject
     assert "Dear John Doe" in contact_person_mail.body
-    assert expected_body in contact_person_mail.body
+    assert "we have received payment" in contact_person_mail.body
 
 
 @pytest.mark.django_db
