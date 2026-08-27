@@ -425,7 +425,7 @@ def test_prepaid_invoice_paid_notification_emails_on_save(
 
     invoice = InvoiceFactory(
         challenge=challenge,
-        support_costs_euros=0,
+        support_costs_euros=5000,
         compute_costs_euros=10,
         storage_costs_euros=5,
         payment_type=Invoice.PaymentTypeChoices.PREPAID,
@@ -456,8 +456,13 @@ def test_prepaid_invoice_paid_notification_emails_on_save(
     assert challenge.short_name in organizer_mail.body
     assert "Compute capacity reservation: 10 Euro" in organizer_mail.body
     assert "Storage capacity reservation: 5 Euro" in organizer_mail.body
+    assert "Support cost: 2000 Euro" in organizer_mail.body
     assert (
         "a compute budget of 10 Euro has become available"
+        in organizer_mail.body
+    )
+    assert (
+        "You can now use this budget to process submissions."
         in organizer_mail.body
     )
 
@@ -465,6 +470,60 @@ def test_prepaid_invoice_paid_notification_emails_on_save(
     assert expected_subject in contact_person_mail.subject
     assert "Dear John Doe" in contact_person_mail.body
     assert "we have received payment" in contact_person_mail.body
+    assert (
+        "You can now use this budget to process submissions."
+        in contact_person_mail.body
+    )
+
+
+@pytest.mark.django_db
+def test_prepaid_invoice_paid_email_without_compute_budget(
+    settings,
+    django_capture_on_commit_callbacks,
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    challenge = ChallengeFactory()
+    challenge_admin = challenge.creator
+
+    contact_email = "contact_person@example.com"
+
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=0,
+        storage_costs_euros=5,
+        payment_type=Invoice.PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.ISSUED,
+        issued_on=datetime(2025, 2, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC")),
+        contact_email=contact_email,
+        contact_name="John Doe",
+    )
+
+    # Clear outbox from the ISSUED notification sent on create
+    mail.outbox.clear()
+
+    invoice.payment_status = Invoice.PaymentStatusChoices.PAID
+    invoice.paid_on = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+
+    with django_capture_on_commit_callbacks(execute=True):
+        invoice.save()
+
+    organizer_mail = next(
+        m for m in mail.outbox if challenge_admin.email in m.to
+    )
+    expected_subject = "[{challenge_name}] Invoice Payment Received".format(
+        challenge_name=challenge.short_name,
+    )
+    assert expected_subject in organizer_mail.subject
+    assert "we have received payment" in organizer_mail.body
+    assert challenge.short_name in organizer_mail.body
+    assert "Compute capacity reservation: 0 Euro" in organizer_mail.body
+    assert "Storage capacity reservation: 5 Euro" in organizer_mail.body
+    assert (
+        "You can now use this budget to process submissions."
+        not in organizer_mail.body
+    )
 
 
 @pytest.mark.django_db
