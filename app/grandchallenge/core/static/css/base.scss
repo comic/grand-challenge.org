@@ -2,9 +2,12 @@
 $gray-500: #b4bcc2 !default;
 $blue: #2c3e50 !default;
 $cyan: #3498db !default;
+$black: #000 !default;
 
 // Override flatly success colours
 $link-color: $cyan !default;
+
+$input-color: $black !default;
 
 $navbar-dark-hover-color: $gray-500 !default;
 $navbar-light-color: $blue !default;
@@ -125,10 +128,6 @@ a.mark:hover {
 .phase-nav-dropdown {
     background-clip: border-box;
     z-index: 1001;  // place above .vega-embed summary
-}
-
-textarea.form-control, textarea.form-control:focus {
-    color: $black;
 }
 
 .bg-gray-100 {
