@@ -456,7 +456,7 @@ def test_prepaid_invoice_paid_notification_emails_on_save(
     assert challenge.short_name in organizer_mail.body
     assert "Compute capacity reservation: 10 Euro" in organizer_mail.body
     assert "Storage capacity reservation: 5 Euro" in organizer_mail.body
-    assert "Base cost: 5000 Euro" in organizer_mail.body
+    assert "Base contribution: 5000 Euro" in organizer_mail.body
     assert (
         "a compute budget of 10 Euro has become available"
         in organizer_mail.body
