@@ -8,6 +8,7 @@ from grandchallenge.invoices.emails import (
     send_challenge_invoice_issued_notification,
     send_challenge_invoice_overdue_reminder,
     send_postpaid_invoice_follow_up_date_approaching_email,
+    send_prepaid_invoice_paid_notification,
 )
 
 
@@ -28,6 +29,14 @@ def send_challenge_invoice_issued_notification_emails(*, pk: int):
 
     invoice = Invoice.objects.get(pk=pk)
     send_challenge_invoice_issued_notification(invoice)
+
+
+@lambda_task
+def send_prepaid_invoice_paid_notification_emails(*, pk: int):
+    from grandchallenge.invoices.models import Invoice
+
+    invoice = Invoice.objects.get(pk=pk)
+    send_prepaid_invoice_paid_notification(invoice)
 
 
 @lambda_task
