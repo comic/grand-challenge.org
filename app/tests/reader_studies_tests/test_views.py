@@ -595,12 +595,8 @@ def test_display_set_update(
             client=client,
             reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
             data={
-                **get_interface_form_data(
-                    interface_slug=ci_img.slug,
-                    data=str(im2.pk),
-                    existing_data=True,
-                ),
-                f"{FlexibleWidgetPrefixes.CHOICE}{ci_json_file.slug}": SourceChoices.REMOVE.value,
+                f"{FlexibleWidgetPrefixes.CHOICE}{ci_img.slug}": SourceChoices.REMOVE,
+                f"{FlexibleWidgetPrefixes.CHOICE}{ci_json_file.slug}": SourceChoices.REMOVE,
                 "order": 12,
                 "title": "foobar_foobar",
             },
@@ -613,8 +609,8 @@ def test_display_set_update(
     )
 
     ds1.refresh_from_db()
-    assert ds1.values.count() == 1
-    assert ds1.values.filter(pk=civ_img_new.pk).exists()
+    assert ds1.values.count() == 0
+    assert not ds1.values.filter(pk=civ_img_new.pk).exists()
     assert not ds1.values.filter(pk=civ_json_file_new.pk).exists()
     assert not ds1.values.filter(interface=ci_json).exists()
 

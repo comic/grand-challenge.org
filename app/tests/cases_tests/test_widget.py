@@ -151,10 +151,12 @@ def test_image_source_select_prepopulated_value():
         ("CURRENT", "test_image"),
         ("SEARCH", "Select an existing image"),
         ("UPLOAD", "Upload a new image"),
+        ("REMOVE", "Remove this image"),
     ]
-    assert field.clean(SourceChoices.CURRENT.value) == im
+    assert field.clean(SourceChoices.CURRENT) == im
+    assert field.clean(SourceChoices.REMOVE) == SourceChoices.REMOVE
     with pytest.raises(ValidationError, match="This field is required."):
-        field.clean(ImageSourceChoices.UNDEFINED.value)
+        field.clean(ImageSourceChoices.UNDEFINED)
 
     field = ImageSourceChoiceField()
 
@@ -165,6 +167,8 @@ def test_image_source_select_prepopulated_value():
     ]
     assert field.current_socket_value is None
     with pytest.raises(ValidationError, match="Select a valid choice."):
-        field.clean(SourceChoices.CURRENT.value)
+        field.clean(SourceChoices.CURRENT)
+    with pytest.raises(ValidationError, match="Select a valid choice."):
+        field.clean(SourceChoices.REMOVE)
     with pytest.raises(ValidationError, match="This field is required."):
-        field.clean(ImageSourceChoices.UNDEFINED.value)
+        field.clean(ImageSourceChoices.UNDEFINED)
