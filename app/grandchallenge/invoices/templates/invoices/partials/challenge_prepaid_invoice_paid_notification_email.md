@@ -3,7 +3,7 @@ We are pleased to let you know that we have received payment for a prepaid invoi
 **Invoice details:**
 
 - Amount: {{ invoice.total_amount_euros }} Euro
-- Base cost: {{ invoice.support_costs_euros }} Euro
+- Base contribution: {{ invoice.support_costs_euros }} Euro
 - Compute capacity reservation: {{ invoice.compute_costs_euros }} Euro
 - Storage capacity reservation: {{ invoice.storage_costs_euros }} Euro
 
