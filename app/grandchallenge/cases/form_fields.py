@@ -13,9 +13,9 @@ from grandchallenge.cases.widgets import (
     DICOMUploadWidget,
     DICOMUploadWithName,
     ImageSearchMultiWidget,
+    ImageSourceSelect,
 )
 from grandchallenge.components.models import SourceChoices
-from grandchallenge.components.widgets import SourceSelect
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.uploads.models import UserUpload
 
@@ -30,10 +30,11 @@ class ImageSourceChoices(TextChoices):
     UNDEFINED = SourceChoices.UNDEFINED, "Choose data source..."
     SEARCH = SourceChoices.SEARCH, "Select an existing image"
     UPLOAD = SourceChoices.UPLOAD, "Upload a new image"
+    REMOVE = SourceChoices.REMOVE, "Remove this image"
 
 
 class ImageSourceChoiceField(ChoiceField):
-    widget = SourceSelect(attrs={"class": "custom-select"})
+    widget = ImageSourceSelect(attrs={"class": "custom-select"})
 
     def __init__(
         self,
@@ -60,6 +61,13 @@ class ImageSourceChoiceField(ChoiceField):
                     SourceChoices.CURRENT.value,
                     current_socket_value.title,
                 ),
+            )
+        else:
+            choices.remove(
+                (
+                    ImageSourceChoices.REMOVE.value,
+                    ImageSourceChoices.REMOVE.label,
+                )
             )
 
         super().__init__(

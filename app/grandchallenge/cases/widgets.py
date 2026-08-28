@@ -6,8 +6,13 @@ from django.forms import MultiWidget, TextInput
 from grandchallenge.components.widgets import (
     SearchSelect,
     SearchWidgetSuffixes,
+    SourceSelect,
 )
 from grandchallenge.uploads.widgets import DICOMUserUploadMultipleWidget
+
+
+class ImageSourceSelect(SourceSelect):
+    template_name = "cases/warning_select.html"
 
 
 class DICOMUploadWidgetSuffixes(StrEnum):

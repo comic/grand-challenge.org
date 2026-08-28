@@ -2395,8 +2395,8 @@ class CIVData:
             self._upload_session = self._initial_value
         elif isinstance(self._initial_value, Image):
             self._image = self._initial_value
-        elif not self._initial_value:
-            self._image = None
+        elif self._initial_value == SourceChoices.REMOVE:
+            self._image = self._initial_value
         else:
             raise ValidationError(
                 f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
@@ -2603,7 +2603,9 @@ class CIVForObjectMixin:
     ):
         current_image = current_civ.image if current_civ else None
 
-        if image:
+        if image == SourceChoices.REMOVE:
+            self.remove_civ(civ=current_civ)
+        elif image:
             if current_image == image:
                 # Nothing to do.
                 return
