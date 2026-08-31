@@ -1272,7 +1272,9 @@ def start_service(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     with check_lock_acquired():
-        service = model.objects.select_for_update(nowait=True).get(pk=pk)
+        service = model.objects.select_for_update(
+            nowait=True, no_key=True
+        ).get(pk=pk)
 
     if service.status != service.QUEUED:
         raise RuntimeError("Service is not ready for starting")
@@ -1335,7 +1337,9 @@ def update_service(*, pk: str | UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     with check_lock_acquired():
-        service = model.objects.select_for_update(nowait=True).get(pk=pk)
+        service = model.objects.select_for_update(
+            nowait=True, no_key=True
+        ).get(pk=pk)
 
     if service.status != service.STARTED:
         raise RuntimeError("Service is not ready for updating")
@@ -1373,7 +1377,9 @@ def stop_service(*, pk: str | UUID, app_label: str, model_name: str):
     with check_lock_acquired():
         # We allow all states here (started, stopped, failed, etc.) as the
         # responsibility of this task is to remove the service from ECS
-        service = model.objects.select_for_update(nowait=True).get(pk=pk)
+        service = model.objects.select_for_update(
+            nowait=True, no_key=True
+        ).get(pk=pk)
 
     orchestrator = ECSTaskOrchestrator(**service.orchestrator_kwargs)
 
