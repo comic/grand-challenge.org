@@ -252,13 +252,22 @@ class UserUpload(UUIDModel):
         if self.status != self.StatusChoices.INITIALIZED:
             raise RuntimeError("Upload is not initialized")
 
+        sorted_parts = sorted(
+            [
+                {
+                    "ETag": part["ETag"],
+                    "PartNumber": part["PartNumber"],
+                }
+                for part in parts
+            ],
+            key=lambda part: part["PartNumber"],
+        )
+
         self._client.complete_multipart_upload(
             Bucket=self.bucket,
             Key=self.key,
             UploadId=self.s3_upload_id,
-            MultipartUpload={
-                "Parts": sorted(parts, key=lambda p: p["PartNumber"])
-            },
+            MultipartUpload={"Parts": sorted_parts},
         )
         self.status = self.StatusChoices.COMPLETED
         self.mimetype = self.mimetype_from_file
