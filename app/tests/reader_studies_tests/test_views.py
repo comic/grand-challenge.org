@@ -1075,19 +1075,6 @@ def test_ground_truth_from_answers_workflow(
         is_ground_truth=False,
     ).exists(), "Source answer is consumed"
 
-    response = get_view_for_user(
-        viewname="api:reader-study-ground-truth",
-        reverse_kwargs={"pk": rs.pk, "case_pk": ds.pk},
-        user=reader,
-        client=client,
-        content_type="application/json",
-        follow=True,
-    )
-    assert response.status_code == 200, "Can retrieve ground truth"
-
-    response = response.json()
-    assert response[str(q.pk)]["answer"], "Ground truth is retrieved OK"
-
     reader_answer.refresh_from_db()
     assert reader_answer.score is not None, " Scores are assigned"
 

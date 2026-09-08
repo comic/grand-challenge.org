@@ -27,11 +27,9 @@ from django.db.models.functions import Coalesce
 from django.forms import Form
 from django.forms.utils import ErrorList
 from django.http import (
-    Http404,
     HttpResponse,
     HttpResponseForbidden,
     HttpResponseRedirect,
-    JsonResponse,
 )
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
@@ -1169,55 +1167,10 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_fields = ["slug"]
-    change_permission = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
     )
-
-    def _check_change_perms(self, user, obj):
-        if not (user and user.has_perm(self.change_permission, obj)):
-            raise Http404()
-
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                "case_pk", OpenApiTypes.UUID, OpenApiParameter.PATH
-            ),
-        ],
-    )
-    @action(detail=True, url_path="ground-truth/(?P<case_pk>[^/.]+)")
-    def ground_truth(self, request, pk=None, case_pk=None):
-        reader_study = self.get_object()
-        if not (reader_study.is_educational and reader_study.has_ground_truth):
-            raise Http404()
-        answers = (
-            Answer.objects.filter(
-                display_set_id=case_pk,
-                question__reader_study=reader_study,
-                is_ground_truth=True,
-            )
-            .prefetch_related("question__options")
-            .select_related("question")
-        )
-
-        return JsonResponse(
-            {
-                str(answer.question_id): {
-                    "answer": answer.answer,
-                    "answer_text": answer.answer_text,
-                    "question_text": answer.question.question_text,
-                    "options": {
-                        option.id: option.title
-                        for option in answer.question.options.all()
-                    },
-                    "explanation": answer.explanation,
-                }
-                for answer in answers
-            }
-        )
 
 
 @extend_schema_view(
