@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib import admin, messages
 from django.forms import ModelForm
 from django.utils.html import format_html
@@ -7,6 +6,7 @@ from grandchallenge.challenges.exceptions import InsufficientBudgetError
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
+    ExternalAdminLinkMixin,
     cancel_jobs,
     deprovision_jobs,
     requeue_jobs,
@@ -226,10 +226,9 @@ class SubmissionAdmin(admin.ModelAdmin):
 
 
 @admin.register(Evaluation)
-class EvaluationAdmin(admin.ModelAdmin):
+class EvaluationAdmin(ExternalAdminLinkMixin, admin.ModelAdmin):
     list_display = (
         "pk",
-        "external_admin",
         "created",
         "submission",
         "time_limit",
@@ -278,18 +277,9 @@ class EvaluationAdmin(admin.ModelAdmin):
     )
     actions = (requeue_jobs, cancel_jobs, deprovision_jobs)
 
-    def external_admin(self, obj):
-        executor = obj.get_executor(
-            backend=settings.COMPONENTS_DEFAULT_BACKEND
-        )
-        return format_html(
-            "<a target=_blank href='{url}'>🔗</a>",
-            url=executor.external_admin_url,
-        )
-
 
 @admin.register(BatchJob)
-class BatchJobAdmin(admin.ModelAdmin):
+class BatchJobAdmin(ExternalAdminLinkMixin, admin.ModelAdmin):
     list_display = (
         "pk",
         "created",
