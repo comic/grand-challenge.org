@@ -13,7 +13,7 @@ exclude-newer-span = "P7D"
 
 [[package]]
 name = "biom-format"
-version = "2.1.17"
+version = "2.1.18"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -22,7 +22,14 @@ dependencies = [
     { name = "pandas" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cf/63/da18b1cdb9de07f8ad07d71535eac0460d065c71312ad400f55f6c2865ae/biom_format-2.1.17.tar.gz", hash = "sha256:8e3fa07a432b3f6d5c3cad491ef1f27b18d10fc151ca2d223761be4f0b050479", size = 11721758, upload-time = "2025-08-26T15:19:19.35Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f7/c4/58b24f5d1bf0fc00811d11852fe70d084c1dbbfaebb897af89487cb1a330/biom_format-2.1.18.tar.gz", hash = "sha256:fbb8cb19e459bbd1e8e2f8d34983a127245c6014f950ae082b9b19697484a315", size = 11721584, upload-time = "2026-10-05T17:46:48.839Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/22/60/33d36033227370c5b0b88e118bbb25e91efee8762e875123bfe7b6bde413/biom_format-2.1.18-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:cc8f6e24ec800e5490f2b4869958c737c6d543a67f7c3e5222bc7ad4eb882a14", size = 11880455, upload-time = "2026-10-05T17:46:25.01Z" },
+    { url = "https://files.pythonhosted.org/packages/42/5e/54fc16697ce114e20c1e1586bf43f51616d70270bc39cdc93586b654c741/biom_format-2.1.18-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:78c32af8d6956511c447b1b29ba212457d5763f12c8a791a9306c230507389f8", size = 11880745, upload-time = "2026-10-05T17:46:27.196Z" },
+    { url = "https://files.pythonhosted.org/packages/78/a3/7c1a03c8c5b678782607681216bfee0d7d65dc79b4a0014d23171e2b0a8e/biom_format-2.1.18-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:ea7d552760e94f49d5682cb94ead2e09f3ea5e837cf6cfd0db99d9c88b3f3df4", size = 12333044, upload-time = "2026-10-05T17:46:29.587Z" },
+    { url = "https://files.pythonhosted.org/packages/74/e1/558b5fb055af5f4d308da941e0d689c0de71741faed10b13421f098e0092/biom_format-2.1.18-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:3bb93b258479c29e452813fca575e35fda638379a888667a671ccccd7f0e1836", size = 12327277, upload-time = "2026-10-05T17:46:32.188Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/d4/3df4d02a4febbdd0655428154753f6bfe41a4299bb378f7127006dc8c7bb/biom_format-2.1.18-cp314-cp314-win_amd64.whl", hash = "sha256:87b5086ef758fd23bba0361118f3b65545cb63803e6f889c67f02ae86d85bf96", size = 12054949, upload-time = "2026-10-05T17:46:34.547Z" },
+]
 
 [[package]]
 name = "biopython"
@@ -208,9 +215,9 @@ wheels = [
 
 [[package]]
 name = "tzdata"
-version = "2026.4"
+version = "2026.5"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e4/31/3d74fa778a63b98b7374323befcc0be5ab3bd94afd4096a0124e7379152c/tzdata-2026.4.tar.gz", hash = "sha256:f1b8bd365d8d210c55353f4d7f8d6d8561c0ba50d704b700d195a9424bba0d79", size = 199350, upload-time = "2026-09-12T12:56:03.251Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d9/68/f1b440335057bfce71b6e50a9d09445aa2ecbd08359a337976627b8409e7/tzdata-2026.5.tar.gz", hash = "sha256:8cc73c0a0bfca7dbfa59235d60b2eff82231dee33f53d206db1acd9173cfc0a7", size = 200404, upload-time = "2026-10-03T09:23:14.143Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f9/bc/8737e8d54cf51106118039b83f485a4783112fab49ea9d044b234978a46e/tzdata-2026.4-py2.py3-none-any.whl", hash = "sha256:c2169a8b0a7a5e9674da5a135ccdfb2b3e671b333ed9fed17b41f73c34476e81", size = 347494, upload-time = "2026-09-12T12:56:01.67Z" },
+    { url = "https://files.pythonhosted.org/packages/94/21/1e5995a1c920cce14e4bffae20c665ec10e7ed03ab25e006cd741092b718/tzdata-2026.5-py2.py3-none-any.whl", hash = "sha256:b683bd1b6659ddcd810ff02ad09ba821d4bf1065072805063eb35c49617905ac", size = 347996, upload-time = "2026-10-03T09:23:12.535Z" },
 ]
