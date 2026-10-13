@@ -1,5 +1,7 @@
 import humanize
+from django.conf import settings
 from django.contrib import admin
+from django.utils.html import format_html
 
 from grandchallenge.components.models import (
     ComponentImage,
@@ -10,6 +12,20 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.tasks import deprovision_job, stop_endpoint
 from grandchallenge.evaluation.models import Evaluation
+
+
+class ExternalAdminLinkMixin:
+    def get_list_display(self, request):
+        return ("external_admin", *super().get_list_display(request))
+
+    def external_admin(self, obj):
+        executor = obj.get_executor(
+            backend=settings.COMPONENTS_DEFAULT_BACKEND
+        )
+        return format_html(
+            "<a target=_blank href='{url}'>🔗</a>",
+            url=executor.external_admin_url,
+        )
 
 
 @admin.action(

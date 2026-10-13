@@ -1,5 +1,4 @@
 import humanize
-from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.core.exceptions import ObjectDoesNotExist
@@ -30,6 +29,7 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
+    ExternalAdminLinkMixin,
     cancel_jobs,
     deprovision_jobs,
     requeue_jobs,
@@ -187,12 +187,11 @@ class AlgorithmUserCreditAdmin(ModelAdmin):
 
 
 @admin.register(Job)
-class JobAdmin(admin.ModelAdmin):
+class JobAdmin(ExternalAdminLinkMixin, admin.ModelAdmin):
     autocomplete_fields = ("viewer_groups",)
     ordering = ("-created",)
     list_display = (
         "pk",
-        "external_admin",
         "created",
         "algorithm",
         "creator",
@@ -248,15 +247,6 @@ class JobAdmin(admin.ModelAdmin):
 
     def algorithm(self, obj):
         return obj.algorithm_image.algorithm
-
-    def external_admin(self, obj):
-        executor = obj.get_executor(
-            backend=settings.COMPONENTS_DEFAULT_BACKEND
-        )
-        return format_html(
-            "<a target=_blank href='{url}'>🔗</a>",
-            url=executor.external_admin_url,
-        )
 
 
 @admin.register(AlgorithmPermissionRequest)
