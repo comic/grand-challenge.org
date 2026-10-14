@@ -61,11 +61,12 @@
             </p>
             {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
                 <p>
-                    For each submission, {{ phase.valid_archive_item_count }}
-                    algorithm job{{ phase.valid_archive_item_count|pluralize }} will be created
-                    from the {{ phase.valid_archive_item_count }} valid item{{ phase.valid_archive_item_count|pluralize }}
-                    in <a href="{{ phase.archive.get_absolute_url }}">{{ phase.archive }}</a>.
-                    Each individual algorithm job will have a time limit of {{ phase.algorithm_time_limit|naturaldelta }}.
+                    For each submission, the {{ phase.valid_archive_item_count }} valid item{{ phase.valid_archive_item_count|pluralize }} in <a href="{{ phase.archive.get_absolute_url }}">{{ phase.archive }}</a> will be processed across {{ phase.inference_job_count }} job{{ phase.inference_job_count|pluralize }}.
+                    {% if phase.use_batch_mode %}
+                        Each job processes up to {{ phase.archive_items_per_job }} item{{ phase.archive_items_per_job|pluralize }}. There is a time limit of {{ phase.algorithm_time_limit|naturaldelta }} for processing a single archive item.
+                    {% else %}
+                        Each individual algorithm job will have a time limit of {{ phase.algorithm_time_limit|naturaldelta }}.
+                    {% endif %}
                     Participants will only be able to select algorithms that are configured to use
                     maximum main memory (DRAM) of {{ phase.algorithm_maximum_settable_memory_gb }} GB or less
                     and one of the following instance types: {{ phase.get_algorithm_selectable_gpu_type_choices_display }}.

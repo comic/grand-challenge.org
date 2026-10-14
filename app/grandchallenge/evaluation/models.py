@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from math import ceil
 from statistics import mean, median
 
 from actstream.actions import follow, is_following
@@ -1292,6 +1293,20 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             return max(max_inference_duration // self.algorithm_time_limit, 1)
         else:
             return 1
+
+    @cached_property
+    def inference_job_count_per_interface(self):
+        chunk_size = self.archive_items_per_job
+        return {
+            interface: ceil(count / chunk_size)
+            for interface, count in (
+                self.valid_archive_item_count_per_interface.items()
+            )
+        }
+
+    @cached_property
+    def inference_job_count(self):
+        return sum(self.inference_job_count_per_interface.values())
 
     def send_give_algorithm_editors_job_view_permissions_changed_email(self):
         message = format_html(

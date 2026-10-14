@@ -28,7 +28,8 @@
         <p>This phase is linked to archive <a href="{{ phase.archive.get_absolute_url }}">{{ phase.archive }}</a>.</p>
 
         {% if phase.algorithm_interfaces.all %}
-            <p> Each item in the archive needs to contain data for one of the configured interfaces (i.e. input combinations):</p>
+            <p> Each item in the archive needs to contain data for one of the configured interfaces (i.e. input
+                combinations):</p>
             {% for interface in phase.algorithm_interfaces.all %}
                 <ul>
                     <li><b>Interface {{ forloop.counter }}</b></li>
@@ -40,23 +41,35 @@
                 </ul>
             {% endfor %}
             <p>
-                Currently, for each submission, {{ phase.valid_archive_item_count }}
-                algorithm job{{ phase.valid_archive_item_count|pluralize }} will be created from the {{ phase.valid_archive_item_count }} valid archive item{{ phase.valid_archive_item_count|pluralize }}. </p>
-            <p> The jobs are spread across the configured algorithm interfaces as follows:
-                <ul>
-                    {% for interface, count in phase.valid_archive_item_count_per_interface.items %}
-                        <li>Interface {{ forloop.counter }}: {{ count }} job{{ count|pluralize }}</li>
-                    {% endfor %}
-                </ul>
+                Currently, for each submission, the {{ phase.valid_archive_item_count }}
+                valid archive item{{ phase.valid_archive_item_count|pluralize }} will be processed
+                across {{ phase.inference_job_count }} job{{ phase.inference_job_count|pluralize }}.
+                {% if phase.use_batch_mode %}
+                    Each job processes up to {{ phase.archive_items_per_job }} archive
+                    item{{ phase.archive_items_per_job|pluralize }}.
+                {% endif %}
             </p>
-            <a class="btn btn-primary" href="{% url 'archives:items-list' slug=phase.archive.slug %}"> <i class="fa fa-upload mr-1"></i> Upload data to {{ phase.archive }}</a>
+            <p>The jobs are spread across the configured algorithm interfaces as follows:
+            <ul>
+                {% for interface, count in phase.inference_job_count_per_interface.items %}
+                    <li>Interface {{ forloop.counter }}: {{ count }} batch job{{ count|pluralize }}</li>
+                {% endfor %}
+            </ul>
+            </p>
+            <a class="btn btn-primary" href="{% url 'archives:items-list' slug=phase.archive.slug %}">
+                <i class="fa fa-upload mr-1"></i> Upload data to {{ phase.archive }}</a>
         {% else %}
-            <p> Before you can upload data to your archive, <b>you need to define the interfaces (i.e. possible input and output combinations) for algorithms submitted to this phase</b>. Please <a target="_blank" href="mailto:{{ SUPPORT_EMAIL }}">contact support</a> to get help with getting this set up.</p>
+            <p> Before you can upload data to your archive,
+                <b>you need to define the interfaces (i.e. possible input and output combinations) for algorithms submitted to this phase</b>. Please
+                <a target="_blank" href="mailto:{{ SUPPORT_EMAIL }}">contact support</a> to get help with getting this set up.
+            </p>
         {% endif %}
 
     {% elif phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not phase.external_evaluation and not phase.archive %}
         <p>This phase <b>does not have an archive</b> linked to it yet.</p>
-        <p>Please <a target="_blank" href="mailto:{{ SUPPORT_EMAIL }}">contact support</a> to help with getting this set up.</p>
+        <p>Please
+            <a target="_blank" href="mailto:{{ SUPPORT_EMAIL }}">contact support</a> to get help with getting this set up.
+        </p>
     {% else %}
         <p>This phase does not require a linked archive.</p>
     {% endif %}

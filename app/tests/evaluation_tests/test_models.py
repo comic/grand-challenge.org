@@ -1138,6 +1138,50 @@ def test_archive_items_per_job_in_batch_mode(
 
 
 @pytest.mark.django_db
+def test_inference_job_count_without_batch_mode():
+    # Without batch mode every archive item maps to its own job.
+    phase = PhaseFactory(use_batch_mode=False, algorithm_time_limit=600)
+    interface1, interface2 = (
+        AlgorithmInterfaceFactory(),
+        AlgorithmInterfaceFactory(),
+    )
+    phase.valid_archive_item_count_per_interface = {
+        interface1: 3,
+        interface2: 2,
+    }
+
+    assert phase.inference_job_count_per_interface == {
+        interface1: 3,
+        interface2: 2,
+    }
+    assert phase.inference_job_count == 5
+
+
+@pytest.mark.django_db
+def test_inference_job_count_in_batch_mode(settings):
+    settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = 1200
+    settings.COMPONENTS_JOB_SETUP_DURATION = 200
+    # Compute budget 1000 / 500 -> 2 archive items per batch job.
+    phase = PhaseFactory(use_batch_mode=True, algorithm_time_limit=500)
+    interface1, interface2 = (
+        AlgorithmInterfaceFactory(),
+        AlgorithmInterfaceFactory(),
+    )
+    phase.valid_archive_item_count_per_interface = {
+        interface1: 5,
+        interface2: 2,
+    }
+
+    assert phase.archive_items_per_job == 2
+    # 5 items -> ceil(5 / 2) = 3 batch jobs, 2 items -> 1 batch job.
+    assert phase.inference_job_count_per_interface == {
+        interface1: 3,
+        interface2: 1,
+    }
+    assert phase.inference_job_count == 4
+
+
+@pytest.mark.django_db
 def test_use_batch_mode_requires_short_enough_time_limit(settings):
     settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION = 60 * 60
     settings.COMPONENTS_JOB_SETUP_DURATION = 5 * 60
