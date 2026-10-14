@@ -3486,7 +3486,7 @@ def test_get_incomplete_inference_jobs_for_user_in_single_mode():
     non_viewer = UserFactory()
     algorithm_editor = UserFactory()
 
-    algorithm_image.algorithm.editors_group.add(algorithm_editor)
+    algorithm_image.algorithm.add_editor(algorithm_editor)
 
     failed_job.viewer_groups.add(
         [phase.challenge.admins_group, algorithm_image.algorithm.editors_group]
