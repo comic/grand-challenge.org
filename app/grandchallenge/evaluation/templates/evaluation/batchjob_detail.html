@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load naturaldelta %}
+{% load profiles %}
+{% load url %}
+{% load civ %}
+{% load copy_button %}
+
+{% block title %}
+    {{ object.pk }} - Batch Jobs - {{ object.submission.phase.title }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item"><a
+                href="{{ object.submission.get_absolute_url }}">Submission {{ object.submission.pk }}</a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'evaluation:batch-job-list' challenge_short_name=challenge.short_name slug=object.submission.phase.slug submission_pk=object.submission.pk %}">Batch Jobs</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ object.pk }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Batch Job</h2>
+
+    <dl class="row">
+        <dt class="col-sm-3">Batch Job ID</dt>
+        <dd class="col-sm-9">{{ object.pk }}{% copy_button_only object.pk %}</dd>
+
+        <dt class="col-sm-3">Phase</dt>
+        <dd class="col-sm-9"><a
+                href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=object.submission.phase.slug %}">{{ object.submission.phase.title }}</a>
+        </dd>
+
+        <dt class="col-sm-3">Submission</dt>
+        <dd class="col-sm-9"><a
+                href="{{ object.submission.get_absolute_url }}">{{ object.submission.pk }}</a>{% copy_button_only object.submission.pk %}</dd>
+
+        <dt class="col-sm-3">Algorithm</dt>
+        <dd class="col-sm-9"><a
+                href="{{ object.algorithm_image.algorithm.get_absolute_url }}">{{ object.algorithm_image.algorithm }}</a>
+        </dd>
+
+        <dt class="col-sm-3">Algorithm Version</dt>
+        <dd class="col-sm-9">{{ object.algorithm_image.pk }}</dd>
+
+        <dt class="col-sm-3">Model Version</dt>
+        <dd class="col-sm-9">{% if object.algorithm_model %}{{ object.algorithm_model.pk }}{% else %}None{% endif %}</dd>
+
+        <dt class="col-sm-3">Created</dt>
+        <dd class="col-sm-9">{{ object.created }}</dd>
+
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">
+            {% include "evaluation/batchjob_status_detail.html" %}
+        </dd>
+
+        {% if object.error_message %}
+            <dt class="col-sm-3">Error Message</dt>
+            <dd class="col-sm-9">{{ object.error_message }}</dd>
+        {% endif %}
+
+        {% if object.utilization.duration %}
+            <dt class="col-sm-3">Duration</dt>
+            <dd class="col-sm-9">{{ object.utilization.duration|naturaldelta }}</dd>
+        {% endif %}
+    </dl>
+
+    <a class="btn btn-primary mb-3"
+       href="{% url 'evaluation:batch-job-logs-detail' challenge_short_name=challenge.short_name slug=object.submission.phase.slug submission_pk=object.submission.pk pk=object.pk %}">
+        <i class="fas fa-terminal fa-fw"></i>&nbsp;Logs
+    </a>
+
+    <h3>Tasks</h3>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm">
+            <thead class="thead-light">
+                <tr>
+                    <th>Task ID</th>
+                    <th>Inputs</th>
+                    <th>Outputs</th>
+                    <th>Exec Duration</th>
+                    <th>Invoke Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in object.tasks.all %}
+                    <tr>
+                        <td>{{ task.pk|copy_button }}</td>
+                        <td>
+                            <ul class="list-unstyled mb-0">
+                                {% for input in task.inputs.all|sort_civs %}
+                                    <li>
+                                        {% include 'components/partials/civ.html' with object=input display_inline=True only %}
+                                    </li>
+                                {% empty %}
+                                    <li>
+                                        <i class="fa fa-eye-slash text-warning"></i> No inputs were found
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>
+                            <ul class="list-unstyled mb-0">
+                                {% for output in task.outputs.all|sort_civs %}
+                                    <li>
+                                        {% include 'components/partials/civ.html' with object=output display_inline=True only %}
+                                    </li>
+                                {% empty %}
+                                    <li>
+                                        <i class="fa fa-eye-slash text-warning"></i> No outputs were found
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>
+                            {% if task.exec_duration %}
+                                {{ task.exec_duration.total_seconds|floatformat:0 }} s
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if task.invoke_duration %}
+                                {{ task.invoke_duration.total_seconds|floatformat:0 }} s
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5">This batch job has no tasks.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

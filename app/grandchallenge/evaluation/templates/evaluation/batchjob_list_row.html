@@ -1,0 +1,24 @@
+{% load url %}
+{% load copy_button %}
+
+<a class="btn btn-primary btn-sm"
+   href="{{ object.get_absolute_url }}"
+   title="View batch job details">
+    <i class="fa fa-info-circle"></i>
+</a>
+
+<split></split>
+
+{{ object.pk }}{% copy_button_only object.pk %}
+
+<split></split>
+
+{{ object.created }}
+
+<split></split>
+
+{{ object.tasks.all|length }}
+
+<split></split>
+
+{% include 'evaluation/batchjob_status_detail.html' %}

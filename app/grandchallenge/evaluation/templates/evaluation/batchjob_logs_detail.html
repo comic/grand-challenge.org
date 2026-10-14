@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load url %}
+{% load static %}
+
+{% block title %}
+    {{ object.pk }} Logs - Batch Jobs - {{ object.submission.phase.title }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item">
+            <a href="{{ object.submission.get_absolute_url }}">Submission {{ object.submission.pk }}</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'evaluation:batch-job-list' challenge_short_name=challenge.short_name slug=object.submission.phase.slug submission_pk=object.submission.pk %}">Batch Jobs</a>
+        </li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object.pk }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Logs</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Batch Job Logs</h2>
+
+    {% include "components/partials/amazon_sagemaker_training_logs.html" %}
+
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
+    <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
+    <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
+    <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
+{% endblock %}

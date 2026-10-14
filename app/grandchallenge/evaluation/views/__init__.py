@@ -68,6 +68,7 @@ from grandchallenge.evaluation.forms import (
     SubmissionForm,
 )
 from grandchallenge.evaluation.models import (
+    BatchJob,
     Evaluation,
     EvaluationGroundTruth,
     Method,
@@ -744,6 +745,76 @@ class EvaluationLogsDetail(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "change_evaluation"
     template_name_suffix = "_logs_detail"
     model = Evaluation
+    raise_exception = True
+
+
+class BatchJobList(
+    LoginRequiredMixin,
+    ViewObjectPermissionListMixin,
+    PaginatedTableListView,
+):
+    model = BatchJob
+    row_template = "evaluation/batchjob_list_row.html"
+    login_url = reverse_lazy("account_login")
+    raise_exception = True
+    search_fields = ["pk", "status"]
+    columns = [
+        Column(title="Detail"),
+        Column(title="Batch Job ID"),
+        Column(title="Created", sort_field="created"),
+        Column(title="Tasks"),
+        Column(title="Status", sort_field="status"),
+    ]
+    default_sort_column = 2
+
+    @cached_property
+    def submission(self):
+        return get_object_or_404(
+            Submission,
+            pk=self.kwargs["submission_pk"],
+            phase__slug=self.kwargs["slug"],
+            phase__challenge=self.request.challenge,
+        )
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return (
+            queryset.filter(submission=self.submission)
+            .select_related("submission__phase__challenge")
+            .prefetch_related("tasks")
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"submission": self.submission})
+        return context
+
+
+class BatchJobDetail(ObjectPermissionRequiredMixin, DetailView):
+    permission_required = "view_batchjob"
+    raise_exception = True
+    queryset = BatchJob.objects.select_related(
+        "submission__phase__challenge",
+        "algorithm_image__algorithm",
+    ).prefetch_related(
+        "tasks__inputs__interface",
+        "tasks__inputs__image__files",
+        "tasks__outputs__interface",
+        "tasks__outputs__image__files",
+    )
+
+
+class BatchJobStatusDetail(ObjectPermissionRequiredMixin, DetailView):
+    permission_required = "view_batchjob"
+    template_name_suffix = "_status_detail"
+    model = BatchJob
+    raise_exception = True
+
+
+class BatchJobLogsDetail(ObjectPermissionRequiredMixin, DetailView):
+    permission_required = "view_batchjob"
+    template_name_suffix = "_logs_detail"
+    model = BatchJob
     raise_exception = True
 
 

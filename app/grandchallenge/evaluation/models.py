@@ -2315,6 +2315,33 @@ class BatchJob(ComponentJob):
             for task in self.tasks.all()
         ]
 
+    def get_absolute_url(self):
+        return reverse(
+            "evaluation:batch-job-detail",
+            kwargs={
+                "pk": self.pk,
+                "submission_pk": self.submission.pk,
+                "slug": self.submission.phase.slug,
+                "challenge_short_name": self.submission.phase.challenge.short_name,
+            },
+        )
+
+    @property
+    def status_url(self) -> str:
+        return reverse(
+            "evaluation:batch-job-status-detail",
+            kwargs={
+                "pk": self.pk,
+                "submission_pk": self.submission.pk,
+                "slug": self.submission.phase.slug,
+                "challenge_short_name": self.submission.phase.challenge.short_name,
+            },
+        )
+
+    @property
+    def status_template(self):
+        return "evaluation/batchjob_status_detail.html"
+
 
 class BatchJobUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset()
