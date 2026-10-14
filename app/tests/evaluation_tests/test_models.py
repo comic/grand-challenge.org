@@ -30,7 +30,6 @@ from grandchallenge.evaluation.models import (
     Phase,
     PhaseAdditionalEvaluationInput,
     get_archive_items_for_interfaces,
-    get_valid_jobs_for_interfaces_and_archive_items,
 )
 from grandchallenge.evaluation.tasks import (
     create_algorithm_jobs_for_evaluation,
@@ -2502,37 +2501,6 @@ def test_get_archive_items_for_interfaces_matches_on_exact_inputs():
     )
     assert valid_archive_items.keys() == {interface4}
     assert list(valid_archive_items[interface4]) == []
-
-
-@pytest.mark.django_db
-def test_get_valid_jobs_for_interfaces_and_archive_items(
-    archive_items_and_jobs_for_interfaces,
-):
-
-    valid_job_inputs = get_archive_items_for_interfaces(
-        algorithm_interfaces=[
-            archive_items_and_jobs_for_interfaces.interface1,
-            archive_items_and_jobs_for_interfaces.interface2,
-        ],
-        archive_items=ArchiveItem.objects.all(),
-    )
-
-    jobs_per_interface = get_valid_jobs_for_interfaces_and_archive_items(
-        algorithm_interfaces=[
-            archive_items_and_jobs_for_interfaces.interface1,
-            archive_items_and_jobs_for_interfaces.interface2,
-        ],
-        algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
-        valid_archive_items_per_interface=valid_job_inputs,
-    )
-    assert jobs_per_interface == {
-        archive_items_and_jobs_for_interfaces.interface1: [
-            archive_items_and_jobs_for_interfaces.jobs_for_interface1[0]
-        ],
-        archive_items_and_jobs_for_interfaces.interface2: [
-            archive_items_and_jobs_for_interfaces.jobs_for_interface2[0]
-        ],
-    }
 
 
 @pytest.mark.django_db
