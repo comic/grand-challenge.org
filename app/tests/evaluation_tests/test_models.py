@@ -3462,24 +3462,43 @@ def test_get_incomplete_inference_jobs_for_user_in_batch_mode():
 
 @pytest.mark.django_db
 def test_get_incomplete_inference_jobs_for_user_in_single_mode():
-    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    archive = ArchiveFactory()
+    phase = PhaseFactory(
+        submission_kind=SubmissionKindChoices.ALGORITHM, archive=archive
+    )
     algorithm_image = AlgorithmImageFactory()
     submission = SubmissionFactory(
         phase=phase, algorithm_image=algorithm_image
     )
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
 
-    failed_job = AlgorithmJobFactory(
+    def create_job(*, status):
+        civ = ComponentInterfaceValueFactory(interface=ci)
+        item = ArchiveItemFactory(archive=archive)
+        item.values.set([civ])
+        job = AlgorithmJobFactory(
+            creator=None,
+            algorithm_image=algorithm_image,
+            status=status,
+            time_limit=10,
+        )
+        job.inputs.set([civ])
+        return job
+
+    failed_job = create_job(status=Job.FAILURE)
+    create_job(status=Job.SUCCESS)
+
+    # A failed job whose inputs are not in this phase's archive must be
+    # ignored, even though it uses the same algorithm image.
+    other_archive_job = AlgorithmJobFactory(
         creator=None,
         algorithm_image=algorithm_image,
         status=Job.FAILURE,
         time_limit=10,
     )
-    AlgorithmJobFactory(
-        creator=None,
-        algorithm_image=algorithm_image,
-        status=Job.SUCCESS,
-        time_limit=10,
-    )
+    other_civ = ComponentInterfaceValueFactory(interface=ci)
+    ArchiveItemFactory().values.set([other_civ])
+    other_archive_job.inputs.set([other_civ])
 
     admin = UserFactory()
     phase.challenge.add_admin(admin)
@@ -3488,12 +3507,16 @@ def test_get_incomplete_inference_jobs_for_user_in_single_mode():
 
     algorithm_image.algorithm.add_editor(algorithm_editor)
 
-    failed_job.viewer_groups.set(
-        [phase.challenge.admins_group, algorithm_image.algorithm.editors_group]
-    )
+    for job in [failed_job, other_archive_job]:
+        job.viewer_groups.set(
+            [
+                phase.challenge.admins_group,
+                algorithm_image.algorithm.editors_group,
+            ]
+        )
 
-    # Users with view_job see the unsuccessful jobs, successful ones are
-    # excluded.
+    # Users with view_job see the unsuccessful jobs for this phase's archive,
+    # successful ones and jobs for other archives are excluded.
     for user in [admin, algorithm_editor]:
         assert list(
             submission.get_incomplete_inference_jobs_for_user(user=user)

@@ -1876,23 +1876,30 @@ class Submission(FieldChangeMixin, UUIDModel):
             )
 
     def get_incomplete_inference_jobs_for_user(self, *, user):
-        incomplete_inference_jobs = self.inference_jobs.exclude(
-            status=self.inference_job_model.SUCCESS
-        ).order_by("status")
-
         if self.phase.use_batch_mode:
-            # Batch jobs are only ever viewable by challenge admins, so there
-            # is no need for a per-object permission filter.
-            if self.phase.challenge.is_admin(user):
-                return incomplete_inference_jobs
-            else:
-                return incomplete_inference_jobs.none()
+            incomplete_inference_jobs = self.inference_jobs.exclude(
+                status=self.inference_job_model.SUCCESS
+            ).order_by("status")
         else:
-            return filter_by_permission(
-                queryset=incomplete_inference_jobs,
-                user=user,
-                codename="view_job",
+            # Jobs are only scoped by algorithm image, which can be run across
+            # many phases and submissions. Narrow to jobs whose inputs come
+            # from this phase's archive.
+            incomplete_inference_jobs = (
+                self.inference_jobs.filter(
+                    inputs__archive_items__archive=self.phase.archive,
+                )
+                .exclude(status=self.inference_job_model.SUCCESS)
+                .distinct()
+                .order_by("status")
             )
+
+        return filter_by_permission(
+            queryset=incomplete_inference_jobs,
+            user=user,
+            codename=(
+                "view_batchjob" if self.phase.use_batch_mode else "view_job"
+            ),
+        )
 
     @cached_property
     def algorithm_interfaces(self):
