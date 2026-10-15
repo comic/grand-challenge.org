@@ -7,6 +7,8 @@ import pytest
 from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ValidationError
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from django.utils.timezone import now
 from guardian.shortcuts import get_group_perms
@@ -2296,6 +2298,95 @@ class TestInputsComplete:
         job.inputs.set([ci1_value_from_item, ci2_value_from_item])
 
         assert eval_alg.total_successful_inference_tasks == 0
+
+    @staticmethod
+    def _build_complete_algorithm_evaluation(*, archive_item_count):
+        # An archive whose items each carry two values, matched by successful
+        # jobs that each produce two outputs. Returns a complete evaluation.
+        ci1, ci2 = ComponentInterfaceFactory.create_batch(
+            2, kind=InterfaceKindChoices.BOOL
+        )
+        output_ci1, output_ci2 = ComponentInterfaceFactory.create_batch(
+            2, kind=InterfaceKindChoices.BOOL
+        )
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci1, ci2], outputs=[output_ci1, output_ci2]
+        )
+        algorithm_image = AlgorithmImageFactory()
+        algorithm_image.algorithm.interfaces.set([interface])
+
+        archive = ArchiveFactory()
+        phase = PhaseFactory(
+            archive=archive,
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+        )
+        phase.algorithm_interfaces.set([interface])
+        submission = SubmissionFactory(
+            phase=phase, algorithm_image=algorithm_image
+        )
+        evaluation = EvaluationFactory(submission=submission, time_limit=10)
+
+        for _ in range(archive_item_count):
+            input_civs = [
+                ComponentInterfaceValueFactory(interface=ci1, value=True),
+                ComponentInterfaceValueFactory(interface=ci2, value=False),
+            ]
+            item = ArchiveItemFactory(archive=archive)
+            item.values.set(input_civs)
+
+            job = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                creator=None,
+                algorithm_image=algorithm_image,
+                algorithm_interface=interface,
+                time_limit=algorithm_image.algorithm.time_limit,
+            )
+            job.inputs.set(input_civs)
+            job.outputs.set(
+                [
+                    ComponentInterfaceValueFactory(
+                        interface=output_ci1, value=True
+                    ),
+                    ComponentInterfaceValueFactory(
+                        interface=output_ci2, value=False
+                    ),
+                ]
+            )
+
+        return evaluation
+
+    def test_inputs_complete_does_not_read_job_outputs(self):
+        # The completeness check only counts successful tasks whose inputs
+        # match a valid archive item; it must not read the jobs' outputs.
+        evaluation = self._build_complete_algorithm_evaluation(
+            archive_item_count=3
+        )
+
+        with CaptureQueriesContext(connection) as captured:
+            assert evaluation.inputs_complete is True
+
+        assert not any(
+            "algorithms_job_outputs" in query["sql"]
+            for query in captured.captured_queries
+        )
+
+    def test_inputs_complete_query_count_is_constant(self):
+        # The number of queries for the completeness check must not grow with
+        # the number of archive items / successful jobs.
+        small_evaluation = self._build_complete_algorithm_evaluation(
+            archive_item_count=2
+        )
+        with CaptureQueriesContext(connection) as captured:
+            assert small_evaluation.inputs_complete is True
+        baseline_query_count = len(captured.captured_queries)
+
+        large_evaluation = self._build_complete_algorithm_evaluation(
+            archive_item_count=10
+        )
+        with CaptureQueriesContext(connection) as captured:
+            assert large_evaluation.inputs_complete is True
+
+        assert len(captured.captured_queries) == baseline_query_count
 
 
 @pytest.mark.django_db
