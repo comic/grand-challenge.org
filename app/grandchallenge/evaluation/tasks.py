@@ -179,8 +179,6 @@ def prepare_and_execute_evaluation(*, evaluation_pk: str | uuid.UUID):
 @lambda_task(
     retry_on=(TooManyJobsScheduled, LockNotAcquiredException),
     retry_delay=60,
-    soft_timeout=LONG_TASK_SOFT_TIMEOUT,
-    hard_timeout=LONG_TASK_HARD_TIMEOUT,
 )
 def create_algorithm_jobs_for_evaluation(
     *, evaluation_pk: str | uuid.UUID, first_run: bool
