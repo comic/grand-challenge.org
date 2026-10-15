@@ -52,7 +52,7 @@
             <p>The jobs are spread across the configured algorithm interfaces as follows:
             <ul>
                 {% for interface, count in phase.inference_job_count_per_interface.items %}
-                    <li>Interface {{ forloop.counter }}: {{ count }} batch job{{ count|pluralize }}</li>
+                    <li>Interface {{ forloop.counter }}: {{ count }} job{{ count|pluralize }}</li>
                 {% endfor %}
             </ul>
             </p>
