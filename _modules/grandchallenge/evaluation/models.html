@@ -214,37 +214,6 @@
     <span class="k">return</span> <span class="n">valid_archive_items_per_interface</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">get_valid_jobs_for_interfaces_and_archive_items</span><span class="p">(</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">algorithm_image</span><span class="p">,</span>
-    <span class="n">algorithm_interfaces</span><span class="p">,</span>
-    <span class="n">valid_archive_items_per_interface</span><span class="p">,</span>
-    <span class="n">algorithm_model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">subset_by_status</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<span class="p">):</span>
-    <span class="k">if</span> <span class="n">algorithm_model</span><span class="p">:</span>
-        <span class="n">extra_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"algorithm_model"</span><span class="p">:</span> <span class="n">algorithm_model</span><span class="p">}</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">extra_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"algorithm_model__isnull"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
-
-    <span class="k">if</span> <span class="n">subset_by_status</span><span class="p">:</span>
-        <span class="n">extra_filter</span><span class="p">[</span><span class="s2">"status__in"</span><span class="p">]</span> <span class="o">=</span> <span class="n">subset_by_status</span>
-
-    <span class="n">jobs</span> <span class="o">=</span> <span class="n">Job</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-        <span class="n">algorithm_image</span><span class="o">=</span><span class="n">algorithm_image</span><span class="p">,</span>
-        <span class="n">creator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">extra_filter</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">filter_inference_tasks_by_valid_archive_items</span><span class="p">(</span>
-        <span class="n">inference_tasks</span><span class="o">=</span><span class="n">jobs</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s2">"inputs"</span><span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
-            <span class="s2">"algorithm_image__algorithm"</span>
-        <span class="p">),</span>
-        <span class="n">algorithm_interfaces</span><span class="o">=</span><span class="n">algorithm_interfaces</span><span class="p">,</span>
-        <span class="n">valid_archive_items_per_interface</span><span class="o">=</span><span class="n">valid_archive_items_per_interface</span><span class="p">,</span>
-    <span class="p">)</span>
-
-
 <span class="k">def</span><span class="w"> </span><span class="nf">filter_inference_tasks_by_valid_archive_items</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">inference_tasks</span><span class="p">,</span>
@@ -2001,19 +1970,24 @@
                 <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_interfaces</span>
             <span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">scheduled_jobs_per_interface</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">get_valid_jobs_for_interfaces_and_archive_items</span><span class="p">(</span>
-                    <span class="n">algorithm_image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">,</span>
-                    <span class="n">algorithm_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_model</span><span class="p">,</span>
-                    <span class="n">algorithm_interfaces</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="p">,</span>
-                    <span class="n">valid_archive_items_per_interface</span><span class="o">=</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">candidate_archive_items_per_interface</span>
-                    <span class="p">),</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
+            <span class="c1"># This may include jobs whose input set only partially overlaps a</span>
+            <span class="c1"># (current) candidate archive item, rather than matching one exactly.</span>
+            <span class="c1"># That is fine: the exact match is done by unscheduled_input_civ_sets_per_interface,</span>
+            <span class="c1"># which subtracts these sets from the candidate sets. A partial-overlap set never equals</span>
+            <span class="c1"># a candidate set, so it is ignored there.</span>
             <span class="k">return</span> <span class="p">{</span>
-                <span class="n">interface</span><span class="p">:</span> <span class="p">{</span><span class="nb">frozenset</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">all</span><span class="p">())</span> <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs</span><span class="p">}</span>
-                <span class="k">for</span> <span class="n">interface</span><span class="p">,</span> <span class="n">jobs</span> <span class="ow">in</span> <span class="n">scheduled_jobs_per_interface</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="n">interface</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="nb">frozenset</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+                    <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_jobs</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">algorithm_interface</span><span class="o">=</span><span class="n">interface</span><span class="p">,</span>
+                        <span class="n">inputs__archive_items__in</span><span class="o">=</span><span class="n">valid_archive_items</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+                    <span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s2">"inputs"</span><span class="p">)</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">interface</span><span class="p">,</span> <span class="n">valid_archive_items</span> <span class="ow">in</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">candidate_archive_items_per_interface</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">)</span>
             <span class="p">}</span>
 
     <span class="nd">@property</span>
