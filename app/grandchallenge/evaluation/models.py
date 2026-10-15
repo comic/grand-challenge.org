@@ -176,37 +176,6 @@ def get_archive_items_for_interfaces(*, algorithm_interfaces, archive_items):
     return valid_archive_items_per_interface
 
 
-def get_valid_jobs_for_interfaces_and_archive_items(
-    *,
-    algorithm_image,
-    algorithm_interfaces,
-    valid_archive_items_per_interface,
-    algorithm_model=None,
-    subset_by_status=None,
-):
-    if algorithm_model:
-        extra_filter = {"algorithm_model": algorithm_model}
-    else:
-        extra_filter = {"algorithm_model__isnull": True}
-
-    if subset_by_status:
-        extra_filter["status__in"] = subset_by_status
-
-    jobs = Job.objects.filter(
-        algorithm_image=algorithm_image,
-        creator=None,
-        **extra_filter,
-    )
-
-    return filter_inference_tasks_by_valid_archive_items(
-        inference_tasks=jobs.prefetch_related("inputs").select_related(
-            "algorithm_image__algorithm"
-        ),
-        algorithm_interfaces=algorithm_interfaces,
-        valid_archive_items_per_interface=valid_archive_items_per_interface,
-    )
-
-
 def filter_inference_tasks_by_valid_archive_items(
     *,
     inference_tasks,
@@ -1951,19 +1920,24 @@ class Submission(FieldChangeMixin, UUIDModel):
                 for interface in self.algorithm_interfaces
             }
         else:
-            scheduled_jobs_per_interface = (
-                get_valid_jobs_for_interfaces_and_archive_items(
-                    algorithm_image=self.algorithm_image,
-                    algorithm_model=self.algorithm_model,
-                    algorithm_interfaces=self.algorithm_interfaces,
-                    valid_archive_items_per_interface=(
-                        self.candidate_archive_items_per_interface
-                    ),
-                )
-            )
+            # This may include jobs whose input set only partially overlaps a
+            # (current) candidate archive item, rather than matching one exactly.
+            # That is fine: the exact match is done by unscheduled_input_civ_sets_per_interface,
+            # which subtracts these sets from the candidate sets. A partial-overlap set never equals
+            # a candidate set, so it is ignored there.
             return {
-                interface: {frozenset(job.inputs.all()) for job in jobs}
-                for interface, jobs in scheduled_jobs_per_interface.items()
+                interface: {
+                    frozenset(job.inputs.all())
+                    for job in self.inference_jobs.filter(
+                        algorithm_interface=interface,
+                        inputs__archive_items__in=valid_archive_items,
+                    )
+                    .distinct()
+                    .prefetch_related("inputs")
+                }
+                for interface, valid_archive_items in (
+                    self.candidate_archive_items_per_interface.items()
+                )
             }
 
     @property
