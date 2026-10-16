@@ -16,7 +16,8 @@ from grandchallenge.evaluation.models import Evaluation
 
 class ExternalAdminLinkMixin:
     def get_list_display(self, request):
-        return ("external_admin", *super().get_list_display(request))
+        first, *rest = super().get_list_display(request)
+        return (first, "external_admin", *rest)
 
     def external_admin(self, obj):
         executor = obj.get_executor(
