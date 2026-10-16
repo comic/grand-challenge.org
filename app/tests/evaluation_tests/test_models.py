@@ -7,6 +7,8 @@ import pytest
 from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ValidationError
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from django.utils.timezone import now
 from guardian.shortcuts import get_group_perms
@@ -547,6 +549,88 @@ class TestSubmissionCreateInferenceJobs:
         assert submission.unscheduled_input_civ_sets_per_interface == {
             interface: [frozenset({unscheduled_civ})]
         }
+
+    @staticmethod
+    def _build_submission_with_scheduled_jobs(*, already_scheduled_count):
+        # An archive whose items each carry two values. ``already_scheduled``
+        # items already have a matching successful job; one extra item does
+        # not, so exactly one job remains to be scheduled.
+        ci1, ci2 = ComponentInterfaceFactory.create_batch(
+            2, kind=InterfaceKindChoices.BOOL
+        )
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci1, ci2], outputs=[ComponentInterfaceFactory()]
+        )
+        submission = _algorithm_submission_for_interface(interface=interface)
+
+        def add_item():
+            input_civs = [
+                ComponentInterfaceValueFactory(interface=ci1, value=True),
+                ComponentInterfaceValueFactory(interface=ci2, value=False),
+            ]
+            item = ArchiveItemFactory(archive=submission.phase.archive)
+            item.values.set(input_civs)
+            return input_civs
+
+        for _ in range(already_scheduled_count):
+            scheduled_civs = add_item()
+            job = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                creator=None,
+                algorithm_image=submission.algorithm_image,
+                algorithm_interface=interface,
+                time_limit=submission.phase.algorithm_time_limit,
+            )
+            job.inputs.set(scheduled_civs)
+            job.outputs.set(
+                [ComponentInterfaceValueFactory(value={"foo": "bar"})]
+            )
+
+        # One item without a job, so there is always exactly one job to create.
+        add_item()
+
+        return submission
+
+    def test_create_inference_jobs_scheduling_query_count_is_constant(self):
+        # Scheduling creates one job here (max_jobs=1), so the only thing that
+        # could scale is the candidate/scheduled dedup overhead. That overhead
+        # must not grow with the number of archive items / existing jobs.
+        small_submission = self._build_submission_with_scheduled_jobs(
+            already_scheduled_count=2
+        )
+        with CaptureQueriesContext(connection) as captured:
+            small_submission.create_inference_jobs(
+                max_jobs=1, task_on_success=None, task_on_failure=None
+            )
+        baseline_query_count = len(captured.captured_queries)
+
+        large_submission = self._build_submission_with_scheduled_jobs(
+            already_scheduled_count=10
+        )
+        with CaptureQueriesContext(connection) as captured:
+            large_submission.create_inference_jobs(
+                max_jobs=1, task_on_success=None, task_on_failure=None
+            )
+
+        large_query_count = len(captured.captured_queries)
+        if large_query_count > baseline_query_count:
+            # Surface which queries scaled so the N+1 source is obvious.
+            from collections import Counter
+
+            counter = Counter(
+                query["sql"].split(" WHERE ")[0]
+                for query in captured.captured_queries
+            )
+            scaled = "\n\n".join(
+                f"{count}x: {sql}"
+                for sql, count in counter.most_common()
+                if count > 1
+            )
+            raise AssertionError(
+                f"Scheduling query count grew from {baseline_query_count} to "
+                f"{large_query_count} (2 -> 10 already-scheduled jobs). "
+                f"Repeated queries in the large run:\n\n{scaled}"
+            )
 
 
 @pytest.mark.django_db
@@ -2296,6 +2380,95 @@ class TestInputsComplete:
         job.inputs.set([ci1_value_from_item, ci2_value_from_item])
 
         assert eval_alg.total_successful_inference_tasks == 0
+
+    @staticmethod
+    def _build_complete_algorithm_evaluation(*, archive_item_count):
+        # An archive whose items each carry two values, matched by successful
+        # jobs that each produce two outputs. Returns a complete evaluation.
+        ci1, ci2 = ComponentInterfaceFactory.create_batch(
+            2, kind=InterfaceKindChoices.BOOL
+        )
+        output_ci1, output_ci2 = ComponentInterfaceFactory.create_batch(
+            2, kind=InterfaceKindChoices.BOOL
+        )
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci1, ci2], outputs=[output_ci1, output_ci2]
+        )
+        algorithm_image = AlgorithmImageFactory()
+        algorithm_image.algorithm.interfaces.set([interface])
+
+        archive = ArchiveFactory()
+        phase = PhaseFactory(
+            archive=archive,
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+        )
+        phase.algorithm_interfaces.set([interface])
+        submission = SubmissionFactory(
+            phase=phase, algorithm_image=algorithm_image
+        )
+        evaluation = EvaluationFactory(submission=submission, time_limit=10)
+
+        for _ in range(archive_item_count):
+            input_civs = [
+                ComponentInterfaceValueFactory(interface=ci1, value=True),
+                ComponentInterfaceValueFactory(interface=ci2, value=False),
+            ]
+            item = ArchiveItemFactory(archive=archive)
+            item.values.set(input_civs)
+
+            job = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                creator=None,
+                algorithm_image=algorithm_image,
+                algorithm_interface=interface,
+                time_limit=algorithm_image.algorithm.time_limit,
+            )
+            job.inputs.set(input_civs)
+            job.outputs.set(
+                [
+                    ComponentInterfaceValueFactory(
+                        interface=output_ci1, value=True
+                    ),
+                    ComponentInterfaceValueFactory(
+                        interface=output_ci2, value=False
+                    ),
+                ]
+            )
+
+        return evaluation
+
+    def test_inputs_complete_does_not_read_job_outputs(self):
+        # The completeness check only counts successful tasks whose inputs
+        # match a valid archive item; it must not read the jobs' outputs.
+        evaluation = self._build_complete_algorithm_evaluation(
+            archive_item_count=3
+        )
+
+        with CaptureQueriesContext(connection) as captured:
+            assert evaluation.inputs_complete is True
+
+        assert not any(
+            "algorithms_job_outputs" in query["sql"]
+            for query in captured.captured_queries
+        )
+
+    def test_inputs_complete_query_count_is_constant(self):
+        # The number of queries for the completeness check must not grow with
+        # the number of archive items / successful jobs.
+        small_evaluation = self._build_complete_algorithm_evaluation(
+            archive_item_count=2
+        )
+        with CaptureQueriesContext(connection) as captured:
+            assert small_evaluation.inputs_complete is True
+        baseline_query_count = len(captured.captured_queries)
+
+        large_evaluation = self._build_complete_algorithm_evaluation(
+            archive_item_count=10
+        )
+        with CaptureQueriesContext(connection) as captured:
+            assert large_evaluation.inputs_complete is True
+
+        assert len(captured.captured_queries) == baseline_query_count
 
 
 @pytest.mark.django_db

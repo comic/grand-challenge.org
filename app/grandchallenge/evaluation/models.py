@@ -1946,12 +1946,15 @@ class Submission(FieldChangeMixin, UUIDModel):
         Input CIV sets that have NOT been scheduled as inputs for a Job or
         BatchJob yet, grouped by interface.
         """
+        scheduled_input_civ_sets_per_interface = (
+            self.scheduled_input_civ_sets_per_interface
+        )
         return {
             interface: [
                 input_civs
                 for input_civs in input_civ_sets
                 if input_civs
-                not in self.scheduled_input_civ_sets_per_interface[interface]
+                not in scheduled_input_civ_sets_per_interface[interface]
             ]
             for interface, input_civ_sets in (
                 self.candidate_input_civ_sets_per_interface.items()
@@ -2886,10 +2889,13 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
                 status__in=subset_by_status
             )
 
+        # Only inputs are needed here: the exact-match below compares input
+        # CIV pks, and the common consumer (inputs_complete) just counts the
+        # matched tasks. Consumers that serialize outputs (set_evaluation_inputs)
+        # prefetch outputs on the returned tasks themselves, so that the
+        # frequent completeness check does not read every output row.
         return filter_inference_tasks_by_valid_archive_items(
-            inference_tasks=inference_tasks.prefetch_related(
-                "inputs__interface", "outputs__interface"
-            ),
+            inference_tasks=inference_tasks.prefetch_related("inputs"),
             algorithm_interfaces=self.submission.phase.algorithm_interfaces.prefetch_related(
                 "inputs"
             ),

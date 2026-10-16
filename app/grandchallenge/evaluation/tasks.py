@@ -357,12 +357,38 @@ def set_evaluation_inputs(*, evaluation_pk: str | uuid.UUID):
         return
 
     if evaluation.inputs_complete:
+        from django.db.models import prefetch_related_objects
+
         from grandchallenge.components.models import (
             ComponentInterface,
             ComponentInterfaceValue,
         )
 
         successful_inference_tasks = evaluation.successful_inference_tasks
+        # Serializing the tasks reads their inputs and outputs (and each CIV's
+        # interface and image) and the algorithm image / batch job. Prefetch
+        # those here, on the already-fetched tasks, so serialization does not
+        # issue a query per task. This is kept out of
+        # successful_inference_tasks itself so the frequent inputs_complete
+        # check does not read every output row.
+        serialization_lookups = [
+            "inputs__interface",
+            "inputs__image",
+            "outputs__interface",
+            "outputs__image",
+        ]
+        if evaluation.submission.phase.use_batch_mode:
+            serialization_lookups.append("batch_job__algorithm_image")
+        else:
+            serialization_lookups.extend(
+                [
+                    "algorithm_image__algorithm__hanging_protocol",
+                    "algorithm_image__algorithm__optional_hanging_protocols",
+                ]
+            )
+        prefetch_related_objects(
+            successful_inference_tasks, *serialization_lookups
+        )
         serializer = evaluation.job_serializer_class(
             successful_inference_tasks, many=True
         )

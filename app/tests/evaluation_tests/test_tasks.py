@@ -11,6 +11,8 @@ import pytest
 import requests
 from actstream.actions import unfollow
 from django.core.cache import cache
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils.html import format_html
 from django.utils.timezone import now
 from redis.exceptions import LockError
@@ -669,6 +671,90 @@ class TestSetEvaluationInputs:
         assert eval.status == eval.EXECUTING_PREREQUISITES
         assert eval.inputs.count() == 0
         assert eval.input_prefixes == {}
+
+    @staticmethod
+    def _build_evaluation(*, archive_item_count):
+        # An archive whose items each carry two values, matched by successful
+        # jobs that each produce two outputs, so serializing the jobs would
+        # N+1 on inputs, outputs, their interfaces/images and the algorithm
+        # image unless everything is prefetched.
+        ci1, ci2 = ComponentInterfaceFactory.create_batch(
+            2, kind=InterfaceKindChoices.BOOL
+        )
+        output_ci1, output_ci2 = ComponentInterfaceFactory.create_batch(
+            2, kind=InterfaceKindChoices.BOOL
+        )
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci1, ci2], outputs=[output_ci1, output_ci2]
+        )
+        algorithm_image = AlgorithmImageFactory()
+        algorithm_image.algorithm.interfaces.set([interface])
+
+        archive = ArchiveFactory()
+        phase = PhaseFactory(
+            archive=archive,
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+        )
+        phase.algorithm_interfaces.set([interface])
+        submission = SubmissionFactory(
+            phase=phase, algorithm_image=algorithm_image
+        )
+        evaluation = EvaluationFactory(
+            submission=submission,
+            status=Evaluation.EXECUTING_PREREQUISITES,
+            time_limit=phase.evaluation_time_limit,
+        )
+
+        for _ in range(archive_item_count):
+            input_civs = [
+                ComponentInterfaceValueFactory(interface=ci1, value=True),
+                ComponentInterfaceValueFactory(interface=ci2, value=False),
+            ]
+            item = ArchiveItemFactory(archive=archive)
+            item.values.set(input_civs)
+
+            job = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                creator=None,
+                algorithm_image=algorithm_image,
+                algorithm_interface=interface,
+                time_limit=algorithm_image.algorithm.time_limit,
+            )
+            job.inputs.set(input_civs)
+            job.outputs.set(
+                [
+                    ComponentInterfaceValueFactory(
+                        interface=output_ci1, value=True
+                    ),
+                    ComponentInterfaceValueFactory(
+                        interface=output_ci2, value=False
+                    ),
+                ]
+            )
+
+        return evaluation
+
+    def test_set_evaluation_inputs_query_count_is_constant(self):
+        # The number of queries must not grow with the number of archive
+        # items / successful jobs / their outputs.
+        small_evaluation = self._build_evaluation(archive_item_count=2)
+        with CaptureQueriesContext(connection) as captured:
+            set_evaluation_inputs(evaluation_pk=small_evaluation.pk)
+        baseline_query_count = len(captured.captured_queries)
+
+        small_evaluation.refresh_from_db()
+        assert small_evaluation.status == Evaluation.PENDING
+
+        # Five times as many archive items, successful jobs and outputs must
+        # not increase the number of queries: everything the serialization
+        # reads is prefetched, so there is no per-job query.
+        large_evaluation = self._build_evaluation(archive_item_count=10)
+        with CaptureQueriesContext(connection) as captured:
+            set_evaluation_inputs(evaluation_pk=large_evaluation.pk)
+
+        large_evaluation.refresh_from_db()
+        assert large_evaluation.status == Evaluation.PENDING
+        assert len(captured.captured_queries) <= baseline_query_count
 
 
 @pytest.mark.django_db
