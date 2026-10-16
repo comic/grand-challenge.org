@@ -1929,8 +1929,7 @@ class Submission(FieldChangeMixin, UUIDModel):
             )
         }
 
-    @property
-    def scheduled_input_civ_sets_per_interface(self):
+    def get_scheduled_input_civ_sets_per_interface(self):
         """
         Input CIV sets that have already been scheduled as inputs for a Job or
         BatchJob, grouped by interface.
@@ -1967,14 +1966,13 @@ class Submission(FieldChangeMixin, UUIDModel):
                 )
             }
 
-    @property
-    def unscheduled_input_civ_sets_per_interface(self):
+    def get_unscheduled_input_civ_sets_per_interface(self):
         """
         Input CIV sets that have NOT been scheduled as inputs for a Job or
         BatchJob yet, grouped by interface.
         """
         scheduled_input_civ_sets_per_interface = (
-            self.scheduled_input_civ_sets_per_interface
+            self.get_scheduled_input_civ_sets_per_interface()
         )
         return {
             interface: [
@@ -2001,7 +1999,7 @@ class Submission(FieldChangeMixin, UUIDModel):
 
         # Evaluate once
         unscheduled_input_civ_sets_per_interface = (
-            self.unscheduled_input_civ_sets_per_interface
+            self.get_unscheduled_input_civ_sets_per_interface()
         )
 
         sets_remaining = sum(
