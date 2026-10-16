@@ -93,6 +93,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.guardian</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">GroupObjectPermissionBase</span><span class="p">,</span>
     <span class="n">UserObjectPermissionBase</span><span class="p">,</span>
+    <span class="n">filter_by_permission</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -1908,6 +1909,32 @@
                 <span class="o">**</span><span class="n">extra_filter</span><span class="p">,</span>
             <span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_incomplete_inference_jobs_for_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">use_batch_mode</span><span class="p">:</span>
+            <span class="n">incomplete_inference_jobs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inference_jobs</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+                <span class="n">status</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inference_job_model</span><span class="o">.</span><span class="n">SUCCESS</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"status"</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Jobs are only scoped by algorithm image, which can be run across</span>
+            <span class="c1"># many phases and submissions. Narrow to jobs whose inputs come</span>
+            <span class="c1"># from this phase's archive.</span>
+            <span class="n">incomplete_inference_jobs</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">inference_jobs</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">inputs__archive_items__archive</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">archive</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">inference_job_model</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"status"</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">filter_by_permission</span><span class="p">(</span>
+            <span class="n">queryset</span><span class="o">=</span><span class="n">incomplete_inference_jobs</span><span class="p">,</span>
+            <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+            <span class="n">codename</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">"view_batchjob"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">use_batch_mode</span> <span class="k">else</span> <span class="s2">"view_job"</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">algorithm_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">interfaces</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
@@ -2612,14 +2639,26 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">algorithm_logs_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">format_html</span><span class="p">(</span>
-            <span class="s2">"&lt;a href=</span><span class="si">{url}</span><span class="s2">&gt;</span><span class="si">{label}</span><span class="s2">&lt;/a&gt;"</span><span class="p">,</span>
-            <span class="n">url</span><span class="o">=</span><span class="n">reverse</span><span class="p">(</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">use_batch_mode</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span>
+                <span class="s2">"evaluation:batch-job-list"</span><span class="p">,</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"challenge_short_name"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
+                    <span class="s2">"slug"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span>
+                    <span class="s2">"submission_pk"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">reverse</span><span class="p">(</span>
                 <span class="s2">"algorithms:job-list"</span><span class="p">,</span>
                 <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
                     <span class="s2">"slug"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_image</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">slug</span>
                 <span class="p">},</span>
-            <span class="p">),</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">format_html</span><span class="p">(</span>
+            <span class="s2">"&lt;a href=</span><span class="si">{url}</span><span class="s2">&gt;</span><span class="si">{label}</span><span class="s2">&lt;/a&gt;"</span><span class="p">,</span>
+            <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span>
             <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
         <span class="p">)</span>
 
