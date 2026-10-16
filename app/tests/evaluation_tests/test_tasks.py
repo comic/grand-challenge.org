@@ -745,13 +745,16 @@ class TestSetEvaluationInputs:
         small_evaluation.refresh_from_db()
         assert small_evaluation.status == Evaluation.PENDING
 
+        # Five times as many archive items, successful jobs and outputs must
+        # not increase the number of queries: everything the serialization
+        # reads is prefetched, so there is no per-job query.
         large_evaluation = self._build_evaluation(archive_item_count=10)
         with CaptureQueriesContext(connection) as captured:
             set_evaluation_inputs(evaluation_pk=large_evaluation.pk)
 
         large_evaluation.refresh_from_db()
         assert large_evaluation.status == Evaluation.PENDING
-        assert len(captured.captured_queries) == baseline_query_count
+        assert len(captured.captured_queries) <= baseline_query_count
 
 
 @pytest.mark.django_db

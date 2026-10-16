@@ -550,6 +550,88 @@ class TestSubmissionCreateInferenceJobs:
             interface: [frozenset({unscheduled_civ})]
         }
 
+    @staticmethod
+    def _build_submission_with_scheduled_jobs(*, already_scheduled_count):
+        # An archive whose items each carry two values. ``already_scheduled``
+        # items already have a matching successful job; one extra item does
+        # not, so exactly one job remains to be scheduled.
+        ci1, ci2 = ComponentInterfaceFactory.create_batch(
+            2, kind=InterfaceKindChoices.BOOL
+        )
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci1, ci2], outputs=[ComponentInterfaceFactory()]
+        )
+        submission = _algorithm_submission_for_interface(interface=interface)
+
+        def add_item():
+            input_civs = [
+                ComponentInterfaceValueFactory(interface=ci1, value=True),
+                ComponentInterfaceValueFactory(interface=ci2, value=False),
+            ]
+            item = ArchiveItemFactory(archive=submission.phase.archive)
+            item.values.set(input_civs)
+            return input_civs
+
+        for _ in range(already_scheduled_count):
+            scheduled_civs = add_item()
+            job = AlgorithmJobFactory(
+                status=Job.SUCCESS,
+                creator=None,
+                algorithm_image=submission.algorithm_image,
+                algorithm_interface=interface,
+                time_limit=submission.phase.algorithm_time_limit,
+            )
+            job.inputs.set(scheduled_civs)
+            job.outputs.set(
+                [ComponentInterfaceValueFactory(value={"foo": "bar"})]
+            )
+
+        # One item without a job, so there is always exactly one job to create.
+        add_item()
+
+        return submission
+
+    def test_create_inference_jobs_scheduling_query_count_is_constant(self):
+        # Scheduling creates one job here (max_jobs=1), so the only thing that
+        # could scale is the candidate/scheduled dedup overhead. That overhead
+        # must not grow with the number of archive items / existing jobs.
+        small_submission = self._build_submission_with_scheduled_jobs(
+            already_scheduled_count=2
+        )
+        with CaptureQueriesContext(connection) as captured:
+            small_submission.create_inference_jobs(
+                max_jobs=1, task_on_success=None, task_on_failure=None
+            )
+        baseline_query_count = len(captured.captured_queries)
+
+        large_submission = self._build_submission_with_scheduled_jobs(
+            already_scheduled_count=10
+        )
+        with CaptureQueriesContext(connection) as captured:
+            large_submission.create_inference_jobs(
+                max_jobs=1, task_on_success=None, task_on_failure=None
+            )
+
+        large_query_count = len(captured.captured_queries)
+        if large_query_count > baseline_query_count:
+            # Surface which queries scaled so the N+1 source is obvious.
+            from collections import Counter
+
+            counter = Counter(
+                query["sql"].split(" WHERE ")[0]
+                for query in captured.captured_queries
+            )
+            scaled = "\n\n".join(
+                f"{count}x: {sql}"
+                for sql, count in counter.most_common()
+                if count > 1
+            )
+            raise AssertionError(
+                f"Scheduling query count grew from {baseline_query_count} to "
+                f"{large_query_count} (2 -> 10 already-scheduled jobs). "
+                f"Repeated queries in the large run:\n\n{scaled}"
+            )
+
 
 @pytest.mark.django_db
 def test_create_evaluation_uniqueness_checks(

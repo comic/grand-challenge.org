@@ -1902,7 +1902,7 @@ class Submission(FieldChangeMixin, UUIDModel):
             )
         }
 
-    @property
+    @cached_property
     def scheduled_input_civ_sets_per_interface(self):
         """
         Input CIV sets that have already been scheduled as inputs for a Job or
@@ -1946,12 +1946,15 @@ class Submission(FieldChangeMixin, UUIDModel):
         Input CIV sets that have NOT been scheduled as inputs for a Job or
         BatchJob yet, grouped by interface.
         """
+        scheduled_input_civ_sets_per_interface = (
+            self.scheduled_input_civ_sets_per_interface
+        )
         return {
             interface: [
                 input_civs
                 for input_civs in input_civ_sets
                 if input_civs
-                not in self.scheduled_input_civ_sets_per_interface[interface]
+                not in scheduled_input_civ_sets_per_interface[interface]
             ]
             for interface, input_civ_sets in (
                 self.candidate_input_civ_sets_per_interface.items()

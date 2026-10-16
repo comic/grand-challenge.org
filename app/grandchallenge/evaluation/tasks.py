@@ -380,7 +380,12 @@ def set_evaluation_inputs(*, evaluation_pk: str | uuid.UUID):
         if evaluation.submission.phase.use_batch_mode:
             serialization_lookups.append("batch_job__algorithm_image")
         else:
-            serialization_lookups.append("algorithm_image__algorithm")
+            serialization_lookups.extend(
+                [
+                    "algorithm_image__algorithm__hanging_protocol",
+                    "algorithm_image__algorithm__optional_hanging_protocols",
+                ]
+            )
         prefetch_related_objects(
             successful_inference_tasks, *serialization_lookups
         )
