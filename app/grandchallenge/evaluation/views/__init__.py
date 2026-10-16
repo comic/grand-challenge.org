@@ -34,7 +34,7 @@ from django.views.generic import (
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
-from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.algorithms.views import AlgorithmInterfaceCreateBase
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import ChallengeRequest
@@ -49,7 +49,6 @@ from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
     ViewObjectPermissionListMixin,
-    filter_by_permission,
 )
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.direct_messages.forms import ConversationForm
@@ -650,21 +649,11 @@ class EvaluationIncompleteJobsMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        incomplete_jobs = filter_by_permission(
-            queryset=Job.objects.exclude(status=Job.SUCCESS)
-            .filter(
-                algorithm_image=self.object.submission.algorithm_image,
-                inputs__archive_items__archive=self.object.submission.phase.archive,
-            )
-            .distinct()
-            .order_by("status"),
-            user=self.request.user,
-            codename="view_job",
-        )
-
         context.update(
             {
-                "incomplete_jobs": incomplete_jobs,
+                "incomplete_jobs": self.object.submission.get_incomplete_inference_jobs_for_user(
+                    user=self.request.user
+                ),
             }
         )
 

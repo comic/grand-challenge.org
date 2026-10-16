@@ -229,11 +229,19 @@
                 {% endif %}
 
                 {% if object.submission.phase.submission_kind == evaluation.submission.phase.SubmissionKindChoices.ALGORITHM and object.submission.algorithm_image %}
-                    <a class="btn btn-primary"
-                       href="{% url 'algorithms:job-list' slug=object.submission.algorithm_image.algorithm.slug %}">
-                        <i class="fas fa-angle-double-right mr-1"></i>
-                        Go to the results of {{ object.submission.algorithm_image.algorithm.title|truncatechars:30 }}
-                    </a>
+                    {% if object.submission.phase.use_batch_mode %}
+                        <a class="btn btn-primary"
+                           href="{% url 'evaluation:batch-job-list' challenge_short_name=challenge.short_name slug=object.submission.phase.slug submission_pk=object.submission.pk %}">
+                            <i class="fas fa-angle-double-right mr-1"></i>
+                            Go to the batch jobs for this submission
+                        </a>
+                    {% else %}
+                        <a class="btn btn-primary"
+                           href="{% url 'algorithms:job-list' slug=object.submission.algorithm_image.algorithm.slug %}">
+                            <i class="fas fa-angle-double-right mr-1"></i>
+                            Go to the results of {{ object.submission.algorithm_image.algorithm.title|truncatechars:30 }}
+                        </a>
+                    {% endif %}
                 {% endif %}
             </div>
 

@@ -69,7 +69,11 @@
 <split></split>
 
 {% if object.submission.phase.submission_kind == object.submission.phase.SubmissionKindChoices.ALGORITHM and object.submission.algorithm_image %}
-    <a href="{% url 'algorithms:job-list' slug=object.submission.algorithm_image.algorithm.slug %}">{{ object.submission.algorithm_image.algorithm.title }}</a>
+    {% if object.submission.phase.use_batch_mode %}
+        <a href="{% url 'evaluation:batch-job-list' challenge_short_name=challenge.short_name slug=object.submission.phase.slug submission_pk=object.submission.pk %}">{{ object.submission.algorithm_image.algorithm.title }}</a>
+    {% else %}
+        <a href="{% url 'algorithms:job-list' slug=object.submission.algorithm_image.algorithm.slug %}">{{ object.submission.algorithm_image.algorithm.title }}</a>
+    {% endif %}
     <split></split>
 {% endif %}
 

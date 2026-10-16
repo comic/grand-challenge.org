@@ -38,6 +38,7 @@ from grandchallenge.evaluation.tasks import (
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentTypeChoices
+from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmInterfaceFactory,
@@ -3301,6 +3302,43 @@ def test_handle_algorithm_failure(is_admin, open_logs, expected_message):
     assert expected_message in result
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize("use_batch_mode", [False, True])
+def test_algorithm_logs_message_links_to_jobs(use_batch_mode):
+    phase = PhaseFactory(
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        use_batch_mode=use_batch_mode,
+    )
+    ai = AlgorithmImageFactory()
+    eval = EvaluationFactory(
+        time_limit=10,
+        submission__phase=phase,
+        submission__algorithm_image=ai,
+    )
+
+    builder = EvaluationActionMessageBuilder(
+        evaluation=eval, user=UserFactory()
+    )
+
+    result = builder.algorithm_logs_message(label="the algorithm logs")
+
+    if use_batch_mode:
+        expected_url = reverse(
+            "evaluation:batch-job-list",
+            kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "submission_pk": eval.submission.pk,
+            },
+        )
+    else:
+        expected_url = reverse(
+            "algorithms:job-list", kwargs={"slug": ai.algorithm.slug}
+        )
+
+    assert expected_url in result
+
+
 @pytest.mark.parametrize(
     "is_admin,submission_kind,open_logs,expected_message",
     [
@@ -3565,3 +3603,111 @@ def test_batch_job_inputs_complete():
         time_limit=10,
     )
     assert not incomplete_batch_job.inputs_complete
+
+
+@pytest.mark.django_db
+def test_get_incomplete_inference_jobs_for_user_in_batch_mode():
+    phase = PhaseFactory(
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        use_batch_mode=True,
+    )
+    algorithm_image = AlgorithmImageFactory()
+    submission = SubmissionFactory(
+        phase=phase, algorithm_image=algorithm_image
+    )
+
+    failed_batch_job = BatchJobFactory(
+        submission=submission,
+        algorithm_image=algorithm_image,
+        status=BatchJob.FAILURE,
+        time_limit=10,
+    )
+    BatchJobFactory(
+        submission=submission,
+        algorithm_image=algorithm_image,
+        status=BatchJob.SUCCESS,
+        time_limit=10,
+    )
+
+    admin = UserFactory()
+    phase.challenge.add_admin(admin)
+    non_admin = UserFactory()
+
+    # Challenge admins see the unsuccessful batch jobs, successful ones are
+    # excluded.
+    assert list(
+        submission.get_incomplete_inference_jobs_for_user(user=admin)
+    ) == [failed_batch_job]
+
+    # Everyone else sees nothing, batch jobs are admins-only.
+    assert not submission.get_incomplete_inference_jobs_for_user(
+        user=non_admin
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_get_incomplete_inference_jobs_for_user_in_single_mode():
+    archive = ArchiveFactory()
+    phase = PhaseFactory(
+        submission_kind=SubmissionKindChoices.ALGORITHM, archive=archive
+    )
+    algorithm_image = AlgorithmImageFactory()
+    submission = SubmissionFactory(
+        phase=phase, algorithm_image=algorithm_image
+    )
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+
+    def create_job(*, status):
+        civ = ComponentInterfaceValueFactory(interface=ci)
+        item = ArchiveItemFactory(archive=archive)
+        item.values.set([civ])
+        job = AlgorithmJobFactory(
+            creator=None,
+            algorithm_image=algorithm_image,
+            status=status,
+            time_limit=10,
+        )
+        job.inputs.set([civ])
+        return job
+
+    failed_job = create_job(status=Job.FAILURE)
+    create_job(status=Job.SUCCESS)
+
+    # A failed job whose inputs are not in this phase's archive must be
+    # ignored, even though it uses the same algorithm image.
+    other_archive_job = AlgorithmJobFactory(
+        creator=None,
+        algorithm_image=algorithm_image,
+        status=Job.FAILURE,
+        time_limit=10,
+    )
+    other_civ = ComponentInterfaceValueFactory(interface=ci)
+    ArchiveItemFactory().values.set([other_civ])
+    other_archive_job.inputs.set([other_civ])
+
+    admin = UserFactory()
+    phase.challenge.add_admin(admin)
+    non_viewer = UserFactory()
+    algorithm_editor = UserFactory()
+
+    algorithm_image.algorithm.add_editor(algorithm_editor)
+
+    for job in [failed_job, other_archive_job]:
+        job.viewer_groups.set(
+            [
+                phase.challenge.admins_group,
+                algorithm_image.algorithm.editors_group,
+            ]
+        )
+
+    # Users with view_job see the unsuccessful jobs for this phase's archive,
+    # successful ones and jobs for other archives are excluded.
+    for user in [admin, algorithm_editor]:
+        assert list(
+            submission.get_incomplete_inference_jobs_for_user(user=user)
+        ) == [failed_job]
+
+    # Users without view_job see nothing.
+    assert not submission.get_incomplete_inference_jobs_for_user(
+        user=non_viewer
+    ).exists()

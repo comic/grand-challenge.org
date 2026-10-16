@@ -55,6 +55,7 @@ from grandchallenge.core.error_messages import (
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
+    filter_by_permission,
 )
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
@@ -1858,6 +1859,32 @@ class Submission(FieldChangeMixin, UUIDModel):
                 **extra_filter,
             )
 
+    def get_incomplete_inference_jobs_for_user(self, *, user):
+        if self.phase.use_batch_mode:
+            incomplete_inference_jobs = self.inference_jobs.exclude(
+                status=self.inference_job_model.SUCCESS
+            ).order_by("status")
+        else:
+            # Jobs are only scoped by algorithm image, which can be run across
+            # many phases and submissions. Narrow to jobs whose inputs come
+            # from this phase's archive.
+            incomplete_inference_jobs = (
+                self.inference_jobs.filter(
+                    inputs__archive_items__archive=self.phase.archive,
+                )
+                .exclude(status=self.inference_job_model.SUCCESS)
+                .distinct()
+                .order_by("status")
+            )
+
+        return filter_by_permission(
+            queryset=incomplete_inference_jobs,
+            user=user,
+            codename=(
+                "view_batchjob" if self.phase.use_batch_mode else "view_job"
+            ),
+        )
+
     @cached_property
     def algorithm_interfaces(self):
         return self.algorithm_image.algorithm.interfaces.prefetch_related(
@@ -2562,14 +2589,26 @@ class EvaluationActionMessageBuilder:
         )
 
     def algorithm_logs_message(self, label):
-        return format_html(
-            "<a href={url}>{label}</a>",
-            url=reverse(
+        if self.phase.use_batch_mode:
+            url = reverse(
+                "evaluation:batch-job-list",
+                kwargs={
+                    "challenge_short_name": self.phase.challenge.short_name,
+                    "slug": self.phase.slug,
+                    "submission_pk": self.evaluation.submission.pk,
+                },
+            )
+        else:
+            url = reverse(
                 "algorithms:job-list",
                 kwargs={
                     "slug": self.evaluation.submission.algorithm_image.algorithm.slug
                 },
-            ),
+            )
+
+        return format_html(
+            "<a href={url}>{label}</a>",
+            url=url,
             label=label,
         )
 
