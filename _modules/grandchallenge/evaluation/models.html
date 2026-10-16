@@ -1996,12 +1996,15 @@
 <span class="sd">        Input CIV sets that have NOT been scheduled as inputs for a Job or</span>
 <span class="sd">        BatchJob yet, grouped by interface.</span>
 <span class="sd">        """</span>
+        <span class="n">scheduled_input_civ_sets_per_interface</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scheduled_input_civ_sets_per_interface</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">interface</span><span class="p">:</span> <span class="p">[</span>
                 <span class="n">input_civs</span>
                 <span class="k">for</span> <span class="n">input_civs</span> <span class="ow">in</span> <span class="n">input_civ_sets</span>
                 <span class="k">if</span> <span class="n">input_civs</span>
-                <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scheduled_input_civ_sets_per_interface</span><span class="p">[</span><span class="n">interface</span><span class="p">]</span>
+                <span class="ow">not</span> <span class="ow">in</span> <span class="n">scheduled_input_civ_sets_per_interface</span><span class="p">[</span><span class="n">interface</span><span class="p">]</span>
             <span class="p">]</span>
             <span class="k">for</span> <span class="n">interface</span><span class="p">,</span> <span class="n">input_civ_sets</span> <span class="ow">in</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">candidate_input_civ_sets_per_interface</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
@@ -2936,10 +2939,13 @@
                 <span class="n">status__in</span><span class="o">=</span><span class="n">subset_by_status</span>
             <span class="p">)</span>
 
+        <span class="c1"># Only inputs are needed here: the exact-match below compares input</span>
+        <span class="c1"># CIV pks, and the common consumer (inputs_complete) just counts the</span>
+        <span class="c1"># matched tasks. Consumers that serialize outputs (set_evaluation_inputs)</span>
+        <span class="c1"># prefetch outputs on the returned tasks themselves, so that the</span>
+        <span class="c1"># frequent completeness check does not read every output row.</span>
         <span class="k">return</span> <span class="n">filter_inference_tasks_by_valid_archive_items</span><span class="p">(</span>
-            <span class="n">inference_tasks</span><span class="o">=</span><span class="n">inference_tasks</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
-                <span class="s2">"inputs__interface"</span><span class="p">,</span> <span class="s2">"outputs__interface"</span>
-            <span class="p">),</span>
+            <span class="n">inference_tasks</span><span class="o">=</span><span class="n">inference_tasks</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s2">"inputs"</span><span class="p">),</span>
             <span class="n">algorithm_interfaces</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span>
                 <span class="s2">"inputs"</span>
             <span class="p">),</span>
