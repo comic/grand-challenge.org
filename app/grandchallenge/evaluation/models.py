@@ -1902,7 +1902,7 @@ class Submission(FieldChangeMixin, UUIDModel):
             )
         }
 
-    @cached_property
+    @property
     def scheduled_input_civ_sets_per_interface(self):
         """
         Input CIV sets that have already been scheduled as inputs for a Job or
