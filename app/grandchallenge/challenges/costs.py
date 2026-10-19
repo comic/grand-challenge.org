@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 from django.contrib.auth.models import Permission
 from django.db.models import Sum
 
@@ -59,25 +57,12 @@ def annotate_job_duration_and_compute_costs(*, phase):
         phase=phase,
     )
 
-    # a phase can technically have a mix of jobs and batch jobs,
-    # average over both types here if they exist
-    job_durations = [
-        duration
-        for duration in (
-            algorithm_job_utilizations.filter(
-                job__status=Job.SUCCESS
-            ).average_duration(),
-            batch_job_utilizations.filter(
-                batch_job__status=BatchJob.SUCCESS
-            ).average_duration(),
-        )
-        if duration is not None
-    ]
-    phase.average_algorithm_job_duration = (
-        sum(job_durations, start=timedelta()) / len(job_durations)
-        if job_durations
-        else None
-    )
+    phase.average_algorithm_job_duration = algorithm_job_utilizations.filter(
+        job__status=Job.SUCCESS
+    ).average_duration()
+    phase.average_batch_job_duration = batch_job_utilizations.filter(
+        batch_job__status=BatchJob.SUCCESS
+    ).average_duration()
 
     update_compute_cost_euro_millicents(
         obj=phase,

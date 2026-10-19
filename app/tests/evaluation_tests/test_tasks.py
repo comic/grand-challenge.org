@@ -1620,7 +1620,7 @@ def test_check_prerequisites_proceeds_when_batch_jobs_successful(mocker):
 
 
 @pytest.mark.django_db
-def test_average_algorithm_job_duration_includes_batch_jobs(
+def test_algorithm_and_batch_job_durations_are_separate(
     settings, django_capture_on_commit_callbacks
 ):
     settings.LAMBDA_TASKS_EAGER = True
@@ -1650,8 +1650,8 @@ def test_average_algorithm_job_duration_includes_batch_jobs(
         update_challenge_compute_costs()
 
     phase.refresh_from_db()
-    # Average of the two per-type averages: (5 + 15) / 2
-    assert phase.average_algorithm_job_duration == timedelta(minutes=10)
+    assert phase.average_algorithm_job_duration == timedelta(minutes=5)
+    assert phase.average_batch_job_duration == timedelta(minutes=15)
 
 
 @pytest.mark.django_db
@@ -1668,3 +1668,4 @@ def test_average_algorithm_job_duration_none_without_jobs(
 
     phase.refresh_from_db()
     assert phase.average_algorithm_job_duration is None
+    assert phase.average_batch_job_duration is None

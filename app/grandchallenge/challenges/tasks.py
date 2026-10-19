@@ -110,6 +110,7 @@ def update_challenge_compute_cost(*, pk: int):
             skip_calculate_ranks=True,
             update_fields=(
                 "average_algorithm_job_duration",
+                "average_batch_job_duration",
                 "compute_cost_euro_millicents",
             ),
         )

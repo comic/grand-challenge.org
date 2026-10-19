@@ -702,6 +702,11 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         null=True,
         help_text="The average duration of successful algorithm jobs for this phase",
     )
+    average_batch_job_duration = models.DurationField(
+        editable=False,
+        null=True,
+        help_text="The average duration of successful batch jobs for this phase",
+    )
     compute_cost_euro_millicents = models.PositiveBigIntegerField(
         # We store euro here as the costs were incurred at a time when
         # the exchange rate may have been different
