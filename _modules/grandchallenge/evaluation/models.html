@@ -1979,8 +1979,7 @@
             <span class="p">)</span>
         <span class="p">}</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">scheduled_input_civ_sets_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_scheduled_input_civ_sets_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Input CIV sets that have already been scheduled as inputs for a Job or</span>
 <span class="sd">        BatchJob, grouped by interface.</span>
@@ -2017,14 +2016,13 @@
                 <span class="p">)</span>
             <span class="p">}</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">unscheduled_input_civ_sets_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_unscheduled_input_civ_sets_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Input CIV sets that have NOT been scheduled as inputs for a Job or</span>
 <span class="sd">        BatchJob yet, grouped by interface.</span>
 <span class="sd">        """</span>
         <span class="n">scheduled_input_civ_sets_per_interface</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">scheduled_input_civ_sets_per_interface</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_scheduled_input_civ_sets_per_interface</span><span class="p">()</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">interface</span><span class="p">:</span> <span class="p">[</span>
@@ -2051,7 +2049,7 @@
 
         <span class="c1"># Evaluate once</span>
         <span class="n">unscheduled_input_civ_sets_per_interface</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">unscheduled_input_civ_sets_per_interface</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_unscheduled_input_civ_sets_per_interface</span><span class="p">()</span>
         <span class="p">)</span>
 
         <span class="n">sets_remaining</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
