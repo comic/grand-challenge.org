@@ -469,7 +469,7 @@ class TestSubmissionCreateInferenceJobs:
         )
         user_job.inputs.set(user_civs)
 
-        assert submission.scheduled_input_civ_sets_per_interface == {
+        assert submission.get_scheduled_input_civ_sets_per_interface() == {
             interface: {frozenset(system_civs)}
         }
 
@@ -521,7 +521,7 @@ class TestSubmissionCreateInferenceJobs:
         )
         job_without_model.inputs.set(without_model_civs)
 
-        assert submission.scheduled_input_civ_sets_per_interface == {
+        assert submission.get_scheduled_input_civ_sets_per_interface() == {
             interface: {frozenset(with_model_civs)}
         }
 
@@ -547,7 +547,7 @@ class TestSubmissionCreateInferenceJobs:
         system_job.inputs.set([scheduled_civ])
 
         # The set that already has a job is excluded; the other still needs one
-        assert submission.unscheduled_input_civ_sets_per_interface == {
+        assert submission.get_unscheduled_input_civ_sets_per_interface() == {
             interface: [frozenset({unscheduled_civ})]
         }
 
