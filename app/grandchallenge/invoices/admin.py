@@ -318,7 +318,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 
         invoice_request_details = '<div class="invoice-example-text">'
 
-        invoice_request_details += f"See below for the billing information for the recently accepted {obj.challenge.short_name!r} challenge.<br><br>"
+        invoice_request_details += f"See below for the billing information for the {obj.challenge.short_name!r} challenge.<br><br>"
 
         for key, value in required.items():
             invoice_request_details += f"<strong>{key}</strong>:"
