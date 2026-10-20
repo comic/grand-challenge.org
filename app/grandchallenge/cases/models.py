@@ -235,7 +235,7 @@ class RawImageUploadSession(UUIDModel):
         """
 
         # Local import to avoid circular dependency
-        from grandchallenge.cases.tasks import build_images, build_large_images
+        from grandchallenge.cases.tasks import check_size_and_build_images
 
         if self.status != self.PENDING:
             raise RuntimeError("Job is not in PENDING state")
@@ -256,12 +256,7 @@ class RawImageUploadSession(UUIDModel):
         else:
             linked_task = None
 
-        if self.user_uploads_size > settings.CASES_LARGE_IMAGE_SIZE_THRESHOLD:
-            build_images_task = build_large_images
-        else:
-            build_images_task = build_images
-
-        build_images_task.execute_on_commit(
+        check_size_and_build_images.execute_on_commit(
             upload_session_pk=self.pk,
             linked_app_label=linked_app_label,
             linked_model_name=linked_model_name,
