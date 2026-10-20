@@ -110,12 +110,105 @@ def extract_files(*, source_path: Path, checked_paths=None):
 
 
 @lambda_task(
+    retry_on=(LockNotAcquiredException,),
+)
+def check_size_and_build_images(
+    *,
+    upload_session_pk: str | UUID,
+    linked_app_label: str | None,
+    linked_model_name: str | None,
+    linked_object_pk: str | UUID | None,
+    linked_interface_slug: str | None,
+    linked_task: dict | None,
+):
+    with check_lock_acquired():
+        upload_session = (
+            RawImageUploadSession.objects.prefetch_related("user_uploads")
+            .select_for_update(nowait=True)
+            .get(pk=upload_session_pk)
+        )
+
+    if upload_session.status != upload_session.REQUEUED:
+        task_logger.info(
+            "Nothing to do: upload session was not ready for processing"
+        )
+        return {
+            "status": f"Upload session was not ready for processing: {upload_session.status}"
+        }
+
+    kwargs = dict(
+        upload_session_pk=upload_session_pk,
+        linked_app_label=linked_app_label,
+        linked_model_name=linked_model_name,
+        linked_object_pk=linked_object_pk,
+        linked_interface_slug=linked_interface_slug,
+        linked_task=linked_task,
+    )
+
+    user_uploads_size = upload_session.user_uploads_size
+
+    if user_uploads_size > settings.CASES_LARGE_IMAGE_SIZE_THRESHOLD:
+        build_large_images.execute_on_commit(**kwargs)
+    else:
+        build_images.execute_on_commit(**kwargs)
+
+    return {"status": f"Queued import task, upload size: {user_uploads_size}"}
+
+
+@lambda_task(
     queue=LambdaTaskQueueChoices.MEM8G,
     retry_on=(LockNotAcquiredException,),
     soft_timeout=LONG_TASK_SOFT_TIMEOUT,
     hard_timeout=LONG_TASK_HARD_TIMEOUT,
 )
-def build_images(  # noqa:C901
+def build_images(
+    *,
+    upload_session_pk: str | UUID,
+    linked_app_label: str | None,
+    linked_model_name: str | None,
+    linked_object_pk: str | UUID | None,
+    linked_interface_slug: str | None,
+    linked_task: dict | None,
+):
+    # Standard task for building images, keep in sync with build_large_images
+    _build_images(
+        upload_session_pk=upload_session_pk,
+        linked_app_label=linked_app_label,
+        linked_model_name=linked_model_name,
+        linked_object_pk=linked_object_pk,
+        linked_interface_slug=linked_interface_slug,
+        linked_task=linked_task,
+    )
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.BATCH_MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=LONG_TASK_HARD_TIMEOUT,
+)
+def build_large_images(
+    *,
+    upload_session_pk: str | UUID,
+    linked_app_label: str | None,
+    linked_model_name: str | None,
+    linked_object_pk: str | UUID | None,
+    linked_interface_slug: str | None,
+    linked_task: dict | None,
+):
+    # Task for building images that require high amounts of temporary space
+    # Keep this in sync with build_images
+    _build_images(
+        upload_session_pk=upload_session_pk,
+        linked_app_label=linked_app_label,
+        linked_model_name=linked_model_name,
+        linked_object_pk=linked_object_pk,
+        linked_interface_slug=linked_interface_slug,
+        linked_task=linked_task,
+    )
+
+
+def _build_images(  # noqa:C901
     *,
     upload_session_pk: str | UUID,
     linked_app_label: str | None,

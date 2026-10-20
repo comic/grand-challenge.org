@@ -20,10 +20,14 @@ from grandchallenge.cases.models import (
     JobSummary,
     PostProcessImageTask,
     PostProcessImageTaskStatusChoices,
+    RawImageUploadSession,
     UploadSessionCompleteTask,
 )
 from grandchallenge.cases.tasks import (
     _check_post_processor_result,
+    build_images,
+    build_large_images,
+    check_size_and_build_images,
     execute_post_process_image_task,
     handle_health_imaging_import_job_event,
     import_dicom_to_health_imaging,
@@ -37,7 +41,10 @@ from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.storage import protected_s3_storage
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.cases_tests import RESOURCE_PATH
-from tests.cases_tests.factories import DICOMImageSetUploadFactory
+from tests.cases_tests.factories import (
+    DICOMImageSetUploadFactory,
+    RawImageUploadSessionFactory,
+)
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import ImageFactory
 from tests.utils import create_raw_upload_image_session
@@ -586,4 +593,194 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
     assert obj.error_message == "One or more of the inputs failed validation."
     assert SystemErrorMessages.UNEXPECTED_ERROR in str(
         obj.detailed_error_message
+    )
+
+
+@pytest.mark.django_db
+def test_check_size_and_build_images_standard_below_threshold(
+    settings, mocker
+):
+    settings.CASES_LARGE_IMAGE_SIZE_THRESHOLD = 100
+
+    session = RawImageUploadSessionFactory(
+        status=RawImageUploadSession.REQUEUED
+    )
+    mocker.patch.object(
+        RawImageUploadSession,
+        "user_uploads_size",
+        new_callable=mocker.PropertyMock,
+        return_value=100,
+    )
+
+    standard_build = mocker.patch(
+        "grandchallenge.cases.tasks.build_images.execute_on_commit"
+    )
+    large_build = mocker.patch(
+        "grandchallenge.cases.tasks.build_large_images.execute_on_commit"
+    )
+
+    check_size_and_build_images(
+        upload_session_pk=session.pk,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_interface_slug=None,
+        linked_task=None,
+    )
+
+    standard_build.assert_called_once_with(
+        upload_session_pk=session.pk,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_interface_slug=None,
+        linked_task=None,
+    )
+    large_build.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_check_size_and_build_images_large_above_threshold(settings, mocker):
+    settings.CASES_LARGE_IMAGE_SIZE_THRESHOLD = 100
+
+    session = RawImageUploadSessionFactory(
+        status=RawImageUploadSession.REQUEUED
+    )
+    mocker.patch.object(
+        RawImageUploadSession,
+        "user_uploads_size",
+        new_callable=mocker.PropertyMock,
+        return_value=101,
+    )
+
+    standard_build = mocker.patch(
+        "grandchallenge.cases.tasks.build_images.execute_on_commit"
+    )
+    large_build = mocker.patch(
+        "grandchallenge.cases.tasks.build_large_images.execute_on_commit"
+    )
+
+    check_size_and_build_images(
+        upload_session_pk=session.pk,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_interface_slug=None,
+        linked_task=None,
+    )
+
+    large_build.assert_called_once_with(
+        upload_session_pk=session.pk,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_interface_slug=None,
+        linked_task=None,
+    )
+    standard_build.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_check_size_and_build_images_noop_when_not_requeued(settings, mocker):
+    settings.CASES_LARGE_IMAGE_SIZE_THRESHOLD = 100
+
+    session = RawImageUploadSessionFactory(
+        status=RawImageUploadSession.PENDING
+    )
+    mocker.patch.object(
+        RawImageUploadSession,
+        "user_uploads_size",
+        new_callable=mocker.PropertyMock,
+        return_value=101,
+    )
+
+    standard_build = mocker.patch(
+        "grandchallenge.cases.tasks.build_images.execute_on_commit"
+    )
+    large_build = mocker.patch(
+        "grandchallenge.cases.tasks.build_large_images.execute_on_commit"
+    )
+
+    check_size_and_build_images(
+        upload_session_pk=session.pk,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_interface_slug=None,
+        linked_task=None,
+    )
+
+    standard_build.assert_not_called()
+    large_build.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_build_images_delegates_to_build(mocker):
+    session = RawImageUploadSessionFactory()
+
+    inner_build = mocker.patch("grandchallenge.cases.tasks._build_images")
+
+    build_images(
+        upload_session_pk=session.pk,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_interface_slug=None,
+        linked_task=None,
+    )
+
+    inner_build.assert_called_once_with(
+        upload_session_pk=session.pk,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_interface_slug=None,
+        linked_task=None,
+    )
+
+
+@pytest.mark.django_db
+def test_build_large_images_delegates_to_build(mocker):
+    session = RawImageUploadSessionFactory()
+
+    inner_build = mocker.patch("grandchallenge.cases.tasks._build_images")
+
+    build_large_images(
+        upload_session_pk=session.pk,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_interface_slug=None,
+        linked_task=None,
+    )
+
+    inner_build.assert_called_once_with(
+        upload_session_pk=session.pk,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_interface_slug=None,
+        linked_task=None,
+    )
+
+
+@pytest.mark.django_db
+def test_process_images_enqueues_router_task(mocker):
+    session = RawImageUploadSessionFactory(
+        status=RawImageUploadSession.PENDING
+    )
+
+    router = mocker.patch(
+        "grandchallenge.cases.tasks.check_size_and_build_images.execute_on_commit"
+    )
+
+    session.process_images()
+
+    router.assert_called_once_with(
+        upload_session_pk=session.pk,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_interface_slug=None,
+        linked_task=None,
     )
