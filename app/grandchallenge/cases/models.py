@@ -33,7 +33,6 @@ from pydantic.alias_generators import to_camel
 from pydantic.dataclasses import dataclass
 from storages.utils import clean_name
 
-from grandchallenge.cases.tasks import build_large_images
 from grandchallenge.core.error_handlers import (
     DICOMImageSetUploadErrorHandler,
     RawImageUploadSessionErrorHandler,
@@ -236,7 +235,7 @@ class RawImageUploadSession(UUIDModel):
         """
 
         # Local import to avoid circular dependency
-        from grandchallenge.cases.tasks import build_images
+        from grandchallenge.cases.tasks import build_images, build_large_images
 
         if self.status != self.PENDING:
             raise RuntimeError("Job is not in PENDING state")
