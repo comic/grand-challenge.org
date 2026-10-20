@@ -2,6 +2,7 @@ import gzip
 import hashlib
 import json
 import logging
+from functools import cached_property
 from tempfile import SpooledTemporaryFile
 from typing import NamedTuple
 from urllib.parse import urlparse
@@ -32,6 +33,7 @@ from pydantic.alias_generators import to_camel
 from pydantic.dataclasses import dataclass
 from storages.utils import clean_name
 
+from grandchallenge.cases.tasks import build_large_images
 from grandchallenge.core.error_handlers import (
     DICOMImageSetUploadErrorHandler,
     RawImageUploadSessionErrorHandler,
@@ -255,7 +257,12 @@ class RawImageUploadSession(UUIDModel):
         else:
             linked_task = None
 
-        build_images.execute_on_commit(
+        if self.user_uploads_size > settings.CASES_LARGE_IMAGE_SIZE_THRESHOLD:
+            build_images_task = build_large_images
+        else:
+            build_images_task = build_images
+
+        build_images_task.execute_on_commit(
             upload_session_pk=self.pk,
             linked_app_label=linked_app_label,
             linked_model_name=linked_model_name,
@@ -272,6 +279,15 @@ class RawImageUploadSession(UUIDModel):
     @property
     def api_url(self) -> str:
         return reverse("api:upload-session-detail", kwargs={"pk": self.pk})
+
+    @cached_property
+    def user_uploads_size(self):
+        size = 0
+
+        for upload in self.user_uploads.all():
+            size += upload.size
+
+        return size
 
 
 class RawImageUploadSessionUserObjectPermission(UserObjectPermissionBase):

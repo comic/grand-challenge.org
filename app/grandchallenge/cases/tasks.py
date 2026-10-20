@@ -115,7 +115,54 @@ def extract_files(*, source_path: Path, checked_paths=None):
     soft_timeout=LONG_TASK_SOFT_TIMEOUT,
     hard_timeout=LONG_TASK_HARD_TIMEOUT,
 )
-def build_images(  # noqa:C901
+def build_images(
+    *,
+    upload_session_pk: str | UUID,
+    linked_app_label: str | None,
+    linked_model_name: str | None,
+    linked_object_pk: str | UUID | None,
+    linked_interface_slug: str | None,
+    linked_task: dict | None,
+):
+    # Standard task for building images, keep in sync with build_large_images
+    _build_images(
+        upload_session_pk=upload_session_pk,
+        linked_app_label=linked_app_label,
+        linked_model_name=linked_model_name,
+        linked_object_pk=linked_object_pk,
+        linked_interface_slug=linked_interface_slug,
+        linked_task=linked_task,
+    )
+
+
+@lambda_task(
+    queue=LambdaTaskQueueChoices.BATCH_MEM8G,
+    retry_on=(LockNotAcquiredException,),
+    soft_timeout=LONG_TASK_SOFT_TIMEOUT,
+    hard_timeout=LONG_TASK_HARD_TIMEOUT,
+)
+def build_large_images(
+    *,
+    upload_session_pk: str | UUID,
+    linked_app_label: str | None,
+    linked_model_name: str | None,
+    linked_object_pk: str | UUID | None,
+    linked_interface_slug: str | None,
+    linked_task: dict | None,
+):
+    # Task for building images that require high amounts of temporary space
+    # Keep this in sync with build_images
+    _build_images(
+        upload_session_pk=upload_session_pk,
+        linked_app_label=linked_app_label,
+        linked_model_name=linked_model_name,
+        linked_object_pk=linked_object_pk,
+        linked_interface_slug=linked_interface_slug,
+        linked_task=linked_task,
+    )
+
+
+def _build_images(  # noqa:C901
     *,
     upload_session_pk: str | UUID,
     linked_app_label: str | None,

@@ -1201,6 +1201,9 @@ CASES_MAX_NUM_USER_POST_PROCESSING_TASKS = int(
 CASES_MAX_NUM_USER_UPLOADS = int(
     os.environ.get("CASES_MAX_NUM_USER_UPLOADS", "2000")
 )
+CASES_LARGE_IMAGE_SIZE_THRESHOLD = int(
+    os.environ.get("CASES_LARGE_IMAGE_SIZE_THRESHOLD", 5 * GIGABYTE)
+)
 
 # The maximum size of all the files in an upload session in bytes
 UPLOAD_SESSION_MAX_BYTES = 10 * GIGABYTE
