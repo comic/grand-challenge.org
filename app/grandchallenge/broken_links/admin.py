@@ -5,7 +5,14 @@ from grandchallenge.broken_links.models import BrokenLink, IgnoredPattern
 
 @admin.register(BrokenLink)
 class BrokenLinkAdmin(admin.ModelAdmin):
-    list_display = ("path", "domain", "referer", "is_internal", "created")
+    list_display = (
+        "path",
+        "domain",
+        "referer",
+        "ip_address",
+        "is_internal",
+        "created",
+    )
     list_filter = ("is_internal",)
     search_fields = ("path", "referer", "domain")
     date_hierarchy = "created"
