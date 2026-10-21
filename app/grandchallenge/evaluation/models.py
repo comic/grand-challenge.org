@@ -533,6 +533,15 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "result."
         ),
     )
+    auto_evaluate_new_submissions = models.BooleanField(
+        default=True,
+        help_text=(
+            "If true, new submissions are automatically evaluated once their "
+            "inputs have been validated. If false, the challenge "
+            "administrator must manually accept each new submission before "
+            "it is evaluated."
+        ),
+    )
     display_all_metrics = models.BooleanField(
         default=True,
         help_text=(
@@ -1600,8 +1609,19 @@ def submission_supplementary_file_path(instance, filename):
     )
 
 
-class Submission(FieldChangeMixin, UUIDModel):
+class SubmissionStatusChoices(models.TextChoices):
+    VALIDATING_INPUTS = "VALIDATING_INPUTS", "Validating inputs"
+    FAILED = "FAILED", "Failed"
+    PENDING_REVIEW = "PENDING_REVIEW", "Pending review"
+    ACCEPTED = "ACCEPTED", "Accepted"
+    REJECTED = "REJECTED", "Rejected"
+    CANCELLED = "CANCELLED", "Cancelled"
+
+
+class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
     """Store files for evaluation."""
+
+    StatusChoices = SubmissionStatusChoices
 
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
@@ -1670,6 +1690,16 @@ class Submission(FieldChangeMixin, UUIDModel):
     supplementary_url = models.URLField(
         blank=True, help_text="A URL associated with this submission."
     )
+    status = models.CharField(
+        max_length=17,
+        choices=SubmissionStatusChoices,
+        default=SubmissionStatusChoices.ACCEPTED,  # TODO [submission_gate] set to validating inputs when the new task is in place.
+    )
+    status_message = models.TextField(blank=True, default="")
+    additional_inputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="%(app_label)s_%(class)ss_as_additional_input",
+    )
 
     class Meta:
         unique_together = (
@@ -1682,6 +1712,12 @@ class Submission(FieldChangeMixin, UUIDModel):
         )
         indexes = [
             models.Index(fields=["created"]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(status__in=SubmissionStatusChoices.values),
+                name="submission_status_valid",
+            ),
         ]
 
     @cached_property
@@ -1720,6 +1756,21 @@ class Submission(FieldChangeMixin, UUIDModel):
                     actor_only=False,
                     send_action=False,
                 )
+
+    @property
+    def is_editable(self):
+        return self.status == SubmissionStatusChoices.VALIDATING_INPUTS
+
+    def add_civ(self, *, civ):
+        super().add_civ(civ=civ)
+        return self.additional_inputs.add(civ)
+
+    def remove_civ(self, *, civ):
+        super().remove_civ(civ=civ)
+        return self.additional_inputs.remove(civ)
+
+    def get_civ_for_interface(self, interface):
+        return self.additional_inputs.get(interface=interface)
 
     def create_evaluation(self, *, additional_inputs, invoice):
         if (
@@ -3058,10 +3109,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     def is_editable(self):
         # staying with display set and archive item terminology here
         # since this property is checked in create_civ()
-        if self.status == self.VALIDATING_INPUTS:
-            return True
-        else:
-            return False
+        return self.status == self.VALIDATING_INPUTS
 
     def add_civ(self, *, civ):
         super().add_civ(civ=civ)
