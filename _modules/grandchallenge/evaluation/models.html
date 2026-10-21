@@ -742,6 +742,11 @@
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">"The average duration of successful algorithm jobs for this phase"</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">average_batch_job_duration</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DurationField</span><span class="p">(</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">"The average duration of successful batch jobs for this phase"</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">compute_cost_euro_millicents</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveBigIntegerField</span><span class="p">(</span>
         <span class="c1"># We store euro here as the costs were incurred at a time when</span>
         <span class="c1"># the exchange rate may have been different</span>
