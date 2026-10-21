@@ -2217,12 +2217,25 @@ class BatchJobManager(ComponentJobManager):
     ):
         batch_job = super().create(submission=submission, **kwargs)
 
-        for input_civs in input_civ_sets:
-            batch_job_task = BatchJobTask.objects.create(
+        tasks = [
+            BatchJobTask(
                 batch_job=batch_job,
                 algorithm_interface=algorithm_interface,
             )
-            batch_job_task.inputs.set(input_civs)
+            for _ in input_civ_sets
+        ]
+        BatchJobTask.objects.bulk_create(tasks)
+
+        input_through = BatchJobTask.inputs.through
+        through_rows = [
+            input_through(
+                batchjobtask_id=task.pk,
+                componentinterfacevalue_id=input_civ.pk,
+            )
+            for task, input_civs in zip(tasks, input_civ_sets, strict=True)
+            for input_civ in input_civs
+        ]
+        input_through.objects.bulk_create(through_rows)
 
         return batch_job
 

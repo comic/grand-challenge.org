@@ -3711,3 +3711,56 @@ def test_get_incomplete_inference_jobs_for_user_in_single_mode():
     assert not submission.get_incomplete_inference_jobs_for_user(
         user=non_viewer
     ).exists()
+
+
+@pytest.mark.django_db
+def test_batch_job_task_creation_query_count_is_constant(
+    django_assert_max_num_queries,
+):
+    input_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.PANIMG_IMAGE
+    )
+    interface = AlgorithmInterfaceFactory(
+        inputs=[input_interface],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    submission = SubmissionFactory()
+    algorithm_image = AlgorithmImageFactory()
+
+    def input_civ_set():
+        return {
+            ComponentInterfaceValueFactory(
+                interface=input_interface, image=ImageFactory()
+            )
+        }
+
+    few_input_civ_sets = [input_civ_set() for _ in range(2)]
+    many_input_civ_sets = [input_civ_set() for _ in range(20)]
+
+    # Measure only the BatchJob.objects.create() path, with all
+    # dependencies (submission, algorithm_image, interface, input CIVs)
+    # pre-created so factory subfactories don't inflate the count. The first
+    # call captures a baseline; the real assertion is that the second call
+    # (10x the tasks) stays within that same baseline.
+    with django_assert_max_num_queries(30) as captured:
+        BatchJob.objects.create(
+            submission=submission,
+            algorithm_image=algorithm_image,
+            algorithm_interface=interface,
+            input_civ_sets=few_input_civ_sets,
+            time_limit=10,
+            requires_memory_gb=4,
+            requires_gpu_type=GPUTypeChoices.NO_GPU,
+        )
+    baseline_query_count = len(captured.captured_queries)
+
+    with django_assert_max_num_queries(baseline_query_count) as captured:
+        BatchJob.objects.create(
+            submission=submission,
+            algorithm_image=algorithm_image,
+            algorithm_interface=interface,
+            input_civ_sets=many_input_civ_sets,
+            time_limit=10,
+            requires_memory_gb=4,
+            requires_gpu_type=GPUTypeChoices.NO_GPU,
+        )
