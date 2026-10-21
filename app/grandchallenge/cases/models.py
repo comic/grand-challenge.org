@@ -2,6 +2,7 @@ import gzip
 import hashlib
 import json
 import logging
+from functools import cached_property
 from tempfile import SpooledTemporaryFile
 from typing import NamedTuple
 from urllib.parse import urlparse
@@ -234,7 +235,7 @@ class RawImageUploadSession(UUIDModel):
         """
 
         # Local import to avoid circular dependency
-        from grandchallenge.cases.tasks import build_images
+        from grandchallenge.cases.tasks import check_size_and_build_images
 
         if self.status != self.PENDING:
             raise RuntimeError("Job is not in PENDING state")
@@ -255,7 +256,7 @@ class RawImageUploadSession(UUIDModel):
         else:
             linked_task = None
 
-        build_images.execute_on_commit(
+        check_size_and_build_images.execute_on_commit(
             upload_session_pk=self.pk,
             linked_app_label=linked_app_label,
             linked_model_name=linked_model_name,
@@ -272,6 +273,15 @@ class RawImageUploadSession(UUIDModel):
     @property
     def api_url(self) -> str:
         return reverse("api:upload-session-detail", kwargs={"pk": self.pk})
+
+    @cached_property
+    def user_uploads_size(self):
+        size = 0
+
+        for upload in self.user_uploads.all():
+            size += upload.size
+
+        return size
 
 
 class RawImageUploadSessionUserObjectPermission(UserObjectPermissionBase):

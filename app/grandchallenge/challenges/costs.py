@@ -9,6 +9,7 @@ from grandchallenge.algorithms.models import (
 from grandchallenge.cases.models import ImageFile
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.evaluation.models import (
+    BatchJob,
     Evaluation,
     EvaluationGroundTruth,
     Method,
@@ -58,6 +59,9 @@ def annotate_job_duration_and_compute_costs(*, phase):
 
     phase.average_algorithm_job_duration = algorithm_job_utilizations.filter(
         job__status=Job.SUCCESS
+    ).average_duration()
+    phase.average_batch_job_duration = batch_job_utilizations.filter(
+        batch_job__status=BatchJob.SUCCESS
     ).average_duration()
 
     update_compute_cost_euro_millicents(

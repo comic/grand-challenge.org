@@ -17,14 +17,16 @@ from grandchallenge.cases.models import (
     generate_dicom_id_suffix,
 )
 from grandchallenge.notifications.models import Notification
+from grandchallenge.uploads.models import UserUpload
 from tests.cases_tests.factories import (
     DICOMImageSetFactory,
     DICOMImageSetUploadFactory,
     ImageFactory,
+    RawImageUploadSessionFactory,
     fake_dicom_instance_uid,
     fake_image_frame_id,
 )
-from tests.factories import ImageFileFactory
+from tests.factories import ImageFileFactory, UserFactory
 from tests.uploads_tests.factories import UserUploadFactory
 
 
@@ -692,3 +694,26 @@ def test_failed_dicom_image_set_upload_sends_notification():
     notification = Notification.objects.first()
     assert notification.user == upload.creator
     assert notification.description == "Some error message"
+
+
+@pytest.mark.django_db
+def test_user_uploads_size_sums_upload_sizes(mocker):
+    mocker.patch.object(
+        UserUpload, "size", new_callable=mocker.PropertyMock, return_value=7
+    )
+
+    user = UserFactory()
+    session = RawImageUploadSessionFactory(creator=user)
+    session.user_uploads.add(
+        UserUploadFactory(creator=user),
+        UserUploadFactory(creator=user),
+    )
+
+    assert session.user_uploads_size == 14
+
+
+@pytest.mark.django_db
+def test_user_uploads_size_is_zero_without_uploads():
+    session = RawImageUploadSessionFactory()
+
+    assert session.user_uploads_size == 0
