@@ -193,6 +193,7 @@
                         <th>Number of Successful Submissions</th>
                         <th>Number of Unique Creators</th>
                         <th>Average Algorithm Job Duration</th>
+                        <th>Average Batch Job Duration</th>
                         <th>Total Compute Cost</th>
                         <th>Estimated Cost per Successful Submission</th>
                     </tr>
@@ -208,6 +209,7 @@
                             <td>{{ phase.num_successful_submissions }}</td>
                             <td>{{ phase.num_creators }}</td>
                             <td data-order="{{ phase.average_algorithm_job_duration.total_seconds }}">{{ phase.average_algorithm_job_duration|naturaldelta }}</td>
+                            <td data-order="{{ phase.average_batch_job_duration.total_seconds }}">{{ phase.average_batch_job_duration|naturaldelta }}</td>
                             <td>{{ phase.compute_cost_euro_millicents|millicents_to_euro }}</td>
                             <td>{% if phase.num_successful_submissions %}{{ phase.compute_cost_euro_millicents|divide_by:phase.num_successful_submissions|millicents_to_euro }}{% endif %}</td>
                         </tr>

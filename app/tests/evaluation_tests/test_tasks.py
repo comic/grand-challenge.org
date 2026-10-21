@@ -18,6 +18,7 @@ from django.utils.timezone import now
 from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.challenges.tasks import update_challenge_compute_costs
 from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.components.tasks import (
     push_container_image,
@@ -1616,3 +1617,55 @@ def test_check_prerequisites_proceeds_when_batch_jobs_successful(mocker):
     mocked_execute.execute_on_commit.assert_called_once_with(
         evaluation_pk=evaluation.pk
     )
+
+
+@pytest.mark.django_db
+def test_algorithm_and_batch_job_durations_are_separate(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    challenge = ChallengeFactory()
+    phase = PhaseFactory(challenge=challenge)
+
+    job = AlgorithmJobFactory(status=Job.SUCCESS, time_limit=60)
+    job_utilization = job.job_utilization
+    job_utilization.phase = phase
+    job_utilization.challenge = challenge
+    job_utilization.duration = timedelta(minutes=5)
+    job_utilization.save()
+
+    batch_job = BatchJobFactory(
+        submission__phase=phase,
+        status=BatchJob.SUCCESS,
+        time_limit=60,
+    )
+    batch_job_utilization = batch_job.utilization
+    batch_job_utilization.phase = phase
+    batch_job_utilization.challenge = challenge
+    batch_job_utilization.duration = timedelta(minutes=15)
+    batch_job_utilization.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        update_challenge_compute_costs()
+
+    phase.refresh_from_db()
+    assert phase.average_algorithm_job_duration == timedelta(minutes=5)
+    assert phase.average_batch_job_duration == timedelta(minutes=15)
+
+
+@pytest.mark.django_db
+def test_average_algorithm_job_duration_none_without_jobs(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    challenge = ChallengeFactory()
+    phase = PhaseFactory(challenge=challenge)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        update_challenge_compute_costs()
+
+    phase.refresh_from_db()
+    assert phase.average_algorithm_job_duration is None
+    assert phase.average_batch_job_duration is None
