@@ -2323,12 +2323,25 @@
     <span class="p">):</span>
         <span class="n">batch_job</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">submission</span><span class="o">=</span><span class="n">submission</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">input_civs</span> <span class="ow">in</span> <span class="n">input_civ_sets</span><span class="p">:</span>
-            <span class="n">batch_job_task</span> <span class="o">=</span> <span class="n">BatchJobTask</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">BatchJobTask</span><span class="p">(</span>
                 <span class="n">batch_job</span><span class="o">=</span><span class="n">batch_job</span><span class="p">,</span>
                 <span class="n">algorithm_interface</span><span class="o">=</span><span class="n">algorithm_interface</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">batch_job_task</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">input_civs</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">input_civ_sets</span>
+        <span class="p">]</span>
+        <span class="n">BatchJobTask</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">bulk_create</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span>
+
+        <span class="n">input_through</span> <span class="o">=</span> <span class="n">BatchJobTask</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">through</span>
+        <span class="n">through_rows</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">input_through</span><span class="p">(</span>
+                <span class="n">batchjobtask_id</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="n">componentinterfacevalue_id</span><span class="o">=</span><span class="n">input_civ</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">input_civs</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">input_civ_sets</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">input_civ</span> <span class="ow">in</span> <span class="n">input_civs</span>
+        <span class="p">]</span>
+        <span class="n">input_through</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">bulk_create</span><span class="p">(</span><span class="n">through_rows</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">batch_job</span>
 
