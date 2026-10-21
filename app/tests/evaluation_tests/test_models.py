@@ -3798,3 +3798,95 @@ def test_batch_job_task_output_removal_revokes_permission_for_challenge_admins_o
     task.outputs.remove(output_civ)
     assert "view_image" not in get_group_perms(admins_group, output_image)
     assert "view_image" in get_group_perms(job_viewer_group, output_image)
+
+
+@pytest.mark.django_db
+def test_batch_job_creates_tasks_with_correct_inputs():
+    ci_a = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    ci_b = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    interface = AlgorithmInterfaceFactory(inputs=[ci_a, ci_b])
+
+    civ_a1 = ComponentInterfaceValueFactory(interface=ci_a)
+    civ_b1 = ComponentInterfaceValueFactory(interface=ci_b)
+    civ_a2 = ComponentInterfaceValueFactory(interface=ci_a)
+    civ_b2 = ComponentInterfaceValueFactory(interface=ci_b)
+    civ_a3 = ComponentInterfaceValueFactory(interface=ci_a)
+    civ_b3 = ComponentInterfaceValueFactory(interface=ci_b)
+
+    input_civ_sets = [
+        {civ_a1, civ_b1},
+        {civ_a2, civ_b2},
+        {civ_a3, civ_b3},
+    ]
+
+    batch_job = BatchJob.objects.create(
+        submission=SubmissionFactory(),
+        algorithm_image=AlgorithmImageFactory(),
+        algorithm_interface=interface,
+        input_civ_sets=input_civ_sets,
+        time_limit=10,
+        requires_memory_gb=4,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+    )
+
+    tasks = list(batch_job.tasks.order_by("created"))
+
+    assert len(tasks) == 3
+
+    for task in tasks:
+        assert task.algorithm_interface == interface
+
+    actual_input_sets = [frozenset(task.inputs.all()) for task in tasks]
+    expected_input_sets = [frozenset(s) for s in input_civ_sets]
+
+    assert sorted(
+        actual_input_sets, key=lambda s: sorted(c.pk for c in s)
+    ) == sorted(expected_input_sets, key=lambda s: sorted(c.pk for c in s))
+
+
+@pytest.mark.django_db
+def test_batch_job_task_creation_query_count_is_constant(
+    django_assert_max_num_queries,
+):
+    input_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.PANIMG_IMAGE
+    )
+    interface = AlgorithmInterfaceFactory(
+        inputs=[input_interface],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    submission = SubmissionFactory()
+    algorithm_image = AlgorithmImageFactory()
+
+    def input_civ_set():
+        return {
+            ComponentInterfaceValueFactory(
+                interface=input_interface, image=ImageFactory()
+            )
+        }
+
+    few_input_civ_sets = [input_civ_set() for _ in range(2)]
+    many_input_civ_sets = [input_civ_set() for _ in range(20)]
+
+    with django_assert_max_num_queries(30) as captured:
+        BatchJob.objects.create(
+            submission=submission,
+            algorithm_image=algorithm_image,
+            algorithm_interface=interface,
+            input_civ_sets=few_input_civ_sets,
+            time_limit=10,
+            requires_memory_gb=4,
+            requires_gpu_type=GPUTypeChoices.NO_GPU,
+        )
+    baseline_query_count = len(captured.captured_queries)
+
+    with django_assert_max_num_queries(baseline_query_count) as captured:
+        BatchJob.objects.create(
+            submission=submission,
+            algorithm_image=algorithm_image,
+            algorithm_interface=interface,
+            input_civ_sets=many_input_civ_sets,
+            time_limit=10,
+            requires_memory_gb=4,
+            requires_gpu_type=GPUTypeChoices.NO_GPU,
+        )
