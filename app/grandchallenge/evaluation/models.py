@@ -1783,6 +1783,8 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
         if status_message:
             self.status_message = status_message
 
+        # TODO [submission_gate] send notification to participant or organizer
+
         self.save()
 
     def create_evaluation(self, *, additional_inputs, invoice):

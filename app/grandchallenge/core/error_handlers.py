@@ -103,26 +103,11 @@ class SubmissionCIVErrorHandler(ErrorHandler):
         super().__init__(*args, **kwargs)
         self._submission = submission
 
-    def handle_error(self, *, error_message, user, interface=None):
+    def handle_error(self, *, error_message, interface=None, user=None):
         self._submission.update_status(
             status=self._submission.StatusChoices.FAILED,
             status_message=error_message,
         )
-
-        if interface:
-            Notification.send(
-                kind=NotificationTypeChoices.CIV_VALIDATION,
-                message=f"Validation for socket {interface.title} failed.",
-                description=f"Validation for socket {interface.title} failed: {error_message}",
-                actor=user,
-            )
-        else:
-            Notification.send(
-                kind=NotificationTypeChoices.CIV_VALIDATION,
-                message=error_message,
-                description=error_message,
-                actor=user,
-            )
 
 
 class InvocationCIVErrorHandler(ErrorHandler):
