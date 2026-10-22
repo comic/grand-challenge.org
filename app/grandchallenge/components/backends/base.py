@@ -443,10 +443,18 @@ class Executor(ABC):
 
     @cached_property
     def inference_results(self):
-        return [
-            self._get_inference_result(task_pk=task.task_pk)
-            for task in self._task_definitions
-        ]
+        # Tasks run sequentially and the job stops at the first failure.
+        # Tasks after a failure produce no inference result. Return only the
+        # results that exist.
+        inference_results = []
+        for task in self._task_definitions:
+            try:
+                inference_results.append(
+                    self._get_inference_result(task_pk=task.task_pk)
+                )
+            except UncleanExit:
+                continue
+        return inference_results
 
     @property
     @abstractmethod
@@ -941,6 +949,10 @@ class Executor(ABC):
     def _handle_completed_job(self):
         self._check_runtime_setup_result()
         self._raise_for_failed_results()
+
+        # No task reported a failure, so every task must have produced a result
+        if len(self.inference_results) != len(self._task_definitions):
+            raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
 
     def _check_runtime_setup_result(self):
         runtime_setup_result = self._get_runtime_setup_result()
