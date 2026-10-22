@@ -14,6 +14,7 @@ import pytest
 from botocore.auth import SigV4Auth
 from django.core.exceptions import SuspiciousFileOperation
 from django.template.defaultfilters import title
+from django.utils.timezone import now
 
 from grandchallenge.components.backends.base import (
     ASYNC_BOTO_CONFIG,
@@ -35,6 +36,8 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.components.tasks import handle_event
+from grandchallenge.evaluation.models import BatchJob
 from tests.cases_tests.factories import DICOMImageSetFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -985,6 +988,85 @@ def test_test_executor_writes_result_per_task():
         for task_definition in task_definitions
     }
     assert all(result.return_code == 0 for result in inference_results)
+
+
+@pytest.mark.django_db
+def test_batchjob_task_failure_fails_entire_job_with_task_error_message(
+    settings,
+):
+    str_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.STRING,
+        relative_path="string.json",
+        store_in_database=True,
+    )
+    batch_job = BatchJobFactory(
+        status=BatchJob.EXECUTING,
+        signing_key=b"correct-key",
+        input_civ_sets=[
+            {str_interface.create_instance(value="first")},
+            {str_interface.create_instance(value="second")},
+        ],
+        time_limit=10,
+    )
+
+    backend = "tests.components_tests.resources.backends.IOCopyExecutor"
+    executor = batch_job.get_executor(backend=backend)
+
+    task_definitions = executor._task_definitions
+
+    def upload_signed(*, obj, key):
+        content = obj.model_dump_json().encode("utf-8")
+        signature = hmac.new(
+            key=b"correct-key",
+            msg=content,
+            digestmod=hashlib.sha256,
+        ).hexdigest()
+        executor._s3_client.upload_fileobj(
+            Fileobj=io.BytesIO(content),
+            Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            Key=key,
+            ExtraArgs={"Metadata": {"signature_hmac_sha256": signature}},
+        )
+
+    # The job-level runtime setup succeeded.
+    upload_signed(
+        obj=RuntimeSetupResult(
+            return_code=0,
+            user_safe_error_message="",
+            sagemaker_shim_version="0.8.0",
+        ),
+        key=executor.runtime_setup_result_key,
+    )
+
+    # Only the first task wrote a result, and it failed. The second task's
+    # result is absent.
+    first_task_pk = task_definitions[0].task_pk
+    upload_signed(
+        obj=InferenceResult(
+            pk=executor._get_inference_task_pk(task_pk=first_task_pk),
+            return_code=1,
+            user_safe_error_message="the first task failed",
+            user_process_last_stderr_lines=[],
+            exec_duration=timedelta(seconds=1),
+            invoke_duration=timedelta(seconds=1),
+            outputs=[],
+            sagemaker_shim_version="0.8.0",
+        ),
+        key=executor._get_inference_result_key(task_pk=first_task_pk),
+    )
+
+    handle_event(
+        event={
+            "_job_id": batch_job.executor_kwargs["job_id"],
+            "__start_time": now().isoformat(),
+        },
+        backend=backend,
+    )
+
+    batch_job.refresh_from_db()
+
+    assert batch_job.status == BatchJob.FAILURE
+    assert batch_job.error_message == "the first task failed"
 
 
 def test_signing_key_env_set():

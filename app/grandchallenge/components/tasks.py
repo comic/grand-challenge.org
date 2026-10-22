@@ -47,7 +47,6 @@ from grandchallenge.components.backends.exceptions import (
     RetryStep,
     RetryTask,
     TaskCancelled,
-    UncleanExit,
 )
 from grandchallenge.components.emails import (
     send_container_image_not_made_active,
@@ -991,16 +990,6 @@ def get_update_status_kwargs(*, executor=None):
         return {}
 
 
-def _results_or_empty(*, executor):
-    # On failure paths a result file may legitimately be absent, so tolerate
-    # a missing result rather than masking the original failure. A file that
-    # is present but tampered with or invalid still raises ComponentException.
-    try:
-        return executor.inference_results
-    except UncleanExit:
-        return []
-
-
 @lambda_task(retry_on=(RetryStep, LockNotAcquiredException))
 def handle_event(*, event: dict, backend: str):
     """
@@ -1051,7 +1040,7 @@ def handle_event(*, event: dict, backend: str):
     except TaskCancelled as error:
         job.update_status(
             status=job.CANCELLED,
-            results=_results_or_empty(executor=executor),
+            results=executor.inference_results,
             **get_update_status_kwargs(executor=executor),
         )
         return {"status": f"Job was cancelled: {error}"}
@@ -1066,7 +1055,7 @@ def handle_event(*, event: dict, backend: str):
             status=job.FAILURE,
             error_message=str(error),
             detailed_error_message=error.message_details,
-            results=_results_or_empty(executor=executor),
+            results=executor.inference_results,
             **get_update_status_kwargs(executor=executor),
         )
         return {"status": f"Handled exception: {error}"}
@@ -1074,7 +1063,7 @@ def handle_event(*, event: dict, backend: str):
         job.update_status(
             status=job.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
-            results=_results_or_empty(executor=executor),
+            results=executor.inference_results,
             **get_update_status_kwargs(executor=executor),
         )
         task_logger.error(str(error), exc_info=True)
@@ -2111,13 +2100,13 @@ def handle_endpoint_invocation_event(*, event: dict):
             status=invocation.StatusChoices.FAILURE,
             error_message=str(error),
             detailed_error_message=error.message_details,
-            results=_results_or_empty(executor=orchestrator),
+            results=orchestrator.inference_results,
         )
     except Exception as error:
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
-            results=_results_or_empty(executor=orchestrator),
+            results=orchestrator.inference_results,
         )
         task_logger.error(str(error), exc_info=True)
     else:

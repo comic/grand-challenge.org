@@ -29,7 +29,6 @@ from grandchallenge.components.backends.exceptions import (
     RetryStep,
     RetryTask,
     TaskCancelled,
-    UncleanExit,
 )
 from grandchallenge.components.backends.utils import (
     UUID4_REGEX,
@@ -651,18 +650,14 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
             "ClientError: Artifact upload failed:ClientError: "
             "Out of Memory. Please use a larger instance",
         ):
-            try:
-                for inference_result in self.inference_results:
-                    if inference_result.return_code not in (-9, 1, 137):
-                        # Requires investigation
-                        logger.error(
-                            f"SageMaker OOM "
-                            f"{inference_result.return_code=} "
-                            f"for {inference_result.pk}"
-                        )
-            except UncleanExit as error:
-                logger.error(error, exc_info=True)
-
+            for inference_result in self.inference_results:
+                if inference_result.return_code not in (-9, 1, 137):
+                    # Requires investigation
+                    logger.error(
+                        f"SageMaker OOM "
+                        f"{inference_result.return_code=} "
+                        f"for {inference_result.pk}"
+                    )
             raise ComponentException(SystemErrorMessages.MEMORY_LIMIT_EXCEEDED)
         else:
             # Requires investigation
