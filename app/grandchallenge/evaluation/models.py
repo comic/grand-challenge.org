@@ -1985,7 +1985,8 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
             )
         }
 
-    def get_scheduled_input_civ_sets_per_interface(self):
+    @cached_property
+    def scheduled_input_civ_sets_per_interface(self):
         """
         Input CIV sets that have already been scheduled as inputs for a Job or
         BatchJob, grouped by interface.
@@ -2022,20 +2023,18 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                 )
             }
 
-    def get_unscheduled_input_civ_sets_per_interface(self):
+    @cached_property
+    def unscheduled_input_civ_sets_per_interface(self):
         """
         Input CIV sets that have NOT been scheduled as inputs for a Job or
         BatchJob yet, grouped by interface.
         """
-        scheduled_input_civ_sets_per_interface = (
-            self.get_scheduled_input_civ_sets_per_interface()
-        )
         return {
             interface: [
                 input_civs
                 for input_civs in input_civ_sets
                 if input_civs
-                not in scheduled_input_civ_sets_per_interface[interface]
+                not in self.scheduled_input_civ_sets_per_interface[interface]
             ]
             for interface, input_civ_sets in (
                 self.candidate_input_civ_sets_per_interface.items()
@@ -2053,15 +2052,17 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
         # Local import to avoid a circular dependency
         from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 
-        # Evaluate once
-        unscheduled_input_civ_sets_per_interface = (
-            self.get_unscheduled_input_civ_sets_per_interface()
-        )
+        # Clear the cached scheduling properties to keep scheduling idempotent
+        for attr in (
+            "scheduled_input_civ_sets_per_interface",
+            "unscheduled_input_civ_sets_per_interface",
+        ):
+            self.__dict__.pop(attr, None)
 
         sets_remaining = sum(
             len(input_civ_sets)
             for input_civ_sets in (
-                unscheduled_input_civ_sets_per_interface.values()
+                self.unscheduled_input_civ_sets_per_interface.values()
             )
         )
 
@@ -2071,7 +2072,7 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
         for (
             interface,
             input_civ_sets,
-        ) in unscheduled_input_civ_sets_per_interface.items():
+        ) in self.unscheduled_input_civ_sets_per_interface.items():
             input_civ_sets = list(input_civ_sets)
             for start in range(0, len(input_civ_sets), chunk_size):
                 if len(jobs) >= max_jobs:
