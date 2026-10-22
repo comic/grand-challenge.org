@@ -86,6 +86,45 @@ class EvaluationCIVErrorHandler(ComponentJobCIVErrorHandler):
         )
 
 
+class SubmissionCIVErrorHandler(ErrorHandler):
+    """
+    Error handler for CIV validation errors on submission creation.
+    Handle_error() updates a submission.
+    """
+
+    def __init__(self, *args, submission, **kwargs):
+        from grandchallenge.evaluation.models import Submission
+
+        if not isinstance(submission, Submission):
+            raise RuntimeError(
+                "You need to provide a Submission instance to this error handler."
+            )
+
+        super().__init__(*args, **kwargs)
+        self._submission = submission
+
+    def handle_error(self, *, error_message, user, interface=None):
+        self._submission.update_status(
+            status=self._submission.StatusChoices.FAILED,
+            status_message=error_message,
+        )
+
+        if interface:
+            Notification.send(
+                kind=NotificationTypeChoices.CIV_VALIDATION,
+                message=f"Validation for socket {interface.title} failed.",
+                description=f"Validation for socket {interface.title} failed: {error_message}",
+                actor=user,
+            )
+        else:
+            Notification.send(
+                kind=NotificationTypeChoices.CIV_VALIDATION,
+                message=error_message,
+                description=error_message,
+                actor=user,
+            )
+
+
 class InvocationCIVErrorHandler(ErrorHandler):
     """
     Error handler for CIV validation errors on invocation creation.
