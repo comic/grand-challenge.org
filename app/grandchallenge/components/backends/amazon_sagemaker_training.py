@@ -625,6 +625,14 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
     def _handle_failed_job(self, *, event):
         failure_reason = event.get("FailureReason")
 
+        if len(self.inference_results) != len(self._task_definitions):
+            # Requires investigation: some tasks produced no result
+            logger.error(
+                f"SageMaker OOM "
+                f"{len(self.inference_results)} of "
+                f"{len(self._task_definitions)} task results present"
+            )
+
         if failure_reason == (
             "CapacityError: Unable to provision requested ML compute capacity. "
             "Please retry using a different ML instance type."
@@ -650,14 +658,6 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
             "ClientError: Artifact upload failed:ClientError: "
             "Out of Memory. Please use a larger instance",
         ):
-            if len(self.inference_results) != len(self._task_definitions):
-                # Requires investigation: some tasks produced no result
-                logger.error(
-                    f"SageMaker OOM "
-                    f"{len(self.inference_results)} of "
-                    f"{len(self._task_definitions)} task results present"
-                )
-
             for inference_result in self.inference_results:
                 if inference_result.return_code not in (-9, 1, 137):
                     # Requires investigation
