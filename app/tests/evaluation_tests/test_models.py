@@ -3714,6 +3714,93 @@ def test_get_incomplete_inference_jobs_for_user_in_single_mode():
 
 
 @pytest.mark.django_db
+def test_batch_job_task_output_adds_image_permission_for_admins_only():
+    output_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.PANIMG_IMAGE
+    )
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterfaceFactory()],
+        outputs=[output_interface],
+    )
+    algorithm_image = AlgorithmImageFactory()
+    batch_job = BatchJobFactory(
+        algorithm_image=algorithm_image,
+        algorithm_interface=interface,
+        input_civ_sets=[
+            {ComponentInterfaceValueFactory(interface=interface.inputs.get())}
+        ],
+        time_limit=10,
+    )
+    challenge = batch_job.submission.phase.challenge
+    admins_group = challenge.admins_group
+    participants_group = challenge.participants_group
+    algorithm_editors_group = algorithm_image.algorithm.editors_group
+    task = batch_job.tasks.get()
+
+    output_image = ImageFactory()
+    output_civ = ComponentInterfaceValueFactory(
+        interface=output_interface, image=output_image
+    )
+
+    task.outputs.add(output_civ)
+
+    assert "view_image" in get_group_perms(admins_group, output_image)
+    assert "view_image" not in get_group_perms(
+        participants_group, output_image
+    )
+    assert "view_image" not in get_group_perms(
+        algorithm_editors_group, output_image
+    )
+
+
+@pytest.mark.django_db
+def test_batch_job_task_output_removal_revokes_permission_for_challenge_admins_only():
+    output_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.PANIMG_IMAGE
+    )
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterfaceFactory()],
+        outputs=[output_interface],
+    )
+    batch_job = BatchJobFactory(
+        algorithm_interface=interface,
+        input_civ_sets=[
+            {ComponentInterfaceValueFactory(interface=interface.inputs.get())}
+        ],
+        time_limit=10,
+    )
+    admins_group = batch_job.submission.phase.challenge.admins_group
+    task = batch_job.tasks.get()
+
+    output_image = ImageFactory()
+    output_civ = ComponentInterfaceValueFactory(
+        interface=output_interface, image=output_image
+    )
+    task.outputs.add(output_civ)
+    assert "view_image" in get_group_perms(admins_group, output_image)
+
+    # A challenge admin reuses the batch task output image as the input of an
+    # algorithm job, which grants view_image to the job's viewer groups.
+    job = AlgorithmJobFactory(creator=UserFactory(), time_limit=10)
+    job_input_civ = ComponentInterfaceValueFactory(
+        interface=ComponentInterfaceFactory(
+            kind=InterfaceKindChoices.PANIMG_IMAGE
+        ),
+        image=output_image,
+    )
+    job.inputs.set([job_input_civ])
+
+    job_viewer_group = job.viewer_groups.get()
+    assert "view_image" in get_group_perms(job_viewer_group, output_image)
+
+    # Removing the batch task output revokes the admins' access, but must not
+    # strip the job viewer group's access, which is granted via the job input.
+    task.outputs.remove(output_civ)
+    assert "view_image" not in get_group_perms(admins_group, output_image)
+    assert "view_image" in get_group_perms(job_viewer_group, output_image)
+
+
+@pytest.mark.django_db
 def test_batch_job_creates_tasks_with_correct_inputs():
     ci_a = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     ci_b = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)

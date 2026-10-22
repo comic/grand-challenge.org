@@ -616,6 +616,7 @@ class Image(UUIDModel):
         exclude_jobs=None,
         exclude_archive_items=None,
         exclude_display_sets=None,
+        exclude_batch_job_tasks=None,
     ):
         expected_groups = set()
 
@@ -636,6 +637,12 @@ class Image(UUIDModel):
         )
 
         expected_groups.update(self._get_expected_reader_study_answer_groups())
+
+        expected_groups.update(
+            self._get_expected_batch_job_task_viewer_groups(
+                exclude_batch_job_tasks=exclude_batch_job_tasks
+            )
+        )
 
         current_groups = get_groups_with_perms(self, attach_perms=True)
         current_groups = {
@@ -676,6 +683,31 @@ class Image(UUIDModel):
             except SoftTimeLimitExceeded as error:
                 logger.error(error, exc_info=True)
                 raise
+
+        return expected_groups
+
+    def _get_expected_batch_job_task_viewer_groups(
+        self, *, exclude_batch_job_tasks
+    ):
+        from grandchallenge.evaluation.models import BatchJobTask
+
+        expected_groups = set()
+
+        # Only outputs are granted view_image for batch job tasks, so only
+        # outputs contribute to the expected groups.
+        task_queryset = BatchJobTask.objects.filter(
+            outputs__image=self
+        ).select_related("batch_job__submission__phase__challenge")
+
+        if exclude_batch_job_tasks is not None:
+            task_queryset = task_queryset.exclude(
+                pk__in={t.pk for t in exclude_batch_job_tasks}
+            )
+
+        for task in task_queryset:
+            expected_groups.add(
+                task.batch_job.submission.phase.challenge.admins_group
+            )
 
         return expected_groups
 
