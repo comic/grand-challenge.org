@@ -836,8 +836,10 @@ def test_handle_completed_job_missing_inference_result(settings):
         },
     )
 
-    with pytest.raises(UncleanExit):
+    with pytest.raises(ComponentException) as error:
         executor._handle_completed_job()
+
+    assert str(error.value) == SystemErrorMessages.UNEXPECTED_ERROR
 
 
 def test_handle_time_limit_exceeded(settings):
