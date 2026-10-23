@@ -466,8 +466,9 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
 
     @property
     def job_time_limit(self):
-        # TODO [batch_jobs] add settings.COMPONENTS_JOB_SETUP_DURATION here
-        return self.total_task_time_limit
+        return self.total_task_time_limit + timedelta(
+            seconds=settings.COMPONENTS_JOB_SETUP_DURATION
+        )
 
     @staticmethod
     def get_job_params(*, job_name):
