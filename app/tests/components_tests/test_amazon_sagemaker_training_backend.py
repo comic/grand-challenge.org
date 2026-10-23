@@ -274,7 +274,7 @@ def test_invocation_json(settings):
                     "InstanceCount": 1,
                     "KeepAlivePeriodInSeconds": 0,
                 },
-                "StoppingCondition": {"MaxRuntimeInSeconds": 60},
+                "StoppingCondition": {"MaxRuntimeInSeconds": 360},
                 "Environment": {
                     "LOG_LEVEL": "INFO",
                     "PYTHONUNBUFFERED": "1",
