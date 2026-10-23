@@ -46,14 +46,14 @@ class JobCIVErrorHandler(ComponentJobCIVErrorHandler):
     """
 
     def __init__(self, *args, job, **kwargs):
-        super().__init__(*args, job=job, **kwargs)
-
         from grandchallenge.algorithms.models import Job
 
-        if not job or not isinstance(job, Job):
+        if not isinstance(job, Job):
             raise RuntimeError(
                 "You need to provide a Job instance to this error handler."
             )
+
+        super().__init__(*args, job=job, **kwargs)
 
 
 class EvaluationCIVErrorHandler(ComponentJobCIVErrorHandler):
@@ -63,19 +63,19 @@ class EvaluationCIVErrorHandler(ComponentJobCIVErrorHandler):
     """
 
     def __init__(self, *args, job, **kwargs):
-        super().__init__(*args, job=job, **kwargs)
-
         from grandchallenge.evaluation.models import Evaluation
 
-        if not job or not isinstance(job, Evaluation):
+        if not isinstance(job, Evaluation):
             raise RuntimeError(
                 "You need to provide a Evaluation instance to this error handler."
             )
 
+        super().__init__(*args, job=job, **kwargs)
+
     def handle_error(self, *, error_message, interface=None, user=None):
-        # for evaluations don't share the actual error message
-        # as it could lead information to challenge participants
-        # instead, log the error to sentry
+        # For evaluations don't share the actual error message
+        # as it could leak information to challenge participants.
+        # Instead, log the error to sentry.
         logger.error(error_message, exc_info=True)
 
         # and send a generic error message to the user
@@ -83,6 +83,30 @@ class EvaluationCIVErrorHandler(ComponentJobCIVErrorHandler):
 
         super().handle_error(
             error_message=error_message, interface=interface, user=user
+        )
+
+
+class SubmissionCIVErrorHandler(ErrorHandler):
+    """
+    Error handler for CIV validation errors on submission creation.
+    Handle_error() updates a submission.
+    """
+
+    def __init__(self, *args, submission, **kwargs):
+        from grandchallenge.evaluation.models import Submission
+
+        if not isinstance(submission, Submission):
+            raise RuntimeError(
+                "You need to provide a Submission instance to this error handler."
+            )
+
+        super().__init__(*args, **kwargs)
+        self._submission = submission
+
+    def handle_error(self, *, error_message, interface=None, user=None):
+        self._submission.update_status(
+            status=self._submission.StatusChoices.FAILED,
+            status_message=error_message,
         )
 
 
@@ -95,7 +119,7 @@ class InvocationCIVErrorHandler(ErrorHandler):
     def __init__(self, *args, invocation, **kwargs):
         from grandchallenge.algorithms.models import Invocation
 
-        if not invocation or not isinstance(invocation, Invocation):
+        if not isinstance(invocation, Invocation):
             raise RuntimeError(
                 "You need to provide an Invocation instance to this error handler."
             )
@@ -129,17 +153,14 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
     """
 
     def __init__(self, *args, upload_session, linked_object=None, **kwargs):
-        super().__init__(*args, **kwargs)
-
         from grandchallenge.cases.models import RawImageUploadSession
 
-        if not upload_session or not isinstance(
-            upload_session, RawImageUploadSession
-        ):
+        if not isinstance(upload_session, RawImageUploadSession):
             raise RuntimeError(
                 "You need to provide a RawImageUploadSession instance to this error handler."
             )
 
+        super().__init__(*args, **kwargs)
         self._upload_session = upload_session
         self._linked_object = linked_object
 
@@ -179,17 +200,14 @@ class DICOMImageSetUploadErrorHandler(ErrorHandler):
     """
 
     def __init__(self, *args, dicom_image_set_upload, linked_object, **kwargs):
-        super().__init__(*args, **kwargs)
-
         from grandchallenge.cases.models import DICOMImageSetUpload
 
-        if not dicom_image_set_upload or not isinstance(
-            dicom_image_set_upload, DICOMImageSetUpload
-        ):
+        if not isinstance(dicom_image_set_upload, DICOMImageSetUpload):
             raise RuntimeError(
                 "You need to provide a DICOMImageSetUpload instance to this error handler."
             )
 
+        super().__init__(*args, **kwargs)
         self._dicom_image_set_upload = dicom_image_set_upload
         self._linked_object = linked_object
 
@@ -229,13 +247,14 @@ class UserUploadCIVErrorHandler(ErrorHandler):
     """
 
     def __init__(self, *args, user_upload, **kwargs):
-        super().__init__(*args, **kwargs)
+        from grandchallenge.uploads.models import UserUpload
 
-        if not user_upload:
+        if not isinstance(user_upload, UserUpload):
             raise RuntimeError(
                 "You need to provide a UserUpload instance to this error handler."
             )
 
+        super().__init__(*args, **kwargs)
         self._user_upload = user_upload
 
     def handle_error(self, *, error_message, user, interface):

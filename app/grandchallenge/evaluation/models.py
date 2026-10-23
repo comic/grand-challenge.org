@@ -1772,6 +1772,21 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
     def get_civ_for_interface(self, interface):
         return self.additional_inputs.get(interface=interface)
 
+    def update_status(
+        self,
+        *,
+        status: SubmissionStatusChoices,
+        status_message="",
+    ):
+        self.status = status
+
+        if status_message:
+            self.status_message = status_message
+
+        # TODO [submission_gate] send notification to participant or organizer
+
+        self.save()
+
     def create_evaluation(self, *, additional_inputs, invoice):
         if (
             self.phase.additional_evaluation_inputs.exists()
