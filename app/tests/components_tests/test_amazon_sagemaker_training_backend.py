@@ -224,7 +224,9 @@ def test_execute_job_scheduled_job_with_time_limit(mocker):
 
     create_job_boto.assert_called_once()
     scheduling_executor = create_job_boto.call_args.args[0]
-    assert scheduling_executor.job_time_limit == timedelta(seconds=60)
+    assert scheduling_executor.job_time_limit == timedelta(
+        seconds=60
+    ) + timedelta(seconds=settings.COMPONENTS_JOB_SETUP_DURATION)
 
 
 @pytest.mark.django_db
