@@ -49,6 +49,7 @@ def validate_submission(*, submission_pk: str | uuid.UUID):
             to_field=submission.predictions_file
         )
         submission.user_upload.delete()
+        submission.user_upload = None
 
     if submission.algorithm_image or submission.predictions_file:
         submission.status = submission.StatusChoices.PENDING_REVIEW
