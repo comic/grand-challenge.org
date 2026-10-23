@@ -591,14 +591,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     algorithm_time_limit = models.PositiveIntegerField(
         default=20 * 60,
         help_text="Time limit for inference jobs in seconds",
-        validators=[
-            MinValueValidator(
-                limit_value=settings.COMPONENTS_MINIMUM_JOB_DURATION
-            ),
-            MaxValueValidator(
-                limit_value=settings.COMPONENTS_MAXIMUM_JOB_DURATION
-            ),
-        ],
     )
     give_algorithm_editors_job_view_permissions = models.BooleanField(
         default=False,
@@ -814,6 +806,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         self._clean_external_evaluation()
         self._clean_evaluation_requirements()
         self._clean_batch_mode()
+        self._clean_algorithm_time_limit()
 
     def _clean_batch_mode(self):
         if (
@@ -824,18 +817,35 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 "Batch mode can only be enabled for closed log phases."
             )
 
-        maximum_algorithm_time_limit = (
-            settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION
-            - settings.COMPONENTS_JOB_SETUP_DURATION
-        )
-        if (
-            self.use_batch_mode
-            and self.algorithm_time_limit > maximum_algorithm_time_limit
-        ):
-            raise ValidationError(
-                "Batch mode can only be enabled when the algorithm job time "
-                f"limit is at most {maximum_algorithm_time_limit} seconds."
+    def _clean_algorithm_time_limit(self):
+        if self.use_batch_mode:
+            minimum_algorithm_time_limit = (
+                settings.EVALUATION_MINIMUM_BATCH_JOB_DURATION
             )
+            maximum_algorithm_time_limit = (
+                settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION
+                - settings.COMPONENTS_JOB_SETUP_DURATION
+            )
+        else:
+            minimum_algorithm_time_limit = (
+                settings.COMPONENTS_MINIMUM_JOB_DURATION
+            )
+            maximum_algorithm_time_limit = (
+                settings.COMPONENTS_MAXIMUM_JOB_DURATION
+            )
+
+        if self.algorithm_time_limit < minimum_algorithm_time_limit:
+            raise ValidationError(
+                "The algorithm job time limit must be at least "
+                f"{minimum_algorithm_time_limit} seconds."
+            )
+        elif self.algorithm_time_limit > maximum_algorithm_time_limit:
+            raise ValidationError(
+                "The algorithm job time limit must be at most "
+                f"{maximum_algorithm_time_limit} seconds."
+            )
+        else:
+            pass
 
     def _clean_submission_kind(self):
         if self.has_changed("submission_kind"):
@@ -2320,6 +2330,18 @@ class BatchJob(ComponentJob):
         AlgorithmModel, on_delete=models.PROTECT, null=True, blank=True
     )
     submission = models.ForeignKey("Submission", on_delete=models.PROTECT)
+    time_limit = models.PositiveIntegerField(
+        help_text="Time limit in seconds for a single inference task (one invocation)",
+        validators=[
+            MinValueValidator(
+                limit_value=settings.EVALUATION_MINIMUM_BATCH_JOB_DURATION
+            ),
+            MaxValueValidator(
+                limit_value=settings.EVALUATION_MAXIMUM_BATCH_JOB_DURATION
+                - settings.COMPONENTS_JOB_SETUP_DURATION
+            ),
+        ],
+    )
 
     objects = BatchJobManager.as_manager()
 
