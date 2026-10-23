@@ -484,7 +484,7 @@ THIRD_PARTY_APPS = [
     "rest_framework",  # provides REST API
     "knox",  # token auth for REST API
     "crispy_forms",  # bootstrap forms
-    "crispy_bootstrap4",
+    "crispy_bootstrap5",
     "django_select2",  # for multiple choice widgets
     "dal",  # for autocompletion of selection fields
     "dal_select2",  # for autocompletion of selection fields
@@ -911,8 +911,8 @@ COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION = os.environ.get(
     "COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION", "/opt/virtualenvs/biom"
 )
 # Set which template pack to use for forms
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
-CRISPY_TEMPLATE_PACK = "bootstrap4"
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # When using bootstrap error messages need to be renamed to danger
 MESSAGE_TAGS = {messages.ERROR: "danger"}

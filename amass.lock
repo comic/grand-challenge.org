@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:ec20a47f8ced93424d25d4bb87e6fb5fdd8915c88d6cabe25e55806a5d2cce73",
+  "content_hash": "sha256:58e8a7c337a1e23bd339a922110fc9ed0b49c4909e0c8fff247492c405545120",
   "dependencies": [
     {
       "name": "@diagnijmegen/rse-grand-challenge-dicom-de-id-procedure",
@@ -32,12 +32,12 @@
     },
     {
       "name": "bootstrap",
-      "version": "4.6.2",
+      "version": "5.3.8",
       "provider": "cdnjs",
       "assets": [
         {
           "name": "css/bootstrap.css",
-          "sri": "sha512-nC+a1/agL6/Btk2NLY0uRsdrXxibJlYKsBhbIPKFMnVqPRtOyw1M0wd1VNPeUYjHT8YTwTNihxo/DzP++k16xQ=="
+          "sri": "sha512-zylce7fP6h4usg536JBTRj2rt7q22Z0qicHSlgSK53Irtfkz37ate3KCQ59du+aXZV6R3yyL2X1LyGKBEUMZaw=="
         },
         {
           "name": "css/bootstrap.css.map",
@@ -45,7 +45,7 @@
         },
         {
           "name": "css/bootstrap.min.css",
-          "sri": "sha512-rt/SrQ4UNIaGfDyEXZtNcyWvQeOq0QLygHluFQcSjaGB04IxWhal71tKuzP6K8eYXYB6vJV4pHkXcmFGGQ1/0w=="
+          "sri": "sha512-2bBQCjcnw658Lho4nlXJcc6WkV/UxpE/sAokbXPxQNGqmNdQrWqtw26Ns9kFF/yG792pKR1Sx8/Y1Lf1XN4GKA=="
         },
         {
           "name": "css/bootstrap.min.css.map",
@@ -53,7 +53,7 @@
         },
         {
           "name": "js/bootstrap.bundle.js",
-          "sri": "sha512-ezTd7an5ZLpG3KYgo7fNMDMkBBHzv7D7P2372kGGEIrYSA0ZQiRYtFUdVdWVUCY9Xggwi3iGXSjwIv8eY2MNbg=="
+          "sri": "sha512-RIzT5kuaKdKfx6gxL8ZuzemSJbSpEGz0eLGROuOSaovLbCdCsN9aQUILDyBJNdul9rReAK9pJ+cNk5EileUX4A=="
         },
         {
           "name": "js/bootstrap.bundle.js.map",
@@ -61,10 +61,14 @@
         },
         {
           "name": "js/bootstrap.bundle.min.js",
-          "sri": "sha512-igl8WEUuas9k5dtnhKqyyld6TzzRjvMqLC79jkgT3z02FvJyHAuUtyemm/P/jYSne1xwFI06ezQxEwweaiV7VA=="
+          "sri": "sha512-HvOjJrdwNpDbkGJIG2ZNqDlVqMo77qbs4Me4cah0HoDrfhrbA+8SBlZn1KrvAQw7cILLPFJvdwIgphzQmMm+Pw=="
         },
         {
           "name": "js/bootstrap.bundle.min.js.map",
+          "sri": null
+        },
+        {
+          "name": "scss/_accordion.scss",
           "sri": null
         },
         {
@@ -100,11 +104,7 @@
           "sri": null
         },
         {
-          "name": "scss/_code.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/_custom-forms.scss",
+          "name": "scss/_containers.scss",
           "sri": null
         },
         {
@@ -124,15 +124,11 @@
           "sri": null
         },
         {
+          "name": "scss/_helpers.scss",
+          "sri": null
+        },
+        {
           "name": "scss/_images.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/_input-group.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/_jumbotron.scss",
           "sri": null
         },
         {
@@ -140,7 +136,7 @@
           "sri": null
         },
         {
-          "name": "scss/_media.scss",
+          "name": "scss/_maps.scss",
           "sri": null
         },
         {
@@ -160,15 +156,19 @@
           "sri": null
         },
         {
+          "name": "scss/_offcanvas.scss",
+          "sri": null
+        },
+        {
           "name": "scss/_pagination.scss",
           "sri": null
         },
         {
-          "name": "scss/_popover.scss",
+          "name": "scss/_placeholders.scss",
           "sri": null
         },
         {
-          "name": "scss/_print.scss",
+          "name": "scss/_popover.scss",
           "sri": null
         },
         {
@@ -212,6 +212,10 @@
           "sri": null
         },
         {
+          "name": "scss/_variables-dark.scss",
+          "sri": null
+        },
+        {
           "name": "scss/_variables.scss",
           "sri": null
         },
@@ -224,7 +228,95 @@
           "sri": null
         },
         {
+          "name": "scss/bootstrap-utilities.scss",
+          "sri": null
+        },
+        {
           "name": "scss/bootstrap.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/forms/_floating-labels.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/forms/_form-check.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/forms/_form-control.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/forms/_form-range.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/forms/_form-select.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/forms/_form-text.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/forms/_input-group.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/forms/_labels.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/forms/_validation.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/helpers/_clearfix.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/helpers/_color-bg.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/helpers/_colored-links.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/helpers/_focus-ring.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/helpers/_icon-link.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/helpers/_position.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/helpers/_ratio.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/helpers/_stacks.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/helpers/_stretched-link.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/helpers/_text-truncation.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/helpers/_visually-hidden.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/helpers/_vr.scss",
           "sri": null
         },
         {
@@ -232,11 +324,11 @@
           "sri": null
         },
         {
-          "name": "scss/mixins/_background-variant.scss",
+          "name": "scss/mixins/_backdrop.scss",
           "sri": null
         },
         {
-          "name": "scss/mixins/_badge.scss",
+          "name": "scss/mixins/_banner.scss",
           "sri": null
         },
         {
@@ -264,11 +356,19 @@
           "sri": null
         },
         {
-          "name": "scss/mixins/_deprecate.scss",
+          "name": "scss/mixins/_color-mode.scss",
           "sri": null
         },
         {
-          "name": "scss/mixins/_float.scss",
+          "name": "scss/mixins/_color-scheme.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_container.scss",
+          "sri": null
+        },
+        {
+          "name": "scss/mixins/_deprecate.scss",
           "sri": null
         },
         {
@@ -280,15 +380,7 @@
           "sri": null
         },
         {
-          "name": "scss/mixins/_grid-framework.scss",
-          "sri": null
-        },
-        {
           "name": "scss/mixins/_grid.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/mixins/_hover.scss",
           "sri": null
         },
         {
@@ -304,10 +396,6 @@
           "sri": null
         },
         {
-          "name": "scss/mixins/_nav-divider.scss",
-          "sri": null
-        },
-        {
           "name": "scss/mixins/_pagination.scss",
           "sri": null
         },
@@ -320,23 +408,7 @@
           "sri": null
         },
         {
-          "name": "scss/mixins/_screen-reader.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/mixins/_size.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/mixins/_table-row.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/mixins/_text-emphasis.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/mixins/_text-hide.scss",
+          "name": "scss/mixins/_table-variants.scss",
           "sri": null
         },
         {
@@ -348,79 +420,15 @@
           "sri": null
         },
         {
-          "name": "scss/mixins/_visibility.scss",
+          "name": "scss/mixins/_utilities.scss",
           "sri": null
         },
         {
-          "name": "scss/utilities/_align.scss",
+          "name": "scss/mixins/_visually-hidden.scss",
           "sri": null
         },
         {
-          "name": "scss/utilities/_background.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_borders.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_clearfix.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_display.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_embed.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_flex.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_float.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_interactions.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_overflow.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_position.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_screenreaders.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_shadows.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_sizing.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_spacing.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_stretched-link.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_text.scss",
-          "sri": null
-        },
-        {
-          "name": "scss/utilities/_visibility.scss",
+          "name": "scss/utilities/_api.scss",
           "sri": null
         },
         {
@@ -432,16 +440,16 @@
     },
     {
       "name": "bootswatch",
-      "version": "4.6.2",
+      "version": "5.3.8",
       "provider": "unpkg",
       "assets": [
         {
           "name": "dist/flatly/_bootswatch.scss",
-          "sri": "sha256-Zjdf+YJSGQTYRRpBHZrvl3gp+M6SMFqunCnD0FM67Ng="
+          "sri": "sha256-ggPffpsI/tEajSo5WIGMTGVxermGjgGbzx+moUm6la4="
         },
         {
           "name": "dist/flatly/_variables.scss",
-          "sri": "sha256-UCZGDxvYsSEoWLmsffY/03CH10ljY8d7wfCBTlAYf3A="
+          "sri": "sha256-sVRTtfJlse8kyuwxTJNDCW+KX9CVZwMzn1OzTuoKzKo="
         }
       ],
       "maps": []
@@ -463,25 +471,25 @@
       "maps": []
     },
     {
-      "name": "datatables.net-bs4",
+      "name": "datatables.net-bs5",
       "version": "2.3.6",
       "provider": "unpkg",
       "assets": [
         {
-          "name": "css/dataTables.bootstrap4.css",
-          "sri": "sha256-wNATsIqEWygcJ+I6XKqZvMb6xWIH7X+Xu3RBaw3bVho="
+          "name": "css/dataTables.bootstrap5.css",
+          "sri": "sha256-kZYE02Sy4MQoXtuwdo5G0ty/CjmaJo/DzkEbYPDm0Ck="
         },
         {
-          "name": "css/dataTables.bootstrap4.min.css",
-          "sri": "sha256-u8fpIxZd1znGEggKpyhd+7KNhG526VsoTk73b9rUjYg="
+          "name": "css/dataTables.bootstrap5.min.css",
+          "sri": "sha256-OKVsNYmaJ+2PKQljIUclIs7jXiWpGYkRb+CPHeM0Aew="
         },
         {
-          "name": "js/dataTables.bootstrap4.js",
-          "sri": "sha256-AuIDgE0AudDF/CXiZDvIZK9bpmeh5Utq6lUzYNcXwv0="
+          "name": "js/dataTables.bootstrap5.js",
+          "sri": "sha256-C+AZ3bZFyLBofoOJUAp5DQ9ZBquPTkcF2aZma0R5wT0="
         },
         {
-          "name": "js/dataTables.bootstrap4.min.js",
-          "sri": "sha256-91AsoX6hTPqUvcN6AoO2RZ4iWzJv/DxDe9iY6KsWHhk="
+          "name": "js/dataTables.bootstrap5.min.js",
+          "sri": "sha256-Wt/ox5V6rsVu8EA6qeH833FleF8JLDS7VckHXqZg3bw="
         }
       ],
       "maps": []
@@ -511,25 +519,25 @@
       "maps": []
     },
     {
-      "name": "datatables.net-buttons-bs4",
+      "name": "datatables.net-buttons-bs5",
       "version": "3.2.6",
       "provider": "unpkg",
       "assets": [
         {
-          "name": "css/buttons.bootstrap4.css",
-          "sri": "sha256-fn7CTNDSh/MdYyx5joumVtwfoUN79zHpia+8ZbaMG6M="
+          "name": "css/buttons.bootstrap5.css",
+          "sri": "sha256-mC+brjeJ6MjpaVC7IQ6LODvsRZHdO0NqtXILuoB6/kw="
         },
         {
-          "name": "css/buttons.bootstrap4.min.css",
-          "sri": "sha256-91+1bsPR1B8miE0VUsHU7XSuPGtSLSWAApE3P7nw4Ec="
+          "name": "css/buttons.bootstrap5.min.css",
+          "sri": "sha256-KaCC7hwFqsjqxQ5xoYYc3hAUTDUqKJx6462N0OREObc="
         },
         {
-          "name": "js/buttons.bootstrap4.js",
-          "sri": "sha256-HAZ6Uab5OTv34aSFQnWqsHG0ufWrvcHHQvdfd1ZaBOw="
+          "name": "js/buttons.bootstrap5.js",
+          "sri": "sha256-WwC6IPnjfmGBR85ZWGVPX+XswdWgC+5HsPSBXe1WuiY="
         },
         {
-          "name": "js/buttons.bootstrap4.min.js",
-          "sri": "sha256-BpYGF+rn12Mg1Cpgwgo669fhnpMhTdG9MSvORhglwr8="
+          "name": "js/buttons.bootstrap5.min.js",
+          "sri": "sha256-55mwDRZofSRbhoE5zJVlefpVaLdlZWp6ht+j0kud2z8="
         }
       ],
       "maps": []
