@@ -1745,6 +1745,13 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                 if self.has_changed(field):
                     raise ValueError(f"{field} cannot be changed")
 
+        if (
+            self.has_changed("status")
+            and self.status == SubmissionStatusChoices.PENDING_REVIEW
+            and self.phase.auto_evaluate_new_submissions
+        ):
+            self.status = SubmissionStatusChoices.ACCEPTED
+
         super().save(*args, **kwargs)
 
         if adding:
@@ -1756,6 +1763,13 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                     actor_only=False,
                     send_action=False,
                 )
+
+        if (
+            self.has_changed("status")
+            and self.status == SubmissionStatusChoices.ACCEPTED
+        ):
+            # TODO [submission_gate] create evaluation
+            pass
 
     @property
     def is_editable(self):
