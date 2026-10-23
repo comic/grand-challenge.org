@@ -1822,6 +1822,21 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_civ_for_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">)</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_status</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">status</span><span class="p">:</span> <span class="n">SubmissionStatusChoices</span><span class="p">,</span>
+        <span class="n">status_message</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
+
+        <span class="k">if</span> <span class="n">status_message</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_message</span> <span class="o">=</span> <span class="n">status_message</span>
+
+        <span class="c1"># TODO [submission_gate] send notification to participant or organizer</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">create_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">additional_inputs</span><span class="p">,</span> <span class="n">invoice</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">additional_evaluation_inputs</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
