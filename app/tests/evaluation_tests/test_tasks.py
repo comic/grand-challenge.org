@@ -24,13 +24,17 @@ from grandchallenge.components.tasks import (
     push_container_image,
     validate_container_image,
 )
-from grandchallenge.core.error_messages import EvaluationErrorMessages
+from grandchallenge.core.error_messages import (
+    EvaluationErrorMessages,
+    SystemErrorMessages,
+)
 from grandchallenge.evaluation.models import (
     BatchJob,
     BatchJobTask,
     Evaluation,
     Method,
     Submission,
+    SubmissionStatusChoices,
 )
 from grandchallenge.evaluation.tasks import (
     cancel_external_evaluations_past_timeout,
@@ -38,11 +42,13 @@ from grandchallenge.evaluation.tasks import (
     create_algorithm_jobs_for_evaluation,
     handle_failed_jobs,
     set_evaluation_inputs,
+    validate_submission,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentTypeChoices
 from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
+from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmInterfaceFactory,
@@ -69,6 +75,87 @@ from tests.uploads_tests.factories import (
 )
 from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
+
+
+@pytest.mark.parametrize(
+    "auto_evaluate_new_submissions, expected_status",
+    [
+        (False, SubmissionStatusChoices.PENDING_REVIEW),
+        (True, SubmissionStatusChoices.ACCEPTED),
+    ],
+)
+@pytest.mark.django_db
+def test_status_after_validate_submission_for_auto_evaluate(
+    auto_evaluate_new_submissions, expected_status
+):
+    submission = SubmissionFactory(
+        phase__auto_evaluate_new_submissions=auto_evaluate_new_submissions,
+        status=SubmissionStatusChoices.VALIDATING_INPUTS,
+    )
+
+    validate_submission(submission_pk=submission.pk)
+
+    submission.refresh_from_db()
+    assert submission.status == expected_status
+
+
+@pytest.mark.django_db
+def test_validate_submission_materializes_predictions_file_and_deletes_upload(
+    settings,
+):
+    settings.LAMBDA_TASKS_EAGER = True
+
+    user_upload = create_upload_from_file(
+        creator=UserFactory(),
+        file_path=Path(__file__).parent / "resources" / "submission.csv",
+    )
+    user_upload.status = user_upload.StatusChoices.COMPLETED
+    user_upload.save()
+    upload_pk = user_upload.pk
+
+    submission = SubmissionFactory(
+        predictions_file=None,
+        user_upload=user_upload,
+        status=SubmissionStatusChoices.VALIDATING_INPUTS,
+    )
+
+    validate_submission(submission_pk=submission.pk)
+
+    submission.refresh_from_db()
+    assert submission.predictions_file
+    assert not UserUpload.objects.filter(pk=upload_pk).exists()
+    assert submission.user_upload is None
+
+
+@pytest.mark.django_db
+def test_validate_submission_fails_without_file_or_image():
+    submission = SubmissionFactory(
+        predictions_file=None,
+        algorithm_image=None,
+        status=SubmissionStatusChoices.VALIDATING_INPUTS,
+    )
+
+    validate_submission(submission_pk=submission.pk)
+
+    submission.refresh_from_db()
+    assert submission.status == SubmissionStatusChoices.FAILED
+    assert submission.status_message == SystemErrorMessages.UNEXPECTED_ERROR
+
+
+@pytest.mark.parametrize(
+    "status",
+    set(SubmissionStatusChoices).difference(
+        [SubmissionStatusChoices.VALIDATING_INPUTS]
+    ),
+)
+@pytest.mark.django_db
+def test_validate_submission_noop_for_wrong_status(status):
+    submission = SubmissionFactory(status=status)
+
+    validate_submission(submission_pk=submission.pk)
+
+    submission.refresh_from_db()
+    assert submission.status == status
 
 
 @pytest.mark.django_db

@@ -29,6 +29,40 @@ from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
+def validate_submission(*, submission_pk: str | uuid.UUID):
+    from grandchallenge.evaluation.models import Submission
+
+    with check_lock_acquired():
+        submission = Submission.objects.select_for_update(
+            nowait=True, of=("self",)
+        ).get(pk=submission_pk)
+
+    if submission.status != submission.StatusChoices.VALIDATING_INPUTS:
+        return
+
+    if not submission.additional_inputs_complete:
+        task_logger.info("Nothing to do, inputs are still being validated.")
+        return
+
+    if not submission.predictions_file and submission.user_upload:
+        submission.user_upload.copy_object(
+            to_field=submission.predictions_file
+        )
+        submission.user_upload.delete()
+        submission.user_upload = None
+
+    if submission.algorithm_image or submission.predictions_file:
+        submission.status = submission.StatusChoices.PENDING_REVIEW
+        submission.save()
+    else:
+        submission.update_status(
+            status=submission.StatusChoices.FAILED,
+            status_message=SystemErrorMessages.UNEXPECTED_ERROR,
+        )
+        task_logger.error("No algorithm or predictions file found")
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
 def check_prerequisites_for_evaluation_execution(
     *, evaluation_pk: str | uuid.UUID
 ):

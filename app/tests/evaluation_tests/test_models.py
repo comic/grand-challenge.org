@@ -31,6 +31,7 @@ from grandchallenge.evaluation.models import (
     Method,
     Phase,
     PhaseAdditionalEvaluationInput,
+    SubmissionStatusChoices,
     get_archive_items_for_interfaces,
 )
 from grandchallenge.evaluation.tasks import (
@@ -95,6 +96,29 @@ def algorithm_submission():
     return algorithm_submission(
         method=method, algorithm_image=algorithm_image, images=images
     )
+
+
+@pytest.mark.parametrize(
+    "auto_evaluate_new_submissions, expected_status",
+    [
+        (False, SubmissionStatusChoices.PENDING_REVIEW),
+        (True, SubmissionStatusChoices.ACCEPTED),
+    ],
+)
+@pytest.mark.django_db
+def test_submission_auto_accepted_on_auto_evaluate(
+    auto_evaluate_new_submissions, expected_status
+):
+    submission = SubmissionFactory(
+        phase__auto_evaluate_new_submissions=auto_evaluate_new_submissions,
+        status=SubmissionStatusChoices.VALIDATING_INPUTS,
+    )
+
+    submission.status = SubmissionStatusChoices.PENDING_REVIEW
+    submission.save()
+
+    submission.refresh_from_db()
+    assert submission.status == expected_status
 
 
 @pytest.mark.django_db

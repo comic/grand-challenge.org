@@ -1745,6 +1745,13 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                 if self.has_changed(field):
                     raise ValueError(f"{field} cannot be changed")
 
+        if (
+            self.has_changed("status")
+            and self.status == SubmissionStatusChoices.PENDING_REVIEW
+            and self.phase.auto_evaluate_new_submissions
+        ):
+            self.status = SubmissionStatusChoices.ACCEPTED
+
         super().save(*args, **kwargs)
 
         if adding:
@@ -1756,6 +1763,13 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
                     actor_only=False,
                     send_action=False,
                 )
+
+        if (
+            self.has_changed("status")
+            and self.status == SubmissionStatusChoices.ACCEPTED
+        ):
+            # TODO [submission_gate] create evaluation
+            pass
 
     @property
     def is_editable(self):
@@ -1771,6 +1785,28 @@ class Submission(CIVForObjectMixin, FieldChangeMixin, UUIDModel):
 
     def get_civ_for_interface(self, interface):
         return self.additional_inputs.get(interface=interface)
+
+    def process_civ_data_objects_and_execute_linked_task(
+        self, *, civ_data_objects, user, linked_task=None
+    ):
+        from grandchallenge.evaluation.tasks import (
+            validate_submission,
+        )
+
+        linked_task = validate_submission.serialize(submission_pk=self.pk)
+
+        return super().process_civ_data_objects_and_execute_linked_task(
+            civ_data_objects=civ_data_objects,
+            user=user,
+            linked_task=linked_task,
+        )
+
+    @cached_property
+    def additional_inputs_complete(self):
+        return (
+            self.additional_inputs.count()
+            == self.phase.additional_evaluation_inputs.count()
+        )
 
     def update_status(
         self,
