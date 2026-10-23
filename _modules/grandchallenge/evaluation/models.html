@@ -1795,6 +1795,13 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="n">field</span><span class="p">):</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> cannot be changed"</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">"status"</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">PENDING_REVIEW</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">auto_evaluate_new_submissions</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">ACCEPTED</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
@@ -1806,6 +1813,13 @@
                     <span class="n">actor_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                     <span class="n">send_action</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                 <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">"status"</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SubmissionStatusChoices</span><span class="o">.</span><span class="n">ACCEPTED</span>
+        <span class="p">):</span>
+            <span class="c1"># TODO [submission_gate] create evaluation</span>
+            <span class="k">pass</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_editable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1821,6 +1835,28 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_civ_for_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_civ_data_objects_and_execute_linked_task</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ_data_objects</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">validate_submission</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">linked_task</span> <span class="o">=</span> <span class="n">validate_submission</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="n">submission_pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">process_civ_data_objects_and_execute_linked_task</span><span class="p">(</span>
+            <span class="n">civ_data_objects</span><span class="o">=</span><span class="n">civ_data_objects</span><span class="p">,</span>
+            <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+            <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">additional_inputs_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">additional_inputs</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">additional_evaluation_inputs</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update_status</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
